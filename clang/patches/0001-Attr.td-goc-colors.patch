@@ -1,0 +1,39 @@
+--- a/clang/include/clang/Basic/Attr.td
++++ b/clang/include/clang/Basic/Attr.td
+@@ -948,6 +948,36 @@
+ +// goc P27 — pointer-color attributes (in-tree form of p27-clang-frontend plugin)
++// Out-of-tree plugin registers the same GNU spellings via ParsedAttrInfo until
++// a full clang rebuild lands these. See p27-clang-frontend/patches/.
++//===----------------------------------------------------------------------===//
++
++def GocCPtr : InheritableAttr {
++  let Spellings = [GNU<"goc_cptr">, CXX11<"goc", "cptr">, C23<"goc", "cptr">];
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Documentation = [Undocumented];
++  let SimpleHandler = 1;
++}
++def GocSPtr : InheritableAttr {
++  let Spellings = [GNU<"goc_sptr">, CXX11<"goc", "sptr">, C23<"goc", "sptr">];
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Documentation = [Undocumented];
++  let SimpleHandler = 1;
++}
++def GocUPtr : InheritableAttr {
++  let Spellings = [GNU<"goc_uptr">, CXX11<"goc", "uptr">, C23<"goc", "uptr">];
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Documentation = [Undocumented];
++  let SimpleHandler = 1;
++}
++def GocAutoPtr : InheritableAttr {
++  let Spellings = [GNU<"goc_auto_ptr">, CXX11<"goc", "auto_ptr">, C23<"goc", "auto_ptr">];
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Documentation = [Undocumented];
++  let SimpleHandler = 1;
++}
++def GocGPtr : InheritableAttr {
++  let Spellings = [GNU<"goc_gptr">, CXX11<"goc", "gptr">, C23<"goc", "gptr">];
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Documentation = [Undocumented];
++  let SimpleHandler = 1;
++}
++

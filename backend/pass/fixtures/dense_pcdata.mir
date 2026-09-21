@@ -1,0 +1,36 @@
+--- |
+  target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+  target triple = "x86_64-unknown-linux-gnu"
+
+  declare void @main.HugeFrameVoid()
+  define void @goc_dense_pcdata() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  attributes #0 = { nounwind "no_callee_saved_registers" }
+...
+
+---
+name:            goc_dense_pcdata
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    PUSH64r $rbp, implicit-def $rsp, implicit $rsp
+    $rbp = MOV64rr $rsp
+    $rsp = SUB64ri8 $rsp, 24, implicit-def $eflags
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @main.HugeFrameVoid, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    $rax = MOV64ri 0
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @main.HugeFrameVoid, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    $rsp = ADD64ri8 $rsp, 24, implicit-def $eflags
+    $rbp = POP64r implicit-def $rsp, implicit $rsp
+    RET64
+
+...

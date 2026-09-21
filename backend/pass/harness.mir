@@ -1,0 +1,335 @@
+# goc harness bodies — GOLDEN/REFERENCE only (P15).
+# Hot path producer: goc-pass-driver printMIR → build/pass-out/harness.mir
+# llc-19 accepts Pass export DIRECTLY (P14 dialect rules).
+# No mircanon dialect rewrite on the hot path. Metadata lives in
+# pass/harness.meta.json (go_sym/frame/flags/calls stackmap indices).
+# Dialect leftovers (&sym, CMP64ri, GOC_PCDATA1, goc.*, noreg abs PIC) are FATAL in mirguard.
+#
+# Go ABIInternal float: X0–X14 args/results; X15 zero (amd64). Integer: AX,BX,CX,DI,SI,R8,R9.
+# Unsupported: x87 in Go-callable path (FATAL); EH landingpads (FATAL).
+
+--- |
+  target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+  target triple = "x86_64-unknown-linux-gnu"
+
+  declare void @main.HugeFrameVoid()
+  @main.morestackHits = external global i8
+  @main.wbPathHits = external global i8
+  declare void @runtime.gcWriteBarrier2()
+  declare void @runtime.morestack_noctxt()
+  @runtime.writeBarrier = external global i8
+
+  define void @goc_checked_add() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  define void @goc_hold_live() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  define void @goc_hold_arg() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  define void @goc_hold_two() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  define void @goc_hold_regonly() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  define void @goc_store_gptr() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  define void @goc_leaf() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+
+  define void @goc_fadd64() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  define void @goc_fadd32() nounwind #0 {
+  entry:
+    unreachable
+  }
+
+  attributes #0 = { nounwind "no_callee_saved_registers" }
+...
+
+---
+name:            goc_checked_add
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    successors: %bb.2, %bb.1
+    $r11 = MOV64rm $noreg, 1, $noreg, -8, $fs
+    CMP64rm $rsp, $r11, 1, $noreg, 16, $noreg, implicit-def $eflags
+    JCC_1 %bb.1, 7, implicit $eflags
+
+  bb.2:
+    successors: %bb.0
+    ADD64mi8 $rip, 1, $noreg, @main.morestackHits, $noreg, 1, implicit-def $eflags
+    CALL64pcrel32 @runtime.morestack_noctxt, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    JMP_1 %bb.0
+
+  bb.1:
+    $rdi = MOV64rr $rax
+    $rsi = MOV64rr $rbx
+    CALL64pcrel32 @goc_leaf, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    RET64
+
+...
+
+---
+name:            goc_hold_live
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    successors: %bb.2, %bb.1
+    PUSH64r $rbp, implicit-def $rsp, implicit $rsp
+    $rbp = MOV64rr $rsp
+    $rsp = SUB64ri8 $rsp, 24, implicit-def $eflags
+    $r11 = MOV64rm $noreg, 1, $noreg, -8, $fs
+    CMP64rm $rsp, $r11, 1, $noreg, 16, $noreg, implicit-def $eflags
+    JCC_1 %bb.1, 7, implicit $eflags
+
+  bb.2:
+    successors: %bb.0
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @runtime.morestack_noctxt, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    JMP_1 %bb.0
+
+  bb.1:
+    successors: %bb.3, %bb.4
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @main.HugeFrameVoid, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    $rdi = MOV64ri 40
+    $rsi = MOV64ri 2
+    CALL64pcrel32 @goc_leaf, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    CMP64ri32 $rax, 42, implicit-def $eflags
+    JCC_1 %bb.3, 4, implicit $eflags
+
+  bb.4:
+    successors: %bb.3
+    MOV32mi $noreg, 1, $noreg, 0, $noreg, 0
+    JMP_1 %bb.3
+
+  bb.3:
+    $rax = MOV64rm $rsp, 1, $noreg, 16, $noreg
+    $rax = MOV64rm $rax, 1, $noreg, 0, $noreg
+    $rsp = ADD64ri8 $rsp, 24, implicit-def $eflags
+    $rbp = POP64r implicit-def $rsp, implicit $rsp
+    RET64
+
+...
+
+---
+name:            goc_hold_arg
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    successors: %bb.2, %bb.1
+    PUSH64r $rbp, implicit-def $rsp, implicit $rsp
+    $rbp = MOV64rr $rsp
+    $rsp = SUB64ri8 $rsp, 24, implicit-def $eflags
+    $r11 = MOV64rm $noreg, 1, $noreg, -8, $fs
+    CMP64rm $rsp, $r11, 1, $noreg, 16, $noreg, implicit-def $eflags
+    JCC_1 %bb.1, 7, implicit $eflags
+
+  bb.2:
+    successors: %bb.0
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @runtime.morestack_noctxt, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    JMP_1 %bb.0
+
+  bb.1:
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @main.HugeFrameVoid, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    $rax = MOV64rm $rsp, 1, $noreg, 16, $noreg
+    $rax = MOV64rm $rax, 1, $noreg, 0, $noreg
+    $rsp = ADD64ri8 $rsp, 24, implicit-def $eflags
+    $rbp = POP64r implicit-def $rsp, implicit $rsp
+    RET64
+
+...
+
+---
+name:            goc_hold_two
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    successors: %bb.2, %bb.1
+    PUSH64r $rbp, implicit-def $rsp, implicit $rsp
+    $rbp = MOV64rr $rsp
+    $rsp = SUB64ri8 $rsp, 32, implicit-def $eflags
+    $r11 = MOV64rm $noreg, 1, $noreg, -8, $fs
+    CMP64rm $rsp, $r11, 1, $noreg, 16, $noreg, implicit-def $eflags
+    JCC_1 %bb.1, 7, implicit $eflags
+
+  bb.2:
+    successors: %bb.0
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    MOV64mr $rsp, 1, $noreg, 24, $noreg, $rbx
+    CALL64pcrel32 @runtime.morestack_noctxt, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    JMP_1 %bb.0
+
+  bb.1:
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    MOV64mr $rsp, 1, $noreg, 24, $noreg, $rbx
+    CALL64pcrel32 @main.HugeFrameVoid, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    $rax = MOV64rm $rsp, 1, $noreg, 16, $noreg
+    $rax = MOV64rm $rax, 1, $noreg, 0, $noreg
+    $rbx = MOV64rm $rsp, 1, $noreg, 24, $noreg
+    $rbx = MOV64rm $rbx, 1, $noreg, 0, $noreg
+    $rax = ADD64rr $rax, $rbx, implicit-def $eflags
+    $rsp = ADD64ri8 $rsp, 32, implicit-def $eflags
+    $rbp = POP64r implicit-def $rsp, implicit $rsp
+    RET64
+
+...
+
+---
+name:            goc_hold_regonly
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    successors: %bb.2, %bb.1
+    PUSH64r $rbp, implicit-def $rsp, implicit $rsp
+    $rbp = MOV64rr $rsp
+    $rsp = SUB64ri8 $rsp, 24, implicit-def $eflags
+    $r11 = MOV64rm $noreg, 1, $noreg, -8, $fs
+    CMP64rm $rsp, $r11, 1, $noreg, 16, $noreg, implicit-def $eflags
+    JCC_1 %bb.1, 7, implicit $eflags
+
+  bb.2:
+    successors: %bb.0
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @runtime.morestack_noctxt, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    JMP_1 %bb.0
+
+  bb.1:
+    MOV64mr $rsp, 1, $noreg, 16, $noreg, $rax
+    CALL64pcrel32 @main.HugeFrameVoid, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    $rax = MOV64rm $rsp, 1, $noreg, 16, $noreg
+    $rax = MOV64rm $rax, 1, $noreg, 0, $noreg
+    $rsp = ADD64ri8 $rsp, 24, implicit-def $eflags
+    $rbp = POP64r implicit-def $rsp, implicit $rsp
+    RET64
+
+...
+
+---
+name:            goc_store_gptr
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    $rcx = MOV64rr $rax
+    $rax = MOV64rr $rbx
+    $r14 = MOV64rm $noreg, 1, $noreg, -8, $fs
+    CMP32mi $rip, 1, $noreg, @runtime.writeBarrier, $noreg, 0, implicit-def $eflags
+    JCC_1 %bb.2, 4, implicit $eflags
+
+  bb.1:
+    successors: %bb.2
+    ADD64mi8 $rip, 1, $noreg, @main.wbPathHits, $noreg, 1, implicit-def $eflags
+    CALL64pcrel32 @runtime.gcWriteBarrier2, implicit $rsp, implicit $ssp, implicit-def $rsp, implicit-def $ssp
+    MOV64mr $r11, 1, $noreg, 0, $noreg, $rax
+    $rdx = MOV64rm $rcx, 1, $noreg, 0, $noreg
+    MOV64mr $r11, 1, $noreg, 8, $noreg, $rdx
+
+  bb.2:
+    MOV64mr $rcx, 1, $noreg, 0, $noreg, $rax
+    RET64
+
+...
+
+---
+name:            goc_leaf
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        true
+body: |
+  bb.0:
+    $rax = MOV64rr $rdi
+    $rax = ADD64rr $rax, $rsi, implicit-def $eflags
+    RET64
+
+...
+
+---
+name:            goc_fadd64
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        false
+body: |
+  bb.0:
+    ; Go ABIInternal amd64: float64 args X0,X1; result X0 (abi-internal.md)
+    $xmm0 = ADDSDrr $xmm0, $xmm1, implicit $mxcsr
+    RET64
+
+...
+
+---
+name:            goc_fadd32
+tracksRegLiveness: false
+frameInfo:
+  stackSize:       0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        false
+body: |
+  bb.0:
+    ; Go ABIInternal amd64: float32 args X0,X1; result X0
+    $xmm0 = ADDSSrr $xmm0, $xmm1, implicit $mxcsr
+    RET64
+
+...

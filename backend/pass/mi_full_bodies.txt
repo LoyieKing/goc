@@ -1,0 +1,154 @@
+# FALLBACK only (P11): prefer pass/harness.mir → goobj/mirparse.
+# Full per-function MI lists for goobj (physreg/SP/symbol). Packaged from
+# post-pass MIR + ABIInternal/goobj contracts. Lowered by goobj/mirlower.
+#
+# P10 NOSPLIT vs checked policy:
+# - flags nosplit + MIR morestack (MOV FS:-8 / CMP / JCC / CALL morestack / JMP):
+#   MIR owns the stack check; Go assembler must NOT insert a dual-track auto prologue.
+# - flags nosplit without morestack: tiny leaf helpers that cannot grow (goc_leaf).
+# - Never: non-NOSPLIT goc TEXT relying on Go auto stack-check prologue (removed P10).
+
+.begin_fn goc_checked_add
+go_sym main.GocCheckedAdd
+frame 0
+flags nosplit
+.label entry
+op=MOV64rm dst=R11 mem=FS:-8
+op=CMP64rm reg=RSP mem=16(R11)
+op=JCC_1 cond=HI target=ok
+op=ADD64mi8 mem=main.morestackHits imm=1
+op=CALL64pcrel32 sym=runtime.morestack_noctxt
+op=JMP_1 target=entry
+.label ok
+op=MOV64rr dst=DI src=AX
+op=MOV64rr dst=SI src=BX
+op=CALL64pcrel32 sym=goc_leaf
+op=RET64
+.end_fn
+
+.begin_fn goc_hold_live
+go_sym main.GocHoldLive
+frame 24
+flags nosplit
+.label entry
+op=MOV64rm dst=R11 mem=FS:-8
+op=CMP64rm reg=RSP mem=16(R11)
+op=JCC_1 cond=HI target=ok
+op=MOV64mr mem=SP:16 src=AX
+op=CALL64pcrel32 sym=runtime.morestack_noctxt
+op=JMP_1 target=entry
+.label ok
+op=MOV64mr mem=SP:16 src=AX
+op=PCDATA1 imm=0
+op=CALL64pcrel32 sym=main.HugeFrameVoid
+op=PCDATA1 imm=0
+op=MOV64ri dst=DI imm=40
+op=MOV64ri dst=SI imm=2
+op=CALL64pcrel32 sym=goc_leaf
+op=CMP64ri reg=AX imm=42
+op=JCC_1 cond=E target=leaf_ok
+op=MOV32mi imm=0
+.label leaf_ok
+op=MOV64rm dst=AX mem=SP:16
+op=MOV64rm dst=AX mem=(AX)
+op=RET64
+.end_fn
+
+.begin_fn goc_hold_arg
+go_sym main.GocHoldArg
+frame 24
+flags nosplit
+.label entry
+op=MOV64rm dst=R11 mem=FS:-8
+op=CMP64rm reg=RSP mem=16(R11)
+op=JCC_1 cond=HI target=ok
+op=MOV64mr mem=SP:16 src=AX
+op=CALL64pcrel32 sym=runtime.morestack_noctxt
+op=JMP_1 target=entry
+.label ok
+op=MOV64mr mem=SP:16 src=AX
+op=PCDATA1 imm=0
+op=CALL64pcrel32 sym=main.HugeFrameVoid
+op=MOV64rm dst=AX mem=SP:16
+op=MOV64rm dst=AX mem=(AX)
+op=RET64
+.end_fn
+
+.begin_fn goc_hold_two
+go_sym main.GocHoldTwo
+frame 32
+flags nosplit
+.label entry
+op=MOV64rm dst=R11 mem=FS:-8
+op=CMP64rm reg=RSP mem=16(R11)
+op=JCC_1 cond=HI target=ok
+op=MOV64mr mem=SP:16 src=AX
+op=MOV64mr mem=SP:24 src=BX
+op=CALL64pcrel32 sym=runtime.morestack_noctxt
+op=JMP_1 target=entry
+.label ok
+op=MOV64mr mem=SP:16 src=AX
+op=MOV64mr mem=SP:24 src=BX
+op=PCDATA1 imm=0
+op=CALL64pcrel32 sym=main.HugeFrameVoid
+op=PCDATA1 imm=0
+op=MOV64rm dst=AX mem=SP:16
+op=MOV64rm dst=AX mem=(AX)
+op=MOV64rm dst=BX mem=SP:24
+op=MOV64rm dst=BX mem=(BX)
+op=ADD64rr dst=AX src=BX
+op=RET64
+.end_fn
+
+.begin_fn goc_hold_regonly
+go_sym main.GocHoldRegOnly
+frame 24
+flags nosplit
+.label entry
+op=MOV64rm dst=R11 mem=FS:-8
+op=CMP64rm reg=RSP mem=16(R11)
+op=JCC_1 cond=HI target=ok
+op=MOV64mr mem=SP:16 src=AX
+op=CALL64pcrel32 sym=runtime.morestack_noctxt
+op=JMP_1 target=entry
+.label ok
+op=MOV64mr mem=SP:16 src=AX
+op=PCDATA1 imm=0
+op=CALL64pcrel32 sym=main.HugeFrameVoid
+op=PCDATA1 imm=0
+op=MOV64rm dst=AX mem=SP:16
+op=MOV64rm dst=AX mem=(AX)
+op=RET64
+.end_fn
+
+.begin_fn goc_store_gptr
+go_sym main.StoreGptrWB
+frame 0
+flags nosplit
+.label entry
+op=MOV64rr dst=CX src=AX
+op=MOV64rr dst=AX src=BX
+op=MOV64rm dst=R14 mem=FS:-8
+op=CMP32mi mem=runtime.writeBarrier imm=0
+op=JCC_1 cond=E target=dowrite
+op=ADD64mi8 mem=main.wbPathHits imm=1
+op=CALL64pcrel32 sym=runtime.gcWriteBarrier2
+op=MOV64mr mem=(R11) src=AX
+op=MOV64rm dst=DX mem=(CX)
+op=MOV64mr mem=8(R11) src=DX
+.label dowrite
+op=MOV64mr mem=(CX) src=AX
+op=RET64
+.end_fn
+
+# Demo leaf: same MIR→goobj pipeline (no llc .syso). SysV-ish DI/SI → AX
+# as called from GocCheckedAdd / GocHoldLive after ABIInternal→SysV shuffle.
+.begin_fn goc_leaf
+go_sym goc_leaf
+frame 0
+flags nosplit
+.label entry
+op=MOV64rr dst=AX src=DI
+op=ADD64rr dst=AX src=SI
+op=RET64
+.end_fn

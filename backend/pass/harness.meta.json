@@ -1,0 +1,172 @@
+{
+  "functions": [
+    {
+      "mir_name": "goc_checked_add",
+      "go_sym": "main.GocCheckedAdd",
+      "frame": 0,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": [
+        {
+          "callee": "runtime.morestack_noctxt",
+          "stackmap_index": -1
+        },
+        {
+          "callee": "goc_leaf",
+          "stackmap_index": -1
+        }
+      ]
+    },
+    {
+      "mir_name": "goc_hold_live",
+      "go_sym": "main.GocHoldLive",
+      "frame": 24,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": [
+        {
+          "callee": "runtime.morestack_noctxt",
+          "stackmap_index": 0
+        },
+        {
+          "callee": "main.HugeFrameVoid",
+          "stackmap_index": 0
+        },
+        {
+          "callee": "goc_leaf",
+          "stackmap_index": 0
+        }
+      ]
+    },
+    {
+      "mir_name": "goc_hold_arg",
+      "go_sym": "main.GocHoldArg",
+      "frame": 24,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": [
+        {
+          "callee": "runtime.morestack_noctxt",
+          "stackmap_index": 0
+        },
+        {
+          "callee": "main.HugeFrameVoid",
+          "stackmap_index": 0
+        }
+      ]
+    },
+    {
+      "mir_name": "goc_hold_two",
+      "go_sym": "main.GocHoldTwo",
+      "frame": 32,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": [
+        {
+          "callee": "runtime.morestack_noctxt",
+          "stackmap_index": 0
+        },
+        {
+          "callee": "main.HugeFrameVoid",
+          "stackmap_index": 0
+        }
+      ]
+    },
+    {
+      "mir_name": "goc_hold_regonly",
+      "go_sym": "main.GocHoldRegOnly",
+      "frame": 24,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": [
+        {
+          "callee": "runtime.morestack_noctxt",
+          "stackmap_index": 0
+        },
+        {
+          "callee": "main.HugeFrameVoid",
+          "stackmap_index": 0
+        }
+      ]
+    },
+    {
+      "mir_name": "goc_store_gptr",
+      "go_sym": "main.StoreGptrWB",
+      "frame": 0,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": [
+        {
+          "callee": "runtime.gcWriteBarrier2",
+          "stackmap_index": -1
+        }
+      ]
+    },
+    {
+      "mir_name": "goc_leaf",
+      "go_sym": "goc_leaf",
+      "frame": 0,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": []
+    },
+    {
+      "mir_name": "goc_fadd64",
+      "go_sym": "main.GocFadd64",
+      "frame": 0,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": []
+    },
+    {
+      "mir_name": "goc_fadd32",
+      "go_sym": "main.GocFadd32",
+      "frame": 0,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": []
+    }
+  ],
+  "mircanon": {
+    "mode": "identity",
+    "transforms": [],
+    "cfg_rewrite": false,
+    "frame_inject": false,
+    "dialect_strip": false
+  },
+  "abi_float": {
+    "arch": "amd64",
+    "float_arg_regs": [
+      "X0",
+      "X1",
+      "X2",
+      "X3",
+      "X4",
+      "X5",
+      "X6",
+      "X7",
+      "X8",
+      "X9",
+      "X10",
+      "X11",
+      "X12",
+      "X13",
+      "X14"
+    ],
+    "float_result_regs": [
+      "X0"
+    ],
+    "float_zero_reg": "X15",
+    "int_arg_regs": [
+      "AX",
+      "BX",
+      "CX",
+      "DI",
+      "SI",
+      "R8",
+      "R9"
+    ],
+    "note": "Go ABIInternal (cmd/compile/abi-internal.md amd64); SSE2 ADDSD/ADDSS for float64/float32",
+    "x87": "unsupported_FATAL"
+  }
+}

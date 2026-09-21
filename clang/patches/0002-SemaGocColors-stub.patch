@@ -1,0 +1,15 @@
+--- /dev/null	2026-09-20 23:16:51.459204399 +0800
++++ clang/lib/Sema/SemaGocColors.cpp	2026-09-21 23:16:47.219497614 +0800
+@@ -0,0 +1,12 @@
++//===- SemaGocColors.cpp - goc pointer-color Sema (P27 in-tree sketch) ----===//
++// Full Sema integration lands with clang rebuild (P28+). Until then the
++// out-of-tree plugin p27-clang-frontend/plugin/GocClangPlugin.cpp provides
++// the same diagnostics via PluginASTAction.
++//
++// Contract (goc-syntax-guide.md v0.2.1):
++//   sptr store to heap/global = error; no auto-promote to uptr; no dsptr.
++//===----------------------------------------------------------------------===//
++
++#include "clang/Sema/Sema.h"
++// Placeholder translation unit — wired when Attr.td tablegen + Sema handlers
++// are rebuilt into clang. See p27-clang-frontend/patches/README.md.

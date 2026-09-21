@@ -1,0 +1,28 @@
+{
+  "functions": [
+    {
+      "mir_name": "goc_dense_pcdata",
+      "go_sym": "main.GocDensePcdata",
+      "frame": 24,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": [
+        {
+          "callee": "main.HugeFrameVoid",
+          "stackmap_index": 0
+        },
+        {
+          "callee": "main.HugeFrameVoid",
+          "stackmap_index": 1
+        }
+      ]
+    }
+  ],
+  "mircanon": {
+    "mode": "identity",
+    "transforms": [],
+    "cfg_rewrite": false,
+    "frame_inject": false,
+    "dialect_strip": false
+  }
+}

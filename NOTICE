@@ -1,0 +1,19 @@
+goc
+Copyright (c) 2026 Loyie King
+
+This product includes software developed by the LLVM Project and Clang
+contributors. LLVM and Clang are available under the Apache License v2.0
+with LLVM Exceptions. See:
+
+  https://llvm.org/
+  https://github.com/llvm/llvm-project
+
+Patches under clang/patches/ and clang/sema/ modify Clang 19.1.7 sources
+(Attr.td, SemaGocColors.cpp, and related Sema wiring). Those patches are
+distributed under the same MIT license as this repository for the delta;
+the underlying LLVM/Clang tree remains under its own license.
+
+Optional third-party components (not vendored in this tree):
+
+  - quickjs-ng — fetch instructions in third_party/README.md
+  - LLVM 19.1.7 — fetch/build instructions in clang/README.md and third_party/README.md

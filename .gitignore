@@ -1,0 +1,47 @@
+# Build outputs
+build/
+**/build/
+clang-build/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.syso
+*.llc.o
+*.log
+*.tmp
+*.swp
+*~
+
+# Local LLVM / deps (never vendor blobs)
+_deps/
+third_party/llvm-project*/
+third_party/llvm-*-build/
+third_party/cmake-*/
+third_party/ninja
+third_party/quickjs-ng/
+
+# Go module vendor trees (not our pass/vendor lite headers)
+/vendor/
+backend/vendor/
+**/go/pkg/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Test / pipeline scratch
+*.color.ll
+/build/
+PASS_LINES.txt
+goc-test*.txt
+goc-test*.log
+
+# Driver-local binaries
+cmd/goc-p8
+cmd/elfpack
+/bin/

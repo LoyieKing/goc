@@ -1,0 +1,19 @@
+{
+  "functions": [
+    {
+      "mir_name": "goc_avx_smoke",
+      "go_sym": "main.GocAvxSmoke",
+      "frame": 0,
+      "flags": "nosplit",
+      "encoding": "llvm-llc-mc",
+      "calls": []
+    }
+  ],
+  "mircanon": {
+    "mode": "identity",
+    "transforms": [],
+    "cfg_rewrite": false,
+    "frame_inject": false,
+    "dialect_strip": false
+  }
+}

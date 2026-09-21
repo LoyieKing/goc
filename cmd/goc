@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+# goc — experimental C-on-Go-stacks driver (P28 surface)
+set -euo pipefail
+
+SELF="$(cd "$(dirname "$0")" && pwd)"
+# Resolve repo root: cmd/ -> repo, or GOC_ROOT override
+if [[ -n "${GOC_ROOT:-}" ]]; then
+  ROOT="$(cd "$GOC_ROOT" && pwd)"
+else
+  ROOT="$(cd "$SELF/.." && pwd)"
+fi
+export GOC_ROOT="$ROOT"
+
+usage() {
+  cat <<'USAGE'
+goc — experimental compiler driver (pointer-colored C → Go stacks)
+
+Usage:
+  goc build foo.c -o foo.o       In-tree Clang Sema → real-body goobj (P28)
+  goc cc [clang-args…] file.c    Invoke resolved clang with goc include/attrs
+  goc test [--p27|--p28]         Run curated golden tests
+  goc version                    Print version
+  goc help | -h | --help         This help
+
+Environment:
+  GOC_ROOT     Repository root (default: parent of cmd/)
+  GOC_CLANG    Path to patched clang-19 (preferred)
+  LLC          llc binary (default: llc-19)
+  CLANG_FALLBACK  System clang when GOC_CLANG unset (default: clang-19)
+
+Product frontend: P28 in-tree Clang (Sema colors + escape; no -fplugin).
+P27 out-of-tree plugin remains as LEGACY fallback.
+
+Docs: docs/README pointers in repository README.md
+USAGE
+}
+
+cmd_version() {
+  echo "goc experimental P28 (2026-09-22) — C-on-Go-stacks research compiler"
+}
+
+resolve_clang() {
+  local clang=""
+  local intree_candidates=(
+    "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
+    "$ROOT/third_party/llvm-clang-build/bin/clang"
+  )
+  if [[ -n "${GOC_CLANG:-}" ]]; then
+    clang="$GOC_CLANG"
+  else
+    local c
+    for c in "${intree_candidates[@]}"; do
+      if [[ -x "$c" ]]; then clang="$c"; break; fi
+    done
+    if [[ -z "$clang" ]]; then
+      clang="${CLANG_FALLBACK:-clang-19}"
+    fi
+  fi
+  echo "$clang"
+}
+
+is_intree_clang() {
+  local clang="$1"
+  # Heuristic: user-built tree under third_party, or GOC_CLANG explicitly set
+  # with GOC_USE_INTREE preference. Prefer intree attrs when GOC_CLANG is set
+  # or path contains llvm-*-clang-build.
+  if [[ -n "${GOC_CLANG:-}" ]]; then return 0; fi
+  case "$clang" in
+    *llvm*clang-build*) return 0 ;;
+    *third_party*) return 0 ;;
+  esac
+  return 1
+}
+
+cmd_cc() {
+  local CLANG PLUGIN INC
+  CLANG="$(resolve_clang)"
+  INC="$ROOT/include"
+  PLUGIN="$ROOT/clang/plugin/../build/libGocClang.so"
+  # Prefer plugin build dir next to plugin sources
+  if [[ ! -f "$PLUGIN" ]]; then
+    PLUGIN="$ROOT/build/libGocClang.so"
+  fi
+  if [[ ! -f "$PLUGIN" ]]; then
+    PLUGIN="$ROOT/clang/build/libGocClang.so"
+  fi
+
+  if is_intree_clang "$CLANG"; then
+    exec "$CLANG" -DGOC_USE_INTREE_ATTRS -I "$INC" "$@"
+  fi
+  # LEGACY plugin path
+  if [[ ! -f "$PLUGIN" ]]; then
+    make -C "$ROOT/clang/plugin" all OBJDIR="$ROOT/build" TARGET="$ROOT/build/libGocClang.so" || \
+      make -C "$ROOT/clang/plugin" all
+    PLUGIN="$ROOT/build/libGocClang.so"
+    [[ -f "$PLUGIN" ]] || PLUGIN="$ROOT/clang/plugin/../build/libGocClang.so"
+  fi
+  if [[ -f "$PLUGIN" ]]; then
+    exec "$CLANG" -fplugin="$PLUGIN" -DGOC_USE_PLUGIN_ATTRS -I "$INC" "$@"
+  fi
+  echo "goc cc: warning: no in-tree clang and no plugin; using annotate-only attrs" >&2
+  exec "$CLANG" -I "$INC" "$@"
+}
+
+cmd_build() {
+  if [[ $# -eq 0 ]]; then
+    exec bash "$ROOT/scripts/test-p28.sh"
+  fi
+  local SRC="" OUT_O="" EXTRA=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -o) OUT_O="$2"; shift 2 ;;
+      -h|--help)
+        echo "usage: goc build [foo.c -o foo.o]  # or goc build → P28 test suite"
+        exit 0
+        ;;
+      -*) EXTRA+=("$1"); shift ;;
+      *)
+        if [[ -z "$SRC" ]]; then SRC="$1"; shift
+        else EXTRA+=("$1"); shift
+        fi
+        ;;
+    esac
+  done
+  if [[ -z "$SRC" ]]; then
+    exec bash "$ROOT/scripts/test-p28.sh"
+  fi
+  if [[ -z "$OUT_O" ]]; then
+    OUT_O="${SRC%.c}.o"
+    OUT_O="${OUT_O%.goc}.o"
+  fi
+
+  local CLANG USE_PLUGIN=0
+  CLANG="$(resolve_clang)"
+  if ! is_intree_clang "$CLANG"; then
+    USE_PLUGIN=1
+  fi
+  local INC="$ROOT/include"
+  local LLC="${LLC:-llc-19}"
+  local REALBODY="$ROOT/backend/realbody/goc_p28_realbody.sh"
+  local COLOR_ESC="$ROOT/frontend/color-escape/build/goc-color-escape"
+  local PLUGIN="$ROOT/build/libGocClang.so"
+
+  if [[ ! -x "$COLOR_ESC" ]]; then
+    make -C "$ROOT/frontend/color-escape/pass" all 2>/dev/null || true
+  fi
+
+  local TMP
+  TMP="$(mktemp -d)"
+  cleanup_build_tmp() { rm -rf "$TMP"; }
+
+  local CLANG_ARGS=(-I "$INC" -emit-llvm -S -O0 -Xclang -disable-O0-optnone)
+  if [[ $USE_PLUGIN -eq 0 ]]; then
+    CLANG_ARGS=(-DGOC_USE_INTREE_ATTRS "${CLANG_ARGS[@]}")
+    echo "goc build: in-tree/clang=$CLANG (no -fplugin)" >&2
+  else
+    if [[ ! -f "$PLUGIN" ]]; then
+      make -C "$ROOT/clang/plugin" all OBJDIR="$ROOT/build" 2>/dev/null || \
+        make -C "$ROOT/clang/plugin" all || true
+      PLUGIN="$ROOT/build/libGocClang.so"
+    fi
+    if [[ -f "$PLUGIN" ]]; then
+      CLANG_ARGS=(-fplugin="$PLUGIN" -DGOC_USE_PLUGIN_ATTRS "${CLANG_ARGS[@]}")
+      echo "goc build: LEGACY plugin path clang=$CLANG" >&2
+    else
+      echo "goc build: annotate-only path clang=$CLANG (no plugin built)" >&2
+    fi
+  fi
+
+  if ! "$CLANG" "${CLANG_ARGS[@]}" "${EXTRA[@]}" -o "$TMP/a.ll" "$SRC"; then
+    echo "goc build: Clang Sema/frontend failed for $SRC" >&2
+    cleanup_build_tmp
+    exit 1
+  fi
+
+  if [[ -x "$COLOR_ESC" ]]; then
+    "$COLOR_ESC" "$TMP/a.ll" -o "$TMP/a.color.ll" -fatal-errors=false || true
+  fi
+  if [[ ! -f "$TMP/a.color.ll" ]]; then
+    cp "$TMP/a.ll" "$TMP/a.color.ll"
+  fi
+
+  local FN
+  FN="$(rg -o 'define [^@]*@([A-Za-z_][A-Za-z0-9_]*)' -r '$1' "$TMP/a.color.ll" | head -1 || true)"
+  if [[ -z "$FN" ]]; then
+    FN="$(rg -o 'define [^@]*@([A-Za-z_][A-Za-z0-9_]*)' -r '$1' "$TMP/a.ll" | head -1 || true)"
+  fi
+  if [[ -n "$FN" && -x "$REALBODY" ]]; then
+    local GOSYM="main.${FN}"
+    case "$FN" in
+      p28_real_body) GOSYM="main.P28RealBody" ;;
+      p21_sptr_across_call) GOSYM="main.P21SptrAcrossCall" ;;
+      p21_gptr_store) GOSYM="main.P21GptrStoreWB" ;;
+    esac
+    if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" "$REALBODY" "$TMP/a.color.ll" "$OUT_O" "$FN" "$GOSYM"; then
+      echo "goc build: wrote real-body goobj $OUT_O (fn=$FN; not seedMIR)"
+      cleanup_build_tmp
+      return 0
+    fi
+    echo "goc build: real-body lower failed for $FN — falling back to LLC .o" >&2
+  fi
+
+  cp "$TMP/a.color.ll" "${OUT_O%.o}.color.ll"
+  "$LLC" -O0 -filetype=obj -o "$OUT_O" "$TMP/a.color.ll"
+  echo "goc build: wrote $OUT_O (+ ${OUT_O%.o}.color.ll); real IR via llc (no P21 seed)"
+  cleanup_build_tmp
+}
+
+cmd_test() {
+  local ONLY_P27=0 ONLY_P28=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --p27) ONLY_P27=1; shift ;;
+      --p28) ONLY_P28=1; shift ;;
+      --p21|--p22|--p23|--p24|--p25|--p26)
+        echo "goc test: phase flag $1 retained for compatibility; use docs/phases/" >&2
+        shift
+        ;;
+      *) echo "unknown goc test flag: $1" >&2; exit 2 ;;
+    esac
+  done
+  if [[ $ONLY_P27 -eq 1 ]]; then
+    exec bash "$ROOT/scripts/test-p27.sh"
+  fi
+  if [[ $ONLY_P28 -eq 1 ]]; then
+    exec bash "$ROOT/scripts/test-p28.sh"
+  fi
+  # Default: run P28 if clang available, else P27 plugin path
+  if bash "$ROOT/scripts/test-p28.sh"; then
+    echo "goc test: P28 ALL PASS"
+    return 0
+  fi
+  echo "goc test: P28 unavailable/failed — trying P27 plugin goldens" >&2
+  exec bash "$ROOT/scripts/test-p27.sh"
+}
+
+main() {
+  if [[ $# -lt 1 ]]; then
+    usage
+    exit 2
+  fi
+  case "$1" in
+    build) shift; cmd_build "$@" ;;
+    cc) shift; cmd_cc "$@" ;;
+    test|pipeline) shift; cmd_test "$@" ;;
+    version) cmd_version ;;
+    help|-h|--help) usage ;;
+    *)
+      echo "unknown command: $1" >&2
+      usage
+      exit 2
+      ;;
+  esac
+}
+
+main "$@"

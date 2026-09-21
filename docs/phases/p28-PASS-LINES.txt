@@ -1,0 +1,6 @@
+P28 results (2026-09-22 00:16 CST)
+PASS P28-sema-ok (in-tree clang, no -fplugin: 01_ok_outparam_stack)
+PASS P28-sema-err (in-tree Sema rejects sptr→heap without -fplugin)
+PASS P28-realbody-goobj (Clang .c → real ISel body → goobj; not seedMIR)
+PASS P28-driver-clang (in-tree clang present for goc build/cc)
+PASS p28-clang-intree (in-tree Sema + real-body goobj)

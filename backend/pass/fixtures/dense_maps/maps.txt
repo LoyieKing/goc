@@ -1,0 +1,2 @@
+fn goc_dense_pcdata
+locals_hex 02000000030000000400

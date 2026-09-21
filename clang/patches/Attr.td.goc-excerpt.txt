@@ -1,0 +1,61 @@
+953:// goc P27 — pointer-color attributes (in-tree form of p27-clang-frontend plugin)
+954-// Out-of-tree plugin registers the same GNU spellings via ParsedAttrInfo until
+955-// a full clang rebuild lands these. See p27-clang-frontend/patches/.
+956-//===----------------------------------------------------------------------===//
+957-
+958-def GocCPtr : InheritableAttr {
+959-  let Spellings = [GNU<"goc_cptr">, CXX11<"goc", "cptr">, C23<"goc", "cptr">];
+960-  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
+961-  let Documentation = [Undocumented];
+962-  let SimpleHandler = 1;
+963-}
+964-def GocSPtr : InheritableAttr {
+965-  let Spellings = [GNU<"goc_sptr">, CXX11<"goc", "sptr">, C23<"goc", "sptr">];
+966-  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
+967-  let Documentation = [Undocumented];
+968-  let SimpleHandler = 1;
+969-}
+970-def GocUPtr : InheritableAttr {
+971-  let Spellings = [GNU<"goc_uptr">, CXX11<"goc", "uptr">, C23<"goc", "uptr">];
+972-  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
+973-  let Documentation = [Undocumented];
+974-  let SimpleHandler = 1;
+975-}
+976-def GocAutoPtr : InheritableAttr {
+977-  let Spellings = [GNU<"goc_auto_ptr">, CXX11<"goc", "auto_ptr">, C23<"goc", "auto_ptr">];
+978-  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
+979-  let Documentation = [Undocumented];
+980-  let SimpleHandler = 1;
+981-}
+982-def GocGPtr : InheritableAttr {
+983-  let Spellings = [GNU<"goc_gptr">, CXX11<"goc", "gptr">, C23<"goc", "gptr">];
+984-  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
+985-  let Documentation = [Undocumented];
+986-  let SimpleHandler = 1;
+987-}
+988-
+989-def AnnotateType : TypeAttr {
+990-  let Spellings = [CXX11<"clang", "annotate_type">, C23<"clang", "annotate_type">];
+991-  let Args = [StringArgument<"Annotation">, VariadicExprArgument<"Args">];
+992-  let HasCustomParsing = 1;
+993-  let AcceptsExprPack = 1;
+994-  let Documentation = [AnnotateTypeDocs];
+995-}
+996-
+997-def ARMInterrupt : InheritableAttr, TargetSpecificAttr<TargetARM> {
+998-  // NOTE: If you add any additional spellings, M68kInterrupt's,
+999-  // MSP430Interrupt's, MipsInterrupt's and AnyX86Interrupt's spellings
+1000-  // must match.
+1001-  let Spellings = [GCC<"interrupt">];
+1002-  let Args = [EnumArgument<"Interrupt", "InterruptType", /*is_string=*/true,
+1003-                           ["IRQ", "FIQ", "SWI", "ABORT", "UNDEF", ""],
+1004-                           ["IRQ", "FIQ", "SWI", "ABORT", "UNDEF", "Generic"],
+1005-                           1>];
+1006-  let ParseKind = "Interrupt";
+1007-  let HasCustomParsing = 1;
+1008-  let Documentation = [ARMInterruptDocs];
+1009-}
+1010-
+1011-def AVRInterrupt : InheritableAttr, TargetSpecificAttr<TargetAVR> {
+1012-  let Spellings = [GCC<"interrupt">];
+1013-  let Subjects = SubjectList<[Function]>;
