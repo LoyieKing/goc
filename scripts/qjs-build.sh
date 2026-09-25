@@ -1,18 +1,7 @@
 #!/usr/bin/env bash
-# P29: quickjs-ng via goc — color, compile to goobj, link into a Go binary.
+# quickjs-ng via goc: color, compile to goobj, link, run the goroutine-stack smoke.
 #
-# Per TU: patched clang (in-tree Sema) → colored IR (default cptr) →
-# LLVM O3, including inlining → stackmap roots on the surviving functions →
-# Go-ABI entry thunks (--goabi) → llc ISel → elfpack goobj. morestack is
-# inserted there, once per TEXT entry that still exists.
-# Then: pack every goobj into a Go binary (toolexec) with a freestanding libc
-# shim (no libc — QJS is meant to run on the goroutine stack) and run the smoke.
-#
-# STATUS: quickjs-ng's four TUs build into goobj. The default smoke exercises
-# JS_Eval, a Promise parent hook, and actual C-frame stack growth with per-call
-# sptr maps. This is not a claim that every JS API or ABI signature is covered.
-#
-# Prereqs: third_party/quickjs-ng (git clone), patched clang (GOC_CLANG),
+# Prereqs: third_party/quickjs-ng, patched clang (GOC_CLANG),
 #          llc-19 / llvm-objdump-19 / ld.lld-19, Go 1.24+.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -111,8 +100,8 @@ timeout 20 "$OUT/qjs_test"
 rc=$?
 set -e
 if [[ $rc -eq 0 ]]; then
-  echo "PASS p29-qjs (quickjs-ng on goroutine stack via goc)"
+  echo "PASS qjs-build"
 else
-  echo "p29-qjs: FAIL — see docs/phases/p29-archive-P29-REPORT.md" >&2
+  echo "qjs-build: FAIL" >&2
 fi
 exit "$rc"

@@ -3,11 +3,10 @@
 
 # goc 语言语法指导（v0.2.2）
 
-**状态：** 用户修订合同（2026-09-23）  
 **定位：** goc = 面向 Go 运行时的 C 方言：在 goroutine 用户栈上跑，遵守 Go 的 stackmap / morestack /（对 `gptr` 的）写屏障，同时保留接近 C 的代码形态。  
 **非目标：** 完整 ISO C；任意 libc 语义；通用「加速所有 cgo」。
 
-本文只描述**语法与类型合同**。实现分期、QJS 移植工程项见 [roadmap.md](roadmap.md)。  
+本文只描述**语法与类型合同**。  
 相对 v0.1：**删除 `dsptr` 语言表面**；引入显式 `sptr` / `uptr` / `auto_ptr`；`JSValue` 改为显式 struct（不再 NaN-box 整盒 scalar）。v0.2.2 窄化修订：`sptr` 赋给已染色为 `cptr` 的非栈 `T *` 存储时，编译器隐式用 `uptr` 表示该存储，不再报 sptr-escape 错误；源代码仍可保留 `T *`。
 
 ---
@@ -389,34 +388,6 @@ void use_go(gptr<GoObj> o, gptr<GoObj> *slot_on_go_heap) {
 5. `sptr` 指针字禁止进堆字段；跨 morestack 须 spill 到 stackmap 槽。  
 6. `gptr` 独轨 + stackmap + 写屏障；与其它色无隐式转换。  
 7. 栈探测用方言 API，不用 C builtin。  
-8. `alloca` 非一等公民（现阶段降为堆分配）。  
+8. `alloca` 降为堆分配，不是栈上变长帧。  
 9. 函数指针 / 导出 / 虚表 ABI 必须钉死色（禁止 `auto_ptr` / 裸 `T *`）。  
 10. `JSValue` 为显式 struct（tag + 色指针字段），**不是** NaN-box scalar；禁止 ptr/double/int union 叠字。
-
----
-
-## 12. 未决 / 未来项（不阻塞 v0.2 合同）
-
-| 项 | 状态 |
-|---|---|
-| `uptr` 编码：MSB=1 时 offset 相对 `stack.hi`（已钉）vs 其它 base | **已钉 `stack.hi`**；实现按此 |
-| ~~逃逸时自动 `uptr` 提升~~ | **已否决**：`sptr` 逃逸一律编译错误；入库用显式 `uptr` / `auto_ptr` 预收 |
-| 形参模板：真单态 vs 借用检查一份码 | 推荐默认同色联锁单态 |
-| `alloca` 一等支持 | 未来优化；结果为 `sptr` |
-| 编译器强制 safepoint | 可选，非必做 |
-| 属性确切拼写 / `goc.h` 最终 API 名 | 实现期定 |
-| `JSValue.tagged_value` 宽度（int / int32 / int64）与立即数布局 | ABI 钉死即可；不回退 NaN-box |
-| `JSValue.pointer` 默认钉 `cptr` 还是可空 / 按 tag 变体 | 推荐对象载荷 `cptr<JSObject>`；实现可再收紧 |
-
----
-
-## 13. 文档修订
-
-| 版本 | 日期 | 摘要 |
-|---|---|---|
-| 0.1 | 2026-09-20 | 首版：色、`T *`、`dsptr`、逃逸、Go 非对称互操作、栈 API、JSValue scalar（NaN-box） |
-| 0.2 | 2026-09-21 | **批准合同：** 删除 `dsptr`；显式 `cptr`/`sptr`/`uptr`/`auto_ptr`/`gptr`；`uptr` MSB 编码（hi + int64 offset）；ABI 禁 auto_ptr；`JSValue` 改显式 struct |
-| 0.2.1 | 2026-09-21 | **`sptr` 逃逸 = 编译错误**；禁止逃逸自动升格 `uptr`；入库须显式 `uptr` 或 `auto_ptr` 预收成 `uptr` |
-| 0.2.2 | 2026-09-23 | 窄例外：`sptr` 赋给非栈 `cptr<T>` / 已染色为 `cptr` 的 `T *` 时，目标存储自动用 `uptr` 编码，goc 管理的 `T *` 读取自动解码；其它逃逸规则不变 |
-
-**相关：** `docs/roadmap.md`（产品与分期；其中旧「三色 / NaN-box」叙述以本指南 v0.2.2 为准）、`glossary.md`（术语；指针色条目已对齐）、`qjs-addr-of-local-analysis.md`（QJS `&local` 实证，历史分析）。

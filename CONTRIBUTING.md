@@ -5,10 +5,9 @@ patches are preferred over large refactors.
 
 ## Before you start
 
-1. Read [docs/status.md](docs/status.md) and [docs/roadmap.md](docs/roadmap.md).
-2. The language contract is [docs/syntax-guide.md](docs/syntax-guide.md)
+1. The language contract is [docs/syntax-guide.md](docs/syntax-guide.md)
    (Chinese; authoritative). Do not reintroduce `dsptr`.
-3. Prefer honesty: if a path still uses seed MIR or fixtures, say so in the PR.
+2. Prefer honesty: if a path still uses seed MIR or fixtures, say so in the PR.
 
 ## Development setup
 
@@ -27,7 +26,6 @@ export GOC_CLANG=/path/to/patched/clang   # after applying in-tree patches
 ## Pull requests
 
 - One concern per PR when practical
-- Update `docs/status.md` if you change what works / what does not
 - Add or extend golden tests under `tests/`
 - Do not commit `_deps/`, `build/`, `*.o`, clang binaries, or a full
   `quickjs-ng` tree

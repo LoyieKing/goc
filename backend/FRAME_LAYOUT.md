@@ -1,27 +1,25 @@
-# P5 帧布局（复用 P4 合同）
+# Frame layout
 
-详见 [../p4-unified-lower/FRAME_LAYOUT.md](../p4-unified-lower/FRAME_LAYOUT.md)。
+Stack check is real X86 MI: `MOV64rm FS:-8` loads `g`, `CMP64rm` compares
+`SP` with `stackguard0` at offset 16, then `JCC_1 BE`, `CALL morestack_noctxt`,
+and `JMP` back to the check.
 
-P5b 差异：
+`GocExpandStoreGptr` emits the write-barrier MI. Locals and args bitmaps come
+from `GocEmitPointerMaps` and are packed as `gclocals·*` FUNCDATA.
 
-- 栈检查由 `GocInsertStackCheck` 插入 **真 X86 MI**（`MOV64rm FS:-8` → g，`CMP64rm` vs `stackguard0@16`，`JCC_1 BE`，`CALL64pcrel32 morestack_noctxt`，`JMP_1` 重入）。见 [docs/MI_AND_GOOBJ.md](./docs/MI_AND_GOOBJ.md)。  
-- 写屏障由 `GocExpandStoreGptr` 发真 MI；**StoreGptrWB 体在 binwriter Prog**（非 stubs）。  
-- Locals / Args bitmap 由 `GocEmitPointerMaps` **MIR liveness** 写出；binwriter 打成 `gclocals·*` FUNCDATA。
+## hold_two ($32 locals)
 
-
-## P6 hold_two（$32 本地区）
-
-| SP 偏移 | bit | 内容 |
-|---------|-----|------|
+| SP offset | bit | contents |
+|-----------|----:|----------|
 | 16 | 2 | gptr0 spill |
 | 24 | 3 | gptr1 spill |
 
-bitmap 字节 `0x0c`。由 spill pass 按 Go 布局分配，**非** FI 序号×8。
+Bitmap byte `0x0c`. Offsets come from the spill pass, not from frame-index rank times 8.
 
-## P6.1 hold_regonly（$24 本地区，S3）
+## hold_regonly ($24 locals)
 
-| SP 偏移 | bit | 内容 |
-|---------|-----|------|
-| 16 | 2 | 唯一 gptr spill（寄存器-only 活跨 CALL） |
+| SP offset | bit | contents |
+|-----------|----:|----------|
+| 16 | 2 | the only gptr spill (register-only across a call) |
 
-bitmap 字节 `0x04`。integer decoy GR64 **不**占位。
+Bitmap byte `0x04`. An integer decoy in a GR64 is not a pointer slot.

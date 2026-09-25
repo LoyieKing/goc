@@ -1,12 +1,10 @@
-# Frontend helpers (legacy / refine)
+# Frontend
 
-| Dir | Origin | Role |
-|-----|--------|------|
-| `color-escape/` | P17 | IR color refine / escape checks (annotate-era) |
-| `color-bridge/` | P18 | Color → WB / spill recipes |
-| `vertical/` | P21 | Legacy color.ll → goobj **seed** demo (not product lower) |
+| Dir | Role |
+|-----|------|
+| `color-escape/` | IR escape refine; inserts uptr encode/decode |
+| `color-bridge/` | Color metadata to spill / write-barrier recipes |
+| `vertical/` | Legacy color.ll → seed MIR demo. Not the product lower path. |
 
-Product Sema lives under `../clang/`. Product lower is `../backend/realbody/`
-(P28, real ISel — **not** P21 seed MIR).
-
-Public header: `../include/goc.h` (prefer over nested copies).
+Product Sema is `clang/`. Product lower is `backend/realbody/`.
+Public header: `include/goc.h`.
