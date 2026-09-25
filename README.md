@@ -1,150 +1,113 @@
 # goc
 
-**Experimental** pointer-colored C dialect that targets **goroutine stacks**:
-morestack, stackmaps, and write barriers — so C (and eventually engines like
-QuickJS) can run on Go stacks without the usual cgo boundary tax.
-
-> Status: **research / experimental**. Phase **P29** colors and builds all four
-> QuickJS-ng translation units with `goc`, then runs the engine on a Go
-> goroutine stack. Call-bearing functions may inline. The V8-v7 bench median
-> is 791 (two runs, 2026-09-25). The exercised CLI includes std/os/bjson
-> modules and workers; broader host compatibility, arbitrary ABI signatures,
-> and GC/preemption safety remain incomplete.
+Pointer-colored C that runs on the **goroutine stack**: morestack, stackmaps,
+and write barriers, so C can be linked into a Go binary without a cgo stack
+switch.
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![status](https://img.shields.io/badge/status-experimental-orange.svg)](docs/status.md)
 
 ## What it is
 
-`goc` extends a C11 subset with **pointer colors** (`cptr` / `sptr` / `uptr` /
-`auto_ptr` / `gptr`) so the compiler can enforce stack-escape rules, emit Go
-stackmaps, and lower to Go `goobj` objects callable from Go. The product
-frontend is a patched **Clang 19.1.7** (in-tree Sema); an out-of-tree plugin
-remains as a legacy fallback.
+`goc` adds pointer colors (`cptr` / `sptr` / `uptr` / `auto_ptr` / `gptr`) to a
+C11 subset. The product frontend is patched **Clang 19.1.7**. The product
+lower path is Clang IR → llc → `elfpack` → a Go object file.
 
-## Motivation
-
-Embedding C runtimes (notably QuickJS) into Go today usually means cgo, OS
-threads, and expensive stack transitions. `goc` explores compiling colored C
-straight onto the **goroutine user stack**, sharing Go’s growth and GC
-contracts instead of fighting them.
-
-## Current status (honesty)
-
-| Works today | Does **not** work yet |
-|-------------|------------------------|
-| In-tree Clang Sema colors; stack stores into heap/global `T *` promote to `uptr` (raw `sptr` returns still error) | Full upstream QuickJS host/thread compatibility |
-| Out-of-tree Clang plugin fallback (P27) | Complete Go amd64 **ABIInternal** on arbitrary Clang IR |
-| Real-body goobj path (Clang IR → llc ISel → elfpack; not P21 seed MIR) | Full Spill→Maps→StackCheck→WB on arbitrary MachineFunctions |
-| Backend MIR passes + goobj encoder (P5–P16 research path) | AVX / x87 / EH on the Go-callable path |
-| QuickJS-ng four-TU `goc build`, Go-stack interpreter and 115/116 selected upstream JS tests | Production GC/preemption guarantees across arbitrary JS programs |
-| Curated goldens under `tests/` | Stable package API / releases |
-
-See [docs/status.md](docs/status.md) and [docs/roadmap.md](docs/roadmap.md).
+QuickJS-ng's four translation units build this way and run on a goroutine
+stack. See [docs/benchmark.md](docs/benchmark.md) for the comparison.
 
 ## Quick start
 
-**Deps:** `clang-19`, `clang++-19`, `llc-19`, `llvm-config-19`, `cmake`, `ninja`,
-Go 1.24+, `python3`, `rg` (ripgrep).
+**Deps:** `clang-19`, `clang++-19`, `llc-19`, `llvm-config-19`, `cmake`,
+`ninja`, Go 1.24+, `python3`, `rg`.
 
 ```bash
 git clone https://github.com/LoyieKing/goc.git
 cd goc
 export GOC_ROOT="$(pwd)"
 
-# 1) Fetch LLVM 19.1.7 and apply patches (see clang/README.md)
-#    ./scripts/apply-patches.sh /path/to/llvm-project-19.1.7
-#    … cmake + ninja clang …
+# Patched Clang: clang/README.md
 export GOC_CLANG=/path/to/llvm-19.1.7-clang-build/bin/clang
 
-# 2) Run P28 goldens (requires patched clang)
 ./cmd/goc test --p28
-
-# 3) Compile a small example to goobj
 ./cmd/goc build examples/hello_colors.c -o /tmp/hello_colors.o
 ```
 
-Without a patched clang, you can still build the **P27 plugin** and run
-`./cmd/goc test --p27` against system `clang-19`.
+QuickJS-ng (clone into `third_party/quickjs-ng`, then):
 
-## Architecture
-
-```mermaid
-flowchart LR
-  SRC[".c / .goc"] --> CLANG["Clang 19 Sema<br/>goc colors + escape"]
-  CLANG --> IR["LLVM IR<br/>!goc.color.*"]
-  IR --> REFINE["color-escape / bridge<br/>(optional refine)"]
-  REFINE --> LLC["llc ISel"]
-  LLC --> ELFPACK["elfpack → goobj"]
-  ELFPACK --> GO["Go link / call"]
-
-  subgraph backend ["backend/ (P5–P16)"]
-    PASS["Spill · Maps · StackCheck · WB"]
-    MIR["MIR → goobj tooling"]
-  end
-  REFINE -. research .-> PASS
-  PASS -. research .-> MIR
+```bash
+./scripts/qjs-build.sh          # engine smoke on a goroutine stack
+./scripts/qjs-cli-build.sh      # CLI
+./scripts/microcall-bench.sh    # call microbenchmark
 ```
 
-Pipeline overview: [docs/architecture.md](docs/architecture.md).
+Without a patched clang, `./cmd/goc test --p27` uses the out-of-tree plugin
+and system `clang-19`.
 
 ## Pointer colors
 
 | Color | Meaning |
 |-------|---------|
-| `cptr<T>` | Non-stack object pointer (C heap / global / arena). Not Go heap. |
-| `sptr<T>` | Current goroutine stack object pointer. **Must not** be stored to heap. |
-| `uptr<T>` | Encoded `cptr\|sptr` union; may live anywhere; decode before use. |
-| `auto_ptr<T>` | Inferred color (`T *` ≡ `auto_ptr<T>`); escape-sensitive. |
-| `gptr<T>` | Go heap pointer (separate rail; stackmap + write barrier). |
+| `cptr<T>` | Non-stack object (C heap, global, arena). Not the Go heap. |
+| `sptr<T>` | Object on the current goroutine stack. The raw word stays in a register or a stack slot. |
+| `uptr<T>` | Encoded `cptr\|sptr`. MSB 0 is an absolute address; MSB 1 is an int64 offset from `g.stack.hi`. Decode before use. |
+| `auto_ptr<T>` | Inferred. `T *` is this. A stack pointer stored through a non-stack `T *` is encoded as `uptr`. |
+| `gptr<T>` | Go heap pointer. Stackmap plus a write barrier. No implicit conversion to the other colors. |
 
-**No `dsptr`** — heap-stored stack references use `uptr`. Authoritative contract:
-[docs/syntax-guide.md](docs/syntax-guide.md) (中文).
+There is no `dsptr`. Contract: [docs/syntax-guide.md](docs/syntax-guide.md).
 
-```c
-#include "goc.h"
+## Pipeline
 
-void fill(sptr(int) out) { *out = 42; }           /* OK: stack out-param */
-/* void bad(cptr(int*) slot, sptr(int) p) { *slot = p; } */  /* Sema error */
+```text
+.c  →  Clang 19 Sema (colors, escape)
+    →  LLVM IR
+    →  color-escape
+    →  O3, then stack maps
+    →  llc ISel
+    →  elfpack → goobj
+    →  Go link
 ```
 
-## Repository layout
+Detail: [docs/architecture.md](docs/architecture.md).
 
+## Layout
+
+```text
+cmd/goc           driver
+include/goc.h     color attributes
+clang/            patches, Sema, plugin
+backend/          realbody lower, elfpack, machine passes
+frontend/         color-escape and legacy helpers
+runtime/          uptr encode/decode
+tests/            goldens, QuickJS smoke, CLI, microcall
+docs/             contract, architecture, benchmark
+scripts/          Clang patches, QuickJS build, benches
 ```
-cmd/goc              Driver
-include/goc.h        Public color attributes
-clang/               Patches, Sema drop-in, out-of-tree plugin
-backend/             goobj / MIR / realbody path
-frontend/            color-escape, bridge, vertical (legacy helpers)
-runtime/             uptr TLS / MSB helpers
-tests/               Curated goldens
-docs/                Architecture, status, syntax, phase summaries
-third_party/         Fetch instructions only (no vendored LLVM/QJS blobs)
-```
 
-## Documentation
+## Limits
 
-| Doc | Description |
-|-----|-------------|
-| [docs/architecture.md](docs/architecture.md) | Pipeline overview |
-| [docs/syntax-guide.md](docs/syntax-guide.md) | Language contract (中文) |
+- Go amd64 ABIInternal covers the int/pointer subset (at most six arguments). Variadics and other aggregates stay SysV.
+- AVX, x87, and EH are not on the Go-callable path.
+- The QuickJS build uses a freestanding libc shim, not glibc. The alloca pool is single-goroutine.
+- `uptr` decode uses the owner goroutine's `stack.hi`. Decoding with another `g` is an error.
+
+## Docs
+
+| Doc | |
+|-----|--|
+| [docs/syntax-guide.md](docs/syntax-guide.md) | Language contract |
+| [docs/architecture.md](docs/architecture.md) | Pipeline |
 | [docs/glossary.md](docs/glossary.md) | Terms |
-| [docs/status.md](docs/status.md) | What works / what does not |
-| [docs/roadmap.md](docs/roadmap.md) | P29 status and remaining gaps |
-| [docs/phases/](docs/phases/) | Condensed phase reports |
+| [docs/benchmark.md](docs/benchmark.md) | Latest comparison |
 | [clang/README.md](clang/README.md) | Build patched Clang |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
-| [SECURITY.md](SECURITY.md) | Vulnerability reporting |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Patches |
+| [SECURITY.md](SECURITY.md) | Reporting |
 
-## 中文简介
+## 中文
 
-`goc` 是面向 **Go goroutine 用户栈** 的实验性 C 方言：用指针色
-（`cptr`/`sptr`/`uptr`/`auto_ptr`/`gptr`）表达逃逸与写屏障合同，目标是把
-QuickJS 一类 C 运行时跑在 Go 栈上、避开 cgo 税。当前进度到 **P29**：四个
-QuickJS-ng TU 已经由 goc 着色、编译并在 Go 栈上运行，含调用的函数可以内联。
-V8-v7 中位 791。已实测 std/os/bjson 宿主模块和 worker，完整宿主兼容性及
-生产级 GC/抢占安全性仍未完成。语法合同见
-[docs/syntax-guide.md](docs/syntax-guide.md)。
+`goc` 把带指针色的 C 编到 goroutine 用户栈上，和 Go 共用 morestack 与
+stackmap，而不是走 cgo。`uptr` 用最高位区分绝对地址和相对 `g.stack.hi` 的
+偏移。语法合同见 [docs/syntax-guide.md](docs/syntax-guide.md)。横向跑分见
+[docs/benchmark.md](docs/benchmark.md)。
 
 ## License
 

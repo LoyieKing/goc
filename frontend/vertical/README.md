@@ -1,14 +1,11 @@
-# P21 — color.ll → goobj vertical path
+# vertical
 
-Proven slice: colored IR → bridge attrs → **generated** MIR seed (not
-`pass/harness.mir`) → Spill/Maps/WB → Go-frame `printMIR` → `llc` → `elfpack`
-→ linkable goobj.
+Legacy demo: colored IR → seed MIR → goobj.
+
+Not the product lower path. Product objects come from `backend/realbody/`.
 
 ```bash
 ./build.sh
-# or
-../bin/goc vertical
-../bin/goc test --p21
 ```
 
-See `docs/VERTICAL.md` and `../p21-archive/P21-REPORT.md`.
+See [docs/VERTICAL.md](docs/VERTICAL.md).

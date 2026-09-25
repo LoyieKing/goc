@@ -324,7 +324,7 @@ cmd_test() {
       --p27) ONLY_P27=1; shift ;;
       --p28) ONLY_P28=1; shift ;;
       --p21|--p22|--p23|--p24|--p25|--p26)
-        echo "goc test: phase flag $1 retained for compatibility; use docs/phases/" >&2
+        echo "goc test: $1 is not a product test" >&2
         shift
         ;;
       *) echo "unknown goc test flag: $1" >&2; exit 2 ;;

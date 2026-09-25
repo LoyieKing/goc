@@ -5,7 +5,7 @@ goc’s product frontend is **Clang 19.1.7** with:
 1. `Attr.td` entries for `goc_cptr` / `goc_sptr` / `goc_uptr` / `goc_auto_ptr` / `goc_gptr`
 2. `SemaGocColors.cpp` — lowers attrs to `AnnotateAttr` and rejects `sptr` escape
 
-## Option A — in-tree (recommended, P28)
+## Option A — in-tree (recommended)
 
 ```bash
 # Fetch LLVM 19.1.7 (see ../third_party/README.md)
@@ -34,7 +34,7 @@ export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
 - Build directory stays under `third_party/` (gitignored); do not commit binaries.
 - Expect ~30–60 minutes for a Release clang build depending on hardware.
 
-## Option B — out-of-tree plugin (P27 legacy)
+## Option B — out-of-tree plugin
 
 ```bash
 make -C clang/plugin all
@@ -52,8 +52,8 @@ loaded with `-fplugin=libGocClang.so`.
 |------|----------|
 | `patches/0001-Attr.td-goc-colors.patch` | Attr.td delta |
 | `patches/Attr.td.goc-excerpt.txt` | Human-readable Attr excerpt |
-| `patches/0001-SemaGocColors-real.patch` | P28 Sema wiring |
-| `patches/0002-SemaGocColors-stub.patch` | Early stub (superseded by real) |
+| `patches/0001-SemaGocColors-real.patch` | Sema wiring |
+| `patches/0002-SemaGocColors-stub.patch` | Stub, superseded by the real patch |
 | `sema/SemaGocColors.cpp` | Drop-in Sema source |
 | `plugin/GocClangPlugin.cpp` | Out-of-tree plugin |
 

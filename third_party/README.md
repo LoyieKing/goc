@@ -22,17 +22,12 @@ Host tools also useful from distro packages: `clang-19`, `llc-19`,
 
 ## quickjs-ng (optional)
 
-Full QuickJS embedding via goc is **not complete**. For experiments that need
-the upstream tree:
-
 ```bash
 git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng
-# Configure with JS_NAN_BOXING=0 when following P26 research notes
 ```
 
-Do **not** commit the cloned tree. Earlier research phases (P23–P26) used
-stub interpreters and limited real-QJS smokes; see `docs/phases/` and
-`docs/roadmap.md`.
+Do **not** commit the cloned tree. `scripts/qjs-build.sh` builds it with
+`JS_NAN_BOXING=0`.
 
 ## CMake
 
