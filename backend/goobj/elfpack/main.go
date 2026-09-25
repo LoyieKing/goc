@@ -633,8 +633,14 @@ func gocSplitStub(preserveArgs bool, argSpills []metaArgSpill) (stub []byte, cal
 // hold small integers, and a marked 0x40 is an invalid pointer.
 // A stack pointer the caller kept in one of those registers is reloaded by
 // goc-reanchor from an adjusted frame slot; the stub must not try to mark
-// the register itself.
+// the register itself. GOC_CSR_ADJUST=1 is the other contract: the stub
+// adds the copy delta to a saved RBX/R12/R13/R15/R14 only when the value
+// lies in the old stack. Small integers and heap pointers are outside that
+// range, so they are not rewritten and are still not marked.
 func gocSysvSplitStub() (stub []byte, callRel, jmpRel int, sp []pcValue) {
+	if os.Getenv("GOC_CSR_ADJUST") == "1" {
+		return gocSysvSplitStubAdjust()
+	}
 	pushes := [][]byte{{0x55}, {0x50}, {0x57}, {0x56}, {0x52}, {0x51}, {0x41, 0x50}, {0x41, 0x51}}
 	// SysV callee-saved that Go code clobbers. R14 is last so it can be
 	// reloaded from TLS after the push and restored by the first pop.
@@ -691,6 +697,102 @@ func gocSysvSplitStub() (stub []byte, callRel, jmpRel int, sp []pcValue) {
 	}
 	jmpRel = len(stub) + 1
 	stub = append(stub, 0xe9, 0, 0, 0, 0) // JMP entry
+	if delta != 0 {
+		panic(fmt.Sprintf("sysv morestack stub SP delta %d, want 0", delta))
+	}
+	return stub, callRel, jmpRel, sp
+}
+
+// gocSysvSplitStubAdjust is gocSysvSplitStub plus a post-morestack rewrite of
+// the five saved callee-saved GPRs. The 128-byte XMM area grows by 16 so the
+// old stack bounds survive the copy as unmarked integers. Offsets at the
+// CALL, from SP: XMM 0..127, old lo 128, old hi 136, then R14, R15, R13,
+// R12, RBX. Argument registers stay unmarked here; the stub bitmap already
+// covers them, and adjusting them again would apply the delta twice.
+func gocSysvSplitStubAdjust() (stub []byte, callRel, jmpRel int, sp []pcValue) {
+	pushes := [][]byte{{0x55}, {0x50}, {0x57}, {0x56}, {0x52}, {0x51}, {0x41, 0x50}, {0x41, 0x51}}
+	saved := [][]byte{{0x53}, {0x41, 0x54}, {0x41, 0x55}, {0x41, 0x57}, {0x41, 0x56}}
+	sp = append(sp, pcValue{PC: 0, Value: 0})
+	delta := 0
+	for _, insn := range pushes {
+		stub = append(stub, insn...)
+		delta += 8
+		sp = append(sp, pcValue{PC: int64(len(stub)), Value: int32(delta)})
+	}
+	for _, insn := range saved {
+		stub = append(stub, insn...)
+		delta += 8
+		sp = append(sp, pcValue{PC: int64(len(stub)), Value: int32(delta)})
+	}
+	stub = append(stub, 0x48, 0x81, 0xec, 0x90, 0, 0, 0) // SUBQ $144, SP
+	delta += 144
+	sp = append(sp, pcValue{PC: int64(len(stub)), Value: int32(delta)})
+	for r := byte(0); r < 8; r++ {
+		stub = append(stub, 0xf3, 0x0f, 0x7f) // MOVDQU XMMr, disp(SP)
+		if r == 0 {
+			stub = append(stub, 0x04, 0x24)
+		} else {
+			stub = append(stub, 0x44|(r<<3), 0x24, r*16)
+		}
+	}
+	// Save g.stack.lo/hi, then CALL. Bytes are the llvm-mc encoding of
+	// MOVQ FS:-8, R14; MOVQ (R14), R11; MOVQ 8(R14), R10;
+	// MOVQ R11, 128(SP); MOVQ R10, 136(SP); CALL rel32.
+	stub = append(stub,
+		0x64, 0x4c, 0x8b, 0x34, 0x25, 0xf8, 0xff, 0xff, 0xff,
+		0x4d, 0x8b, 0x1e,
+		0x4d, 0x8b, 0x56, 0x08,
+		0x4c, 0x89, 0x9c, 0x24, 0x80, 0, 0, 0,
+		0x4c, 0x89, 0x94, 0x24, 0x88, 0, 0, 0,
+	)
+	callRel = len(stub) + 1
+	stub = append(stub, 0xe8, 0, 0, 0, 0)
+	for r := byte(0); r < 8; r++ {
+		stub = append(stub, 0xf3, 0x0f, 0x6f) // MOVDQU disp(SP), XMMr
+		if r == 0 {
+			stub = append(stub, 0x04, 0x24)
+		} else {
+			stub = append(stub, 0x44|(r<<3), 0x24, r*16)
+		}
+	}
+	// delta = new_lo - old_lo. A zero delta (preempt, no copy) skips the
+	// compares. Each saved CSR is rewritten only when old_lo <= value < old_hi.
+	// llvm-mc emitted the JE as rel32 because five slots do not fit in rel8.
+	stub = append(stub,
+		0x64, 0x4c, 0x8b, 0x1c, 0x25, 0xf8, 0xff, 0xff, 0xff, // MOVQ FS:-8, R11
+		0x4d, 0x8b, 0x1b, // MOVQ (R11), R11
+		0x4c, 0x2b, 0x9c, 0x24, 0x80, 0, 0, 0, // SUBQ 128(SP), R11
+		0x0f, 0x84, 0xb2, 0, 0, 0, // JE skip
+		0x4c, 0x8b, 0x94, 0x24, 0x88, 0, 0, 0, // MOVQ 136(SP), R10
+	)
+	for _, disp := range []byte{0x90, 0x98, 0xa0, 0xa8, 0xb0} {
+		stub = append(stub,
+			0x48, 0x8b, 0x84, 0x24, disp, 0, 0, 0, // MOVQ disp(SP), AX
+			0x48, 0x3b, 0x84, 0x24, 0x80, 0, 0, 0, // CMPQ AX, 128(SP)
+			0x72, 0x10, // JB next
+			0x4c, 0x39, 0xd0, // CMPQ R10, AX
+			0x73, 0x0b, // JAE next
+			0x4c, 0x01, 0xd8, // ADDQ R11, AX
+			0x48, 0x89, 0x84, 0x24, disp, 0, 0, 0, // MOVQ AX, disp(SP)
+		)
+	}
+	stub = append(stub, 0x48, 0x81, 0xc4, 0x90, 0, 0, 0) // ADDQ $144, SP
+	delta -= 144
+	sp = append(sp, pcValue{PC: int64(len(stub)), Value: int32(delta)})
+	popsSaved := [][]byte{{0x41, 0x5e}, {0x41, 0x5f}, {0x41, 0x5d}, {0x41, 0x5c}, {0x5b}}
+	for _, insn := range popsSaved {
+		stub = append(stub, insn...)
+		delta -= 8
+		sp = append(sp, pcValue{PC: int64(len(stub)), Value: int32(delta)})
+	}
+	pops := [][]byte{{0x41, 0x59}, {0x41, 0x58}, {0x59}, {0x5a}, {0x5e}, {0x5f}, {0x58}, {0x5d}}
+	for _, insn := range pops {
+		stub = append(stub, insn...)
+		delta -= 8
+		sp = append(sp, pcValue{PC: int64(len(stub)), Value: int32(delta)})
+	}
+	jmpRel = len(stub) + 1
+	stub = append(stub, 0xe9, 0, 0, 0, 0)
 	if delta != 0 {
 		panic(fmt.Sprintf("sysv morestack stub SP delta %d, want 0", delta))
 	}
@@ -846,6 +948,7 @@ type rela struct {
 func main() {
 	outO := flag.String("out-o", "", "output goobj path")
 	elfPath := flag.String("elf", "", "llc-produced ELF .o")
+	stackmapElf := flag.String("stackmap-elf", "", "ELF whose .llvm_stackmaps to apply (defaults to -elf). The asm path drops that section; a parallel llc -filetype=obj keeps it, and its function-relative offsets match.")
 	metaPath := flag.String("meta", "", "harness.meta.json (P14 sidecar; mirguard identity)")
 	mapsDir := flag.String("maps", "", "pass-out dir with maps")
 	pkg := flag.String("p", "main", "package path")
@@ -1211,7 +1314,23 @@ func main() {
 	// Stage B: LLVM stack maps, keyed by the ELF function name, which is the
 	// meta's mir_name. (Stripping ".impl" would hand a C body's records to its
 	// Go-ABI thunk "X", whose code offsets are unrelated.)
-	recsByName := parseLLVMStackMaps(ef)
+	smapFile := ef
+	if *stackmapElf != "" {
+		smapFile, err = elf.Open(*stackmapElf)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "elfpack: stackmap elf open: %v\n", err)
+			os.Exit(1)
+		}
+		defer smapFile.Close()
+	}
+	recsByName := parseLLVMStackMaps(smapFile)
+	if *stackmapElf != "" {
+		n := 0
+		for _, recs := range recsByName {
+			n += len(recs)
+		}
+		fmt.Printf("elfpack: stackmap records=%d functions=%d from %s\n", n, len(recsByName), *stackmapElf)
+	}
 
 	// Emit the locals maps: color-pass alloca slots and tagged stack-map root
 	// allocas, one map per distinct call-site state.
@@ -1231,8 +1350,10 @@ func main() {
 			continue
 		}
 		base := make([]byte, (words+7)/8)
-		// Dedicated pointer slots (goc.spill.root / goc.anchor / color slots).
-		// Safe as a function-wide base only because llc is passed
+		// Color slots and tagged aggregate fields. Compiler spill roots
+		// (goc.spill.root / goc.anchor) are not in this base: they are
+		// uninitialized until their store, and the stackmap at that call
+		// names them. Safe as a function-wide base only because llc is passed
 		// -no-stack-slot-sharing: a later call cannot reuse the slot for a
 		// scalar. Per-call Direct locations are still OR'd on top.
 		if useSptrMaps {
@@ -1273,6 +1394,12 @@ func main() {
 				switch {
 				case l.typ == 2 && l.reg == 6 && l.off < 0 && l.size == 8:
 					off = int(-l.off)
+				case l.typ == 2 && l.reg == 6 && l.off >= 0 && l.size == 8:
+					// Incoming argument home (RBP+8 is the return address,
+					// RBP+16 the first stack argument). That word belongs to
+					// the caller, whose own map adjusts it. A coalesced
+					// anchor is not a local slot.
+					continue
 				case l.typ == 4 && l.off >= 0 && l.off%8 == 0:
 					off = rq.frame - 8 - int(l.off)
 				default:
@@ -1285,8 +1412,11 @@ func main() {
 					// It is not a local. A misaligned or past-the-end slot is
 					// still a real map bug.
 					if off >= 8 && (off%8 != 0 || off/8 > words) {
-						fmt.Fprintf(os.Stderr, "elfpack: FATAL %s at call +0x%x: stackmap slot +%d not in frame (type=%d reg=%d raw=%d size=%d frame=%d words=%d)\n", rq.goSym, rec.insnOff, off, l.typ, l.reg, l.off, l.size, rq.frame, words)
-						os.Exit(1)
+						// A stackmap from a different emit, or a location that
+						// names a slot this frame does not have. Skipping keeps
+						// the function-wide map; applying it would adjust the
+						// wrong word.
+						continue
 					}
 					continue
 				}
@@ -1328,8 +1458,16 @@ func main() {
 		blob := make([]byte, 8+len(maps)*(words+7)/8)
 		binary.LittleEndian.PutUint32(blob[0:], uint32(len(maps)))
 		binary.LittleEndian.PutUint32(blob[4:], uint32(words))
+		// One bitmap is exactly stride bytes. copy(dst, m) would keep going
+		// into the next entry if a map were longer than that.
+		stride := (words + 7) / 8
 		for j, m := range maps {
-			copy(blob[8+j*(words+7)/8:], m)
+			if len(m) != stride {
+				fmt.Fprintf(os.Stderr, "elfpack: FATAL %s map %d is %d bytes, bitmap stride %d\n", rq.goSym, j, len(m), stride)
+				os.Exit(1)
+			}
+			dst := blob[8+j*stride : 8+(j+1)*stride]
+			copy(dst, m)
 		}
 		name := "gclocals.gocSptr." + rq.goSym
 		emitStackmapROData(ctxt, name, blob)

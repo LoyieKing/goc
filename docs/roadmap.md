@@ -24,8 +24,10 @@
    because Go pcsp cannot describe variable C stack adjustments.
 10. Call-bearing functions may inline. `goc-inline-gate` does not stamp
     `noinline`. Stack-pointer arguments are reloaded after safepoints, and a
-    local that keeps `&s->token` is a frame-map root. V8-v7 median 791
-    (785 and 797, 48 s) versus 1389 for the same-source native Release build.
+    local that keeps `&s->token` is a frame-map root. Hot `uptr` helpers and
+    the alloca-pool bump are inlined before O3. V8-v7 rerun 1198 and 1203
+    (mean 1200.5, 38–40 s) versus 1389 for the same-source native Release
+    build and 402 for Goja.
 
 ## P29 gaps (honest next milestones)
 

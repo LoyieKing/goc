@@ -221,10 +221,12 @@ extern void goc_free(void *p);
 #define GOC_DYNALLOC_POOL_SIZE (16u * 1024u * 1024u)
 #endif
 
-static unsigned char *goc_alloca_pool __attribute__((annotate("goc.color.cptr")));
-static size_t goc_alloca_off;
+/* Exported so goc-inline-gate can bump the pool without a call. */
+unsigned char *goc_alloca_pool __attribute__((annotate("goc.color.cptr")));
+size_t goc_alloca_off;
+const size_t goc_alloca_pool_size = GOC_DYNALLOC_POOL_SIZE;
 
-static void goc_alloca_pool_init(void) {
+void goc_alloca_pool_init(void) {
   if (goc_alloca_pool)
     return;
 #ifdef GOC_UPTR_FREESTANDING
@@ -251,8 +253,8 @@ void *goc_dynalloc(size_t bytes, void **scope) {
   unsigned char *p __attribute__((annotate("goc.color.cptr")));
   p = goc_alloca_pool + goc_alloca_off;
   goc_alloca_off += aligned;
-  if (bytes)
-    __builtin_memset(p, 0, bytes);
+  /* Native alloca does not zero. JS_CallInternal writes JS_UNDEFINED into
+   * the slots it reads; zeroing the operand stack was a per-call memset. */
   return p;
 }
 

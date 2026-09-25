@@ -48,6 +48,8 @@
 // goc-reanchor so growth can still adjust them.
 #include <algorithm>
 #include <optional>
+#include <cstdlib>
+#include <cstring>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -56,6 +58,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -73,6 +76,17 @@ namespace {
 
 // Defined below. O3 may have dropped !goc.color; this walk does not need it.
 DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL);
+std::optional<std::pair<AllocaInst *, int64_t>>
+pureFrameAddress(Value *V, const DataLayout &DL);
+CallInst *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL);
+bool rematerializableFrameAddress(Value *V, const DataLayout &DL);
+bool ignoreUse(const Instruction *User);
+bool separatedBySafepoint(const Instruction *Def, const Instruction *UsePoint);
+Instruction *usePoint(Use &U);
+// Replace uses of a frame address that a call can sit between with a fresh
+// LEA. The address is then not live across morestack, so llc does not spill
+// it in the prologue.
+unsigned rematCrossSafepointUses(Value *V, const DataLayout &DL, Function &F);
 
 // The in-tree Sema pass attaches !goc.color !N to values, where !N is a node
 // holding the color name ("sptr" / "cptr" / "uptr").
@@ -99,6 +113,45 @@ bool isNonSafepointIntrinsic(const CallBase &CB) {
   default:
     return false;
   }
+}
+
+// PC 0's bitmap must not include compiler spill slots. A function-wide bit
+// forced a volatile null store on every entry so the copier would not see
+// garbage. The slot is recorded only at calls the real store dominates.
+constexpr uint64_t GocStackMapTag = 0x474f430000000000ULL;
+
+CallBase *stackmapBefore(Instruction *Safepoint) {
+  for (Instruction *Prev = Safepoint->getPrevNode(); Prev;
+       Prev = Prev->getPrevNode()) {
+    if (Prev->isDebugOrPseudoInst())
+      continue;
+    auto *CB = dyn_cast<CallBase>(Prev);
+    if (CB && CB->getIntrinsicID() == Intrinsic::experimental_stackmap)
+      return CB;
+    return nullptr;
+  }
+  return nullptr;
+}
+
+void ensureStackmapRoot(CallBase *Safepoint, Value *Root, uint64_t &NextId) {
+  if (CallBase *SM = stackmapBefore(Safepoint)) {
+    for (Value *Op : SM->args())
+      if (Op == Root)
+        return;
+    SmallVector<Value *, 16> Args(SM->arg_begin(), SM->arg_end());
+    Args.push_back(Root);
+    IRBuilder<> B(SM);
+    CallInst *New = B.CreateCall(SM->getCalledFunction(), Args);
+    New->copyMetadata(*SM);
+    SM->eraseFromParent();
+    return;
+  }
+  Function *Decl = Intrinsic::getDeclaration(
+      Safepoint->getModule(), Intrinsic::experimental_stackmap);
+  IRBuilder<> B(Safepoint);
+  B.CreateCall(Decl,
+               {ConstantInt::get(B.getInt64Ty(), GocStackMapTag | NextId++),
+                ConstantInt::get(B.getInt32Ty(), 0), Root});
 }
 
 // A stack aggregate is often referenced through a local T* initialized with
@@ -449,12 +502,12 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
     FunctionCallee SM =
         Intrinsic::getDeclaration(M, Intrinsic::experimental_stackmap);
 
-    constexpr uint64_t GocStackMapTag = 0x474f430000000000ULL;
     uint64_t id = 0;
     SmallVector<CallBase *, 16> sites;
     for (Instruction &I : instructions(F)) {
       auto *CB = dyn_cast<CallBase>(&I);
-      if (!CB || isNonSafepointIntrinsic(*CB) || CB->isDebugOrPseudoInst())
+      if (!CB || CB->isInlineAsm() || isNonSafepointIntrinsic(*CB) ||
+          CB->isDebugOrPseudoInst())
         continue;
       sites.push_back(CB);
     }
@@ -501,6 +554,10 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
     DenseMap<Instruction *, AllocaInst *> roots;
     for (Instruction *V : sptr) {
       bool needRoot = false;
+      // A static alloca address is rbp+off. Rematerialize it at the use
+      // instead of storing it in the prologue; morestack adjusts rbp.
+      if (rematerializableFrameAddress(V, DL))
+        continue; // rematCrossSafepointUses runs after this loop
       for (CallBase *CB : sites)
         if (auto It = liveAt.find(CB); It != liveAt.end())
           for (Instruction *Live : It->second)
@@ -510,8 +567,6 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
 
       IRBuilder<> Entry(&*F.getEntryBlock().getFirstInsertionPt());
       auto *Root = Entry.CreateAlloca(V->getType(), nullptr, "goc.spill.root");
-      auto *Init = Entry.CreateStore(Constant::getNullValue(V->getType()), Root);
-      Init->setVolatile(true);
       roots[V] = Root;
 
       // Remember original users before adding the save. Every reloaded use
@@ -519,15 +574,12 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
       SmallVector<Use *, 16> uses;
       for (Use &U : V->uses())
         uses.push_back(&U);
-      Instruction *AfterDef = V->getNextNode();
-      if (isa<PHINode>(V))
-        AfterDef = V->getParent()->getFirstNonPHI();
-      if (!AfterDef)
-        report_fatal_error("goc-stackmap: unsupported terminator sptr value");
-      IRBuilder<> SaveBuilder(AfterDef);
-      auto *Save = SaveBuilder.CreateStore(V, Root);
-      Save->setVolatile(true);
-
+      Instruction *IP = isa<PHINode>(V) ? V->getParent()->getFirstNonPHI()
+                                        : V->getNextNode();
+      if (!IP)
+        IP = V->getParent()->getTerminator();
+      IRBuilder<> Save(IP);
+      Save.CreateStore(V, Root)->setVolatile(true);
       // A switch or duplicated CFG edge can list one predecessor twice. Those
       // incoming values must be the same instruction; two loads are not.
       DenseMap<std::pair<PHINode *, BasicBlock *>, LoadInst *> phiReload;
@@ -557,6 +609,12 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
         U->set(Reload);
       }
     }
+    for (Instruction *V : sptr)
+      if (rematerializableFrameAddress(V, DL))
+        Changed |= rematCrossSafepointUses(V, DL, F) != 0;
+    for (Argument &A : F.args())
+      if (A.hasByValAttr())
+        Changed |= rematCrossSafepointUses(&A, DL, F) != 0;
 
     // Stack-passed pointer arguments are reported as Constant locations: the
     // byte offset from SP at the call (the extractor converts it to a BP
@@ -589,7 +647,8 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
       args.push_back(ConstantInt::get(B.getInt32Ty(), 0)); // no shadow bytes
       if (hasRoots)
         for (Instruction *V : It->second)
-          args.push_back(roots.lookup(V));
+          if (AllocaInst *Root = roots.lookup(V))
+            args.push_back(Root);
       for (int64_t off : outgoing.lookup(CB))
         args.push_back(ConstantInt::get(B.getInt64Ty(), off));
       B.CreateCall(SM, args);
@@ -608,6 +667,10 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
 bool isSafepoint(const Instruction &I) {
   auto *CB = dyn_cast<CallBase>(&I);
   if (!CB || CB->isDebugOrPseudoInst())
+    return false;
+  // Inline asm does not call morestack. The frame-address remat is itself
+  // inline asm; treating it as a safepoint would spill across the remat.
+  if (CB->isInlineAsm())
     return false;
   if (const Function *Callee = CB->getCalledFunction()) {
     switch (Callee->getIntrinsicID()) {
@@ -689,6 +752,136 @@ pureFrameAddress(Value *V, const DataLayout &DL) {
     V = GEP->getPointerOperand();
   }
   return std::nullopt;
+}
+
+CallInst *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
+  Value *Addr = nullptr;
+  int64_t Off = 0;
+  if (auto Frame = pureFrameAddress(V, DL)) {
+    Addr = Frame->first;
+    Off = Frame->second;
+  } else {
+    // byval (and a constant GEP of it) is an address in this frame. llc
+    // lowers a plain use to one prologue LEA; the *m asm recomputes it
+    // from rbp at the use, after morestack.
+    Value *Cur = V;
+    while (Cur && !Addr) {
+      if (auto *A = dyn_cast<Argument>(Cur)) {
+        if (A->hasByValAttr())
+          Addr = A;
+        break;
+      }
+      if (auto *BC = dyn_cast<BitCastInst>(Cur)) {
+        Cur = BC->getOperand(0);
+        continue;
+      }
+      if (auto *ASC = dyn_cast<AddrSpaceCastInst>(Cur)) {
+        Cur = ASC->getOperand(0);
+        continue;
+      }
+      auto *GEP = dyn_cast<GetElementPtrInst>(Cur);
+      if (!GEP)
+        break;
+      APInt Acc(DL.getIndexSizeInBits(GEP->getPointerAddressSpace()), 0);
+      if (!GEP->accumulateConstantOffset(DL, Acc))
+        break;
+      Off += Acc.getSExtValue();
+      Cur = GEP->getPointerOperand();
+    }
+  }
+  if (!Addr)
+    return nullptr;
+  if (Off != 0)
+    Addr = B.CreateGEP(B.getInt8Ty(), Addr, B.getInt64(Off));
+  FunctionType *FT = FunctionType::get(V->getType(), {Addr->getType()}, false);
+  InlineAsm *IA = InlineAsm::get(FT, "leaq $1, $0", "=r,*m",
+                                  /*hasSideEffects=*/true);
+  CallInst *CI = B.CreateCall(IA, {Addr});
+  CI->addParamAttr(0, Attribute::get(CI->getContext(), Attribute::ElementType,
+                                     Type::getInt8Ty(CI->getContext())));
+  return CI;
+}
+
+bool rematerializableFrameAddress(Value *V, const DataLayout &DL) {
+  if (pureFrameAddress(V, DL))
+    return true;
+  Value *Cur = V;
+  while (Cur) {
+    if (auto *A = dyn_cast<Argument>(Cur))
+      return A->hasByValAttr();
+    if (auto *BC = dyn_cast<BitCastInst>(Cur)) {
+      Cur = BC->getOperand(0);
+      continue;
+    }
+    if (auto *ASC = dyn_cast<AddrSpaceCastInst>(Cur)) {
+      Cur = ASC->getOperand(0);
+      continue;
+    }
+    auto *GEP = dyn_cast<GetElementPtrInst>(Cur);
+    if (!GEP)
+      return false;
+    APInt Acc(DL.getIndexSizeInBits(GEP->getPointerAddressSpace()), 0);
+    if (!GEP->accumulateConstantOffset(DL, Acc))
+      return false;
+    Cur = GEP->getPointerOperand();
+  }
+  return false;
+}
+
+unsigned rematCrossSafepointUses(Value *V, const DataLayout &DL, Function &F) {
+  if (!rematerializableFrameAddress(V, DL))
+    return 0;
+  auto *Def = dyn_cast<Instruction>(V);
+  SmallVector<Use *, 16> uses;
+  for (Use &U : V->uses())
+    uses.push_back(&U);
+  DenseMap<std::pair<PHINode *, BasicBlock *>, CallInst *> shared;
+  unsigned n = 0;
+  for (Use *U : uses) {
+    auto *User = dyn_cast<Instruction>(U->getUser());
+    if (!User || ignoreUse(User))
+      continue;
+    if (auto *CB = dyn_cast<CallBase>(User))
+      if (CB->isInlineAsm())
+        continue;
+    Instruction *At = usePoint(*U);
+    bool cross = false;
+    if (Def) {
+      cross = separatedBySafepoint(Def, At);
+    } else if (At->getParent() != &F.getEntryBlock()) {
+      cross = true;
+    } else {
+      for (const Instruction &I : F.getEntryBlock()) {
+        if (&I == At)
+          break;
+        if (isSafepoint(I)) {
+          cross = true;
+          break;
+        }
+      }
+    }
+    if (!cross)
+      continue;
+    CallInst *R = nullptr;
+    if (auto *Phi = dyn_cast<PHINode>(User)) {
+      BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
+      auto Key = std::make_pair(Phi, Inc);
+      R = shared.lookup(Key);
+      if (!R) {
+        IRBuilder<> B(Inc->getTerminator());
+        R = rematFrameAddress(B, V, DL);
+        shared[Key] = R;
+      }
+    } else {
+      IRBuilder<> B(At);
+      R = rematFrameAddress(B, V, DL);
+    }
+    if (!R)
+      report_fatal_error("goc-stackmap: frame address did not rematerialize");
+    U->set(R);
+    ++n;
+  }
+  return n;
 }
 
 // Stack addresses O3 may cache in SSA: static allocas, GEPs of them, and
@@ -912,7 +1105,7 @@ DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL) {
 }
 
 struct GocReanchor : PassInfoMixin<GocReanchor> {
-  PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
     if (F.isDeclaration())
       return PreservedAnalyses::all();
     bool AnySafe = false;
@@ -1004,7 +1197,12 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       return false;
     };
     for (Argument &A : F.args()) {
-      if (!stack.count(&A))
+      // A proven frame address must be reloaded after growth. An ordinary
+      // pointer argument must too: the caller may pass an address of its own
+      // frame (a Go slice on the goroutine stack) even when this TU cannot
+      // prove that. The copier adjusts the slot only when the value lies in
+      // the old stack, so a heap pointer stored here is left alone.
+      if (!stack.count(&A) && !A.getType()->isPointerTy())
         continue;
       ArgFix fix{&A, {}};
       for (Use &U : A.uses()) {
@@ -1017,12 +1215,84 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       if (!fix.Uses.empty())
         argFixes.push_back(std::move(fix));
     }
+    // GOC_CSR_ADJUST: the SysV morestack stub rewrites a saved RBX/R12/R13/
+    // R15/R14 when the value is inside the old stack. The post-call use can
+    // stay in that register. The anchor reload would force the memory
+    // round-trip this mode exists to remove. Store tags above still mark a
+    // slot that holds &s->token; those are not registers.
+    if (const char *csr = std::getenv("GOC_CSR_ADJUST")) {
+      if (std::strcmp(csr, "1") == 0) {
+        if (!fixes.empty() || !argFixes.empty())
+          errs() << "goc-reanchor: " << F.getName() << " csr-adjust skips "
+                 << fixes.size() << " defs and " << argFixes.size()
+                 << " args\n";
+        return PreservedAnalyses::none();
+      }
+    }
     if (fixes.empty() && argFixes.empty())
       return PreservedAnalyses::all();
+
+    DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
+    SmallVector<CallBase *, 16> safepoints;
+    for (Instruction &I : instructions(F))
+      if (auto *CB = dyn_cast<CallBase>(&I))
+        if (isSafepoint(*CB))
+          safepoints.push_back(CB);
+    uint64_t nextMapId = 0x80000001ULL;
+    auto publish = [&](Instruction *Def, Value *Saved, Value *Anchor,
+                       ArrayRef<Instruction *> UsePoints) {
+      SmallVector<CallBase *, 8> invalidators;
+      for (CallBase *CB : safepoints) {
+        if (Def && !DT.dominates(Def, CB))
+          continue;
+        bool live = false;
+        for (Instruction *U : UsePoints)
+          if (U != CB && DT.dominates(CB, U)) {
+            live = true;
+            break;
+          }
+        if (!live)
+          continue;
+        invalidators.push_back(CB);
+        ensureStackmapRoot(CB, Anchor, nextMapId);
+      }
+    };
 
     unsigned anchors = 0, reloads = 0, remats = 0;
     IRBuilder<> Entry(&*F.getEntryBlock().getFirstInsertionPt());
     for (Fix &fix : fixes) {
+      if (rematerializableFrameAddress(fix.Def, DL)) {
+        DenseMap<std::pair<PHINode *, BasicBlock *>, CallInst *> shared;
+        for (Use *U : fix.Uses) {
+          auto *User = cast<Instruction>(U->getUser());
+          if (auto *Phi = dyn_cast<PHINode>(User)) {
+            BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
+            auto Key = std::make_pair(Phi, Inc);
+            CallInst *R = shared.lookup(Key);
+            if (!R) {
+              IRBuilder<> B(Inc->getTerminator());
+              R = rematFrameAddress(B, fix.Def, DL);
+              if (!R)
+                report_fatal_error("goc-reanchor: frame address did not rematerialize");
+              shared[Key] = R;
+            }
+            U->set(R);
+            ++remats;
+            continue;
+          }
+          IRBuilder<> B(usePoint(*U));
+          CallInst *R = rematFrameAddress(B, fix.Def, DL);
+          if (!R)
+            report_fatal_error("goc-reanchor: frame address did not rematerialize");
+          U->set(R);
+          ++remats;
+        }
+        continue;
+      }
+      // publish() may erase the entry stackmap this builder was inserting
+      // before. Recompute so the next alloca is not attached to a dead block.
+      Entry.SetInsertPoint(&F.getEntryBlock(),
+                           F.getEntryBlock().getFirstInsertionPt());
       if (isa<InvokeInst>(fix.Def))
         report_fatal_error("goc-reanchor: invoke result holds a stack address");
       // Always spill across the safepoint. A fresh GEP at the use is not
@@ -1032,25 +1302,21 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       AllocaInst *Anchor = Entry.CreateAlloca(fix.Def->getType(), nullptr,
                                               "goc.anchor");
       Anchor->setAlignment(Align(8));
-      IRBuilder<> Zero(Anchor->getNextNode());
-      auto *Z = Zero.CreateStore(Constant::getNullValue(fix.Def->getType()), Anchor);
-      Z->setVolatile(true);
       SmallVector<Metadata *, 4> tag{
           MDString::get(F.getContext(), "goc.frame.words"),
           MDString::get(F.getContext(), Anchor->getName()),
           ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(F.getContext()), 0))};
       MDNode *Node = MDNode::get(F.getContext(), tag);
       Anchor->setMetadata("goc.frame.words", Node);
-      Z->setMetadata("goc.frame.words", Node);
 
-      Instruction *After = isa<PHINode>(fix.Def) ? fix.Def->getParent()->getFirstNonPHI()
-                                                : fix.Def->getNextNode();
-      if (!After)
-        report_fatal_error("goc-reanchor: stack address defined by a terminator");
-      IRBuilder<> Save(After);
-      auto *St = Save.CreateStore(fix.Def, Anchor);
-      St->setVolatile(true);
       ++anchors;
+      Instruction *SaveAt = isa<PHINode>(fix.Def)
+                                ? fix.Def->getParent()->getFirstNonPHI()
+                                : fix.Def->getNextNode();
+      if (!SaveAt)
+        SaveAt = fix.Def->getParent()->getTerminator();
+      IRBuilder<> Save(SaveAt);
+      Save.CreateStore(fix.Def, Anchor)->setVolatile(true);
 
       // One volatile reload per safepoint-free stretch, not per use. Extra
       // uses in the same stretch stay in a register. A PHI that lists one
@@ -1065,6 +1331,9 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
           return IA->getParent() < IB->getParent();
         return IA->comesBefore(IB);
       });
+      SmallVector<Instruction *, 8> usePoints;
+      for (Use *U : ordered)
+        usePoints.push_back(usePoint(*U));
       SmallVector<LoadInst *, 8> placed;
       for (Use *U : ordered) {
         Instruction *At = usePoint(*U);
@@ -1088,39 +1357,66 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
         U->set(Reload);
         ++reloads;
       }
+      publish(fix.Def, fix.Def, Anchor, usePoints);
     }
-    Instruction *IP = &*F.getEntryBlock().getFirstInsertionPt();
     for (ArgFix &fix : argFixes) {
-      IRBuilder<> B(IP);
-      auto *Anchor = B.CreateAlloca(fix.Arg->getType(), nullptr, "goc.arganchor");
+      if (fix.Arg->hasByValAttr()) {
+        DenseMap<std::pair<PHINode *, BasicBlock *>, CallInst *> shared;
+        for (Use *U : fix.Uses) {
+          auto *User = cast<Instruction>(U->getUser());
+          if (auto *Phi = dyn_cast<PHINode>(User)) {
+            BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
+            auto Key = std::make_pair(Phi, Inc);
+            CallInst *R = shared.lookup(Key);
+            if (!R) {
+              IRBuilder<> B(Inc->getTerminator());
+              R = rematFrameAddress(B, fix.Arg, DL);
+              if (!R)
+                report_fatal_error("goc-reanchor: byval address did not rematerialize");
+              shared[Key] = R;
+            }
+            U->set(R);
+            ++remats;
+            continue;
+          }
+          IRBuilder<> B(usePoint(*U));
+          CallInst *R = rematFrameAddress(B, fix.Arg, DL);
+          if (!R)
+            report_fatal_error("goc-reanchor: byval address did not rematerialize");
+          U->set(R);
+          ++remats;
+        }
+        continue;
+      }
+      Type *ArgTy = fix.Arg->getType();
+      if (!ArgTy->isSized()) {
+        errs() << "goc-reanchor: skip unsized arg in " << F.getName() << "\n";
+        continue;
+      }
+      IRBuilder<> B(&F.getEntryBlock(), F.getEntryBlock().getFirstInsertionPt());
+      auto *Anchor = B.CreateAlloca(ArgTy, nullptr, "goc.arganchor");
       Anchor->setAlignment(Align(8));
-      auto *Z = B.CreateStore(
-          ConstantPointerNull::get(cast<PointerType>(fix.Arg->getType())), Anchor);
-      Z->setVolatile(true);
-      auto *St = B.CreateStore(fix.Arg, Anchor);
-      St->setVolatile(true);
       SmallVector<Metadata *, 4> tag{
           MDString::get(F.getContext(), "goc.frame.words"),
           MDString::get(F.getContext(), Anchor->getName()),
           ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(F.getContext()), 0))};
       MDNode *Node = MDNode::get(F.getContext(), tag);
       Anchor->setMetadata("goc.frame.words", Node);
-      Z->setMetadata("goc.frame.words", Node);
-      St->setMetadata("goc.frame.words", Node);
       ++anchors;
+      Instruction *At = Anchor->getNextNode()
+                            ? Anchor->getNextNode()
+                            : Anchor->getParent()->getTerminator();
+      IRBuilder<> Save(At);
+      Save.CreateStore(fix.Arg, Anchor)->setVolatile(true);
 
-      SmallVector<Use *, 8> ordered(fix.Uses.begin(), fix.Uses.end());
-      std::sort(ordered.begin(), ordered.end(), [](Use *A, Use *B) {
-        Instruction *IA = usePoint(*A);
-        Instruction *IB = usePoint(*B);
-        if (IA == IB)
-          return false;
-        if (IA->getParent() != IB->getParent())
-          return IA->getParent() < IB->getParent();
-        return IA->comesBefore(IB);
-      });
+      // Use-list order is enough to share a reload inside one block. Sorting
+      // with Instruction::comesBefore is not a strict weak order once the
+      // block's numbering is stale, and std::sort then corrupts the heap.
+      SmallVector<Instruction *, 8> usePoints;
+      for (Use *U : fix.Uses)
+        usePoints.push_back(usePoint(*U));
       SmallVector<LoadInst *, 8> placed;
-      for (Use *U : ordered) {
+      for (Use *U : fix.Uses) {
         Instruction *At = usePoint(*U);
         LoadInst *Share = nullptr;
         for (LoadInst *Prev : placed) {
@@ -1142,6 +1438,7 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
         U->set(Reload);
         ++reloads;
       }
+      publish(nullptr, fix.Arg, Anchor, usePoints);
     }
     if (anchors || remats)
       errs() << "goc-reanchor: " << F.getName() << " anchors=" << anchors
@@ -1401,10 +1698,315 @@ struct GocPinI64 : PassInfoMixin<GocPinI64> {
 // merged frame afterwards. A stack-pointer argument kept in a callee-saved
 // register, and a local that stores &s->token, are reanchored / tagged so
 // copystack adjusts them. Source noinline is left untouched.
+//
+// goc_stack_hi / goc_uptr_decode / goc_uptr_from_ptr are out of line in
+// another TU, so every JS entry pays a PLT call to read FS:-8 and add.
+// Give each an alwaysinline body here. The O3 pipeline that follows this
+// pass inlines it. The load of g->stack.hi is volatile: morestack updates
+// that word, and a CSE across a call would decode against the old stack.
+Value *tlsGWord(IRBuilder<> &B, uint64_t Off) {
+  FunctionType *FT = FunctionType::get(B.getInt64Ty(), false);
+  InlineAsm *IA = InlineAsm::get(FT, "movq %fs:-8, $0", "=r",
+                                  /*hasSideEffects=*/true);
+  Value *G = B.CreateIntToPtr(B.CreateCall(IA), B.getPtrTy());
+  LoadInst *L = B.CreateLoad(
+      B.getInt64Ty(), B.CreateGEP(B.getInt8Ty(), G, B.getInt64(Off)));
+  L->setVolatile(true);
+  return L;
+}
+
+Function *uptrFatal(Module &M) {
+  if (Function *F = M.getFunction("goc_uptr_fatal"))
+    return F;
+  auto *FT = FunctionType::get(Type::getVoidTy(M.getContext()),
+                               {PointerType::getUnqual(M.getContext())}, false);
+  auto *F = Function::Create(FT, GlobalValue::ExternalLinkage, "goc_uptr_fatal", M);
+  F->setDoesNotReturn();
+  F->setDoesNotThrow();
+  return F;
+}
+
+void emitUptrFatal(IRBuilder<> &B, Module &M, const char *Msg) {
+  B.CreateCall(uptrFatal(M), {B.CreateGlobalString(Msg)});
+  B.CreateUnreachable();
+}
+
+Function *alwaysInlineUptr(Module &M, StringRef Name, FunctionType *FT) {
+  if (Function *F = M.getFunction(Name))
+    return F;
+  auto *F = Function::Create(FT, GlobalValue::InternalLinkage, Name, M);
+  F->addFnAttr(Attribute::AlwaysInline);
+  F->setDoesNotThrow();
+  return F;
+}
+
+Function *inlineStackBound(Module &M, StringRef Name, uint64_t Off) {
+  auto *FT = FunctionType::get(Type::getInt64Ty(M.getContext()), false);
+  Function *F = alwaysInlineUptr(M, Name, FT);
+  if (!F->empty())
+    return F;
+  IRBuilder<> B(BasicBlock::Create(M.getContext(), "entry", F));
+  B.CreateRet(tlsGWord(B, Off));
+  return F;
+}
+
+Function *inlineUptrDecode(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *FT = FunctionType::get(Ptr, {Ptr}, false);
+  Function *F = alwaysInlineUptr(M, "goc.inline.uptr.decode", FT);
+  if (!F->empty())
+    return F;
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Stack = BasicBlock::Create(C, "stack", F);
+  BasicBlock *Join = BasicBlock::Create(C, "join", F);
+  IRBuilder<> B(Entry);
+  Value *Arg = F->getArg(0);
+  Value *W = B.CreatePtrToInt(Arg, B.getInt64Ty());
+  Value *MSB = B.CreateAnd(W, ConstantInt::get(B.getInt64Ty(), 1ULL << 63));
+  B.CreateCondBr(B.CreateICmpNE(MSB, B.getInt64(0)), Stack, Join);
+  B.SetInsertPoint(Stack);
+  Value *Abs = B.CreateIntToPtr(B.CreateAdd(tlsGWord(B, 8), W), Ptr);
+  B.CreateBr(Join);
+  B.SetInsertPoint(Join);
+  PHINode *Phi = B.CreatePHI(Ptr, 2);
+  Phi->addIncoming(Arg, Entry);
+  Phi->addIncoming(Abs, Stack);
+  B.CreateRet(Phi);
+  return F;
+}
+
+Function *inlineUptrFromPtr(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *FT = FunctionType::get(Ptr, {Ptr}, false);
+  Function *F = alwaysInlineUptr(M, "goc.inline.uptr.from_ptr", FT);
+  if (!F->empty())
+    return F;
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Check = BasicBlock::Create(C, "check", F);
+  BasicBlock *Encode = BasicBlock::Create(C, "encode", F);
+  BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
+  BasicBlock *Pass = BasicBlock::Create(C, "cptr", F);
+  IRBuilder<> B(Entry);
+  Value *Arg = F->getArg(0);
+  Value *W = B.CreatePtrToInt(Arg, B.getInt64Ty());
+  B.CreateCondBr(B.CreateICmpEQ(W, B.getInt64(0)), Pass, Check);
+  B.SetInsertPoint(Check);
+  Value *Lo = tlsGWord(B, 0);
+  Value *Hi = tlsGWord(B, 8);
+  Value *In = B.CreateAnd(B.CreateICmpNE(Lo, B.getInt64(0)),
+                          B.CreateICmpNE(Hi, B.getInt64(0)));
+  In = B.CreateAnd(In, B.CreateICmpUGE(W, Lo));
+  In = B.CreateAnd(In, B.CreateICmpULT(W, Hi));
+  B.CreateCondBr(In, Encode, Pass);
+  B.SetInsertPoint(Encode);
+  Value *Off = B.CreateSub(W, Hi);
+  Value *OffMSB = B.CreateAnd(Off, ConstantInt::get(B.getInt64Ty(), 1ULL << 63));
+  Value *Encoded = B.CreateIntToPtr(Off, Ptr);
+  B.CreateCondBr(B.CreateICmpEQ(OffMSB, B.getInt64(0)), Bad, Pass);
+  B.SetInsertPoint(Bad);
+  emitUptrFatal(B, M, "goc_uptr_from_sptr: offset cleared MSB");
+  B.SetInsertPoint(Pass);
+  PHINode *Phi = B.CreatePHI(Ptr, 2);
+  Phi->addIncoming(Arg, Entry);
+  Phi->addIncoming(Arg, Check);
+  Phi->addIncoming(Encoded, Encode);
+  B.CreateRet(Phi);
+  return F;
+}
+
+Function *inlineUptrRequireCptr(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *FT = FunctionType::get(Ptr, {Ptr}, false);
+  Function *F = alwaysInlineUptr(M, "goc.inline.uptr.require_cptr", FT);
+  if (!F->empty())
+    return F;
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
+  BasicBlock *Ok = BasicBlock::Create(C, "ok", F);
+  IRBuilder<> B(Entry);
+  Value *Arg = F->getArg(0);
+  Value *W = B.CreatePtrToInt(Arg, B.getInt64Ty());
+  Value *Lo = tlsGWord(B, 0);
+  Value *Hi = tlsGWord(B, 8);
+  Value *In = B.CreateAnd(B.CreateICmpNE(W, B.getInt64(0)),
+                          B.CreateICmpNE(Lo, B.getInt64(0)));
+  In = B.CreateAnd(In, B.CreateICmpNE(Hi, B.getInt64(0)));
+  In = B.CreateAnd(In, B.CreateICmpUGE(W, Lo));
+  In = B.CreateAnd(In, B.CreateICmpULT(W, Hi));
+  B.CreateCondBr(In, Bad, Ok);
+  B.SetInsertPoint(Bad);
+  emitUptrFatal(B, M, "sptr cannot be returned as cptr");
+  B.SetInsertPoint(Ok);
+  B.CreateRet(Arg);
+  return F;
+}
+
+GlobalVariable *externGlobal(Module &M, StringRef Name, Type *Ty) {
+  if (GlobalVariable *G = M.getGlobalVariable(Name))
+    return G;
+  return new GlobalVariable(M, Ty, false, GlobalValue::ExternalLinkage,
+                            nullptr, Name);
+}
+
+// Pool bump, not a call. Only sound when the linked runtime was built with
+// GOC_DYNALLOC_POOL (the exported cursor). QJS sets GOC_INLINE_DYNALLOC=1.
+Function *inlineDynAlloc(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *I64 = Type::getInt64Ty(C);
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *FT = FunctionType::get(Ptr, {I64, Ptr}, false);
+  Function *F = alwaysInlineUptr(M, "goc.inline.dynalloc", FT);
+  if (!F->empty())
+    return F;
+  GlobalVariable *Pool = externGlobal(M, "goc_alloca_pool", Ptr);
+  GlobalVariable *Off = externGlobal(M, "goc_alloca_off", I64);
+  GlobalVariable *Sz = externGlobal(M, "goc_alloca_pool_size", I64);
+  FunctionCallee Init = M.getOrInsertFunction(
+      "goc_alloca_pool_init", FunctionType::get(Type::getVoidTy(C), false));
+
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
+  BasicBlock *Ready = BasicBlock::Create(C, "ready", F);
+  BasicBlock *DoInit = BasicBlock::Create(C, "doinit", F);
+  BasicBlock *Bump = BasicBlock::Create(C, "bump", F);
+  BasicBlock *Exhaust = BasicBlock::Create(C, "exhaust", F);
+  BasicBlock *Mark = BasicBlock::Create(C, "mark", F);
+  IRBuilder<> B(Entry);
+  Value *Bytes = F->getArg(0);
+  Value *Scope = F->getArg(1);
+  Value *Overflow = B.CreateICmpUGT(Bytes, ConstantInt::get(I64, ~uint64_t{15}));
+  Value *BadArg = B.CreateOr(
+      B.CreateICmpEQ(Scope, ConstantPointerNull::get(cast<PointerType>(Ptr))),
+      Overflow);
+  B.CreateCondBr(BadArg, Bad, Ready);
+  B.SetInsertPoint(Bad);
+  emitUptrFatal(B, M, "dynamic alloca size overflow");
+  B.SetInsertPoint(Ready);
+  Value *Pool0 = B.CreateLoad(Ptr, Pool);
+  B.CreateCondBr(
+      B.CreateICmpEQ(Pool0, ConstantPointerNull::get(cast<PointerType>(Ptr))),
+      DoInit, Bump);
+  B.SetInsertPoint(DoInit);
+  B.CreateCall(Init);
+  Value *Pool1 = B.CreateLoad(Ptr, Pool);
+  B.CreateBr(Bump);
+  B.SetInsertPoint(Bump);
+  PHINode *PoolV = B.CreatePHI(Ptr, 2);
+  PoolV->addIncoming(Pool0, Ready);
+  PoolV->addIncoming(Pool1, DoInit);
+  Value *Cur = B.CreateLoad(I64, Off);
+  Value *Aligned = B.CreateAnd(B.CreateAdd(Bytes, B.getInt64(15)), B.getInt64(~15));
+  Value *Limit = B.CreateLoad(I64, Sz);
+  Value *Left = B.CreateSub(Limit, Cur);
+  B.CreateCondBr(B.CreateICmpUGT(Aligned, Left), Exhaust, Mark);
+  B.SetInsertPoint(Exhaust);
+  emitUptrFatal(B, M, "alloca pool exhausted");
+  B.SetInsertPoint(Mark);
+  Value *Base = B.CreateGEP(B.getInt8Ty(), PoolV, Cur);
+  Value *Mark0 = B.CreateLoad(Ptr, Scope);
+  Value *NeedMark = B.CreateICmpEQ(Mark0, ConstantPointerNull::get(cast<PointerType>(Ptr)));
+  Value *NewMark = B.CreateSelect(NeedMark, Base, Mark0);
+  B.CreateStore(NewMark, Scope);
+  B.CreateStore(B.CreateAdd(Cur, Aligned), Off);
+  B.CreateRet(Base);
+  return F;
+}
+
+Function *inlineDynRelease(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *I64 = Type::getInt64Ty(C);
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *FT = FunctionType::get(Type::getVoidTy(C), {Ptr}, false);
+  Function *F = alwaysInlineUptr(M, "goc.inline.dynrelease", FT);
+  if (!F->empty())
+    return F;
+  GlobalVariable *Pool = externGlobal(M, "goc_alloca_pool", Ptr);
+  GlobalVariable *Off = externGlobal(M, "goc_alloca_off", I64);
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
+  BasicBlock *Empty = BasicBlock::Create(C, "empty", F);
+  BasicBlock *Check = BasicBlock::Create(C, "check", F);
+  BasicBlock *Corrupt = BasicBlock::Create(C, "corrupt", F);
+  BasicBlock *Drop = BasicBlock::Create(C, "drop", F);
+  IRBuilder<> B(Entry);
+  Value *Scope = F->getArg(0);
+  B.CreateCondBr(B.CreateICmpEQ(Scope, ConstantPointerNull::get(cast<PointerType>(Ptr))),
+                 Bad, Empty);
+  B.SetInsertPoint(Bad);
+  emitUptrFatal(B, M, "missing dynamic alloca scope");
+  B.SetInsertPoint(Empty);
+  Value *Mark = B.CreateLoad(Ptr, Scope);
+  BasicBlock *Done = BasicBlock::Create(C, "done", F);
+  B.CreateCondBr(B.CreateICmpEQ(Mark, ConstantPointerNull::get(cast<PointerType>(Ptr))),
+                 Done, Check);
+  B.SetInsertPoint(Check);
+  Value *PoolV = B.CreateLoad(Ptr, Pool);
+  Value *Cur = B.CreateLoad(I64, Off);
+  Value *End = B.CreateGEP(B.getInt8Ty(), PoolV, Cur);
+  Value *Ok = B.CreateAnd(B.CreateICmpUGE(Mark, PoolV), B.CreateICmpULE(Mark, End));
+  B.CreateCondBr(Ok, Drop, Corrupt);
+  B.SetInsertPoint(Corrupt);
+  emitUptrFatal(B, M, "alloca pool watermark corrupt");
+  B.SetInsertPoint(Drop);
+  Value *Delta = B.CreateSub(B.CreatePtrToInt(Mark, I64), B.CreatePtrToInt(PoolV, I64));
+  B.CreateStore(Delta, Off);
+  B.CreateStore(ConstantPointerNull::get(cast<PointerType>(Ptr)), Scope);
+  B.CreateBr(Done);
+  B.SetInsertPoint(Done);
+  B.CreateRetVoid();
+  return F;
+}
+bool rewriteUptrCall(CallInst *CI) {
+  Function *Callee = CI->getCalledFunction();
+  if (!Callee)
+    return false;
+  StringRef N = Callee->getName();
+  Module &M = *CI->getModule();
+  Function *Helper = nullptr;
+  if (N == "goc_stack_hi")
+    Helper = inlineStackBound(M, "goc.inline.stack_hi", 8);
+  else if (N == "goc_stack_lo")
+    Helper = inlineStackBound(M, "goc.inline.stack_lo", 0);
+  else if (N == "goc_uptr_decode")
+    Helper = inlineUptrDecode(M);
+  else if (N == "goc_uptr_from_ptr")
+    Helper = inlineUptrFromPtr(M);
+  else if (N == "goc_uptr_require_cptr")
+    Helper = inlineUptrRequireCptr(M);
+  else if (const char *pool = std::getenv("GOC_INLINE_DYNALLOC")) {
+    if (std::strcmp(pool, "1") == 0 && N == "goc_dynalloc")
+      Helper = inlineDynAlloc(M);
+    else if (std::strcmp(pool, "1") == 0 && N == "goc_dynrelease")
+      Helper = inlineDynRelease(M);
+    else
+      return false;
+  }
+  else
+    return false;
+  if (CI->arg_size() != Helper->arg_size())
+    return false;
+  IRBuilder<> B(CI);
+  SmallVector<Value *, 2> Args(CI->args());
+  CallInst *New = B.CreateCall(Helper, Args);
+  New->setCallingConv(CI->getCallingConv());
+  CI->replaceAllUsesWith(New);
+  CI->eraseFromParent();
+  return true;
+}
+
 struct GocInlineGate : PassInfoMixin<GocInlineGate> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
-    (void)F;
-    return PreservedAnalyses::all();
+    bool Changed = false;
+    SmallVector<CallInst *, 16> calls;
+    for (Instruction &I : instructions(F))
+      if (auto *CI = dyn_cast<CallInst>(&I))
+        calls.push_back(CI);
+    for (CallInst *CI : calls)
+      Changed |= rewriteUptrCall(CI);
+    return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
   }
 
   static bool isRequired() { return true; }

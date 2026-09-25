@@ -189,6 +189,7 @@ LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
           -no-stack-slot-sharing -no-x86-call-frame-opt)
 if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-reserve-goc-r14)
+  echo "realbody: GOC_FIXED_G=1 llc=$LLC" >&2
 fi
 "$LLC" "${LLC_ARGS[@]}" -filetype=asm \
   -o "$TMP/body.s" "$LL"
@@ -443,6 +444,20 @@ def _sptr_slots(ll, sptr_nodes, mir):
     """Per function: positive BP distances of frame words holding sptr values."""
     if not mir:
         return {}
+    # GOC_CSR_ADJUST: a live address llc kept in a callee-saved register has
+    # no post-PEI slot. The morestack stub rewrites that register if it
+    # points into the old stack. An unmarked spill of the same value is
+    # still invisible; the growth smoke is the check, not this scanner.
+    csr_adjust = os.environ.get("GOC_CSR_ADJUST") == "1"
+    dropped = []
+    # goc.anchor / goc.spill.root are uninitialized until the store after
+    # their def. They are not bits in the function-wide map: a copy before
+    # that store sees a small integer and the copier rejects it ("bad pointer
+    # in frame"). The per-call Direct locations, read from -stackmap-elf, OR
+    # them in only at calls the store dominates.
+    def compiler_root(name):
+        return (name.startswith("goc.anchor") or name.startswith("goc.arganchor")
+                or name.startswith("goc.spill.root"))
     ref = re.compile(r'!goc\.color !(?:%s)\b' % '|'.join(sorted(sptr_nodes, key=int))
                      if sptr_nodes else r'(?!)')
     # The IR pass tags stores through an address of an aggregate alloca *before*
@@ -482,10 +497,20 @@ def _sptr_slots(ll, sptr_nodes, mir):
             if word is None:
                 raise SystemExit("realbody: FATAL unknown frame-word annotation %s in %s" %
                                  (tagged.group(1), name))
+            # Compiler roots stay out of the function-wide map. A spill root
+            # can hold &s->token, but the same name also holds small integers
+            # in other functions; the copier then rejects 0x1/0x60 ("bad
+            # pointer in frame"). Per-call maps are the right place for them.
+            # The asm object's .llvm_stackmaps names only 120 of 776 functions;
+            # the rest have an empty reloc symbol, so they cannot be applied yet.
+            if compiler_root(word[0]):
+                continue
             targets.update((word[0], offset) for offset in word[1])
         for m in re.finditer(r'^\s*store (?:volatile )?(?:ptr )?(%\S+), ptr (%\S+),[^\n]*', chunk, re.M):
-            if '!goc.frame.words' not in m.group(0) and m.group(1) in sptr_vals and m.group(2) in held:
-                targets.add((m.group(2).lstrip('%'), 0))
+            slot = m.group(2).lstrip('%')
+            if ('!goc.frame.words' not in m.group(0) and m.group(1) in sptr_vals
+                    and m.group(2) in held and not compiler_root(slot)):
+                targets.add((slot, 0))
         if not targets:
             continue
         obj = {n: o for n, o in mir.get(name, [])}
@@ -514,6 +539,9 @@ def _sptr_slots(ll, sptr_nodes, mir):
                             live = True
                             break
                 if live:
+                    if csr_adjust:
+                        dropped.append("%s:%s" % (name, t))
+                        continue
                     raise SystemExit("realbody: FATAL sptr alloca %s in %s has no post-PEI slot" % (t, name))
                 continue
             off = -obj[t] - 16 - byte_offset
@@ -524,6 +552,9 @@ def _sptr_slots(ll, sptr_nodes, mir):
         offs = sorted(offs)
         if offs:
             slots[name] = offs
+    if dropped:
+        print("realbody: csr-adjust dropped %d unmapped sptr allocas (first %s)" % (
+            len(dropped), ", ".join(dropped[:8])), file=sys.stderr)
     return slots
 
 

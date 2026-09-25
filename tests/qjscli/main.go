@@ -312,6 +312,19 @@ func evaluate(rt, ctx unsafe.Pointer, source []byte, filename string,
 	return nil
 }
 
+//go:noinline
+func forceGrow(n int) {
+	var pad [32 << 10]byte
+	pad[0] = byte(n)
+	pad[len(pad)-1] = byte(n + 1)
+	if n > 1 && pad[0] != 0 {
+		forceGrow(n - 1)
+	}
+	if pad[0]+pad[len(pad)-1] == 255 {
+		os.Exit(2)
+	}
+}
+
 func run(args []string) error {
 	var filename, expression string
 	var module bool
@@ -381,6 +394,7 @@ func run(args []string) error {
 	if rt == nil {
 		return errors.New("JS_NewRuntime failed")
 	}
+	forceGrow(40)
 	defer JS_FreeRuntime(rt)
 	if stackSizeKB > 0 {
 		JS_SetMaxStackSize(rt, uint64(stackSizeKB)*1024)
