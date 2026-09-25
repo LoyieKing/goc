@@ -26,7 +26,22 @@ static int g_test_lo_set = 0;
 
 void goc_uptr_fatal(const char *msg) {
 #ifdef GOC_UPTR_FREESTANDING
-  (void)msg;
+  const char *text = msg ? msg : "(null)";
+  const char *end = text;
+  while (*end)
+    end++;
+  long n = (long)(end - text);
+  /* write(2, text, n). Freestanding: no libc, and the message must survive
+   * a trap that the Go traceback cannot attribute. */
+  __asm__ volatile("syscall"
+                   :
+                   : "a"(1), "D"(2), "S"(text), "d"(n)
+                   : "rcx", "r11", "memory");
+  const char nl = '\n';
+  __asm__ volatile("syscall"
+                   :
+                   : "a"(1), "D"(2), "S"(&nl), "d"(1)
+                   : "rcx", "r11", "memory");
   __builtin_trap();
   for (;;) {
   }

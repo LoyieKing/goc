@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="854" height="284" viewBox="0 0 854 284" font-family="Noto Sans CJK SC, Noto Sans CJK TC, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="650" fill="#0f172a">相对 native ng 的耗时</text>
+<text x="16" y="46" font-size="12" fill="#64748b">1 = 与 native ng 一样快。高于 1 更慢。V8 用分数倒数换算。</text>
+<rect x="16" y="50" width="10" height="10" rx="2" fill="#2563eb"/>
+<text x="30" y="59" font-size="11" fill="#334155">goc</text>
+<rect x="63" y="50" width="10" height="10" rx="2" fill="#059669"/>
+<text x="77" y="59" font-size="11" fill="#334155">native ng</text>
+<rect x="148" y="50" width="10" height="10" rx="2" fill="#d97706"/>
+<text x="162" y="59" font-size="11" fill="#334155">Bellard</text>
+<rect x="220" y="50" width="10" height="10" rx="2" fill="#7c3aed"/>
+<text x="234" y="59" font-size="11" fill="#334155">Goja</text>
+<rect x="142" y="68" width="640" height="58" fill="#f8fafc"/>
+<text x="134" y="101.0" text-anchor="end" font-size="12" fill="#1e293b">V8-v7 总分</text>
+<rect x="142" y="72" width="140.6" height="11" rx="1.5" fill="#2563eb"/>
+<text x="790" y="83" font-size="10" fill="#2563eb">1.16</text>
+<rect x="142" y="84" width="121.5" height="11" rx="1.5" fill="#059669"/>
+<text x="790" y="95" font-size="10" fill="#059669">1.00</text>
+<rect x="142" y="96" width="95.4" height="11" rx="1.5" fill="#d97706"/>
+<text x="790" y="107" font-size="10" fill="#d97706">0.79</text>
+<rect x="142" y="108" width="419.8" height="11" rx="1.5" fill="#7c3aed"/>
+<text x="790" y="119" font-size="10" fill="#7c3aed">3.46</text>
+<text x="134" y="159.0" text-anchor="end" font-size="12" fill="#1e293b">SunSpider 几何平均</text>
+<rect x="142" y="130" width="137.9" height="11" rx="1.5" fill="#2563eb"/>
+<text x="790" y="141" font-size="10" fill="#2563eb">1.14</text>
+<rect x="142" y="142" width="121.5" height="11" rx="1.5" fill="#059669"/>
+<text x="790" y="153" font-size="10" fill="#059669">1.00</text>
+<rect x="142" y="154" width="90.3" height="11" rx="1.5" fill="#d97706"/>
+<text x="790" y="165" font-size="10" fill="#d97706">0.74</text>
+<rect x="142" y="166" width="615.4" height="11" rx="1.5" fill="#7c3aed"/>
+<text x="790" y="177" font-size="10" fill="#7c3aed">5.07</text>
+<rect x="142" y="184" width="640" height="58" fill="#f8fafc"/>
+<text x="134" y="217.0" text-anchor="end" font-size="12" fill="#1e293b">microbench 几何平均</text>
+<rect x="142" y="188" width="147.2" height="11" rx="1.5" fill="#2563eb"/>
+<text x="790" y="199" font-size="10" fill="#2563eb">1.21</text>
+<rect x="142" y="200" width="121.5" height="11" rx="1.5" fill="#059669"/>
+<text x="790" y="211" font-size="10" fill="#059669">1.00</text>
+<rect x="142" y="212" width="86.2" height="11" rx="1.5" fill="#d97706"/>
+<text x="790" y="223" font-size="10" fill="#d97706">0.71</text>
+<rect x="142" y="224" width="549.1" height="11" rx="1.5" fill="#7c3aed"/>
+<text x="790" y="235" font-size="10" fill="#7c3aed">4.52</text>
+<line x1="142" y1="68" x2="142" y2="242" stroke="#cbd5e1"/>
+<line x1="142" y1="242" x2="782" y2="242" stroke="#cbd5e1"/>
+<line x1="142.0" y1="242" x2="142.0" y2="246" stroke="#94a3b8"/>
+<text x="142.0" y="258" text-anchor="middle" font-size="10" fill="#64748b">0.00</text>
+<line x1="302.0" y1="242" x2="302.0" y2="246" stroke="#94a3b8"/>
+<text x="302.0" y="258" text-anchor="middle" font-size="10" fill="#64748b">1.32</text>
+<line x1="462.0" y1="242" x2="462.0" y2="246" stroke="#94a3b8"/>
+<text x="462.0" y="258" text-anchor="middle" font-size="10" fill="#64748b">2.63</text>
+<line x1="622.0" y1="242" x2="622.0" y2="246" stroke="#94a3b8"/>
+<text x="622.0" y="258" text-anchor="middle" font-size="10" fill="#64748b">3.95</text>
+<line x1="782.0" y1="242" x2="782.0" y2="246" stroke="#94a3b8"/>
+<text x="782.0" y="258" text-anchor="middle" font-size="10" fill="#64748b">5.27</text>
+<text x="462.0" y="276" text-anchor="middle" font-size="11" fill="#64748b">耗时 / native ng</text>
+</svg>

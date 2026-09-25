@@ -1,0 +1,256 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="855" height="1366" viewBox="0 0 855 1366" font-family="Noto Sans CJK SC, Noto Sans CJK TC, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="24" font-size="16" font-weight="650" fill="#0f172a">microbench：goc / native ng</text>
+<text x="16" y="42" font-size="12" fill="#64748b">1 的虚线表示与 native ng 一样快。红 ≥ 1.30，蓝 1.00–1.30，绿 &lt; 1。不含 date_parse。</text>
+<rect x="171" y="52" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="65" text-anchor="end" font-size="11" fill="#1e293b">date_now</text>
+<rect x="171" y="56" width="553.6" height="10" rx="1.5" fill="#dc2626"/>
+<text x="728.6" y="65" font-size="10" fill="#475569">4.53</text>
+<text x="163" y="83" text-anchor="end" font-size="11" fill="#1e293b">map_set_int</text>
+<rect x="171" y="74" width="254.1" height="10" rx="1.5" fill="#dc2626"/>
+<text x="429.1" y="83" font-size="10" fill="#475569">2.08</text>
+<rect x="171" y="88" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="101" text-anchor="end" font-size="11" fill="#1e293b">float_toFixed</text>
+<rect x="171" y="92" width="196.3" height="10" rx="1.5" fill="#dc2626"/>
+<text x="371.3" y="101" font-size="10" fill="#475569">1.61</text>
+<text x="163" y="119" text-anchor="end" font-size="11" fill="#1e293b">float_toExponential</text>
+<rect x="171" y="110" width="187.2" height="10" rx="1.5" fill="#dc2626"/>
+<text x="362.2" y="119" font-size="10" fill="#475569">1.53</text>
+<rect x="171" y="124" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="137" text-anchor="end" font-size="11" fill="#1e293b">float_toPrecision</text>
+<rect x="171" y="128" width="180.7" height="10" rx="1.5" fill="#dc2626"/>
+<text x="355.7" y="137" font-size="10" fill="#475569">1.48</text>
+<text x="163" y="155" text-anchor="end" font-size="11" fill="#1e293b">array_for_in</text>
+<rect x="171" y="146" width="179.6" height="10" rx="1.5" fill="#dc2626"/>
+<text x="354.6" y="155" font-size="10" fill="#475569">1.47</text>
+<rect x="171" y="160" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="173" text-anchor="end" font-size="11" fill="#1e293b">map_set_bigint</text>
+<rect x="171" y="164" width="174.2" height="10" rx="1.5" fill="#dc2626"/>
+<text x="349.2" y="173" font-size="10" fill="#475569">1.43</text>
+<text x="163" y="191" text-anchor="end" font-size="11" fill="#1e293b">regexp_replace</text>
+<rect x="171" y="182" width="172.8" height="10" rx="1.5" fill="#dc2626"/>
+<text x="347.8" y="191" font-size="10" fill="#475569">1.42</text>
+<rect x="171" y="196" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="209" text-anchor="end" font-size="11" fill="#1e293b">regexp_ascii</text>
+<rect x="171" y="200" width="170.9" height="10" rx="1.5" fill="#dc2626"/>
+<text x="345.9" y="209" font-size="10" fill="#475569">1.40</text>
+<text x="163" y="227" text-anchor="end" font-size="11" fill="#1e293b">int_toString</text>
+<rect x="171" y="218" width="168.4" height="10" rx="1.5" fill="#dc2626"/>
+<text x="343.4" y="227" font-size="10" fill="#475569">1.38</text>
+<rect x="171" y="232" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="245" text-anchor="end" font-size="11" fill="#1e293b">string_build3</text>
+<rect x="171" y="236" width="167.5" height="10" rx="1.5" fill="#dc2626"/>
+<text x="342.5" y="245" font-size="10" fill="#475569">1.37</text>
+<text x="163" y="263" text-anchor="end" font-size="11" fill="#1e293b">string_build2</text>
+<rect x="171" y="254" width="164.7" height="10" rx="1.5" fill="#dc2626"/>
+<text x="339.7" y="263" font-size="10" fill="#475569">1.35</text>
+<rect x="171" y="268" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="281" text-anchor="end" font-size="11" fill="#1e293b">prop_write</text>
+<rect x="171" y="272" width="164.3" height="10" rx="1.5" fill="#dc2626"/>
+<text x="339.3" y="281" font-size="10" fill="#475569">1.35</text>
+<text x="163" y="299" text-anchor="end" font-size="11" fill="#1e293b">int_to_string</text>
+<rect x="171" y="290" width="163.8" height="10" rx="1.5" fill="#dc2626"/>
+<text x="338.8" y="299" font-size="10" fill="#475569">1.34</text>
+<rect x="171" y="304" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="317" text-anchor="end" font-size="11" fill="#1e293b">array_for</text>
+<rect x="171" y="308" width="163.2" height="10" rx="1.5" fill="#dc2626"/>
+<text x="338.2" y="317" font-size="10" fill="#475569">1.34</text>
+<text x="163" y="335" text-anchor="end" font-size="11" fill="#1e293b">sort_bench</text>
+<rect x="171" y="326" width="159.5" height="10" rx="1.5" fill="#dc2626"/>
+<text x="334.5" y="335" font-size="10" fill="#475569">1.31</text>
+<rect x="171" y="340" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="353" text-anchor="end" font-size="11" fill="#1e293b">array_hole_length_decr</text>
+<rect x="171" y="344" width="158.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="333.4" y="353" font-size="10" fill="#475569">1.30</text>
+<text x="163" y="371" text-anchor="end" font-size="11" fill="#1e293b">array_prop_create</text>
+<rect x="171" y="362" width="157.2" height="10" rx="1.5" fill="#2563eb"/>
+<text x="332.2" y="371" font-size="10" fill="#475569">1.29</text>
+<rect x="171" y="376" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="389" text-anchor="end" font-size="11" fill="#1e293b">string_build_large2</text>
+<rect x="171" y="380" width="156.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="331.8" y="389" font-size="10" fill="#475569">1.28</text>
+<text x="163" y="407" text-anchor="end" font-size="11" fill="#1e293b">string_build1</text>
+<rect x="171" y="398" width="155.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="330.4" y="407" font-size="10" fill="#475569">1.27</text>
+<rect x="171" y="412" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="425" text-anchor="end" font-size="11" fill="#1e293b">map_delete</text>
+<rect x="171" y="416" width="154.5" height="10" rx="1.5" fill="#2563eb"/>
+<text x="329.5" y="425" font-size="10" fill="#475569">1.27</text>
+<text x="163" y="443" text-anchor="end" font-size="11" fill="#1e293b">arguments_strict_read</text>
+<rect x="171" y="434" width="153.9" height="10" rx="1.5" fill="#2563eb"/>
+<text x="328.9" y="443" font-size="10" fill="#475569">1.26</text>
+<rect x="171" y="448" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="461" text-anchor="end" font-size="11" fill="#1e293b">bigint32_arith</text>
+<rect x="171" y="452" width="153.9" height="10" rx="1.5" fill="#2563eb"/>
+<text x="328.9" y="461" font-size="10" fill="#475569">1.26</text>
+<text x="163" y="479" text-anchor="end" font-size="11" fill="#1e293b">float_to_string</text>
+<rect x="171" y="470" width="153.2" height="10" rx="1.5" fill="#2563eb"/>
+<text x="328.2" y="479" font-size="10" fill="#475569">1.25</text>
+<rect x="171" y="484" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="497" text-anchor="end" font-size="11" fill="#1e293b">arguments_read</text>
+<rect x="171" y="488" width="152.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="327.8" y="497" font-size="10" fill="#475569">1.25</text>
+<text x="163" y="515" text-anchor="end" font-size="11" fill="#1e293b">bigint256_arith</text>
+<rect x="171" y="506" width="152.3" height="10" rx="1.5" fill="#2563eb"/>
+<text x="327.3" y="515" font-size="10" fill="#475569">1.25</text>
+<rect x="171" y="520" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="533" text-anchor="end" font-size="11" fill="#1e293b">bigint64_arith</text>
+<rect x="171" y="524" width="152.1" height="10" rx="1.5" fill="#2563eb"/>
+<text x="327.1" y="533" font-size="10" fill="#475569">1.25</text>
+<text x="163" y="551" text-anchor="end" font-size="11" fill="#1e293b">regexp_utf16</text>
+<rect x="171" y="542" width="150.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="325.8" y="551" font-size="10" fill="#475569">1.23</text>
+<rect x="171" y="556" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="569" text-anchor="end" font-size="11" fill="#1e293b">string_build_large1</text>
+<rect x="171" y="560" width="150.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="325.7" y="569" font-size="10" fill="#475569">1.23</text>
+<text x="163" y="587" text-anchor="end" font-size="11" fill="#1e293b">string_build1x</text>
+<rect x="171" y="578" width="149.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="324.8" y="587" font-size="10" fill="#475569">1.23</text>
+<rect x="171" y="592" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="605" text-anchor="end" font-size="11" fill="#1e293b">typed_array_write</text>
+<rect x="171" y="596" width="147.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="322.7" y="605" font-size="10" fill="#475569">1.21</text>
+<text x="163" y="623" text-anchor="end" font-size="11" fill="#1e293b">float_toString</text>
+<rect x="171" y="614" width="147.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="322.7" y="623" font-size="10" fill="#475569">1.21</text>
+<rect x="171" y="628" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="641" text-anchor="end" font-size="11" fill="#1e293b">map_set_string</text>
+<rect x="171" y="632" width="147.6" height="10" rx="1.5" fill="#2563eb"/>
+<text x="322.6" y="641" font-size="10" fill="#475569">1.21</text>
+<text x="163" y="659" text-anchor="end" font-size="11" fill="#1e293b">empty_do_loop</text>
+<rect x="171" y="650" width="146.5" height="10" rx="1.5" fill="#2563eb"/>
+<text x="321.5" y="659" font-size="10" fill="#475569">1.20</text>
+<rect x="171" y="664" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="677" text-anchor="end" font-size="11" fill="#1e293b">string_to_float</text>
+<rect x="171" y="668" width="146.2" height="10" rx="1.5" fill="#2563eb"/>
+<text x="321.2" y="677" font-size="10" fill="#475569">1.20</text>
+<text x="163" y="695" text-anchor="end" font-size="11" fill="#1e293b">array_write</text>
+<rect x="171" y="686" width="145.5" height="10" rx="1.5" fill="#2563eb"/>
+<text x="320.5" y="695" font-size="10" fill="#475569">1.19</text>
+<rect x="171" y="700" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="713" text-anchor="end" font-size="11" fill="#1e293b">local_destruct</text>
+<rect x="171" y="704" width="144.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="319.8" y="713" font-size="10" fill="#475569">1.19</text>
+<text x="163" y="731" text-anchor="end" font-size="11" fill="#1e293b">string_build4</text>
+<rect x="171" y="722" width="144.2" height="10" rx="1.5" fill="#2563eb"/>
+<text x="319.2" y="731" font-size="10" fill="#475569">1.18</text>
+<rect x="171" y="736" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="749" text-anchor="end" font-size="11" fill="#1e293b">func_closure_call</text>
+<rect x="171" y="740" width="143.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="318.8" y="749" font-size="10" fill="#475569">1.18</text>
+<text x="163" y="767" text-anchor="end" font-size="11" fill="#1e293b">global_destruct_strict</text>
+<rect x="171" y="758" width="143.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="318.7" y="767" font-size="10" fill="#475569">1.18</text>
+<rect x="171" y="772" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="785" text-anchor="end" font-size="11" fill="#1e293b">global_destruct</text>
+<rect x="171" y="776" width="142.6" height="10" rx="1.5" fill="#2563eb"/>
+<text x="317.6" y="785" font-size="10" fill="#475569">1.17</text>
+<text x="163" y="803" text-anchor="end" font-size="11" fill="#1e293b">array_length_decr</text>
+<rect x="171" y="794" width="142.0" height="10" rx="1.5" fill="#2563eb"/>
+<text x="317.0" y="803" font-size="10" fill="#475569">1.16</text>
+<rect x="171" y="808" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="821" text-anchor="end" font-size="11" fill="#1e293b">empty_down_loop2</text>
+<rect x="171" y="812" width="141.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="316.8" y="821" font-size="10" fill="#475569">1.16</text>
+<text x="163" y="839" text-anchor="end" font-size="11" fill="#1e293b">array_for_of</text>
+<rect x="171" y="830" width="141.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="316.4" y="839" font-size="10" fill="#475569">1.16</text>
+<rect x="171" y="844" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="857" text-anchor="end" font-size="11" fill="#1e293b">int_arith</text>
+<rect x="171" y="848" width="141.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="316.4" y="857" font-size="10" fill="#475569">1.16</text>
+<text x="163" y="875" text-anchor="end" font-size="11" fill="#1e293b">prop_update</text>
+<rect x="171" y="866" width="140.9" height="10" rx="1.5" fill="#2563eb"/>
+<text x="315.9" y="875" font-size="10" fill="#475569">1.15</text>
+<rect x="171" y="880" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="893" text-anchor="end" font-size="11" fill="#1e293b">empty_loop</text>
+<rect x="171" y="884" width="139.9" height="10" rx="1.5" fill="#2563eb"/>
+<text x="314.9" y="893" font-size="10" fill="#475569">1.15</text>
+<text x="163" y="911" text-anchor="end" font-size="11" fill="#1e293b">typed_array_read</text>
+<rect x="171" y="902" width="139.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="314.8" y="911" font-size="10" fill="#475569">1.14</text>
+<rect x="171" y="916" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="929" text-anchor="end" font-size="11" fill="#1e293b">string_to_int</text>
+<rect x="171" y="920" width="139.1" height="10" rx="1.5" fill="#2563eb"/>
+<text x="314.1" y="929" font-size="10" fill="#475569">1.14</text>
+<text x="163" y="947" text-anchor="end" font-size="11" fill="#1e293b">array_slice</text>
+<rect x="171" y="938" width="139.1" height="10" rx="1.5" fill="#2563eb"/>
+<text x="314.1" y="947" font-size="10" fill="#475569">1.14</text>
+<rect x="171" y="952" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="965" text-anchor="end" font-size="11" fill="#1e293b">prop_delete</text>
+<rect x="171" y="956" width="138.5" height="10" rx="1.5" fill="#2563eb"/>
+<text x="313.5" y="965" font-size="10" fill="#475569">1.13</text>
+<text x="163" y="983" text-anchor="end" font-size="11" fill="#1e293b">array_pop</text>
+<rect x="171" y="974" width="137.0" height="10" rx="1.5" fill="#2563eb"/>
+<text x="312.0" y="983" font-size="10" fill="#475569">1.12</text>
+<rect x="171" y="988" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1001" text-anchor="end" font-size="11" fill="#1e293b">weak_map_delete</text>
+<rect x="171" y="992" width="136.5" height="10" rx="1.5" fill="#2563eb"/>
+<text x="311.5" y="1001" font-size="10" fill="#475569">1.12</text>
+<text x="163" y="1019" text-anchor="end" font-size="11" fill="#1e293b">prop_clone</text>
+<rect x="171" y="1010" width="136.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="311.4" y="1019" font-size="10" fill="#475569">1.12</text>
+<rect x="171" y="1024" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1037" text-anchor="end" font-size="11" fill="#1e293b">func_call</text>
+<rect x="171" y="1028" width="134.2" height="10" rx="1.5" fill="#2563eb"/>
+<text x="309.2" y="1037" font-size="10" fill="#475569">1.10</text>
+<text x="163" y="1055" text-anchor="end" font-size="11" fill="#1e293b">global_func_call</text>
+<rect x="171" y="1046" width="133.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="308.8" y="1055" font-size="10" fill="#475569">1.10</text>
+<rect x="171" y="1060" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1073" text-anchor="end" font-size="11" fill="#1e293b">empty_down_loop</text>
+<rect x="171" y="1064" width="133.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="308.7" y="1073" font-size="10" fill="#475569">1.09</text>
+<text x="163" y="1091" text-anchor="end" font-size="11" fill="#1e293b">prop_create</text>
+<rect x="171" y="1082" width="131.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="306.7" y="1091" font-size="10" fill="#475569">1.08</text>
+<rect x="171" y="1096" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1109" text-anchor="end" font-size="11" fill="#1e293b">float_arith</text>
+<rect x="171" y="1100" width="131.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="306.7" y="1109" font-size="10" fill="#475569">1.08</text>
+<text x="163" y="1127" text-anchor="end" font-size="11" fill="#1e293b">array_push</text>
+<rect x="171" y="1118" width="131.1" height="10" rx="1.5" fill="#2563eb"/>
+<text x="306.1" y="1127" font-size="10" fill="#475569">1.07</text>
+<rect x="171" y="1132" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1145" text-anchor="end" font-size="11" fill="#1e293b">weak_map_set</text>
+<rect x="171" y="1136" width="130.9" height="10" rx="1.5" fill="#2563eb"/>
+<text x="305.9" y="1145" font-size="10" fill="#475569">1.07</text>
+<text x="163" y="1163" text-anchor="end" font-size="11" fill="#1e293b">array_read</text>
+<rect x="171" y="1154" width="129.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="304.8" y="1163" font-size="10" fill="#475569">1.06</text>
+<rect x="171" y="1168" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1181" text-anchor="end" font-size="11" fill="#1e293b">string_build2c</text>
+<rect x="171" y="1172" width="126.8" height="10" rx="1.5" fill="#2563eb"/>
+<text x="301.8" y="1181" font-size="10" fill="#475569">1.04</text>
+<text x="163" y="1199" text-anchor="end" font-size="11" fill="#1e293b">array_update</text>
+<rect x="171" y="1190" width="122.9" height="10" rx="1.5" fill="#2563eb"/>
+<text x="297.9" y="1199" font-size="10" fill="#475569">1.01</text>
+<rect x="171" y="1204" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1217" text-anchor="end" font-size="11" fill="#1e293b">string_length</text>
+<rect x="171" y="1208" width="119.5" height="10" rx="1.5" fill="#059669"/>
+<text x="294.5" y="1217" font-size="10" fill="#475569">0.98</text>
+<text x="163" y="1235" text-anchor="end" font-size="11" fill="#1e293b">prop_read</text>
+<rect x="171" y="1226" width="118.9" height="10" rx="1.5" fill="#059669"/>
+<text x="293.9" y="1235" font-size="10" fill="#475569">0.97</text>
+<rect x="171" y="1240" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1253" text-anchor="end" font-size="11" fill="#1e293b">global_read</text>
+<rect x="171" y="1244" width="111.6" height="10" rx="1.5" fill="#059669"/>
+<text x="286.6" y="1253" font-size="10" fill="#475569">0.91</text>
+<text x="163" y="1271" text-anchor="end" font-size="11" fill="#1e293b">math_min</text>
+<rect x="171" y="1262" width="109.4" height="10" rx="1.5" fill="#059669"/>
+<text x="284.4" y="1271" font-size="10" fill="#475569">0.90</text>
+<rect x="171" y="1276" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1289" text-anchor="end" font-size="11" fill="#1e293b">array_length_read</text>
+<rect x="171" y="1280" width="102.9" height="10" rx="1.5" fill="#059669"/>
+<text x="277.9" y="1289" font-size="10" fill="#475569">0.84</text>
+<text x="163" y="1307" text-anchor="end" font-size="11" fill="#1e293b">global_write</text>
+<rect x="171" y="1298" width="94.9" height="10" rx="1.5" fill="#059669"/>
+<text x="269.9" y="1307" font-size="10" fill="#475569">0.78</text>
+<rect x="171" y="1312" width="620" height="18" fill="#f8fafc"/>
+<text x="163" y="1325" text-anchor="end" font-size="11" fill="#1e293b">global_write_strict</text>
+<rect x="171" y="1316" width="91.7" height="10" rx="1.5" fill="#059669"/>
+<text x="266.7" y="1325" font-size="10" fill="#475569">0.75</text>
+<line x1="293.1" y1="52" x2="293.1" y2="1330" stroke="#94a3b8" stroke-dasharray="3 3"/>
+<text x="481.0" y="1358" text-anchor="middle" font-size="11" fill="#64748b">耗时 / native ng</text>
+</svg>

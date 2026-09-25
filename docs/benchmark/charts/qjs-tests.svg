@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="785" height="370" viewBox="0 0 785 370" font-family="Noto Sans CJK SC, Noto Sans CJK TC, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="650" fill="#0f172a">QuickJS 官方测试</text>
+<text x="16" y="46" font-size="12" fill="#64748b">Bellard 2026-06-04 tests/test_*.js，按函数计通过率。</text>
+<rect x="16" y="50" width="10" height="10" rx="2" fill="#2563eb"/>
+<text x="30" y="59" font-size="11" fill="#334155">goc</text>
+<rect x="63" y="50" width="10" height="10" rx="2" fill="#059669"/>
+<text x="77" y="59" font-size="11" fill="#334155">native ng</text>
+<rect x="148" y="50" width="10" height="10" rx="2" fill="#d97706"/>
+<text x="162" y="59" font-size="11" fill="#334155">Bellard</text>
+<rect x="220" y="50" width="10" height="10" rx="2" fill="#7c3aed"/>
+<text x="234" y="59" font-size="11" fill="#334155">Goja</text>
+<rect x="73" y="68" width="640" height="52" fill="#f8fafc"/>
+<text x="65" y="98.0" text-anchor="end" font-size="12" fill="#1e293b">language</text>
+<rect x="73" y="72" width="616.3" height="10" rx="1.5" fill="#2563eb"/>
+<text x="721" y="82" font-size="10" fill="#2563eb">96.3%</text>
+<rect x="73" y="83" width="616.3" height="10" rx="1.5" fill="#059669"/>
+<text x="721" y="93" font-size="10" fill="#059669">96.3%</text>
+<rect x="73" y="94" width="640.0" height="10" rx="1.5" fill="#d97706"/>
+<text x="721" y="104" font-size="10" fill="#d97706">100.0%</text>
+<rect x="73" y="105" width="545.2" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="721" y="115" font-size="10" fill="#7c3aed">85.2%</text>
+<text x="65" y="150.0" text-anchor="end" font-size="12" fill="#1e293b">closure</text>
+<rect x="73" y="124" width="640.0" height="10" rx="1.5" fill="#2563eb"/>
+<text x="721" y="134" font-size="10" fill="#2563eb">100.0%</text>
+<rect x="73" y="135" width="640.0" height="10" rx="1.5" fill="#059669"/>
+<text x="721" y="145" font-size="10" fill="#059669">100.0%</text>
+<rect x="73" y="146" width="640.0" height="10" rx="1.5" fill="#d97706"/>
+<text x="721" y="156" font-size="10" fill="#d97706">100.0%</text>
+<rect x="73" y="157" width="548.6" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="721" y="167" font-size="10" fill="#7c3aed">85.7%</text>
+<rect x="73" y="172" width="640" height="52" fill="#f8fafc"/>
+<text x="65" y="202.0" text-anchor="end" font-size="12" fill="#1e293b">loop</text>
+<rect x="73" y="176" width="604.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="721" y="186" font-size="10" fill="#2563eb">94.4%</text>
+<rect x="73" y="187" width="604.4" height="10" rx="1.5" fill="#059669"/>
+<text x="721" y="197" font-size="10" fill="#059669">94.4%</text>
+<rect x="73" y="198" width="640.0" height="10" rx="1.5" fill="#d97706"/>
+<text x="721" y="208" font-size="10" fill="#d97706">100.0%</text>
+<rect x="73" y="209" width="604.4" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="721" y="219" font-size="10" fill="#7c3aed">94.4%</text>
+<text x="65" y="254.0" text-anchor="end" font-size="12" fill="#1e293b">bigint</text>
+<rect x="73" y="228" width="640.0" height="10" rx="1.5" fill="#2563eb"/>
+<text x="721" y="238" font-size="10" fill="#2563eb">100.0%</text>
+<rect x="73" y="239" width="640.0" height="10" rx="1.5" fill="#059669"/>
+<text x="721" y="249" font-size="10" fill="#059669">100.0%</text>
+<rect x="73" y="250" width="640.0" height="10" rx="1.5" fill="#d97706"/>
+<text x="721" y="260" font-size="10" fill="#d97706">100.0%</text>
+<rect x="73" y="261" width="480.0" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="721" y="271" font-size="10" fill="#7c3aed">75.0%</text>
+<rect x="73" y="276" width="640" height="52" fill="#f8fafc"/>
+<text x="65" y="306.0" text-anchor="end" font-size="12" fill="#1e293b">builtin</text>
+<rect x="73" y="280" width="457.1" height="10" rx="1.5" fill="#2563eb"/>
+<text x="721" y="290" font-size="10" fill="#2563eb">71.4%</text>
+<rect x="73" y="291" width="457.1" height="10" rx="1.5" fill="#059669"/>
+<text x="721" y="301" font-size="10" fill="#059669">71.4%</text>
+<rect x="73" y="302" width="518.1" height="10" rx="1.5" fill="#d97706"/>
+<text x="721" y="312" font-size="10" fill="#d97706">81.0%</text>
+<rect x="73" y="313" width="274.3" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="721" y="323" font-size="10" fill="#7c3aed">42.9%</text>
+<line x1="73" y1="68" x2="73" y2="328" stroke="#cbd5e1"/>
+<line x1="73" y1="328" x2="713" y2="328" stroke="#cbd5e1"/>
+<line x1="73.0" y1="328" x2="73.0" y2="332" stroke="#94a3b8"/>
+<text x="73.0" y="344" text-anchor="middle" font-size="10" fill="#64748b">0.0%</text>
+<line x1="233.0" y1="328" x2="233.0" y2="332" stroke="#94a3b8"/>
+<text x="233.0" y="344" text-anchor="middle" font-size="10" fill="#64748b">25.0%</text>
+<line x1="393.0" y1="328" x2="393.0" y2="332" stroke="#94a3b8"/>
+<text x="393.0" y="344" text-anchor="middle" font-size="10" fill="#64748b">50.0%</text>
+<line x1="553.0" y1="328" x2="553.0" y2="332" stroke="#94a3b8"/>
+<text x="553.0" y="344" text-anchor="middle" font-size="10" fill="#64748b">75.0%</text>
+<line x1="713.0" y1="328" x2="713.0" y2="332" stroke="#94a3b8"/>
+<text x="713.0" y="344" text-anchor="middle" font-size="10" fill="#64748b">100.0%</text>
+<text x="393.0" y="362" text-anchor="middle" font-size="11" fill="#64748b">通过率 %</text>
+</svg>

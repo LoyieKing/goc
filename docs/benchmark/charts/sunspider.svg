@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="845" height="682" viewBox="0 0 845 682" font-family="Noto Sans CJK SC, Noto Sans CJK TC, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="650" fill="#0f172a">SunSpider 1.0.2，不含 Goja</text>
+<text x="16" y="46" font-size="12" fill="#64748b">ms/次，越低越快。失败项不画条。几何平均不含 3d-cube 和 string-tagcloud。</text>
+<rect x="16" y="50" width="10" height="10" rx="2" fill="#2563eb"/>
+<text x="30" y="59" font-size="11" fill="#334155">goc</text>
+<rect x="63" y="50" width="10" height="10" rx="2" fill="#059669"/>
+<text x="77" y="59" font-size="11" fill="#334155">native ng</text>
+<rect x="148" y="50" width="10" height="10" rx="2" fill="#d97706"/>
+<text x="162" y="59" font-size="11" fill="#334155">Bellard</text>
+<rect x="185" y="68" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="83.0" text-anchor="end" font-size="12" fill="#1e293b">3d-cube</text>
+<text x="188" y="75" font-size="9" fill="#94a3b8">×</text>
+<rect x="185" y="76" width="205.7" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="80" width="152.4" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="105.0" text-anchor="end" font-size="12" fill="#1e293b">3d-morph</text>
+<rect x="185" y="94" width="204.0" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="98" width="159.7" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="102" width="117.6" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="112" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="127.0" text-anchor="end" font-size="12" fill="#1e293b">3d-raytrace</text>
+<rect x="185" y="116" width="27.8" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="120" width="24.9" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="124" width="15.4" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="149.0" text-anchor="end" font-size="12" fill="#1e293b">access-binary-trees</text>
+<rect x="185" y="138" width="115.5" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="142" width="112.1" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="146" width="93.8" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="156" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="171.0" text-anchor="end" font-size="12" fill="#1e293b">access-fannkuch</text>
+<rect x="185" y="160" width="615.4" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="164" width="521.6" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="168" width="305.5" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="193.0" text-anchor="end" font-size="12" fill="#1e293b">access-nbody</text>
+<rect x="185" y="182" width="168.5" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="186" width="165.6" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="190" width="120.6" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="200" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="215.0" text-anchor="end" font-size="12" fill="#1e293b">access-nsieve</text>
+<rect x="185" y="204" width="303.3" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="208" width="259.3" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="212" width="142.1" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="237.0" text-anchor="end" font-size="12" fill="#1e293b">bitops-3bit-bits-in-byte</text>
+<rect x="185" y="226" width="98.7" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="230" width="93.8" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="234" width="77.5" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="244" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="259.0" text-anchor="end" font-size="12" fill="#1e293b">bitops-bits-in-byte</text>
+<rect x="185" y="248" width="172.9" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="252" width="150.9" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="256" width="125.6" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="281.0" text-anchor="end" font-size="12" fill="#1e293b">bitops-bitwise-and</text>
+<rect x="185" y="270" width="107.7" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="274" width="125.6" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="278" width="63.0" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="288" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="303.0" text-anchor="end" font-size="12" fill="#1e293b">bitops-nsieve-bits</text>
+<rect x="185" y="292" width="195.2" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="296" width="161.2" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="300" width="120.6" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="325.0" text-anchor="end" font-size="12" fill="#1e293b">controlflow-recursive</text>
+<rect x="185" y="314" width="76.7" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="318" width="65.9" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="322" width="54.6" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="332" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="347.0" text-anchor="end" font-size="12" fill="#1e293b">crypto-aes</text>
+<rect x="185" y="336" width="198.7" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="340" width="171.4" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="344" width="120.6" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="369.0" text-anchor="end" font-size="12" fill="#1e293b">crypto-md5</text>
+<rect x="185" y="358" width="80.0" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="362" width="68.1" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="366" width="57.8" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="376" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="391.0" text-anchor="end" font-size="12" fill="#1e293b">crypto-sha1</text>
+<rect x="185" y="380" width="76.7" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="384" width="66.7" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="388" width="53.9" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="413.0" text-anchor="end" font-size="12" fill="#1e293b">date-format-tofte</text>
+<rect x="185" y="402" width="70.3" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="406" width="59.3" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="410" width="42.2" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="420" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="435.0" text-anchor="end" font-size="12" fill="#1e293b">date-format-xparb</text>
+<rect x="185" y="424" width="26.4" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="428" width="27.8" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="432" width="26.4" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="457.0" text-anchor="end" font-size="12" fill="#1e293b">math-cordic</text>
+<rect x="185" y="446" width="216.3" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="450" width="207.5" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="454" width="196.9" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="464" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="479.0" text-anchor="end" font-size="12" fill="#1e293b">math-partial-sums</text>
+<rect x="185" y="468" width="140.7" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="472" width="126.8" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="476" width="82.6" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="501.0" text-anchor="end" font-size="12" fill="#1e293b">math-spectral-norm</text>
+<rect x="185" y="490" width="88.9" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="494" width="80.0" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="498" width="70.3" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="508" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="523.0" text-anchor="end" font-size="12" fill="#1e293b">regexp-dna</text>
+<rect x="185" y="512" width="356.0" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="516" width="196.3" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="520" width="175.8" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="545.0" text-anchor="end" font-size="12" fill="#1e293b">string-base64</text>
+<rect x="185" y="534" width="135.6" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="538" width="131.9" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="542" width="114.3" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="552" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="567.0" text-anchor="end" font-size="12" fill="#1e293b">string-fasta</text>
+<rect x="185" y="556" width="433.7" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="560" width="386.8" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="564" width="188.1" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="589.0" text-anchor="end" font-size="12" fill="#1e293b">string-tagcloud</text>
+<text x="188" y="581" font-size="9" fill="#94a3b8">×</text>
+<rect x="185" y="582" width="230.8" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="586" width="172.3" height="3" rx="1.5" fill="#d97706"/>
+<rect x="185" y="596" width="640" height="22" fill="#f8fafc"/>
+<text x="177" y="611.0" text-anchor="end" font-size="12" fill="#1e293b">string-unpack-code</text>
+<rect x="185" y="600" width="457.1" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="604" width="366.3" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="608" width="296.7" height="3" rx="1.5" fill="#d97706"/>
+<text x="177" y="633.0" text-anchor="end" font-size="12" fill="#1e293b">string-validate-input</text>
+<rect x="185" y="622" width="123.1" height="3" rx="1.5" fill="#2563eb"/>
+<rect x="185" y="626" width="103.3" height="3" rx="1.5" fill="#059669"/>
+<rect x="185" y="630" width="80.9" height="3" rx="1.5" fill="#d97706"/>
+<line x1="185" y1="68" x2="185" y2="640" stroke="#cbd5e1"/>
+<line x1="185" y1="640" x2="825" y2="640" stroke="#cbd5e1"/>
+<line x1="185.0" y1="640" x2="185.0" y2="644" stroke="#94a3b8"/>
+<text x="185.0" y="656" text-anchor="middle" font-size="10" fill="#64748b">0.00</text>
+<line x1="345.0" y1="640" x2="345.0" y2="644" stroke="#94a3b8"/>
+<text x="345.0" y="656" text-anchor="middle" font-size="10" fill="#64748b">18.2</text>
+<line x1="505.0" y1="640" x2="505.0" y2="644" stroke="#94a3b8"/>
+<text x="505.0" y="656" text-anchor="middle" font-size="10" fill="#64748b">36.4</text>
+<line x1="665.0" y1="640" x2="665.0" y2="644" stroke="#94a3b8"/>
+<text x="665.0" y="656" text-anchor="middle" font-size="10" fill="#64748b">54.6</text>
+<line x1="825.0" y1="640" x2="825.0" y2="644" stroke="#94a3b8"/>
+<text x="825.0" y="656" text-anchor="middle" font-size="10" fill="#64748b">72.8</text>
+<text x="505.0" y="674" text-anchor="middle" font-size="11" fill="#64748b">ms / 次</text>
+</svg>

@@ -625,10 +625,16 @@ struct tm *goc_localtime_r(const time_t *t, struct tm *tm) {
   struct tm *result = tm;
   long seconds = *t;
   char *zone = goc_localtime_zone;
+  /* Go spills register args just above the return address so traceback can
+   * recover them. A raw call from C does not reserve that area, so the spill
+   * overwrites this frame and a later uptr check traps. 64 bytes covers this
+   * 3-word signature. */
   __asm__ volatile(
+      "subq $64, %%rsp\n\t"
       "movq %%fs:-8, %%r14\n\t"
       "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoLocaltime.goabi"
+      "call main.gocGoLocaltime.goabi\n\t"
+      "addq $64, %%rsp"
       : "+a"(seconds), "+b"(tm), "+c"(zone)
       : : "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11",
         "r12", "r13", "r14", "r15", "xmm0", "xmm1", "xmm2", "xmm3", "xmm4",

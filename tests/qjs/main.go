@@ -21,6 +21,8 @@ import (
 
 /*
 #include <stdlib.h>
+#include <math.h>
+#cgo LDFLAGS: -lm
 */
 import "C"
 
@@ -87,103 +89,110 @@ func cstr(p *byte) string {
 var failed bool
 
 //go:noinline
-func gocGoMathPow(x, y float64) float64 { return math.Pow(x, y) }
+func gocGoMathPow(x, y float64) float64 { return float64(C.pow(C.double(x), C.double(y))) }
 
 //go:noinline
-func gocGoMathSqrt(x float64) float64 { return math.Sqrt(x) }
+func gocGoMathSqrt(x float64) float64 { return float64(C.sqrt(C.double(x))) }
 
 //go:noinline
-func gocGoMathTrunc(x float64) float64 { return math.Trunc(x) }
+func gocGoMathTrunc(x float64) float64 { return float64(C.trunc(C.double(x))) }
 
 //go:noinline
-func gocGoMathFloor(x float64) float64 { return math.Floor(x) }
+func gocGoMathFloor(x float64) float64 { return float64(C.floor(C.double(x))) }
 
 //go:noinline
-func gocGoMathCeil(x float64) float64 { return math.Ceil(x) }
+func gocGoMathCeil(x float64) float64 { return float64(C.ceil(C.double(x))) }
 
 //go:noinline
-func gocGoMathHypot(x, y float64) float64 { return math.Hypot(x, y) }
+func gocGoMathHypot(x, y float64) float64 { return float64(C.hypot(C.double(x), C.double(y))) }
 
 //go:noinline
-func gocGoMathMod(x, y float64) float64 { return math.Mod(x, y) }
+func gocGoMathMod(x, y float64) float64 { return float64(C.fmod(C.double(x), C.double(y))) }
 
 //go:noinline
-func gocGoMathRound(x float64) float64 { return math.Round(x) }
+func gocGoMathRound(x float64) float64 { return float64(C.round(C.double(x))) }
 
 //go:noinline
-func gocGoMathAcos(x float64) float64 { return math.Acos(x) }
+func gocGoMathAcos(x float64) float64 { return float64(C.acos(C.double(x))) }
 
 //go:noinline
-func gocGoMathAcosh(x float64) float64 { return math.Acosh(x) }
+func gocGoMathAcosh(x float64) float64 { return float64(C.acosh(C.double(x))) }
 
 //go:noinline
-func gocGoMathAsin(x float64) float64 { return math.Asin(x) }
+func gocGoMathAsin(x float64) float64 { return float64(C.asin(C.double(x))) }
 
 //go:noinline
-func gocGoMathAsinh(x float64) float64 { return math.Asinh(x) }
+func gocGoMathAsinh(x float64) float64 { return float64(C.asinh(C.double(x))) }
 
 //go:noinline
-func gocGoMathAtan(x float64) float64 { return math.Atan(x) }
+func gocGoMathAtan(x float64) float64 { return float64(C.atan(C.double(x))) }
 
 //go:noinline
-func gocGoMathAtan2(y, x float64) float64 { return math.Atan2(y, x) }
+func gocGoMathAtan2(y, x float64) float64 { return float64(C.atan2(C.double(y), C.double(x))) }
 
 //go:noinline
-func gocGoMathAtanh(x float64) float64 { return math.Atanh(x) }
+func gocGoMathAtanh(x float64) float64 { return float64(C.atanh(C.double(x))) }
 
 //go:noinline
-func gocGoMathCbrt(x float64) float64 { return math.Cbrt(x) }
+func gocGoMathCbrt(x float64) float64 { return float64(C.cbrt(C.double(x))) }
 
 //go:noinline
-func gocGoMathCos(x float64) float64 { return math.Cos(x) }
+func gocGoMathCos(x float64) float64 { return float64(C.cos(C.double(x))) }
 
 //go:noinline
-func gocGoMathCosh(x float64) float64 { return math.Cosh(x) }
+func gocGoMathCosh(x float64) float64 { return float64(C.cosh(C.double(x))) }
 
 //go:noinline
-func gocGoMathExp(x float64) float64 { return math.Exp(x) }
+func gocGoMathExp(x float64) float64 { return float64(C.exp(C.double(x))) }
 
 //go:noinline
-func gocGoMathExpm1(x float64) float64 { return math.Expm1(x) }
+func gocGoMathExpm1(x float64) float64 { return float64(C.expm1(C.double(x))) }
 
 //go:noinline
-func gocGoMathLog(x float64) float64 { return math.Log(x) }
+func gocGoMathLog(x float64) float64 { return float64(C.log(C.double(x))) }
 
 //go:noinline
-func gocGoMathLog10(x float64) float64 { return math.Log10(x) }
+func gocGoMathLog10(x float64) float64 { return float64(C.log10(C.double(x))) }
 
 //go:noinline
-func gocGoMathLog1p(x float64) float64 { return math.Log1p(x) }
+func gocGoMathLog1p(x float64) float64 { return float64(C.log1p(C.double(x))) }
 
 //go:noinline
-func gocGoMathLog2(x float64) float64 { return math.Log2(x) }
+func gocGoMathLog2(x float64) float64 { return float64(C.log2(C.double(x))) }
 
 //go:noinline
-func gocGoMathSin(x float64) float64 { return math.Sin(x) }
+func gocGoMathSin(x float64) float64 { return float64(C.sin(C.double(x))) }
 
 //go:noinline
-func gocGoMathSinh(x float64) float64 { return math.Sinh(x) }
+func gocGoMathSinh(x float64) float64 { return float64(C.sinh(C.double(x))) }
 
 //go:noinline
-func gocGoMathTan(x float64) float64 { return math.Tan(x) }
+func gocGoMathTan(x float64) float64 { return float64(C.tan(C.double(x))) }
 
 //go:noinline
-func gocGoMathTanh(x float64) float64 { return math.Tanh(x) }
+func gocGoMathTanh(x float64) float64 { return float64(C.tanh(C.double(x))) }
 
 //go:noinline
 func gocGoMathRoundToEven(x float64) int64 { return int64(math.RoundToEven(x)) }
 
 //go:noinline
 func gocGoMathFrexp(x float64) (float64, int64) {
-	fraction, exponent := math.Frexp(x)
-	return fraction, int64(exponent)
+	var exponent C.int
+	fraction := C.frexp(C.double(x), &exponent)
+	return float64(fraction), int64(exponent)
 }
 
 //go:noinline
-func gocGoMathLdexp(x float64, exponent int32) float64 { return math.Ldexp(x, int(exponent)) }
+func gocGoMathLdexp(x float64, exponent int32) float64 {
+	return float64(C.ldexp(C.double(x), C.int(exponent)))
+}
 
 //go:noinline
-func gocGoMathModf(x float64) (float64, float64) { return math.Modf(x) }
+func gocGoMathModf(x float64) (float64, float64) {
+	var integer C.double
+	fraction := C.modf(C.double(x), &integer)
+	return float64(integer), float64(fraction)
+}
 
 //go:noinline
 func gocGoParseFloat(p *byte, length uint64) float64 {

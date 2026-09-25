@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="872" height="226" viewBox="0 0 872 226" font-family="Noto Sans CJK SC, Noto Sans CJK TC, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="650" fill="#0f172a">语法通过率</text>
+<text x="16" y="46" font-size="12" fill="#64748b">test262 是 language 分层抽样 1526 项。QuickJS 是官方 tests/test_*.js 的全部函数。</text>
+<rect x="16" y="50" width="10" height="10" rx="2" fill="#2563eb"/>
+<text x="30" y="59" font-size="11" fill="#334155">goc</text>
+<rect x="63" y="50" width="10" height="10" rx="2" fill="#059669"/>
+<text x="77" y="59" font-size="11" fill="#334155">native ng</text>
+<rect x="148" y="50" width="10" height="10" rx="2" fill="#d97706"/>
+<text x="162" y="59" font-size="11" fill="#334155">Bellard</text>
+<rect x="220" y="50" width="10" height="10" rx="2" fill="#7c3aed"/>
+<text x="234" y="59" font-size="11" fill="#334155">Goja</text>
+<rect x="160" y="68" width="640" height="58" fill="#f8fafc"/>
+<text x="152" y="101.0" text-anchor="end" font-size="12" fill="#1e293b">test262 language 抽样</text>
+<rect x="160" y="72" width="629.9" height="11" rx="1.5" fill="#2563eb"/>
+<text x="808" y="83" font-size="10" fill="#2563eb">98.4%</text>
+<rect x="160" y="84" width="629.9" height="11" rx="1.5" fill="#059669"/>
+<text x="808" y="95" font-size="10" fill="#059669">98.4%</text>
+<rect x="160" y="96" width="629.5" height="11" rx="1.5" fill="#d97706"/>
+<text x="808" y="107" font-size="10" fill="#d97706">98.4%</text>
+<rect x="160" y="108" width="609.4" height="11" rx="1.5" fill="#7c3aed"/>
+<text x="808" y="119" font-size="10" fill="#7c3aed">95.2%</text>
+<text x="152" y="159.0" text-anchor="end" font-size="12" fill="#1e293b">QuickJS 官方测试</text>
+<rect x="160" y="130" width="573.5" height="11" rx="1.5" fill="#2563eb"/>
+<text x="808" y="141" font-size="10" fill="#2563eb">89.6%</text>
+<rect x="160" y="142" width="573.5" height="11" rx="1.5" fill="#059669"/>
+<text x="808" y="153" font-size="10" fill="#059669">89.6%</text>
+<rect x="160" y="154" width="606.8" height="11" rx="1.5" fill="#d97706"/>
+<text x="808" y="165" font-size="10" fill="#d97706">94.8%</text>
+<rect x="160" y="166" width="482.1" height="11" rx="1.5" fill="#7c3aed"/>
+<text x="808" y="177" font-size="10" fill="#7c3aed">75.3%</text>
+<line x1="160" y1="68" x2="160" y2="184" stroke="#cbd5e1"/>
+<line x1="160" y1="184" x2="800" y2="184" stroke="#cbd5e1"/>
+<line x1="160.0" y1="184" x2="160.0" y2="188" stroke="#94a3b8"/>
+<text x="160.0" y="200" text-anchor="middle" font-size="10" fill="#64748b">0.0%</text>
+<line x1="320.0" y1="184" x2="320.0" y2="188" stroke="#94a3b8"/>
+<text x="320.0" y="200" text-anchor="middle" font-size="10" fill="#64748b">25.0%</text>
+<line x1="480.0" y1="184" x2="480.0" y2="188" stroke="#94a3b8"/>
+<text x="480.0" y="200" text-anchor="middle" font-size="10" fill="#64748b">50.0%</text>
+<line x1="640.0" y1="184" x2="640.0" y2="188" stroke="#94a3b8"/>
+<text x="640.0" y="200" text-anchor="middle" font-size="10" fill="#64748b">75.0%</text>
+<line x1="800.0" y1="184" x2="800.0" y2="188" stroke="#94a3b8"/>
+<text x="800.0" y="200" text-anchor="middle" font-size="10" fill="#64748b">100.0%</text>
+<text x="480.0" y="218" text-anchor="middle" font-size="11" fill="#64748b">通过率 %</text>
+</svg>

@@ -1,0 +1,703 @@
+{
+  "summary": {
+    "test_language.js": {
+      "goc": {
+        "pass": 26,
+        "fail": 1,
+        "crash": 0,
+        "total": 27
+      },
+      "ng": {
+        "pass": 26,
+        "fail": 1,
+        "crash": 0,
+        "total": 27
+      },
+      "bellard": {
+        "pass": 27,
+        "fail": 0,
+        "crash": 0,
+        "total": 27
+      },
+      "goja": {
+        "pass": 23,
+        "fail": 4,
+        "crash": 0,
+        "total": 27
+      }
+    },
+    "test_closure.js": {
+      "goc": {
+        "pass": 7,
+        "fail": 0,
+        "crash": 0,
+        "total": 7
+      },
+      "ng": {
+        "pass": 7,
+        "fail": 0,
+        "crash": 0,
+        "total": 7
+      },
+      "bellard": {
+        "pass": 7,
+        "fail": 0,
+        "crash": 0,
+        "total": 7
+      },
+      "goja": {
+        "pass": 6,
+        "fail": 1,
+        "crash": 0,
+        "total": 7
+      }
+    },
+    "test_loop.js": {
+      "goc": {
+        "pass": 17,
+        "fail": 1,
+        "crash": 0,
+        "total": 18
+      },
+      "ng": {
+        "pass": 17,
+        "fail": 1,
+        "crash": 0,
+        "total": 18
+      },
+      "bellard": {
+        "pass": 18,
+        "fail": 0,
+        "crash": 0,
+        "total": 18
+      },
+      "goja": {
+        "pass": 17,
+        "fail": 1,
+        "crash": 0,
+        "total": 18
+      }
+    },
+    "test_bigint.js": {
+      "goc": {
+        "pass": 4,
+        "fail": 0,
+        "crash": 0,
+        "total": 4
+      },
+      "ng": {
+        "pass": 4,
+        "fail": 0,
+        "crash": 0,
+        "total": 4
+      },
+      "bellard": {
+        "pass": 4,
+        "fail": 0,
+        "crash": 0,
+        "total": 4
+      },
+      "goja": {
+        "pass": 3,
+        "fail": 1,
+        "crash": 0,
+        "total": 4
+      }
+    },
+    "test_builtin.js": {
+      "goc": {
+        "pass": 15,
+        "fail": 6,
+        "crash": 0,
+        "total": 21
+      },
+      "ng": {
+        "pass": 15,
+        "fail": 6,
+        "crash": 0,
+        "total": 21
+      },
+      "bellard": {
+        "pass": 17,
+        "fail": 4,
+        "crash": 0,
+        "total": 21
+      },
+      "goja": {
+        "pass": 9,
+        "fail": 12,
+        "crash": 0,
+        "total": 21
+      }
+    }
+  },
+  "details": {
+    "test_language.js": {
+      "goc": {
+        "pass": [
+          "test_op1",
+          "test_cvt",
+          "test_eq",
+          "test_inc_dec",
+          "test_op2",
+          "test_constructor",
+          "test_delete",
+          "test_prototype",
+          "test_arguments",
+          "test_class",
+          "test_template",
+          "test_template_skip",
+          "test_object_literal",
+          "test_regexp_skip",
+          "test_labels",
+          "test_labels2",
+          "test_destructuring",
+          "test_spread",
+          "test_function_length",
+          "test_argument_scope",
+          "test_function_expr_name",
+          "test_parse_semicolon",
+          "test_optional_chaining",
+          "test_parse_arrow_function",
+          "test_global_var_opt",
+          "test_number_literals"
+        ],
+        "fail": [
+          [
+            "test_unicode_ident",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_language.js-test_unicode_ident.js: Error: assertion failed: got |number|, expected |undefined|"
+          ]
+        ],
+        "crash": []
+      },
+      "ng": {
+        "pass": [
+          "test_op1",
+          "test_cvt",
+          "test_eq",
+          "test_inc_dec",
+          "test_op2",
+          "test_constructor",
+          "test_delete",
+          "test_prototype",
+          "test_arguments",
+          "test_class",
+          "test_template",
+          "test_template_skip",
+          "test_object_literal",
+          "test_regexp_skip",
+          "test_labels",
+          "test_labels2",
+          "test_destructuring",
+          "test_spread",
+          "test_function_length",
+          "test_argument_scope",
+          "test_function_expr_name",
+          "test_parse_semicolon",
+          "test_optional_chaining",
+          "test_parse_arrow_function",
+          "test_global_var_opt",
+          "test_number_literals"
+        ],
+        "fail": [
+          [
+            "test_unicode_ident",
+            "Error: assertion failed: got |number|, expected |undefined|"
+          ]
+        ],
+        "crash": []
+      },
+      "bellard": {
+        "pass": [
+          "test_op1",
+          "test_cvt",
+          "test_eq",
+          "test_inc_dec",
+          "test_op2",
+          "test_constructor",
+          "test_delete",
+          "test_prototype",
+          "test_arguments",
+          "test_class",
+          "test_template",
+          "test_template_skip",
+          "test_object_literal",
+          "test_regexp_skip",
+          "test_labels",
+          "test_labels2",
+          "test_destructuring",
+          "test_spread",
+          "test_function_length",
+          "test_argument_scope",
+          "test_function_expr_name",
+          "test_parse_semicolon",
+          "test_optional_chaining",
+          "test_parse_arrow_function",
+          "test_unicode_ident",
+          "test_global_var_opt",
+          "test_number_literals"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "goja": {
+        "pass": [
+          "test_op1",
+          "test_cvt",
+          "test_eq",
+          "test_inc_dec",
+          "test_op2",
+          "test_delete",
+          "test_prototype",
+          "test_arguments",
+          "test_template",
+          "test_template_skip",
+          "test_object_literal",
+          "test_regexp_skip",
+          "test_labels",
+          "test_labels2",
+          "test_destructuring",
+          "test_spread",
+          "test_function_length",
+          "test_function_expr_name",
+          "test_parse_semicolon",
+          "test_parse_arrow_function",
+          "test_unicode_ident",
+          "test_global_var_opt",
+          "test_number_literals"
+        ],
+        "fail": [
+          [
+            "test_constructor",
+            "Error: assertion failed: got |Value is not a constructor|, expected |G is not a constructor|"
+          ],
+          [
+            "test_class",
+            "SyntaxError: /tmp/goc-suites/results/qjs-fn/goja-test_language.js-test_class.js: Line 198:15 Unexpected token = (and 3 more errors)"
+          ],
+          [
+            "test_argument_scope",
+            "Error: assertion failed: got |undefined|, expected |12|"
+          ],
+          [
+            "test_optional_chaining",
+            "Error: assertion failed: got |{\"b\":{\"c\":2}}|, expected |{\"b\":{}}| (optional chaining delete)"
+          ]
+        ],
+        "crash": []
+      }
+    },
+    "test_closure.js": {
+      "goc": {
+        "pass": [
+          "test_closure1",
+          "test_closure2",
+          "test_closure3",
+          "test_arrow_function",
+          "test_with",
+          "test_eval_closure",
+          "test_eval_const"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "ng": {
+        "pass": [
+          "test_closure1",
+          "test_closure2",
+          "test_closure3",
+          "test_arrow_function",
+          "test_with",
+          "test_eval_closure",
+          "test_eval_const"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "bellard": {
+        "pass": [
+          "test_closure1",
+          "test_closure2",
+          "test_closure3",
+          "test_arrow_function",
+          "test_with",
+          "test_eval_closure",
+          "test_eval_const"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "goja": {
+        "pass": [
+          "test_closure1",
+          "test_closure2",
+          "test_closure3",
+          "test_with",
+          "test_eval_closure",
+          "test_eval_const"
+        ],
+        "fail": [
+          [
+            "test_arrow_function",
+            "Error: assertion failed: got |4|, expected |2|"
+          ]
+        ],
+        "crash": []
+      }
+    },
+    "test_loop.js": {
+      "goc": {
+        "pass": [
+          "test_while",
+          "test_while_break",
+          "test_do_while",
+          "test_for",
+          "test_for_break",
+          "test_switch1",
+          "test_switch2",
+          "test_for_in",
+          "test_for_in2",
+          "test_try_catch1",
+          "test_try_catch2",
+          "test_try_catch3",
+          "test_try_catch4",
+          "test_try_catch5",
+          "test_try_catch6",
+          "test_try_catch7",
+          "test_try_catch8"
+        ],
+        "fail": [
+          [
+            "test_for_in_proxy",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_loop.js-test_for_in_proxy.js: Error: assertion failed: got |false|, expected |true|"
+          ]
+        ],
+        "crash": []
+      },
+      "ng": {
+        "pass": [
+          "test_while",
+          "test_while_break",
+          "test_do_while",
+          "test_for",
+          "test_for_break",
+          "test_switch1",
+          "test_switch2",
+          "test_for_in",
+          "test_for_in2",
+          "test_try_catch1",
+          "test_try_catch2",
+          "test_try_catch3",
+          "test_try_catch4",
+          "test_try_catch5",
+          "test_try_catch6",
+          "test_try_catch7",
+          "test_try_catch8"
+        ],
+        "fail": [
+          [
+            "test_for_in_proxy",
+            "Error: assertion failed: got |false|, expected |true|"
+          ]
+        ],
+        "crash": []
+      },
+      "bellard": {
+        "pass": [
+          "test_while",
+          "test_while_break",
+          "test_do_while",
+          "test_for",
+          "test_for_break",
+          "test_switch1",
+          "test_switch2",
+          "test_for_in",
+          "test_for_in2",
+          "test_for_in_proxy",
+          "test_try_catch1",
+          "test_try_catch2",
+          "test_try_catch3",
+          "test_try_catch4",
+          "test_try_catch5",
+          "test_try_catch6",
+          "test_try_catch7",
+          "test_try_catch8"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "goja": {
+        "pass": [
+          "test_while",
+          "test_while_break",
+          "test_do_while",
+          "test_for",
+          "test_for_break",
+          "test_switch1",
+          "test_switch2",
+          "test_for_in2",
+          "test_for_in_proxy",
+          "test_try_catch1",
+          "test_try_catch2",
+          "test_try_catch3",
+          "test_try_catch4",
+          "test_try_catch5",
+          "test_try_catch6",
+          "test_try_catch7",
+          "test_try_catch8"
+        ],
+        "fail": [
+          [
+            "test_for_in",
+            "SyntaxError: /tmp/goc-suites/results/qjs-fn/goja-test_loop.js-test_for_in.js: Line 147:17 for-in loop variable declaration may not have an initializer"
+          ]
+        ],
+        "crash": []
+      }
+    },
+    "test_bigint.js": {
+      "goc": {
+        "pass": [
+          "test_bigint1",
+          "test_bigint2",
+          "test_bigint3",
+          "test_pi"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "ng": {
+        "pass": [
+          "test_bigint1",
+          "test_bigint2",
+          "test_bigint3",
+          "test_pi"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "bellard": {
+        "pass": [
+          "test_bigint1",
+          "test_bigint2",
+          "test_bigint3",
+          "test_pi"
+        ],
+        "fail": [],
+        "crash": []
+      },
+      "goja": {
+        "pass": [
+          "test_bigint1",
+          "test_bigint2",
+          "test_pi"
+        ],
+        "fail": [
+          [
+            "test_bigint3",
+            "Error: assertion failed: got |-1|, expected |18446744073709552000|"
+          ]
+        ],
+        "crash": []
+      }
+    },
+    "test_builtin.js": {
+      "goc": {
+        "pass": [
+          "test",
+          "test_function",
+          "test_enum",
+          "test_array",
+          "test_string",
+          "test_math",
+          "test_number",
+          "test_eval",
+          "test_typed_array",
+          "test_date",
+          "test_regexp",
+          "test_symbol",
+          "test_map",
+          "test_generator",
+          "test_rope"
+        ],
+        "fail": [
+          [
+            "test_json",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_builtin.js-test_json.js: Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 "
+          ],
+          [
+            "test_weak_map",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_builtin.js-test_weak_map.js: ReferenceError: std is not defined"
+          ],
+          [
+            "test_weak_map_cycles",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_builtin.js-test_weak_map_cycles.js: ReferenceError: std is not defined"
+          ],
+          [
+            "test_weak_ref",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_builtin.js-test_weak_ref.js: ReferenceError: std is not defined"
+          ],
+          [
+            "test_finalization_registry",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_builtin.js-test_finalization_registry.js: ReferenceError: os is not defined"
+          ],
+          [
+            "test_line_column_numbers",
+            "qjscli:runtime: /tmp/goc-suites/results/qjs-fn/goc-test_builtin.js-test_line_column_numbers.js: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3"
+          ]
+        ],
+        "crash": []
+      },
+      "ng": {
+        "pass": [
+          "test",
+          "test_function",
+          "test_enum",
+          "test_array",
+          "test_string",
+          "test_math",
+          "test_number",
+          "test_eval",
+          "test_typed_array",
+          "test_date",
+          "test_regexp",
+          "test_symbol",
+          "test_map",
+          "test_generator",
+          "test_rope"
+        ],
+        "fail": [
+          [
+            "test_json",
+            "Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 column 5).got |    at <input>:2:1|, expected |:2:5|"
+          ],
+          [
+            "test_weak_map",
+            "ReferenceError: std is not defined"
+          ],
+          [
+            "test_weak_map_cycles",
+            "ReferenceError: std is not defined"
+          ],
+          [
+            "test_weak_ref",
+            "ReferenceError: std is not defined"
+          ],
+          [
+            "test_finalization_registry",
+            "ReferenceError: os is not defined"
+          ],
+          [
+            "test_line_column_numbers",
+            "Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2:8|"
+          ]
+        ],
+        "crash": []
+      },
+      "bellard": {
+        "pass": [
+          "test",
+          "test_function",
+          "test_enum",
+          "test_array",
+          "test_string",
+          "test_math",
+          "test_number",
+          "test_eval",
+          "test_typed_array",
+          "test_json",
+          "test_date",
+          "test_regexp",
+          "test_symbol",
+          "test_map",
+          "test_generator",
+          "test_rope",
+          "test_line_column_numbers"
+        ],
+        "fail": [
+          [
+            "test_weak_map",
+            "ReferenceError: 'std' is not defined"
+          ],
+          [
+            "test_weak_map_cycles",
+            "ReferenceError: 'std' is not defined"
+          ],
+          [
+            "test_weak_ref",
+            "ReferenceError: 'std' is not defined"
+          ],
+          [
+            "test_finalization_registry",
+            "ReferenceError: 'os' is not defined"
+          ]
+        ],
+        "crash": []
+      },
+      "goja": {
+        "pass": [
+          "test",
+          "test_function",
+          "test_enum",
+          "test_array",
+          "test_number",
+          "test_symbol",
+          "test_map",
+          "test_generator",
+          "test_rope"
+        ],
+        "fail": [
+          [
+            "test_string",
+            "panic: unexpected unicode length while parsing '\\u{10ffff}' [recovered]"
+          ],
+          [
+            "test_math",
+            "TypeError: Object has no member 'sumPrecise'"
+          ],
+          [
+            "test_eval",
+            "TypeError: Cannot read property 'length' of undefined"
+          ],
+          [
+            "test_typed_array",
+            "ReferenceError: Float16Array is not defined"
+          ],
+          [
+            "test_json",
+            "Error: unexpected line or column number. error=invalid character 'x' in string escape code.got |SyntaxError: invalid character 'x' in string escape code|, expected |:2:5|"
+          ],
+          [
+            "test_date",
+            "Error: assertion failed: got number:|29256|, expected number:|29312| (order of operations / precision in MakeTime)"
+          ],
+          [
+            "test_regexp",
+            "SyntaxError: Invalid flags supplied to RegExp constructor 'gvi' at /tmp/goc-suites/results/qjs-fn/goja-test_builtin.js-test_regexp.js:382:31"
+          ],
+          [
+            "test_weak_map",
+            "TypeError: Value is not an object: x1"
+          ],
+          [
+            "test_weak_map_cycles",
+            "ReferenceError: std is not defined"
+          ],
+          [
+            "test_weak_ref",
+            "ReferenceError: WeakRef is not defined"
+          ],
+          [
+            "test_finalization_registry",
+            "ReferenceError: FinalizationRegistry is not defined"
+          ],
+          [
+            "test_line_column_numbers",
+            "Error: unexpected line or column number. error=SyntaxError: <eval>: Line 2:6 Unexpected identifier.got |SyntaxError: SyntaxError: <eval>: Line 2:6 Unexpected identifier|, expected "
+          ]
+        ],
+        "crash": []
+      }
+    }
+  }
+}

@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="771" height="578" viewBox="0 0 771 578" font-family="Noto Sans CJK SC, Noto Sans CJK TC, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="650" fill="#0f172a">microbench 分组几何平均</text>
+<text x="16" y="46" font-size="12" fill="#64748b">ns/op，越低越快。对数轴。date_parse 不在任何组里。</text>
+<rect x="16" y="50" width="10" height="10" rx="2" fill="#2563eb"/>
+<text x="30" y="59" font-size="11" fill="#334155">goc</text>
+<rect x="63" y="50" width="10" height="10" rx="2" fill="#059669"/>
+<text x="77" y="59" font-size="11" fill="#334155">native ng</text>
+<rect x="148" y="50" width="10" height="10" rx="2" fill="#d97706"/>
+<text x="162" y="59" font-size="11" fill="#334155">Bellard</text>
+<rect x="220" y="50" width="10" height="10" rx="2" fill="#7c3aed"/>
+<text x="234" y="59" font-size="11" fill="#334155">Goja</text>
+<rect x="59" y="68" width="640" height="52" fill="#f8fafc"/>
+<text x="51" y="98.0" text-anchor="end" font-size="12" fill="#1e293b">loop</text>
+<rect x="59" y="72" width="41.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="82" font-size="10" fill="#2563eb">17.1</text>
+<rect x="59" y="83" width="22.5" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="93" font-size="10" fill="#059669">14.9</text>
+<rect x="59" y="94" width="22.4" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="104" font-size="10" fill="#d97706">14.9</text>
+<rect x="59" y="105" width="213.4" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="115" font-size="10" fill="#7c3aed">59.5</text>
+<text x="51" y="150.0" text-anchor="end" font-size="12" fill="#1e293b">prop</text>
+<rect x="59" y="124" width="133.3" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="134" font-size="10" fill="#2563eb">33.3</text>
+<rect x="59" y="135" width="116.7" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="145" font-size="10" fill="#059669">29.5</text>
+<rect x="59" y="146" width="77.4" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="156" font-size="10" fill="#d97706">22.2</text>
+<rect x="59" y="157" width="343.2" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="167" font-size="10" fill="#7c3aed">152</text>
+<rect x="59" y="172" width="640" height="52" fill="#f8fafc"/>
+<text x="51" y="202.0" text-anchor="end" font-size="12" fill="#1e293b">array</text>
+<rect x="59" y="176" width="116.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="186" font-size="10" fill="#2563eb">29.4</text>
+<rect x="59" y="187" width="95.2" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="197" font-size="10" fill="#059669">25.2</text>
+<rect x="59" y="198" width="61.7" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="208" font-size="10" fill="#d97706">19.8</text>
+<rect x="59" y="209" width="324.2" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="219" font-size="10" fill="#7c3aed">133</text>
+<text x="51" y="254.0" text-anchor="end" font-size="12" fill="#1e293b">string</text>
+<rect x="59" y="228" width="181.6" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="238" font-size="10" fill="#2563eb">47.2</text>
+<rect x="59" y="239" width="157.1" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="249" font-size="10" fill="#059669">39.5</text>
+<rect x="59" y="250" width="98.6" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="260" font-size="10" fill="#d97706">25.9</text>
+<rect x="59" y="261" width="380.7" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="271" font-size="10" fill="#7c3aed">200</text>
+<rect x="59" y="276" width="640" height="52" fill="#f8fafc"/>
+<text x="51" y="306.0" text-anchor="end" font-size="12" fill="#1e293b">regexp</text>
+<rect x="59" y="280" width="515.0" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="290" font-size="10" fill="#2563eb">529</text>
+<rect x="59" y="291" width="473.9" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="301" font-size="10" fill="#059669">393</text>
+<rect x="59" y="302" width="401.5" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="312" font-size="10" fill="#d97706">232</text>
+<rect x="59" y="313" width="634.6" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="323" font-size="10" fill="#7c3aed">1260</text>
+<text x="51" y="358.0" text-anchor="end" font-size="12" fill="#1e293b">bigint</text>
+<rect x="59" y="332" width="381.7" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="342" font-size="10" fill="#2563eb">201</text>
+<rect x="59" y="343" width="346.3" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="353" font-size="10" fill="#059669">156</text>
+<rect x="59" y="354" width="203.5" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="364" font-size="10" fill="#d97706">55.3</text>
+<rect x="59" y="365" width="412.3" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="375" font-size="10" fill="#7c3aed">251</text>
+<rect x="59" y="380" width="640" height="52" fill="#f8fafc"/>
+<text x="51" y="410.0" text-anchor="end" font-size="12" fill="#1e293b">map</text>
+<rect x="59" y="384" width="468.9" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="394" font-size="10" fill="#2563eb">379</text>
+<rect x="59" y="395" width="432.0" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="405" font-size="10" fill="#059669">290</text>
+<rect x="59" y="406" width="319.8" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="416" font-size="10" fill="#d97706">129</text>
+<rect x="59" y="417" width="513.9" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="427" font-size="10" fill="#7c3aed">525</text>
+<text x="51" y="462.0" text-anchor="end" font-size="12" fill="#1e293b">call</text>
+<rect x="59" y="436" width="126.6" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="446" font-size="10" fill="#2563eb">31.7</text>
+<rect x="59" y="447" width="110.6" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="457" font-size="10" fill="#059669">28.2</text>
+<rect x="59" y="458" width="92.2" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="468" font-size="10" fill="#d97706">24.7</text>
+<rect x="59" y="469" width="285.1" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="479" font-size="10" fill="#7c3aed">100</text>
+<rect x="59" y="484" width="640" height="52" fill="#f8fafc"/>
+<text x="51" y="514.0" text-anchor="end" font-size="12" fill="#1e293b">arith</text>
+<rect x="59" y="488" width="105.4" height="10" rx="1.5" fill="#2563eb"/>
+<text x="707" y="498" font-size="10" fill="#2563eb">27.2</text>
+<rect x="59" y="499" width="100.2" height="10" rx="1.5" fill="#059669"/>
+<text x="707" y="509" font-size="10" fill="#059669">26.2</text>
+<rect x="59" y="510" width="71.3" height="10" rx="1.5" fill="#d97706"/>
+<text x="707" y="520" font-size="10" fill="#d97706">21.2</text>
+<rect x="59" y="521" width="348.9" height="10" rx="1.5" fill="#7c3aed"/>
+<text x="707" y="531" font-size="10" fill="#7c3aed">159</text>
+<line x1="59" y1="68" x2="59" y2="536" stroke="#cbd5e1"/>
+<line x1="59" y1="536" x2="699" y2="536" stroke="#cbd5e1"/>
+<line x1="59.0" y1="536" x2="59.0" y2="540" stroke="#94a3b8"/>
+<text x="59.0" y="552" text-anchor="middle" font-size="10" fill="#64748b">12.7</text>
+<line x1="219.0" y1="536" x2="219.0" y2="540" stroke="#94a3b8"/>
+<text x="219.0" y="552" text-anchor="middle" font-size="10" fill="#64748b">40.4</text>
+<line x1="379.0" y1="536" x2="379.0" y2="540" stroke="#94a3b8"/>
+<text x="379.0" y="552" text-anchor="middle" font-size="10" fill="#64748b">129</text>
+<line x1="539.0" y1="536" x2="539.0" y2="540" stroke="#94a3b8"/>
+<text x="539.0" y="552" text-anchor="middle" font-size="10" fill="#64748b">411</text>
+<line x1="699.0" y1="536" x2="699.0" y2="540" stroke="#94a3b8"/>
+<text x="699.0" y="552" text-anchor="middle" font-size="10" fill="#64748b">1310</text>
+<text x="379.0" y="570" text-anchor="middle" font-size="11" fill="#64748b">ns / op（对数）</text>
+</svg>
