@@ -1,0 +1,1339 @@
+{
+  "meta": {
+    "arguments-object": {
+      "eligible_pos": 200,
+      "eligible_neg": 1,
+      "ran": 81
+    },
+    "asi": {
+      "eligible_pos": 67,
+      "eligible_neg": 35,
+      "ran": 102
+    },
+    "block-scope": {
+      "eligible_pos": 43,
+      "eligible_neg": 102,
+      "ran": 83
+    },
+    "comments": {
+      "eligible_pos": 21,
+      "eligible_neg": 8,
+      "ran": 29
+    },
+    "computed-property-names": {
+      "eligible_pos": 48,
+      "eligible_neg": 0,
+      "ran": 48
+    },
+    "destructuring": {
+      "eligible_pos": 19,
+      "eligible_neg": 0,
+      "ran": 19
+    },
+    "directive-prologue": {
+      "eligible_pos": 51,
+      "eligible_neg": 6,
+      "ran": 57
+    },
+    "eval-code": {
+      "eligible_pos": 292,
+      "eligible_neg": 3,
+      "ran": 83
+    },
+    "expressions": {
+      "eligible_pos": 6903,
+      "eligible_neg": 2015,
+      "ran": 120
+    },
+    "function-code": {
+      "eligible_pos": 217,
+      "eligible_neg": 0,
+      "ran": 80
+    },
+    "future-reserved-words": {
+      "eligible_pos": 29,
+      "eligible_neg": 26,
+      "ran": 55
+    },
+    "global-code": {
+      "eligible_pos": 27,
+      "eligible_neg": 15,
+      "ran": 42
+    },
+    "identifier-resolution": {
+      "eligible_pos": 12,
+      "eligible_neg": 2,
+      "ran": 14
+    },
+    "identifiers": {
+      "eligible_pos": 152,
+      "eligible_neg": 116,
+      "ran": 120
+    },
+    "keywords": {
+      "eligible_pos": 0,
+      "eligible_neg": 25,
+      "ran": 25
+    },
+    "line-terminators": {
+      "eligible_pos": 17,
+      "eligible_neg": 24,
+      "ran": 41
+    },
+    "literals": {
+      "eligible_pos": 215,
+      "eligible_neg": 321,
+      "ran": 120
+    },
+    "punctuators": {
+      "eligible_pos": 1,
+      "eligible_neg": 10,
+      "ran": 11
+    },
+    "reserved-words": {
+      "eligible_pos": 14,
+      "eligible_neg": 12,
+      "ran": 26
+    },
+    "rest-parameters": {
+      "eligible_pos": 10,
+      "eligible_neg": 1,
+      "ran": 11
+    },
+    "source-text": {
+      "eligible_pos": 1,
+      "eligible_neg": 0,
+      "ran": 1
+    },
+    "statementList": {
+      "eligible_pos": 80,
+      "eligible_neg": 0,
+      "ran": 80
+    },
+    "statements": {
+      "eligible_pos": 5316,
+      "eligible_neg": 1513,
+      "ran": 120
+    },
+    "types": {
+      "eligible_pos": 102,
+      "eligible_neg": 11,
+      "ran": 91
+    },
+    "white-space": {
+      "eligible_pos": 61,
+      "eligible_neg": 6,
+      "ran": 67
+    }
+  },
+  "results": {
+    "bellard": {
+      "by_dir": {
+        "arguments-object": {
+          "pass": 81,
+          "fail": 0,
+          "crash": 0,
+          "ran": 81
+        },
+        "asi": {
+          "pass": 102,
+          "fail": 0,
+          "crash": 0,
+          "ran": 102
+        },
+        "block-scope": {
+          "pass": 83,
+          "fail": 0,
+          "crash": 0,
+          "ran": 83
+        },
+        "comments": {
+          "pass": 29,
+          "fail": 0,
+          "crash": 0,
+          "ran": 29
+        },
+        "computed-property-names": {
+          "pass": 48,
+          "fail": 0,
+          "crash": 0,
+          "ran": 48
+        },
+        "destructuring": {
+          "pass": 19,
+          "fail": 0,
+          "crash": 0,
+          "ran": 19
+        },
+        "directive-prologue": {
+          "pass": 57,
+          "fail": 0,
+          "crash": 0,
+          "ran": 57
+        },
+        "eval-code": {
+          "pass": 81,
+          "fail": 2,
+          "crash": 0,
+          "ran": 83
+        },
+        "expressions": {
+          "pass": 117,
+          "fail": 3,
+          "crash": 0,
+          "ran": 120
+        },
+        "function-code": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "future-reserved-words": {
+          "pass": 55,
+          "fail": 0,
+          "crash": 0,
+          "ran": 55
+        },
+        "global-code": {
+          "pass": 29,
+          "fail": 13,
+          "crash": 0,
+          "ran": 42
+        },
+        "identifier-resolution": {
+          "pass": 13,
+          "fail": 1,
+          "crash": 0,
+          "ran": 14
+        },
+        "identifiers": {
+          "pass": 120,
+          "fail": 0,
+          "crash": 0,
+          "ran": 120
+        },
+        "keywords": {
+          "pass": 25,
+          "fail": 0,
+          "crash": 0,
+          "ran": 25
+        },
+        "line-terminators": {
+          "pass": 41,
+          "fail": 0,
+          "crash": 0,
+          "ran": 41
+        },
+        "literals": {
+          "pass": 120,
+          "fail": 0,
+          "crash": 0,
+          "ran": 120
+        },
+        "punctuators": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "reserved-words": {
+          "pass": 26,
+          "fail": 0,
+          "crash": 0,
+          "ran": 26
+        },
+        "rest-parameters": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "source-text": {
+          "pass": 1,
+          "fail": 0,
+          "crash": 0,
+          "ran": 1
+        },
+        "statementList": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "statements": {
+          "pass": 118,
+          "fail": 2,
+          "crash": 0,
+          "ran": 120
+        },
+        "types": {
+          "pass": 87,
+          "fail": 4,
+          "crash": 0,
+          "ran": 91
+        },
+        "white-space": {
+          "pass": 67,
+          "fail": 0,
+          "crash": 0,
+          "ran": 67
+        }
+      },
+      "sample_fails": [
+        [
+          "test/language/eval-code/indirect/lex-env-heritage.js",
+          "FAIL ReferenceError: ReferenceError: 'x' is not defined"
+        ],
+        [
+          "test/language/eval-code/indirect/var-env-global-lex-non-strict.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00abundefined\u00bb) to be false"
+        ],
+        [
+          "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js",
+          "FAIL SyntaxError: SyntaxError: unsupported keyword: export"
+        ],
+        [
+          "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js",
+          "FAIL SyntaxError: SyntaxError: meta expected"
+        ],
+        [
+          "test/language/global-code/S10.4.1_A1_T1.js",
+          "FAIL : Test262Error: #2: variable x has property attribute DontDelete"
+        ],
+        [
+          "test/language/global-code/decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-deletion.js",
+          "FAIL ReferenceError: ReferenceError: 'test262let' is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-lex.js",
+          "FAIL : Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-restricted-global.js",
+          "FAIL : Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var-declared-via-eval.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00ab1\u00bb) to be true"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var.js",
+          "FAIL : Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex.js",
+          "FAIL ReferenceError: ReferenceError: 'test262let' is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-var-collision.js",
+          "FAIL : Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/decl-lex-restricted-global.js",
+          "FAIL expected SyntaxError"
+        ],
+        [
+          "test/language/identifier-resolution/assign-to-global-undefined.js",
+          "FAIL expected ReferenceError"
+        ],
+        [
+          "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js",
+          "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'"
+        ],
+        [
+          "test/language/statements/using/static-init-await-binding-valid.js",
+          "FAIL SyntaxError: SyntaxError: expecting ';'"
+        ],
+        [
+          "test/language/types/reference/S8.7.1_A2.js",
+          "FAIL : Test262Error: #1: y = 1; (delete y) === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/S8.7_A5_T1.js",
+          "FAIL : Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/get-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/types/reference/put-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ]
+      ]
+    },
+    "ng": {
+      "by_dir": {
+        "arguments-object": {
+          "pass": 81,
+          "fail": 0,
+          "crash": 0,
+          "ran": 81
+        },
+        "asi": {
+          "pass": 102,
+          "fail": 0,
+          "crash": 0,
+          "ran": 102
+        },
+        "block-scope": {
+          "pass": 83,
+          "fail": 0,
+          "crash": 0,
+          "ran": 83
+        },
+        "comments": {
+          "pass": 29,
+          "fail": 0,
+          "crash": 0,
+          "ran": 29
+        },
+        "computed-property-names": {
+          "pass": 48,
+          "fail": 0,
+          "crash": 0,
+          "ran": 48
+        },
+        "destructuring": {
+          "pass": 18,
+          "fail": 1,
+          "crash": 0,
+          "ran": 19
+        },
+        "directive-prologue": {
+          "pass": 57,
+          "fail": 0,
+          "crash": 0,
+          "ran": 57
+        },
+        "eval-code": {
+          "pass": 81,
+          "fail": 2,
+          "crash": 0,
+          "ran": 83
+        },
+        "expressions": {
+          "pass": 117,
+          "fail": 3,
+          "crash": 0,
+          "ran": 120
+        },
+        "function-code": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "future-reserved-words": {
+          "pass": 55,
+          "fail": 0,
+          "crash": 0,
+          "ran": 55
+        },
+        "global-code": {
+          "pass": 30,
+          "fail": 12,
+          "crash": 0,
+          "ran": 42
+        },
+        "identifier-resolution": {
+          "pass": 13,
+          "fail": 1,
+          "crash": 0,
+          "ran": 14
+        },
+        "identifiers": {
+          "pass": 120,
+          "fail": 0,
+          "crash": 0,
+          "ran": 120
+        },
+        "keywords": {
+          "pass": 25,
+          "fail": 0,
+          "crash": 0,
+          "ran": 25
+        },
+        "line-terminators": {
+          "pass": 41,
+          "fail": 0,
+          "crash": 0,
+          "ran": 41
+        },
+        "literals": {
+          "pass": 120,
+          "fail": 0,
+          "crash": 0,
+          "ran": 120
+        },
+        "punctuators": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "reserved-words": {
+          "pass": 26,
+          "fail": 0,
+          "crash": 0,
+          "ran": 26
+        },
+        "rest-parameters": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "source-text": {
+          "pass": 1,
+          "fail": 0,
+          "crash": 0,
+          "ran": 1
+        },
+        "statementList": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "statements": {
+          "pass": 119,
+          "fail": 1,
+          "crash": 0,
+          "ran": 120
+        },
+        "types": {
+          "pass": 87,
+          "fail": 4,
+          "crash": 0,
+          "ran": 91
+        },
+        "white-space": {
+          "pass": 67,
+          "fail": 0,
+          "crash": 0,
+          "ran": 67
+        }
+      },
+      "sample_fails": [
+        [
+          "test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js",
+          "FAIL : Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::sourc"
+        ],
+        [
+          "test/language/eval-code/indirect/lex-env-heritage.js",
+          "FAIL ReferenceError: ReferenceError: x is not defined"
+        ],
+        [
+          "test/language/eval-code/indirect/var-env-global-lex-non-strict.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00abundefined\u00bb) to be false"
+        ],
+        [
+          "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js",
+          "FAIL SyntaxError: SyntaxError: unsupported keyword: export"
+        ],
+        [
+          "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js",
+          "FAIL SyntaxError: SyntaxError: meta expected"
+        ],
+        [
+          "test/language/global-code/S10.4.1_A1_T1.js",
+          "FAIL : Test262Error: #2: variable x has property attribute DontDelete"
+        ],
+        [
+          "test/language/global-code/decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-deletion.js",
+          "FAIL ReferenceError: ReferenceError: test262let is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-lex.js",
+          "FAIL : Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-restricted-global.js",
+          "FAIL : Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var-declared-via-eval.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00ab1\u00bb) to be true"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var.js",
+          "FAIL : Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex.js",
+          "FAIL ReferenceError: ReferenceError: test262let is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-var-collision.js",
+          "FAIL : Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/identifier-resolution/assign-to-global-undefined.js",
+          "FAIL expected ReferenceError"
+        ],
+        [
+          "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js",
+          "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'"
+        ],
+        [
+          "test/language/types/reference/S8.7.1_A2.js",
+          "FAIL : Test262Error: #1: y = 1; (delete y) === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/S8.7_A5_T1.js",
+          "FAIL : Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/get-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/types/reference/put-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ]
+      ]
+    },
+    "goja": {
+      "by_dir": {
+        "arguments-object": {
+          "pass": 81,
+          "fail": 0,
+          "crash": 0,
+          "ran": 81
+        },
+        "asi": {
+          "pass": 102,
+          "fail": 0,
+          "crash": 0,
+          "ran": 102
+        },
+        "block-scope": {
+          "pass": 83,
+          "fail": 0,
+          "crash": 0,
+          "ran": 83
+        },
+        "comments": {
+          "pass": 28,
+          "fail": 1,
+          "crash": 0,
+          "ran": 29
+        },
+        "computed-property-names": {
+          "pass": 48,
+          "fail": 0,
+          "crash": 0,
+          "ran": 48
+        },
+        "destructuring": {
+          "pass": 16,
+          "fail": 3,
+          "crash": 0,
+          "ran": 19
+        },
+        "directive-prologue": {
+          "pass": 57,
+          "fail": 0,
+          "crash": 0,
+          "ran": 57
+        },
+        "eval-code": {
+          "pass": 67,
+          "fail": 16,
+          "crash": 0,
+          "ran": 83
+        },
+        "expressions": {
+          "pass": 112,
+          "fail": 8,
+          "crash": 0,
+          "ran": 120
+        },
+        "function-code": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "future-reserved-words": {
+          "pass": 55,
+          "fail": 0,
+          "crash": 0,
+          "ran": 55
+        },
+        "global-code": {
+          "pass": 29,
+          "fail": 13,
+          "crash": 0,
+          "ran": 42
+        },
+        "identifier-resolution": {
+          "pass": 14,
+          "fail": 0,
+          "crash": 0,
+          "ran": 14
+        },
+        "identifiers": {
+          "pass": 107,
+          "fail": 13,
+          "crash": 0,
+          "ran": 120
+        },
+        "keywords": {
+          "pass": 25,
+          "fail": 0,
+          "crash": 0,
+          "ran": 25
+        },
+        "line-terminators": {
+          "pass": 41,
+          "fail": 0,
+          "crash": 0,
+          "ran": 41
+        },
+        "literals": {
+          "pass": 111,
+          "fail": 9,
+          "crash": 0,
+          "ran": 120
+        },
+        "punctuators": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "reserved-words": {
+          "pass": 26,
+          "fail": 0,
+          "crash": 0,
+          "ran": 26
+        },
+        "rest-parameters": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "source-text": {
+          "pass": 1,
+          "fail": 0,
+          "crash": 0,
+          "ran": 1
+        },
+        "statementList": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "statements": {
+          "pass": 114,
+          "fail": 6,
+          "crash": 0,
+          "ran": 120
+        },
+        "types": {
+          "pass": 87,
+          "fail": 4,
+          "crash": 0,
+          "ran": 91
+        },
+        "white-space": {
+          "pass": 67,
+          "fail": 0,
+          "crash": 0,
+          "ran": 67
+        }
+      },
+      "sample_fails": [
+        [
+          "test/language/comments/hashbang/function-constructor.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:16:33"
+        ],
+        [
+          "test/language/destructuring/binding/syntax/destructuring-array-parameters-function-arguments-length.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:34:19"
+        ],
+        [
+          "test/language/destructuring/binding/syntax/destructuring-object-parameters-function-arguments-length.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:34:19"
+        ],
+        [
+          "test/language/destructuring/binding/typedarray-backed-by-resizable-buffer.js",
+          "FAIL TypeError: TypeError: Object has no member 'resize'"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-func-decl-a-preceding-parameter-is-named-arguments-declare-arguments.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-func-expr-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-meth-a-following-parameter-is-named-arguments-declare-arguments.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 9 more errors)"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 12 more errors)"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 16 more errors)"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-named-func-expr-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9"
+        ],
+        [
+          "test/language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9"
+        ],
+        [
+          "test/language/eval-code/indirect/lex-env-heritage.js",
+          "FAIL ReferenceError: ReferenceError: x is not defined"
+        ],
+        [
+          "test/language/eval-code/indirect/var-env-global-lex-non-strict.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00abundefined\u00bb) to be false"
+        ],
+        [
+          "test/language/eval-code/direct/var-env-global-lex-non-strict.js",
+          "FAIL expected SyntaxError"
+        ],
+        [
+          "test/language/expressions/async-generator/dstr/dflt-ary-ptrn-elision-step-err.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:43:9"
+        ],
+        [
+          "test/language/expressions/async-generator/named-dflt-params-ref-self.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:35:5"
+        ],
+        [
+          "test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-unresolvable.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:62:3"
+        ],
+        [
+          "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 6:1 Unexpected reserved word (and 2 more errors)"
+        ],
+        [
+          "test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-await-nested-imports.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 26:9 Unexpected reserved word (and 2 more errors)"
+        ],
+        [
+          "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 28:3 Unexpected reserved word (and 1 more errors)"
+        ],
+        [
+          "test/language/expressions/object/dstr/async-gen-meth-obj-init-undefined.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 32:10 Unexpected token * (and 4 more errors)"
+        ],
+        [
+          "test/language/global-code/S10.4.1_A1_T1.js",
+          "FAIL : Test262Error: #2: variable x has property attribute DontDelete"
+        ],
+        [
+          "test/language/global-code/decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-deletion.js",
+          "FAIL ReferenceError: ReferenceError: test262let is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-lex.js",
+          "FAIL : Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-restricted-global.js",
+          "FAIL : Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var-declared-via-eval.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00ab1\u00bb) to be true"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var.js",
+          "FAIL : Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex.js",
+          "FAIL ReferenceError: ReferenceError: test262let is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-var-collision.js",
+          "FAIL : Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/decl-lex-restricted-global.js",
+          "FAIL expected SyntaxError"
+        ],
+        [
+          "test/language/identifiers/part-unicode-15.1.0-class-escaped.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:22 Unexpected token ILLEGAL (and 1 more errors)"
+        ],
+        [
+          "test/language/identifiers/part-unicode-15.1.0-class.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:11 Unexpected token ILLEGAL (and 4 more errors)"
+        ],
+        [
+          "test/language/identifiers/part-unicode-15.1.0.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:12 Unexpected token ILLEGAL (and 3 more errors)"
+        ],
+        [
+          "test/language/identifiers/part-unicode-16.0.0-class.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 133 more errors)"
+        ],
+        [
+          "test/language/identifiers/part-unicode-16.0.0.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:6 Unexpected token ILLEGAL (and 132 more errors)"
+        ],
+        [
+          "test/language/identifiers/part-unicode-17.0.0-class.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 54 more errors)"
+        ],
+        [
+          "test/language/identifiers/part-unicode-17.0.0.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:6 Unexpected token ILLEGAL (and 53 more errors)"
+        ],
+        [
+          "test/language/identifiers/start-unicode-15.1.0-class.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:4 Unexpected token ILLEGAL (and 1865 more errors)"
+        ],
+        [
+          "test/language/identifiers/start-unicode-15.1.0-escaped.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 1242 more errors)"
+        ],
+        [
+          "test/language/identifiers/start-unicode-16.0.0-class-escaped.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:9 Unexpected token ILLEGAL (and 9 more errors)"
+        ],
+        [
+          "test/language/identifiers/start-unicode-16.0.0-escaped.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 8602 more errors)"
+        ],
+        [
+          "test/language/identifiers/start-unicode-17.0.0-class-escaped.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:9 Unexpected token ILLEGAL (and 9 more errors)"
+        ],
+        [
+          "test/language/identifiers/start-unicode-17.0.0-escaped.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 9292 more errors)"
+        ],
+        [
+          "test/language/literals/regexp/S7.8.5_A1.4_T2.js",
+          "FAIL : Test262Error: Code unit: d800 Expected SameValue(\u00ab\"\\\\\\\\\\\\ud800\"\u00bb, \u00ab\"\\\\\\ud800\"\u00bb) to be true"
+        ],
+        [
+          "test/language/literals/regexp/S7.8.5_A2.1_T2.js",
+          "FAIL : Test262Error: Code unit: d800 Expected SameValue(\u00ab\"nnnn\\\\ud800\"\u00bb, \u00ab\"nnnn\\ud800\"\u00bb) to be true"
+        ],
+        [
+          "test/language/literals/regexp/u-case-mapping.js",
+          "FAIL : Test262Error: Case mapping is not applied in the absence of the `u` flag Expected SameValue(\u00abtrue\u00bb, \u00abfalse\u00bb) to be true"
+        ],
+        [
+          "test/language/literals/string/legacy-octal-escape-sequence.js",
+          "FAIL : Test262Error: \\400 Expected SameValue(\u00ab\"\u0100\"\u00bb, \u00ab\" 0\"\u00bb) to be true"
+        ],
+        [
+          "test/language/literals/regexp/invalid-range-lookbehind.js",
+          "FAIL : Test262: This statement should not be evaluated."
+        ],
+        [
+          "test/language/literals/regexp/u-invalid-range-lookahead.js",
+          "FAIL : Test262: This statement should not be evaluated."
+        ],
+        [
+          "test/language/literals/string/S7.8.4_A4.3_T2.js",
+          "FAIL : Test262: This statement should not be evaluated."
+        ],
+        [
+          "test/language/literals/string/legacy-non-octal-escape-sequence-2-strict-explicit-pragma.js",
+          "FAIL : Test262: This statement should not be evaluated."
+        ],
+        [
+          "test/language/literals/string/legacy-non-octal-escape-sequence-9-strict-explicit-pragma.js",
+          "FAIL : Test262: This statement should not be evaluated."
+        ],
+        [
+          "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 54:1 Unexpected token ILLEGAL (and 7 more errors)"
+        ],
+        [
+          "test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-iter-val-err.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:74:3"
+        ],
+        [
+          "test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-prop-id-init-throws.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:57:10"
+        ],
+        [
+          "test/language/statements/for-await-of/let-block-with-newline.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 17:7 Unexpected token await (and 10 more errors)"
+        ],
+        [
+          "test/language/statements/let/global-closure-set-before-initialization.js",
+          "FAIL : Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/statements/using/static-init-await-binding-valid.js",
+          "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 17:20 Unexpected token await (and 5 more errors)"
+        ],
+        [
+          "test/language/types/reference/S8.7.1_A2.js",
+          "FAIL : Test262Error: #1: y = 1; (delete y) === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/S8.7_A5_T1.js",
+          "FAIL : Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/get-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/types/reference/put-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ]
+      ]
+    },
+    "goc": {
+      "by_dir": {
+        "arguments-object": {
+          "pass": 81,
+          "fail": 0,
+          "crash": 0,
+          "ran": 81
+        },
+        "asi": {
+          "pass": 102,
+          "fail": 0,
+          "crash": 0,
+          "ran": 102
+        },
+        "block-scope": {
+          "pass": 83,
+          "fail": 0,
+          "crash": 0,
+          "ran": 83
+        },
+        "comments": {
+          "pass": 29,
+          "fail": 0,
+          "crash": 0,
+          "ran": 29
+        },
+        "computed-property-names": {
+          "pass": 48,
+          "fail": 0,
+          "crash": 0,
+          "ran": 48
+        },
+        "destructuring": {
+          "pass": 18,
+          "fail": 1,
+          "crash": 0,
+          "ran": 19
+        },
+        "directive-prologue": {
+          "pass": 57,
+          "fail": 0,
+          "crash": 0,
+          "ran": 57
+        },
+        "eval-code": {
+          "pass": 81,
+          "fail": 2,
+          "crash": 0,
+          "ran": 83
+        },
+        "expressions": {
+          "pass": 117,
+          "fail": 3,
+          "crash": 0,
+          "ran": 120
+        },
+        "function-code": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "future-reserved-words": {
+          "pass": 55,
+          "fail": 0,
+          "crash": 0,
+          "ran": 55
+        },
+        "global-code": {
+          "pass": 30,
+          "fail": 12,
+          "crash": 0,
+          "ran": 42
+        },
+        "identifier-resolution": {
+          "pass": 13,
+          "fail": 1,
+          "crash": 0,
+          "ran": 14
+        },
+        "identifiers": {
+          "pass": 120,
+          "fail": 0,
+          "crash": 0,
+          "ran": 120
+        },
+        "keywords": {
+          "pass": 25,
+          "fail": 0,
+          "crash": 0,
+          "ran": 25
+        },
+        "line-terminators": {
+          "pass": 41,
+          "fail": 0,
+          "crash": 0,
+          "ran": 41
+        },
+        "literals": {
+          "pass": 120,
+          "fail": 0,
+          "crash": 0,
+          "ran": 120
+        },
+        "punctuators": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "reserved-words": {
+          "pass": 26,
+          "fail": 0,
+          "crash": 0,
+          "ran": 26
+        },
+        "rest-parameters": {
+          "pass": 11,
+          "fail": 0,
+          "crash": 0,
+          "ran": 11
+        },
+        "source-text": {
+          "pass": 1,
+          "fail": 0,
+          "crash": 0,
+          "ran": 1
+        },
+        "statementList": {
+          "pass": 80,
+          "fail": 0,
+          "crash": 0,
+          "ran": 80
+        },
+        "statements": {
+          "pass": 119,
+          "fail": 1,
+          "crash": 0,
+          "ran": 120
+        },
+        "types": {
+          "pass": 87,
+          "fail": 4,
+          "crash": 0,
+          "ran": 91
+        },
+        "white-space": {
+          "pass": 67,
+          "fail": 0,
+          "crash": 0,
+          "ran": 67
+        }
+      },
+      "sample_fails": [
+        [
+          "test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js",
+          "FAIL : Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::sourc"
+        ],
+        [
+          "test/language/eval-code/indirect/lex-env-heritage.js",
+          "FAIL ReferenceError: ReferenceError: x is not defined"
+        ],
+        [
+          "test/language/eval-code/indirect/var-env-global-lex-non-strict.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00abundefined\u00bb) to be false"
+        ],
+        [
+          "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js",
+          "FAIL SyntaxError: SyntaxError: unsupported keyword: export"
+        ],
+        [
+          "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js",
+          "FAIL SyntaxError: SyntaxError: meta expected"
+        ],
+        [
+          "test/language/global-code/S10.4.1_A1_T1.js",
+          "FAIL : Test262Error: #2: variable x has property attribute DontDelete"
+        ],
+        [
+          "test/language/global-code/decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-func.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-deletion.js",
+          "FAIL ReferenceError: ReferenceError: test262let is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-lex.js",
+          "FAIL : Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-restricted-global.js",
+          "FAIL : Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var-declared-via-eval.js",
+          "FAIL : Test262Error: Expected SameValue(\u00abundefined\u00bb, \u00ab1\u00bb) to be true"
+        ],
+        [
+          "test/language/global-code/script-decl-lex-var.js",
+          "FAIL : Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-lex.js",
+          "FAIL ReferenceError: ReferenceError: test262let is not defined"
+        ],
+        [
+          "test/language/global-code/script-decl-var-collision.js",
+          "FAIL : Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all"
+        ],
+        [
+          "test/language/global-code/script-decl-var.js",
+          "FAIL : Test262Error: brandNew descriptor should not be configurable"
+        ],
+        [
+          "test/language/identifier-resolution/assign-to-global-undefined.js",
+          "FAIL expected ReferenceError"
+        ],
+        [
+          "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js",
+          "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'"
+        ],
+        [
+          "test/language/types/reference/S8.7.1_A2.js",
+          "FAIL : Test262Error: #1: y = 1; (delete y) === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/S8.7_A5_T1.js",
+          "FAIL : Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true"
+        ],
+        [
+          "test/language/types/reference/get-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ],
+        [
+          "test/language/types/reference/put-value-prop-base-primitive-realm.js",
+          "FAIL Error: Error: $262.createRealm"
+        ]
+      ]
+    }
+  }
+}

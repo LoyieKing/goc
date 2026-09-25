@@ -1,0 +1,536 @@
+{
+  "goc": {
+    "rows": {
+      "3d-cube": {
+        "fail": "Error: bad vector sum for CubeSize = 20; expected 2889.0000000000045 but got 2889.0000000000086"
+      },
+      "3d-morph": {
+        "ms": 116.0,
+        "reps": 5.0,
+        "ms_per": 23.2
+      },
+      "3d-raytrace": {
+        "ms": 19.0,
+        "reps": 6.0,
+        "ms_per": 3.1666666666666665
+      },
+      "access-binary-trees": {
+        "ms": 92.0,
+        "reps": 7.0,
+        "ms_per": 13.142857142857142
+      },
+      "access-fannkuch": {
+        "ms": 210.0,
+        "reps": 3.0,
+        "ms_per": 70.0
+      },
+      "access-nbody": {
+        "ms": 115.0,
+        "reps": 6.0,
+        "ms_per": 19.166666666666668
+      },
+      "access-nsieve": {
+        "ms": 138.0,
+        "reps": 4.0,
+        "ms_per": 34.5
+      },
+      "bitops-3bit-bits-in-byte": {
+        "ms": 101.0,
+        "reps": 9.0,
+        "ms_per": 11.222222222222221
+      },
+      "bitops-bits-in-byte": {
+        "ms": 118.0,
+        "reps": 6.0,
+        "ms_per": 19.666666666666668
+      },
+      "bitops-bitwise-and": {
+        "ms": 98.0,
+        "reps": 8.0,
+        "ms_per": 12.25
+      },
+      "bitops-nsieve-bits": {
+        "ms": 111.0,
+        "reps": 5.0,
+        "ms_per": 22.2
+      },
+      "controlflow-recursive": {
+        "ms": 96.0,
+        "reps": 11.0,
+        "ms_per": 8.727272727272727
+      },
+      "crypto-aes": {
+        "ms": 113.0,
+        "reps": 5.0,
+        "ms_per": 22.6
+      },
+      "crypto-md5": {
+        "ms": 91.0,
+        "reps": 10.0,
+        "ms_per": 9.1
+      },
+      "crypto-sha1": {
+        "ms": 96.0,
+        "reps": 11.0,
+        "ms_per": 8.727272727272727
+      },
+      "date-format-tofte": {
+        "ms": 32.0,
+        "reps": 4.0,
+        "ms_per": 8.0
+      },
+      "date-format-xparb": {
+        "ms": 18.0,
+        "reps": 6.0,
+        "ms_per": 3.0
+      },
+      "math-cordic": {
+        "ms": 123.0,
+        "reps": 5.0,
+        "ms_per": 24.6
+      },
+      "math-partial-sums": {
+        "ms": 112.0,
+        "reps": 7.0,
+        "ms_per": 16.0
+      },
+      "math-spectral-norm": {
+        "ms": 91.0,
+        "reps": 9.0,
+        "ms_per": 10.11111111111111
+      },
+      "regexp-dna": {
+        "ms": 81.0,
+        "reps": 2.0,
+        "ms_per": 40.5
+      },
+      "string-base64": {
+        "ms": 108.0,
+        "reps": 7.0,
+        "ms_per": 15.428571428571429
+      },
+      "string-fasta": {
+        "ms": 148.0,
+        "reps": 3.0,
+        "ms_per": 49.333333333333336
+      },
+      "string-tagcloud": {
+        "fail": "SIGILL"
+      },
+      "string-unpack-code": {
+        "ms": 156.0,
+        "reps": 3.0,
+        "ms_per": 52.0
+      },
+      "string-validate-input": {
+        "ms": 98.0,
+        "reps": 7.0,
+        "ms_per": 14.0
+      }
+    },
+    "wall_s": 5.43
+  },
+  "ng": {
+    "rows": {
+      "3d-cube": {
+        "ms": 117.0,
+        "reps": 5.0,
+        "ms_per": 23.4
+      },
+      "3d-morph": {
+        "ms": 109.0,
+        "reps": 6.0,
+        "ms_per": 18.166666666666668
+      },
+      "3d-raytrace": {
+        "ms": 17.0,
+        "reps": 6.0,
+        "ms_per": 2.8333333333333335
+      },
+      "access-binary-trees": {
+        "ms": 102.0,
+        "reps": 8.0,
+        "ms_per": 12.75
+      },
+      "access-fannkuch": {
+        "ms": 178.0,
+        "reps": 3.0,
+        "ms_per": 59.333333333333336
+      },
+      "access-nbody": {
+        "ms": 113.0,
+        "reps": 6.0,
+        "ms_per": 18.833333333333332
+      },
+      "access-nsieve": {
+        "ms": 118.0,
+        "reps": 4.0,
+        "ms_per": 29.5
+      },
+      "bitops-3bit-bits-in-byte": {
+        "ms": 96.0,
+        "reps": 9.0,
+        "ms_per": 10.666666666666666
+      },
+      "bitops-bits-in-byte": {
+        "ms": 103.0,
+        "reps": 6.0,
+        "ms_per": 17.166666666666668
+      },
+      "bitops-bitwise-and": {
+        "ms": 100.0,
+        "reps": 7.0,
+        "ms_per": 14.285714285714286
+      },
+      "bitops-nsieve-bits": {
+        "ms": 110.0,
+        "reps": 6.0,
+        "ms_per": 18.333333333333332
+      },
+      "controlflow-recursive": {
+        "ms": 90.0,
+        "reps": 12.0,
+        "ms_per": 7.5
+      },
+      "crypto-aes": {
+        "ms": 117.0,
+        "reps": 6.0,
+        "ms_per": 19.5
+      },
+      "crypto-md5": {
+        "ms": 93.0,
+        "reps": 12.0,
+        "ms_per": 7.75
+      },
+      "crypto-sha1": {
+        "ms": 91.0,
+        "reps": 12.0,
+        "ms_per": 7.583333333333333
+      },
+      "date-format-tofte": {
+        "ms": 27.0,
+        "reps": 4.0,
+        "ms_per": 6.75
+      },
+      "date-format-xparb": {
+        "ms": 19.0,
+        "reps": 6.0,
+        "ms_per": 3.1666666666666665
+      },
+      "math-cordic": {
+        "ms": 118.0,
+        "reps": 5.0,
+        "ms_per": 23.6
+      },
+      "math-partial-sums": {
+        "ms": 101.0,
+        "reps": 7.0,
+        "ms_per": 14.428571428571429
+      },
+      "math-spectral-norm": {
+        "ms": 91.0,
+        "reps": 10.0,
+        "ms_per": 9.1
+      },
+      "regexp-dna": {
+        "ms": 67.0,
+        "reps": 3.0,
+        "ms_per": 22.333333333333332
+      },
+      "string-base64": {
+        "ms": 105.0,
+        "reps": 7.0,
+        "ms_per": 15.0
+      },
+      "string-fasta": {
+        "ms": 132.0,
+        "reps": 3.0,
+        "ms_per": 44.0
+      },
+      "string-tagcloud": {
+        "ms": 105.0,
+        "reps": 4.0,
+        "ms_per": 26.25
+      },
+      "string-unpack-code": {
+        "ms": 125.0,
+        "reps": 3.0,
+        "ms_per": 41.666666666666664
+      },
+      "string-validate-input": {
+        "ms": 94.0,
+        "reps": 8.0,
+        "ms_per": 11.75
+      }
+    },
+    "wall_s": 5.48
+  },
+  "bellard": {
+    "rows": {
+      "3d-cube": {
+        "ms": 104.0,
+        "reps": 6.0,
+        "ms_per": 17.333333333333332
+      },
+      "3d-morph": {
+        "ms": 107.0,
+        "reps": 8.0,
+        "ms_per": 13.375
+      },
+      "3d-raytrace": {
+        "ms": 14.0,
+        "reps": 8.0,
+        "ms_per": 1.75
+      },
+      "access-binary-trees": {
+        "ms": 96.0,
+        "reps": 9.0,
+        "ms_per": 10.666666666666666
+      },
+      "access-fannkuch": {
+        "ms": 139.0,
+        "reps": 4.0,
+        "ms_per": 34.75
+      },
+      "access-nbody": {
+        "ms": 96.0,
+        "reps": 7.0,
+        "ms_per": 13.714285714285714
+      },
+      "access-nsieve": {
+        "ms": 97.0,
+        "reps": 6.0,
+        "ms_per": 16.166666666666668
+      },
+      "bitops-3bit-bits-in-byte": {
+        "ms": 97.0,
+        "reps": 11.0,
+        "ms_per": 8.818181818181818
+      },
+      "bitops-bits-in-byte": {
+        "ms": 100.0,
+        "reps": 7.0,
+        "ms_per": 14.285714285714286
+      },
+      "bitops-bitwise-and": {
+        "ms": 86.0,
+        "reps": 12.0,
+        "ms_per": 7.166666666666667
+      },
+      "bitops-nsieve-bits": {
+        "ms": 96.0,
+        "reps": 7.0,
+        "ms_per": 13.714285714285714
+      },
+      "controlflow-recursive": {
+        "ms": 87.0,
+        "reps": 14.0,
+        "ms_per": 6.214285714285714
+      },
+      "crypto-aes": {
+        "ms": 96.0,
+        "reps": 7.0,
+        "ms_per": 13.714285714285714
+      },
+      "crypto-md5": {
+        "ms": 92.0,
+        "reps": 14.0,
+        "ms_per": 6.571428571428571
+      },
+      "crypto-sha1": {
+        "ms": 92.0,
+        "reps": 15.0,
+        "ms_per": 6.133333333333334
+      },
+      "date-format-tofte": {
+        "ms": 24.0,
+        "reps": 5.0,
+        "ms_per": 4.8
+      },
+      "date-format-xparb": {
+        "ms": 18.0,
+        "reps": 6.0,
+        "ms_per": 3.0
+      },
+      "math-cordic": {
+        "ms": 112.0,
+        "reps": 5.0,
+        "ms_per": 22.4
+      },
+      "math-partial-sums": {
+        "ms": 94.0,
+        "reps": 10.0,
+        "ms_per": 9.4
+      },
+      "math-spectral-norm": {
+        "ms": 96.0,
+        "reps": 12.0,
+        "ms_per": 8.0
+      },
+      "regexp-dna": {
+        "ms": 60.0,
+        "reps": 3.0,
+        "ms_per": 20.0
+      },
+      "string-base64": {
+        "ms": 104.0,
+        "reps": 8.0,
+        "ms_per": 13.0
+      },
+      "string-fasta": {
+        "ms": 107.0,
+        "reps": 5.0,
+        "ms_per": 21.4
+      },
+      "string-tagcloud": {
+        "ms": 98.0,
+        "reps": 5.0,
+        "ms_per": 19.6
+      },
+      "string-unpack-code": {
+        "ms": 135.0,
+        "reps": 4.0,
+        "ms_per": 33.75
+      },
+      "string-validate-input": {
+        "ms": 92.0,
+        "reps": 10.0,
+        "ms_per": 9.2
+      }
+    },
+    "wall_s": 5.1
+  },
+  "goja": {
+    "rows": {
+      "3d-cube": {
+        "fail": "Error: bad vector sum for CubeSize = 20; expected 2889.0000000000045 but got 2889.0000000000086"
+      },
+      "3d-morph": {
+        "ms": 211.0,
+        "reps": 2.0,
+        "ms_per": 105.5
+      },
+      "3d-raytrace": {
+        "ms": 81.0,
+        "reps": 2.0,
+        "ms_per": 40.5
+      },
+      "access-binary-trees": {
+        "ms": 157.0,
+        "reps": 4.0,
+        "ms_per": 39.25
+      },
+      "access-fannkuch": {
+        "ms": 300.0,
+        "reps": 2.0,
+        "ms_per": 150.0
+      },
+      "access-nbody": {
+        "ms": 255.0,
+        "reps": 2.0,
+        "ms_per": 127.5
+      },
+      "access-nsieve": {
+        "ms": 242.0,
+        "reps": 3.0,
+        "ms_per": 80.66666666666667
+      },
+      "bitops-3bit-bits-in-byte": {
+        "ms": 193.0,
+        "reps": 3.0,
+        "ms_per": 64.33333333333333
+      },
+      "bitops-bits-in-byte": {
+        "ms": 177.0,
+        "reps": 2.0,
+        "ms_per": 88.5
+      },
+      "bitops-bitwise-and": {
+        "ms": 219.0,
+        "reps": 2.0,
+        "ms_per": 109.5
+      },
+      "bitops-nsieve-bits": {
+        "ms": 356.0,
+        "reps": 2.0,
+        "ms_per": 178.0
+      },
+      "controlflow-recursive": {
+        "ms": 113.0,
+        "reps": 5.0,
+        "ms_per": 22.6
+      },
+      "crypto-aes": {
+        "ms": 207.0,
+        "reps": 3.0,
+        "ms_per": 69.0
+      },
+      "crypto-md5": {
+        "ms": 158.0,
+        "reps": 3.0,
+        "ms_per": 52.666666666666664
+      },
+      "crypto-sha1": {
+        "ms": 147.0,
+        "reps": 3.0,
+        "ms_per": 49.0
+      },
+      "date-format-tofte": {
+        "ms": 53.0,
+        "reps": 3.0,
+        "ms_per": 17.666666666666668
+      },
+      "date-format-xparb": {
+        "ms": 33.0,
+        "reps": 4.0,
+        "ms_per": 8.25
+      },
+      "math-cordic": {
+        "ms": 243.0,
+        "reps": 2.0,
+        "ms_per": 121.5
+      },
+      "math-partial-sums": {
+        "ms": 168.0,
+        "reps": 2.0,
+        "ms_per": 84.0
+      },
+      "math-spectral-norm": {
+        "ms": 138.0,
+        "reps": 3.0,
+        "ms_per": 46.0
+      },
+      "regexp-dna": {
+        "ms": 139.0,
+        "reps": 2.0,
+        "ms_per": 69.5
+      },
+      "string-base64": {
+        "ms": 275.0,
+        "reps": 2.0,
+        "ms_per": 137.5
+      },
+      "string-fasta": {
+        "ms": 217.0,
+        "reps": 2.0,
+        "ms_per": 108.5
+      },
+      "string-tagcloud": {
+        "ms": 316.0,
+        "reps": 2.0,
+        "ms_per": 158.0
+      },
+      "string-unpack-code": {
+        "ms": 182.0,
+        "reps": 3.0,
+        "ms_per": 60.666666666666664
+      },
+      "string-validate-input": {
+        "ms": 1397.0,
+        "reps": 2.0,
+        "ms_per": 698.5
+      }
+    },
+    "wall_s": 12.38
+  }
+}

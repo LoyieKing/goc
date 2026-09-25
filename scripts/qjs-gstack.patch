@@ -33,32 +33,36 @@ index 6ca030b..072e76a 100644
  
  JSRuntime *JS_NewRuntime2(const JSMallocFunctions *mf, void *opaque)
 diff --git a/libregexp.c b/libregexp.c
-index 49c474c..8abecac 100644
+index 49c474c..ee96267 100644
 --- a/libregexp.c
 +++ b/libregexp.c
-@@ -2780,6 +2780,21 @@ typedef union {
+@@ -2780,6 +2780,25 @@ typedef union {
      } bp;
  } StackElem;
  
 +#ifdef GOC_QJS_GSTACK
 +#include "../../runtime/goc_uptr.h"
-+static inline uint8_t *goc_regexp_restore_capture(StackElem saved)
-+{
-+    /* capture[] is uptr-backed C heap storage. The undo stack retains its
-+       encoded word; decode against the current g before writing it back. */
-+    return goc_uptr_decode((goc_uptr)saved.ptr);
-+}
++/* Decode the saved word as an integer. A pointer-typed helper return is
++   colored cptr and the return guard traps when the address is still on
++   this goroutine (function-local input, regex bytecode). */
++#define goc_regexp_restore_capture(elem) \
++    ((uint8_t *)goc_uptr_decode((goc_uptr)(elem).val))
 +#else
-+static inline uint8_t *goc_regexp_restore_capture(StackElem saved)
-+{
-+    return saved.ptr;
-+}
++#define goc_regexp_restore_capture(elem) ((elem).ptr)
++#endif
++#ifdef GOC_QJS_GSTACK
++/* Load the encoded word as an integer. A pointer-typed load is colored cptr
++   and the return guard traps when the address is still on this goroutine. */
++#define goc_regexp_restore_ptr(elem) \
++    ((uint8_t *)goc_uptr_decode((goc_uptr)(elem).val))
++#else
++#define goc_regexp_restore_ptr(elem) ((elem).ptr)
 +#endif
 +
  typedef struct {
      const uint8_t *cbuf;
      const uint8_t *cbuf_end;
-@@ -2837,6 +2852,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2837,6 +2856,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
      uint32_t val, c, idx;
      const uint8_t *cbuf_end;
      StackElem *sp, *bp, *stack_end;
@@ -66,7 +70,7 @@ index 49c474c..8abecac 100644
  #ifdef DUMP_EXEC
      const uint8_t *pc_start = pc; /* TEST */
  #endif
-@@ -2890,6 +2906,28 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2890,6 +2910,28 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
          capture[idx] = (value);                         \
      }
  
@@ -95,7 +99,7 @@ index 49c474c..8abecac 100644
  
  #ifdef DUMP_EXEC
      printf("%5s %5s %5s %5s %s\n", "PC", "CP", "BP", "SP", "OPCODE");
-@@ -2914,7 +2952,11 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2914,12 +2956,16 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
                      return 0;
                  /* undo the modifications to capture[] */
                  while (sp > bp) {
@@ -108,7 +112,34 @@ index 49c474c..8abecac 100644
                      sp -= 2;
                  }
                  
-@@ -2969,7 +3011,11 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+-                pc = sp[-3].ptr;
+-                cptr = sp[-2].ptr;
++                pc = goc_regexp_restore_ptr(sp[-3]);
++                cptr = goc_regexp_restore_ptr(sp[-2]);
+                 type = sp[-1].bp.type;
+                 bp = s->stack_buf + sp[-1].bp.val;
+                 sp -= 3;
+@@ -2941,8 +2987,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+                 for(;;) {
+                     sp1 = sp;
+                     sp = bp;
+-                    pc = sp[-3].ptr;
+-                    cptr = sp[-2].ptr;
++                    pc = goc_regexp_restore_ptr(sp[-3]);
++                    cptr = goc_regexp_restore_ptr(sp[-2]);
+                     type = sp[-1].bp.type;
+                     bp = s->stack_buf + sp[-1].bp.val;
+                     sp[-1].ptr = (void *)sp1; /* save the next value for the copy step */
+@@ -2954,7 +3000,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+                     /* keep the undo info if there is a saved state */
+                     sp1 = sp;
+                     while (sp1 < sp_top) {
+-                        next_sp = (void *)sp1[2].ptr;
++                        next_sp = (StackElem *)goc_regexp_restore_ptr(sp1[2]);
+                         sp1 += 3;
+                         while (sp1 < next_sp)
+                             *sp++ = *sp1++;
+@@ -2969,11 +3015,15 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
                  type = bp[-1].bp.type;
                  /* undo the modifications to capture[] */
                  while (sp > bp) {
@@ -120,8 +151,14 @@ index 49c474c..8abecac 100644
 +                        capture[sp[-2].val] = goc_regexp_restore_capture(sp[-1]);
                      sp -= 2;
                  }
-                 pc = sp[-3].ptr;
-@@ -3116,7 +3162,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+-                pc = sp[-3].ptr;
+-                cptr = sp[-2].ptr;
++                pc = goc_regexp_restore_ptr(sp[-3]);
++                cptr = goc_regexp_restore_ptr(sp[-2]);
+                 type = sp[-1].bp.type;
+                 bp = s->stack_buf + sp[-1].bp.val;
+                 sp -= 3;
+@@ -3116,7 +3166,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
              idx = 2 * s->capture_count + pc[0];
              val = get_u32(pc + 1);
              pc += 5;
@@ -130,7 +167,7 @@ index 49c474c..8abecac 100644
              break;
          case REOP_loop:
              {
-@@ -3125,8 +3171,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -3125,8 +3175,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
                  val = get_u32(pc + 1);
                  pc += 5;
  
@@ -141,7 +178,7 @@ index 49c474c..8abecac 100644
                  if (val2 != 0) {
                      pc += (int)val;
                      if (lre_poll_timeout(s))
-@@ -3147,8 +3193,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -3147,8 +3197,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
                  pc += 9;
  
                  /* decrement the counter */

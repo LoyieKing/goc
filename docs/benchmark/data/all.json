@@ -1,0 +1,731 @@
+{
+  "engines": {
+    "goc": "build/qjs/qjscli --stack-size 16384",
+    "ng": "QuickJS-ng 0.17.0 -C",
+    "bellard": "QuickJS 2026-06-04",
+    "goja": "cfe4039cb6d77b297d8b637182f774fa4a54b7d5"
+  },
+  "v8": {
+    "Richards": {
+      "goc": 837.5,
+      "ng": 914,
+      "bellard": 1170,
+      "goja": 334
+    },
+    "DeltaBlue": {
+      "goc": 846.5,
+      "ng": 948,
+      "bellard": 1106,
+      "goja": 400
+    },
+    "Crypto": {
+      "goc": 804,
+      "ng": 994,
+      "bellard": 1274,
+      "goja": 166
+    },
+    "RayTrace": {
+      "goc": 1776,
+      "ng": 1915,
+      "bellard": 2576,
+      "goja": 348
+    },
+    "EarleyBoyer": {
+      "goc": 2262,
+      "ng": 2626,
+      "bellard": 3132,
+      "goja": 711
+    },
+    "RegExp": {
+      "goc": 362,
+      "ng": 454,
+      "bellard": 584,
+      "goja": 289
+    },
+    "Splay": {
+      "goc": 3449,
+      "ng": 4081,
+      "bellard": 5038,
+      "goja": 1568
+    },
+    "NavierStokes": {
+      "goc": 1511,
+      "ng": 1733,
+      "bellard": 2447,
+      "goja": 274
+    },
+    "Overall": {
+      "goc": 1200.5,
+      "ng": 1389,
+      "bellard": 1768,
+      "goja": 402
+    }
+  },
+  "v8_wall_s": {
+    "goc": "37.95 s, 39.73 s",
+    "ng": "36.3 s",
+    "goja": "87.7 s",
+    "bellard": "30.6 s"
+  },
+  "microcall": {
+    "goc": 19556,
+    "ng": 23356,
+    "ratio": 1.19,
+    "depth4_ms": {
+      "goc": 60,
+      "ng": 45
+    }
+  },
+  "sunspider_ms": {
+    "3d-cube": {
+      "goc": null,
+      "ng": 23.4,
+      "bellard": 17.333333333333332,
+      "goja": null
+    },
+    "3d-morph": {
+      "goc": 23.2,
+      "ng": 18.166666666666668,
+      "bellard": 13.375,
+      "goja": 105.5
+    },
+    "3d-raytrace": {
+      "goc": 3.1666666666666665,
+      "ng": 2.8333333333333335,
+      "bellard": 1.75,
+      "goja": 40.5
+    },
+    "access-binary-trees": {
+      "goc": 13.142857142857142,
+      "ng": 12.75,
+      "bellard": 10.666666666666666,
+      "goja": 39.25
+    },
+    "access-fannkuch": {
+      "goc": 70.0,
+      "ng": 59.333333333333336,
+      "bellard": 34.75,
+      "goja": 150.0
+    },
+    "access-nbody": {
+      "goc": 19.166666666666668,
+      "ng": 18.833333333333332,
+      "bellard": 13.714285714285714,
+      "goja": 127.5
+    },
+    "access-nsieve": {
+      "goc": 34.5,
+      "ng": 29.5,
+      "bellard": 16.166666666666668,
+      "goja": 80.66666666666667
+    },
+    "bitops-3bit-bits-in-byte": {
+      "goc": 11.222222222222221,
+      "ng": 10.666666666666666,
+      "bellard": 8.818181818181818,
+      "goja": 64.33333333333333
+    },
+    "bitops-bits-in-byte": {
+      "goc": 19.666666666666668,
+      "ng": 17.166666666666668,
+      "bellard": 14.285714285714286,
+      "goja": 88.5
+    },
+    "bitops-bitwise-and": {
+      "goc": 12.25,
+      "ng": 14.285714285714286,
+      "bellard": 7.166666666666667,
+      "goja": 109.5
+    },
+    "bitops-nsieve-bits": {
+      "goc": 22.2,
+      "ng": 18.333333333333332,
+      "bellard": 13.714285714285714,
+      "goja": 178.0
+    },
+    "controlflow-recursive": {
+      "goc": 8.727272727272727,
+      "ng": 7.5,
+      "bellard": 6.214285714285714,
+      "goja": 22.6
+    },
+    "crypto-aes": {
+      "goc": 22.6,
+      "ng": 19.5,
+      "bellard": 13.714285714285714,
+      "goja": 69.0
+    },
+    "crypto-md5": {
+      "goc": 9.1,
+      "ng": 7.75,
+      "bellard": 6.571428571428571,
+      "goja": 52.666666666666664
+    },
+    "crypto-sha1": {
+      "goc": 8.727272727272727,
+      "ng": 7.583333333333333,
+      "bellard": 6.133333333333334,
+      "goja": 49.0
+    },
+    "date-format-tofte": {
+      "goc": 8.0,
+      "ng": 6.75,
+      "bellard": 4.8,
+      "goja": 17.666666666666668
+    },
+    "date-format-xparb": {
+      "goc": 3.0,
+      "ng": 3.1666666666666665,
+      "bellard": 3.0,
+      "goja": 8.25
+    },
+    "math-cordic": {
+      "goc": 24.6,
+      "ng": 23.6,
+      "bellard": 22.4,
+      "goja": 121.5
+    },
+    "math-partial-sums": {
+      "goc": 16.0,
+      "ng": 14.428571428571429,
+      "bellard": 9.4,
+      "goja": 84.0
+    },
+    "math-spectral-norm": {
+      "goc": 10.11111111111111,
+      "ng": 9.1,
+      "bellard": 8.0,
+      "goja": 46.0
+    },
+    "regexp-dna": {
+      "goc": 40.5,
+      "ng": 22.333333333333332,
+      "bellard": 20.0,
+      "goja": 69.5
+    },
+    "string-base64": {
+      "goc": 15.428571428571429,
+      "ng": 15.0,
+      "bellard": 13.0,
+      "goja": 137.5
+    },
+    "string-fasta": {
+      "goc": 49.333333333333336,
+      "ng": 44.0,
+      "bellard": 21.4,
+      "goja": 108.5
+    },
+    "string-tagcloud": {
+      "goc": null,
+      "ng": 26.25,
+      "bellard": 19.6,
+      "goja": 158.0
+    },
+    "string-unpack-code": {
+      "goc": 52.0,
+      "ng": 41.666666666666664,
+      "bellard": 33.75,
+      "goja": 60.666666666666664
+    },
+    "string-validate-input": {
+      "goc": 14.0,
+      "ng": 11.75,
+      "bellard": 9.2,
+      "goja": 698.5
+    }
+  },
+  "sunspider_geomean_24": {
+    "goc": 16.085712496280525,
+    "ng": 14.165619644406178,
+    "bellard": 10.526765035267555,
+    "goja": 71.75740457647662
+  },
+  "sunspider_wall_s": {
+    "goc": 5.43,
+    "ng": 5.48,
+    "bellard": 5.1,
+    "goja": 12.38
+  },
+  "micro_ns": {
+    "arguments_read": {
+      "goc": 198.69,
+      "ng": 158.79,
+      "bellard": 125.31,
+      "goja": 1250.0
+    },
+    "arguments_strict_read": {
+      "goc": 157.27,
+      "ng": 124.76,
+      "bellard": 97.4,
+      "goja": 1000.0
+    },
+    "array_for": {
+      "goc": 20.22,
+      "ng": 15.13,
+      "bellard": 18.23,
+      "goja": 100.0
+    },
+    "array_for_in": {
+      "goc": 72.09,
+      "ng": 49.01,
+      "bellard": 46.86,
+      "goja": 400.0
+    },
+    "array_for_of": {
+      "goc": 23.26,
+      "ng": 20.09,
+      "bellard": 21.0,
+      "goja": 400.0
+    },
+    "array_hole_length_decr": {
+      "goc": 61.31,
+      "ng": 47.26,
+      "bellard": 41.17,
+      "goja": 200.0
+    },
+    "array_length_decr": {
+      "goc": 45.2,
+      "ng": 38.88,
+      "bellard": 40.17,
+      "goja": 200.0
+    },
+    "array_length_read": {
+      "goc": 12.38,
+      "ng": 14.69,
+      "bellard": 9.06,
+      "goja": 50.0
+    },
+    "array_pop": {
+      "goc": 81.0,
+      "ng": 72.22,
+      "bellard": 69.82,
+      "goja": 200.0
+    },
+    "array_prop_create": {
+      "goc": 38.53,
+      "ng": 29.94,
+      "bellard": 15.01,
+      "goja": 200.0
+    },
+    "array_push": {
+      "goc": 43.28,
+      "ng": 40.32,
+      "bellard": 34.51,
+      "goja": 200.0
+    },
+    "array_read": {
+      "goc": 13.82,
+      "ng": 13.0,
+      "bellard": 7.7,
+      "goja": 50.0
+    },
+    "array_slice": {
+      "goc": 16.32,
+      "ng": 14.33,
+      "bellard": 16.33,
+      "goja": 100.0
+    },
+    "array_update": {
+      "goc": 19.51,
+      "ng": 19.38,
+      "bellard": 11.13,
+      "goja": 100.0
+    },
+    "array_write": {
+      "goc": 31.52,
+      "ng": 26.46,
+      "bellard": 7.68,
+      "goja": 40.0
+    },
+    "bigint256_arith": {
+      "goc": 128.23,
+      "ng": 102.82,
+      "bellard": 84.78,
+      "goja": 200.0
+    },
+    "bigint32_arith": {
+      "goc": 50.35,
+      "ng": 39.96,
+      "bellard": 24.62,
+      "goja": 200.0
+    },
+    "bigint64_arith": {
+      "goc": 70.14,
+      "ng": 56.31,
+      "bellard": 34.02,
+      "goja": 200.0
+    },
+    "date_now": {
+      "goc": 258.92,
+      "ng": 57.12,
+      "bellard": 46.93,
+      "goja": 200.0
+    },
+    "date_parse": {
+      "goc": null,
+      "ng": 521.12,
+      "bellard": 486.98,
+      "goja": 666.67
+    },
+    "empty_do_loop": {
+      "goc": 15.89,
+      "ng": 13.25,
+      "bellard": 15.0,
+      "goja": 50.0
+    },
+    "empty_down_loop": {
+      "goc": 16.68,
+      "ng": 15.24,
+      "bellard": 15.32,
+      "goja": 50.0
+    },
+    "empty_down_loop2": {
+      "goc": 21.71,
+      "ng": 18.7,
+      "bellard": 19.15,
+      "goja": 100.0
+    },
+    "empty_loop": {
+      "goc": 14.9,
+      "ng": 13.01,
+      "bellard": 11.15,
+      "goja": 50.0
+    },
+    "float_arith": {
+      "goc": 27.96,
+      "ng": 25.93,
+      "bellard": 20.16,
+      "goja": 200.0
+    },
+    "float_toExponential": {
+      "goc": 166.08,
+      "ng": 108.33,
+      "bellard": 93.33,
+      "goja": 333.33
+    },
+    "float_toFixed": {
+      "goc": 149.31,
+      "ng": 92.89,
+      "bellard": 82.06,
+      "goja": 666.67
+    },
+    "float_toPrecision": {
+      "goc": 156.41,
+      "ng": 105.71,
+      "bellard": 93.23,
+      "goja": 333.33
+    },
+    "float_toString": {
+      "goc": 239.65,
+      "ng": 198.18,
+      "bellard": 190.43,
+      "goja": 333.33
+    },
+    "float_to_string": {
+      "goc": 224.21,
+      "ng": 178.75,
+      "bellard": 175.29,
+      "goja": 333.33
+    },
+    "func_call": {
+      "goc": 29.3,
+      "ng": 26.67,
+      "bellard": 23.38,
+      "goja": 100.0
+    },
+    "func_closure_call": {
+      "goc": 29.88,
+      "ng": 25.37,
+      "bellard": 24.37,
+      "goja": 100.0
+    },
+    "global_destruct": {
+      "goc": 47.7,
+      "ng": 40.84,
+      "bellard": 33.2,
+      "goja": 500.0
+    },
+    "global_destruct_strict": {
+      "goc": 46.66,
+      "ng": 39.65,
+      "bellard": 33.36,
+      "goja": 500.0
+    },
+    "global_func_call": {
+      "goc": 36.34,
+      "ng": 33.16,
+      "bellard": 26.41,
+      "goja": 100.0
+    },
+    "global_read": {
+      "goc": 11.08,
+      "ng": 12.13,
+      "bellard": 7.84,
+      "goja": 50.0
+    },
+    "global_write": {
+      "goc": 11.07,
+      "ng": 14.24,
+      "bellard": 7.53,
+      "goja": 100.0
+    },
+    "global_write_strict": {
+      "goc": 10.84,
+      "ng": 14.43,
+      "bellard": 7.53,
+      "goja": 100.0
+    },
+    "int_arith": {
+      "goc": 19.23,
+      "ng": 16.61,
+      "bellard": 15.67,
+      "goja": 100.0
+    },
+    "int_toString": {
+      "goc": 67.28,
+      "ng": 48.79,
+      "bellard": 38.96,
+      "goja": 133.33
+    },
+    "int_to_string": {
+      "goc": 48.62,
+      "ng": 36.24,
+      "bellard": 28.82,
+      "goja": 133.33
+    },
+    "local_destruct": {
+      "goc": 33.43,
+      "ng": 28.19,
+      "bellard": 24.46,
+      "goja": 333.33
+    },
+    "map_delete": {
+      "goc": 249.77,
+      "ng": 197.4,
+      "bellard": 178.02,
+      "goja": 500.0
+    },
+    "map_set_bigint": {
+      "goc": 3627.8,
+      "ng": 2543.23,
+      "bellard": 131.75,
+      "goja": 500.0
+    },
+    "map_set_int": {
+      "goc": 3366.72,
+      "ng": 1617.81,
+      "bellard": 98.87,
+      "goja": 400.0
+    },
+    "map_set_string": {
+      "goc": 234.5,
+      "ng": 194.02,
+      "bellard": 181.88,
+      "goja": 500.0
+    },
+    "math_min": {
+      "goc": 37.25,
+      "ng": 41.57,
+      "bellard": 30.22,
+      "goja": 200.0
+    },
+    "prop_clone": {
+      "goc": 55.86,
+      "ng": 50.0,
+      "bellard": 44.75,
+      "goja": 250.0
+    },
+    "prop_create": {
+      "goc": 66.09,
+      "ng": 61.28,
+      "bellard": 41.83,
+      "goja": 200.0
+    },
+    "prop_delete": {
+      "goc": 93.41,
+      "ng": 82.35,
+      "bellard": 72.9,
+      "goja": 500.0
+    },
+    "prop_read": {
+      "goc": 12.72,
+      "ng": 13.06,
+      "bellard": 10.03,
+      "goja": 100.0
+    },
+    "prop_update": {
+      "goc": 18.4,
+      "ng": 15.95,
+      "bellard": 11.38,
+      "goja": 100.0
+    },
+    "prop_write": {
+      "goc": 16.79,
+      "ng": 12.48,
+      "bellard": 7.63,
+      "goja": 50.0
+    },
+    "regexp_ascii": {
+      "goc": 275.79,
+      "ng": 197.08,
+      "bellard": 150.6,
+      "goja": 1000.0
+    },
+    "regexp_replace": {
+      "goc": 1904.63,
+      "ng": 1345.93,
+      "bellard": 538.25,
+      "goja": 1000.0
+    },
+    "regexp_utf16": {
+      "goc": 282.52,
+      "ng": 228.84,
+      "bellard": 154.83,
+      "goja": 2000.0
+    },
+    "sort_bench": {
+      "goc": 16.93,
+      "ng": 12.96,
+      "bellard": 13.58,
+      "goja": 58.0
+    },
+    "string_build1": {
+      "goc": 54.44,
+      "ng": 42.78,
+      "bellard": 20.85,
+      "goja": 200.0
+    },
+    "string_build1x": {
+      "goc": 53.05,
+      "ng": 43.26,
+      "bellard": 20.73,
+      "goja": 200.0
+    },
+    "string_build2": {
+      "goc": 61.55,
+      "ng": 45.64,
+      "bellard": 39.13,
+      "goja": 200.0
+    },
+    "string_build2c": {
+      "goc": 59.23,
+      "ng": 57.04,
+      "bellard": 24.77,
+      "goja": 400.0
+    },
+    "string_build3": {
+      "goc": 61.62,
+      "ng": 44.92,
+      "bellard": 36.81,
+      "goja": 200.0
+    },
+    "string_build4": {
+      "goc": 58.32,
+      "ng": 49.4,
+      "bellard": 40.85,
+      "goja": 200.0
+    },
+    "string_build_large1": {
+      "goc": 71.89,
+      "ng": 58.24,
+      "bellard": 44.35,
+      "goja": 11150.0
+    },
+    "string_build_large2": {
+      "goc": 72.49,
+      "ng": 56.47,
+      "bellard": 44.88,
+      "goja": 11750.0
+    },
+    "string_length": {
+      "goc": 13.78,
+      "ng": 14.08,
+      "bellard": 12.26,
+      "goja": 100.0
+    },
+    "string_to_float": {
+      "goc": 108.7,
+      "ng": 90.77,
+      "bellard": 92.91,
+      "goja": 200.0
+    },
+    "string_to_int": {
+      "goc": 81.55,
+      "ng": 71.59,
+      "bellard": 67.94,
+      "goja": 200.0
+    },
+    "typed_array_read": {
+      "goc": 15.74,
+      "ng": 13.75,
+      "bellard": 12.05,
+      "goja": 50.0
+    },
+    "typed_array_write": {
+      "goc": 36.09,
+      "ng": 29.84,
+      "bellard": 11.98,
+      "goja": 50.0
+    },
+    "weak_map_delete": {
+      "goc": 291.96,
+      "ng": 261.29,
+      "bellard": 165.23,
+      "goja": 1000.0
+    },
+    "weak_map_set": {
+      "goc": 135.73,
+      "ng": 126.65,
+      "bellard": 66.31,
+      "goja": 400.0
+    }
+  },
+  "micro_total": {
+    "goc": 14201.59,
+    "ng": 10187.58,
+    "bellard": 4592.93,
+    "goja": 44314.65
+  },
+  "micro_geomean_71": {
+    "goc": 58.73059190397051,
+    "ng": 48.46954989802866,
+    "bellard": 34.40749877755273,
+    "goja": 219.0689547164824
+  },
+  "test262_pct": {
+    "goc": {
+      "pass": 1502,
+      "ran": 1526
+    },
+    "ng": {
+      "pass": 1502,
+      "ran": 1526
+    },
+    "bellard": {
+      "pass": 1501,
+      "ran": 1526
+    },
+    "goja": {
+      "pass": 1453,
+      "ran": 1526
+    }
+  },
+  "qjs_pct": {
+    "goc": {
+      "pass": 69,
+      "total": 77
+    },
+    "ng": {
+      "pass": 69,
+      "total": 77
+    },
+    "bellard": {
+      "pass": 73,
+      "total": 77
+    },
+    "goja": {
+      "pass": 58,
+      "total": 77
+    }
+  }
+}

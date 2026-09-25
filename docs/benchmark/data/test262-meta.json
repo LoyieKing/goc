@@ -1,0 +1,127 @@
+{
+  "arguments-object": {
+    "eligible_pos": 200,
+    "eligible_neg": 1,
+    "ran": 81
+  },
+  "asi": {
+    "eligible_pos": 67,
+    "eligible_neg": 35,
+    "ran": 102
+  },
+  "block-scope": {
+    "eligible_pos": 43,
+    "eligible_neg": 102,
+    "ran": 83
+  },
+  "comments": {
+    "eligible_pos": 21,
+    "eligible_neg": 8,
+    "ran": 29
+  },
+  "computed-property-names": {
+    "eligible_pos": 48,
+    "eligible_neg": 0,
+    "ran": 48
+  },
+  "destructuring": {
+    "eligible_pos": 19,
+    "eligible_neg": 0,
+    "ran": 19
+  },
+  "directive-prologue": {
+    "eligible_pos": 51,
+    "eligible_neg": 6,
+    "ran": 57
+  },
+  "eval-code": {
+    "eligible_pos": 292,
+    "eligible_neg": 3,
+    "ran": 83
+  },
+  "expressions": {
+    "eligible_pos": 6903,
+    "eligible_neg": 2015,
+    "ran": 120
+  },
+  "function-code": {
+    "eligible_pos": 217,
+    "eligible_neg": 0,
+    "ran": 80
+  },
+  "future-reserved-words": {
+    "eligible_pos": 29,
+    "eligible_neg": 26,
+    "ran": 55
+  },
+  "global-code": {
+    "eligible_pos": 27,
+    "eligible_neg": 15,
+    "ran": 42
+  },
+  "identifier-resolution": {
+    "eligible_pos": 12,
+    "eligible_neg": 2,
+    "ran": 14
+  },
+  "identifiers": {
+    "eligible_pos": 152,
+    "eligible_neg": 116,
+    "ran": 120
+  },
+  "keywords": {
+    "eligible_pos": 0,
+    "eligible_neg": 25,
+    "ran": 25
+  },
+  "line-terminators": {
+    "eligible_pos": 17,
+    "eligible_neg": 24,
+    "ran": 41
+  },
+  "literals": {
+    "eligible_pos": 215,
+    "eligible_neg": 321,
+    "ran": 120
+  },
+  "punctuators": {
+    "eligible_pos": 1,
+    "eligible_neg": 10,
+    "ran": 11
+  },
+  "reserved-words": {
+    "eligible_pos": 14,
+    "eligible_neg": 12,
+    "ran": 26
+  },
+  "rest-parameters": {
+    "eligible_pos": 10,
+    "eligible_neg": 1,
+    "ran": 11
+  },
+  "source-text": {
+    "eligible_pos": 1,
+    "eligible_neg": 0,
+    "ran": 1
+  },
+  "statementList": {
+    "eligible_pos": 80,
+    "eligible_neg": 0,
+    "ran": 80
+  },
+  "statements": {
+    "eligible_pos": 5316,
+    "eligible_neg": 1513,
+    "ran": 120
+  },
+  "types": {
+    "eligible_pos": 102,
+    "eligible_neg": 11,
+    "ran": 91
+  },
+  "white-space": {
+    "eligible_pos": 61,
+    "eligible_neg": 6,
+    "ran": 67
+  }
+}

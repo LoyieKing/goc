@@ -34,5 +34,13 @@ echo "CLI ready: $OUT/qjscli"
       !close(Math.sin(Math.PI / 2), 1) ||
       !Number.isNaN(Math.log(-1)))
     throw new Error("QuickJS math bridge returned an invalid result");
+  // glibc sin, not Go math: the printed value must match native libm.
+  if (Math.sin(1).toString() !== "0.8414709848078965")
+    throw new Error("Math.sin does not match libm");
+  const epoch = new Date(0);
+  if (Date.parse(epoch.toString()) !== 0 || Date.parse(epoch.toISOString()) !== 0)
+    throw new Error("localtime bridge corrupted Date");
+  if (epoch.toGMTString() !== "Thu, 01 Jan 1970 00:00:00 GMT")
+    throw new Error("Date.toGMTString mismatch");
 ' >/dev/null
 echo "PASS qjs-cli-math-bridge"
