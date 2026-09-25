@@ -51,6 +51,7 @@ export GOC_DEFAULT_PTR_COLOR=cptr   # bulk coloring: uncolored ptrs are cptr
 export GOC_NO_NOSPLIT=1             # let the meta say "splittable", not "nosplit"
 export GOC_MORESTACK="${GOC_MORESTACK:-1}"  # real split check + morestack stub in goc TEXT
 export GOC_SPTR_MAPS="${GOC_SPTR_MAPS:-1}"  # real locals maps at C call sites
+export GOC_INLINE_DYNALLOC=1        # bump the alloca pool in-line; no per-call memset
 export GOC_CRESERVE="${GOC_CRESERVE:-8192}"  # fixed Go->C thunk frame, not a C-stack workaround
 export QJS_EVAL="${QJS_EVAL:-1}" QJS_PROMISE="${QJS_PROMISE:-1}"
 

@@ -44,6 +44,7 @@ two complete sequential runs per engine produced these **median scores**
 | goc-built QuickJS-ng CLI (`-O3` IR + `goc_malloc` dynalloc) | 341 | 89.5 s (one run, not a median) |
 | goc-built QuickJS-ng CLI (`-O3`, no pin-i64, nosplit leaves) | 403, 413, 414 | 77–79 s (three runs) |
 | goc-built QuickJS-ng CLI (`-O3`, call-bearing inline, tagged `&s->token`) | 785, 797 | 48.0 s (two runs, median 791) |
+| goc-built QuickJS-ng CLI (`-O3`, inlined uptr + alloca pool bump) | 1198, 1203 | 38.0–39.7 s (rerun, mean 1200.5) |
 | Goja (`cfe4039cb6d77b297d8b637182f774fa4a54b7d5`, Go 1.24.4) | 402 | 87.7 s |
 | Pristine native QuickJS-ng (`6d46d07d04041b40f4f49eaa7fdebe44c314c699`, GCC Release) | 1389 | 36.3 s |
 | Original [Bellard QuickJS 2026-06-04](https://bellard.org/quickjs/) (GCC `-O2`) | 1768 | 30.6 s |
@@ -70,6 +71,14 @@ run; the 791 column is the median of these two runs. The previous
 single `-O3` run, still paying a `mmap`/`munmap` pair per call, scored 70.2
 in 333.1 s. An earlier attempt faulted in RegExp after EarleyBoyer; that
 partial print is not a score.
+The 2026-09-25 follow-up inlines `goc_stack_hi` / `goc_uptr_decode` /
+`goc_uptr_from_ptr` to a volatile TLS load, and (`GOC_INLINE_DYNALLOC=1`)
+bumps the alloca pool in line without the extra memset. Two runs scored
+1265 and 1239 on the first pair (38.3–38.5 s). The same binary rerun scored
+1198 and 1203 (mean 1200.5, 37.95 s and 39.73 s): 3.0× Goja's 402, and 1.16×
+behind the same-source native QuickJS-ng 1389. The per-suite column is that
+rerun. Microcall on the rerun: 19556 vs native 23356 (1.19×); depth4 60 ms
+vs 45 ms (1.33×).
 Native QuickJS-ng built separately at `-O0` scored 385 in one control run.
 This earlier goc snapshot was compiled at `-O0`, whereas native Release used
 GCC `-O3`; these numbers compare the **complete builds**, not isolated goroutine-stack
@@ -89,17 +98,17 @@ and trapped; the Go-backed math functions now run the unmodified timed suites.
 Per-run scores, exit codes, commands, and elapsed times from this workstation
 are saved in the local `build/qjs/bench-v8-results.json` artifact.
 
-| Suite | goc `-O0` | goc `-O3` pin | goc 413 | goc 791 | Goja | native ng | Bellard |
-|-------|----------:|-------------:|--------:|--------:|-----:|----------:|--------:|
-| Richards | 13.5 | 189 | 237 | 438 | 334 | 914 | 1170 |
-| DeltaBlue | 9.23 | 178 | 223 | 360 | 400 | 948 | 1106 |
-| Crypto | 90.0 | 265 | 304 | 736.5 | 166 | 994 | 1274 |
-| RayTrace | 50.0 | 450 | 558 | 1014.5 | 348 | 1915 | 2576 |
-| EarleyBoyer | 60.3 | 585 | 707 | 1264.5 | 711 | 2626 | 3132 |
-| RegExp | 65.5 | 110 | 136 | 254.5 | 289 | 454 | 584 |
-| Splay | 146 | 1215 | 1482 | 2609.5 | 1568 | 4081 | 5038 |
-| NavierStokes | 272 | 584 | 664 | 1549.5 | 274 | 1733 | 2447 |
-| **Overall** | **55.3** | **341** | **413** | **791** | **402** | **1389** | **1768** |
+| Suite | goc `-O0` | goc `-O3` pin | goc 413 | goc 791 | goc 1200.5 | Goja | native ng | Bellard |
+|-------|----------:|-------------:|--------:|--------:|-----------:|-----:|----------:|--------:|
+| Richards | 13.5 | 189 | 237 | 438 | 837.5 | 334 | 914 | 1170 |
+| DeltaBlue | 9.23 | 178 | 223 | 360 | 846.5 | 400 | 948 | 1106 |
+| Crypto | 90.0 | 265 | 304 | 736.5 | 804 | 166 | 994 | 1274 |
+| RayTrace | 50.0 | 450 | 558 | 1014.5 | 1776 | 348 | 1915 | 2576 |
+| EarleyBoyer | 60.3 | 585 | 707 | 1264.5 | 2262 | 711 | 2626 | 3132 |
+| RegExp | 65.5 | 110 | 136 | 254.5 | 362 | 289 | 454 | 584 |
+| Splay | 146 | 1215 | 1482 | 2609.5 | 3449 | 1568 | 4081 | 5038 |
+| NavierStokes | 272 | 584 | 664 | 1549.5 | 1511 | 274 | 1733 | 2447 |
+| **Overall** | **55.3** | **341** | **413** | **791** | **1200.5** | **402** | **1389** | **1768** |
 
 The independent recursive Earley check that previously returned 43/133 now
 returns 42/132 at sizes 6/7. That check is separate from the V8 score above.

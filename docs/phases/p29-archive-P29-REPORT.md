@@ -5,6 +5,35 @@
 
 ## 追加实测（2026-09-24；下文 2026-09-23 记录是历史快照）
 
+- **2026-09-25：热路径 uptr / alloca 不再是调用。** `goc-inline-gate` 在 O3
+  之前把 `goc_stack_hi`、`goc_uptr_decode`、`goc_uptr_from_ptr` 收成 volatile
+  的 `FS:-8` 加载加算术；`GOC_INLINE_DYNALLOC=1` 时 alloca 池的 +size/−size
+  也内联，并且不再 memset（与原生 `alloca` 一致）。同一二进制先跑出
+  SCORE 1265、1239（38.3–38.5 s）。重跑两轮：1198（37.95 s）、1203（39.73 s），
+  均值 1200.5。对照 Goja 402（3.0 倍）、同源 native QuickJS-ng 1389（1.16 倍）。
+  重跑 microcall 19556 / 23356（1.19 倍），depth4 60 ms / 45 ms（1.33 倍，
+  先前 5.73 倍）。到此停。
+
+- **2026-09-25：帧地址不再在序言里物化。** `goc-stackmap` / `goc-reanchor`
+  对静态 alloca 和 `byval` 参数在 safepoint 之后的使用点插入
+  `leaq $1, $0`（`*m` 约束），llc 在使用点从当前 `rbp` 重算地址，不再把
+  地址留在被调用者保存寄存器或序言 spill 里。inline asm 不算 safepoint。
+  `JS_CallInternal` 的入口块（`-O3`）从约 96 条 `leaq N(%rbp)` + store 降到
+  0 条帧地址 LEA；剩下的 spill 是入参寄存器。`./scripts/qjs-build.sh`：
+  `qjs-eval=7`、`qjs-promise-eval=7`、`qjs-link-copy-after-growth=3`、
+  两处 `qjs-frame-chain-after-growth=3`，退出码 0。
+
+- **2026-09-25：`Promise.resolve(1)` 在小栈上是旧 token。** 源在堆上仍失败；
+  先把 goroutine 栈撑到 1MiB 再编译，同一字符串通过。`js_parse_expect` 看到
+  `TOK_NUMBER`（`-128`），真实 token 已是 `)`。`&s->token` 在 `goc.spill.root`
+  （MIR 对象偏移 -88，指令是 `-72(%rbp)`），再经 `goc.anchor130` 重载。函数级
+  bitmap 排除了 compiler root：放进去之后复制器在
+  `js_parse_statement_or_decl` 读到 `0x60`、在 `js_parse_postfix_expr` 读到
+  `0x1`，报 `bad pointer in frame`——同名槽里有的是栈地址，有的是小整数。
+  对象里的 `.llvm_stackmaps` 有 776 个函数记录，重定位只给 120 个起了名，
+  其余符号名为空，不能按名套到 MIR。`goc-reanchor` 的入口插入点已改为每次
+  重取，全量 IR 不再在第二个 `CreateAlloca` 崩溃。
+
 - **2026-09-25：带调用的函数可以内联。** 先前 `goc-inline-gate` 把含调用的函数
   标成 `noinline`，因为打开后 `Promise.resolve(1).then(x => x + 6)` 在
   `js_free_function_def` 里把空闲链表 atom 当变量名释放。根因不是混合槽：
@@ -460,3 +489,60 @@ QuickJS-ng 的 1389 还差约 3.4 倍。该数字已被 2026-09-25 的两轮结�
 （SCORE 785、797，中位 791，墙钟 48 s，约 1.8 倍）。解释器里每个 opcode 仍在 volatile 重载
 栈指针；把重载收成 safepoint 之后的 PHI 时，llc 丢掉了 `JS_DumpValue` 的
 一个已标记槽，构建失败，这版没有留下。
+
+## 2026-09-25：两次对着 1.8 倍的实验都没有留下
+
+`GOC_FIXED_G=1` 用仓库里的 llc（`-reserve-goc-r14`）把 R14 留成 `g`，入口检查
+不再 `MOVQ FS:-8`。系统 `llc-19` 没有这个旗。带断言的仓库 llc 在
+`no-realign-stack` 下碰到更高对齐会 abort；`ensureMaxAlignment` 改为钳住，
+不再抬高 `MaxAlignment`。编出来的 CLI 里有 2373 处 `CMPQ SP, 16(R14)`，
+入口检查的 `FS:-8 → R11` 是 0。两次 V8：SCORE 746（50.49 s）、756（50.05 s）。
+比 791 慢。少一个被调用者保存寄存器的代价大于每次入口那条 TLS 加载。
+默认仍然用系统 llc，不留 R14。
+
+`GOC_CSR_ADJUST=1` 让 SysV morestack 桩在复制之后，只给落在旧栈
+`[lo, hi)` 里的 RBX/R12/R13/R15/R14 加 delta，并停掉 `goc-reanchor` 的
+volatile 重载。`goabi` 的寄存器指针复制测试通过。QJS 的增长探针没有：
+`qjs-link-copy-after-growth` 和两处 `qjs-frame-chain-after-growth` 都返回 2
+（栈确实长了，指针没对上）。这些指针活在结构体槽和全局里，不在那五个
+寄存器里。停掉重载后 llc 把槽提升掉，扫描器原来会拒绝；放开之后槽不在
+图里，复制不会改它。eval 和 promise 的非复制路径仍通过。这版没有跑分，
+也没有装成 CLI。
+
+## 2026-09-25：Richards 热路径
+
+同一份 `richards.js` 循环 2.5 s：native 655 次，goc 306 次，2.14 倍，和套件
+分 914/438 一致。perf 不可用。native 的 SIGVTALRM 采样（2500 次）落在
+`JS_CallInternal` 55.7%、`find_own_property` 33.6%、`JS_FreeValue` 5.5%。
+属性读取微基准两边一样（80 ms / 79 ms，2e6 次 × 4 字段）。空调用是
+67 ms 对 246 ms，3.65 倍；方法调用 111 对 313，2.82 倍。一次 `runRichards`
+大约 4.0 万次方法调用，其中 `isHeldOrSuspended` 10671 次。
+
+差别在每次进入解释器的序言，不在属性哈希。native `JS_CallInternal` 帧
+`sub $0x328`，序言没有清零。goc 先 `MOVQ FS:-8` 再比 3312 字节的栈，帧
+`sub $0xd40`，morestack 检查之后到下一条分支之间有 145 次 `movq $0`，
+全在直线路径上。这是 anchor 的 volatile 空存储。属性读取不重新进入这个
+函数，所以它没有变慢。
+
+`GOC_OPT_LEVEL=2`（`opt` 的 `default<O2>` 加 `llc -O2`，不是只改 clang）
+两轮 V8：SCORE 755（49.66 s）、769（50.14 s），均值 762，低于 O3 的
+785、797（均值 791）。八个套件都没有更高。Richards 411、441，对照
+429、447。O2 没有把分数抬上去。CLI 已换回 O3 二进制；`build/qjs/*.o`
+仍是这次 O2 产物。
+
+`tests/bench/microcall.js`（`scripts/microcall-bench.sh`）只计微函数调用。
+分数是调用形用例的 calls/ms 几何平均。第二次：goc 7101，native 24343，
+3.43 倍。空调用 4.21 倍，四层链 5.73 倍，但每次进入多出来的都是约 100 ns。
+属性读取 0.95 倍。六参和八参没有更差，所以不是出参区。
+
+把 store 挪到每个 safepoint 前会用增长前的 SSA 值盖掉 copier 已调整的槽。
+只在“支配其余 safepoint 的那一个调用”前存也不行：`js_arena_malloc` 在
+任何 safepoint 支配它之前就 reload `rt`，槽是空的，`+0xa8` 读 `0x18a5`。
+store 必须在 def 之后、reload 之前，每个 rooted use 都要 reload。PHI 的
+store 必须在 `getFirstNonPHI`，不能在 terminator，否则块内 reload 读空槽。
+proven-stack 的 `addr - stack.hi` 内联编码让 `JS_NewRuntime2` 故障，已撤回。
+只按支配关系跳过 reload 时微基准到过 2.42 倍（空调用 2.69，四层链 3.67），
+但套件掉到 111/4。改回全量 reload 后是 113 PASS / 2 FAIL：
+`new Date("2024 Apr 7 1:00 AM")` 得到 `02/18/1996`（native 是
+`04/07/2024, 01:00:00 AM`），`std.sprintf("%10.1f", 2.1)` 格式串损坏。
+入口 null store 修不了这两项。

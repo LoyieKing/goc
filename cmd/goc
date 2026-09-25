@@ -161,7 +161,13 @@ cmd_build() {
 
   local TMP
   TMP="$(mktemp -d)"
-  cleanup_build_tmp() { rm -rf "$TMP"; }
+  cleanup_build_tmp() {
+    if [[ -n "${GOC_KEEP_TMP:-}" ]]; then
+      echo "goc build: kept $TMP" >&2
+      return 0
+    fi
+    rm -rf "$TMP"
+  }
 
   # Go-stack compatible codegen: no red zone, no stack protector, no unwind tables.
   local CLANG_ARGS=(-mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables
