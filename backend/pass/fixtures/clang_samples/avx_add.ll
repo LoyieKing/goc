@@ -1,7 +1,7 @@
 ; ModuleID = 'pass/fixtures/clang_samples/avx_add.c'
 source_filename = "pass/fixtures/clang_samples/avx_add.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-linux-gnu"
+target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none) uwtable
 define dso_local noundef <8 x float> @goc_avx_add(<8 x float> noundef %0, <8 x float> noundef %1) local_unnamed_addr #0 {
@@ -18,4 +18,4 @@ attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memor
 !1 = !{i32 8, !"PIC Level", i32 2}
 !2 = !{i32 7, !"PIE Level", i32 2}
 !3 = !{i32 7, !"uwtable", i32 2}
-!4 = !{!"Debian clang version 19.1.7 (3+b1)"}
+!4 = !{!"clang version 19.1.7 (/home/runner/work/llvm-project/llvm-project/clang cd708029e0b2869e80abe31ddb175f7c35361f90)"}

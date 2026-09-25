@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # goc — experimental C-on-Go-stacks driver (P28 surface)
 set -euo pipefail
-
 SELF="$(cd "$(dirname "$0")" && pwd)"
 # Resolve repo root: cmd/ -> repo, or GOC_ROOT override
 if [[ -n "${GOC_ROOT:-}" ]]; then
@@ -25,6 +24,7 @@ Usage:
 Environment:
   GOC_ROOT     Repository root (default: parent of cmd/)
   GOC_CLANG    Path to patched clang-19 (preferred)
+  GOC_OPT_LEVEL  LLVM IR optimization level 0..3 (default 0); QuickJS scripts default 3
   LLC          llc binary (default: llc-19)
   CLANG_FALLBACK  System clang when GOC_CLANG unset (default: clang-19)
 
@@ -106,12 +106,20 @@ cmd_build() {
   if [[ $# -eq 0 ]]; then
     exec bash "$ROOT/scripts/test-p28.sh"
   fi
-  local SRC="" OUT_O="" EXTRA=()
+  local SRC="" OUT_O="" EXTRA=() ALL=0 GOABI=0 ABI0=0 OPT_ARG=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -o) OUT_O="$2"; shift 2 ;;
+      --all) ALL=1; shift ;;
+      --goabi) GOABI=1; ALL=1; shift ;;
+      --abi0) ABI0=1; ALL=1; shift ;;
+      -O0|-O1|-O2|-O3) OPT_ARG="${1#-O}"; shift ;;
       -h|--help)
-        echo "usage: goc build [foo.c -o foo.o]  # or goc build → P28 test suite"
+        echo "usage: goc build [foo.c -o foo.o] [-O0|-O1|-O2|-O3] [--all] [--goabi]  # or goc build → P28 test suite"
+        echo "  --all: emit TEXT for every defined function (P29 multi-function)"
+        echo "  --goabi: Go amd64 ABIInternal entry thunks for supported signatures"
+        echo "  --abi0:  emit ABI0 TEXT (C-side SysV entry points, e.g. libc shim)"
+        echo "  -O0..3: LLVM IR optimization level (overrides GOC_OPT_LEVEL)"
         exit 0
         ;;
       -*) EXTRA+=("$1"); shift ;;
@@ -140,16 +148,36 @@ cmd_build() {
   local REALBODY="$ROOT/backend/realbody/goc_p28_realbody.sh"
   local COLOR_ESC="$ROOT/frontend/color-escape/build/goc-color-escape"
   local PLUGIN="$ROOT/build/libGocClang.so"
+  local OPT_LEVEL="${OPT_ARG:-${GOC_OPT_LEVEL:-0}}"
+  case "$OPT_LEVEL" in
+    0|1|2|3) ;;
+    *) echo "goc build: GOC_OPT_LEVEL must be 0, 1, 2, or 3" >&2; exit 1 ;;
+  esac
 
   if [[ ! -x "$COLOR_ESC" ]]; then
-    make -C "$ROOT/frontend/color-escape/pass" all 2>/dev/null || true
+    make -C "$ROOT/frontend/color-escape/pass" all
+    [[ -x "$COLOR_ESC" ]] || { echo "goc build: missing color-escape pass" >&2; exit 1; }
   fi
 
   local TMP
   TMP="$(mktemp -d)"
   cleanup_build_tmp() { rm -rf "$TMP"; }
 
-  local CLANG_ARGS=(-I "$INC" -emit-llvm -S -O0 -Xclang -disable-O0-optnone)
+  # Go-stack compatible codegen: no red zone, no stack protector, no unwind tables.
+  local CLANG_ARGS=(-mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables
+                    -I "$INC" -emit-llvm -S "-O$OPT_LEVEL")
+  if [[ "$OPT_LEVEL" == 0 ]]; then
+    CLANG_ARGS+=(-Xclang -disable-O0-optnone)
+  else
+    # Color/escape analysis must see the original pointer stores before SROA
+    # and inlining. -disable-llvm-passes keeps this IR uninlined without
+    # stamping noinline: that attribute would survive into opt and block the
+    # inliner. Source __attribute__((noinline)) is preserved. O3 runs below,
+    # and stack maps run after it so an inlined callee is part of the caller.
+    CLANG_ARGS+=(-fwrapv -fno-strict-aliasing
+                 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
+                 -fno-optimize-sibling-calls -Xclang -disable-llvm-passes)
+  fi
   if [[ $USE_PLUGIN -eq 0 ]]; then
     CLANG_ARGS=(-DGOC_USE_INTREE_ATTRS "${CLANG_ARGS[@]}")
     echo "goc build: in-tree/clang=$CLANG (no -fplugin)" >&2
@@ -173,37 +201,114 @@ cmd_build() {
     exit 1
   fi
 
-  if [[ -x "$COLOR_ESC" ]]; then
-    "$COLOR_ESC" "$TMP/a.ll" -o "$TMP/a.color.ll" -fatal-errors=false || true
+  local COLOR_ESC_ARGS=(-fatal-errors=true)
+  if [[ -n "${GOC_DEFAULT_PTR_COLOR:-}" ]]; then
+    COLOR_ESC_ARGS+=("-default-ptr-color=$GOC_DEFAULT_PTR_COLOR")
   fi
-  if [[ ! -f "$TMP/a.color.ll" ]]; then
-    cp "$TMP/a.ll" "$TMP/a.color.ll"
+  if ! "$COLOR_ESC" "$TMP/a.ll" -o "$TMP/a.color.ll" "${COLOR_ESC_ARGS[@]}"; then
+    echo "goc build: pointer-color/escape analysis failed for $SRC" >&2
+    cleanup_build_tmp
+    exit 1
+  fi
+  local BODY_LL="$TMP/a.color.ll"
+  local STACKMAP_PREPARED=0
+  if [[ "$OPT_LEVEL" != 0 ]]; then
+    local OPT="${OPT:-opt-19}"
+    local SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+    [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
+    # goc-inline-gate is a no-op: call-bearing functions may inline. Maps are
+    # recorded after O3 on the merged frame. Stack-pointer arguments and slots
+    # that keep &s->token are reanchored so copystack adjusts them.
+    if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate \
+        -S "$BODY_LL" -o "$TMP/a.gate.ll"; then
+      cleanup_build_tmp
+      exit 1
+    fi
+    BODY_LL="$TMP/a.gate.ll"
+    local PIPELINE
+    PIPELINE="$("$OPT" "-passes=default<O$OPT_LEVEL>" -print-pipeline-passes -disable-output /dev/null)"
+    # Stack maps, recorded after this pipeline, model SysV outgoing areas.
+    # argpromotion and globalopt rewrite internal calls (fastcc, fewer args)
+    # and would make those offsets lie.
+    PIPELINE="${PIPELINE//,argpromotion/}"
+    PIPELINE="${PIPELINE//,globalopt/}"
+    if ! "$OPT" "-passes=$PIPELINE" -S "$BODY_LL" -o "$TMP/a.opt.ll"; then
+      cleanup_build_tmp
+      exit 1
+    fi
+    BODY_LL="$TMP/a.opt.ll"
+    echo "goc build: O$OPT_LEVEL inlined before stack maps" >&2
+    # Inlining is done. Record maps on the surviving functions, then spill
+    # frame addresses O3 left in SSA across calls. Nothing after this may
+    # inline: a caller cannot retarget a callee's frame-word offsets.
+    # goc-pin-i64 is not run. llc is invoked with -no-stack-slot-sharing, so
+    # an integer spill is never reused for g. Integer fragments stay in
+    # registers; the copier copies callee-saved spills verbatim.
+    if [[ $ALL -eq 1 && "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
+      local SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+      [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
+      if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap \
+          -S "$BODY_LL" -o "$TMP/a.sm.ll"; then
+        cleanup_build_tmp
+        exit 1
+      fi
+      BODY_LL="$TMP/a.sm.ll"
+      STACKMAP_PREPARED=1
+      if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-reanchor \
+          -S "$BODY_LL" -o "$TMP/a.reanchor.ll"; then
+        cleanup_build_tmp
+        exit 1
+      fi
+      BODY_LL="$TMP/a.reanchor.ll"
+    fi
   fi
 
   local FN
-  FN="$(rg -o 'define [^@]*@([A-Za-z_][A-Za-z0-9_]*)' -r '$1' "$TMP/a.color.ll" | head -1 || true)"
+  FN="$(rg -o 'define [^@]*@([A-Za-z_][A-Za-z0-9_]*)' -r '$1' "$BODY_LL" | head -1 || true)"
   if [[ -z "$FN" ]]; then
     FN="$(rg -o 'define [^@]*@([A-Za-z_][A-Za-z0-9_]*)' -r '$1' "$TMP/a.ll" | head -1 || true)"
   fi
-  if [[ -n "$FN" && -x "$REALBODY" ]]; then
+  if [[ $ALL -eq 1 ]]; then
+    [[ -x "$REALBODY" ]] || { echo "goc build: missing real-body goobj builder" >&2; cleanup_build_tmp; exit 1; }
+    local RB_ARGS=("$BODY_LL" "$OUT_O" --all)
+    # 4th positional is the go_sym prefix; 3rd is the (unused) fn name.
+    if [[ -n "${GOC_PKG:-}" ]]; then RB_ARGS+=("_" "$GOC_PKG"); fi
+    if [[ $GOABI -eq 1 ]]; then RB_ARGS+=(--goabi); fi
+    if [[ $ABI0 -eq 1 ]]; then RB_ARGS+=(--abi0); fi
+    if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" GOC_OPT_LEVEL="$OPT_LEVEL" \
+        GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
+        "$REALBODY" "${RB_ARGS[@]}"; then
+      echo "goc build: wrote multi-function real-body goobj $OUT_O (all fns; not seedMIR)"
+      cleanup_build_tmp
+      return 0
+    fi
+    echo "goc build: multi-function real-body lower failed; no object emitted" >&2
+    cleanup_build_tmp
+    exit 1
+  fi
+  if [[ -n "$FN" ]]; then
+    [[ -x "$REALBODY" ]] || { echo "goc build: missing real-body goobj builder" >&2; cleanup_build_tmp; exit 1; }
     local GOSYM="main.${FN}"
     case "$FN" in
       p28_real_body) GOSYM="main.P28RealBody" ;;
       p21_sptr_across_call) GOSYM="main.P21SptrAcrossCall" ;;
       p21_gptr_store) GOSYM="main.P21GptrStoreWB" ;;
     esac
-    if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" "$REALBODY" "$TMP/a.color.ll" "$OUT_O" "$FN" "$GOSYM"; then
+    if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" GOC_OPT_LEVEL="$OPT_LEVEL" \
+        GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
+        "$REALBODY" "$BODY_LL" "$OUT_O" "$FN" "$GOSYM"; then
       echo "goc build: wrote real-body goobj $OUT_O (fn=$FN; not seedMIR)"
       cleanup_build_tmp
       return 0
     fi
-    echo "goc build: real-body lower failed for $FN — falling back to LLC .o" >&2
+    echo "goc build: real-body lower failed for $FN; no object emitted" >&2
+    cleanup_build_tmp
+    exit 1
   fi
 
-  cp "$TMP/a.color.ll" "${OUT_O%.o}.color.ll"
-  "$LLC" -O0 -filetype=obj -o "$OUT_O" "$TMP/a.color.ll"
-  echo "goc build: wrote $OUT_O (+ ${OUT_O%.o}.color.ll); real IR via llc (no P21 seed)"
+  echo "goc build: no defined function in $SRC; refusing a non-goobj LLVM object" >&2
   cleanup_build_tmp
+  exit 1
 }
 
 cmd_test() {

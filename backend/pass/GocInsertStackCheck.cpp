@@ -43,7 +43,6 @@ struct GocInsertStackCheck : public MachineFunctionPass {
     if (MF.empty())
       return false;
 
-#if GOC_HAVE_X86INSTRINFO
     const X86InstrInfo *TII = goc::x86TII(MF);
     const unsigned OpcMOV64rm = X86::MOV64rm;
     const unsigned OpcCMP64rm = X86::CMP64rm;
@@ -56,34 +55,21 @@ struct GocInsertStackCheck : public MachineFunctionPass {
     const unsigned CondBE = X86::COND_BE;
     const char *MiPath = "real_x86_opcodes";
     const char *ApiNote = "api=X86InstrInfo";
-#else
-    const TargetInstrInfo *TII = goc::x86TII(MF);
-    goc::X86::InstrInfoLite Lite;
-    Lite.resolve(*TII, *MF.getSubtarget().getRegisterInfo());
-    const unsigned OpcMOV64rm = Lite.MOV64rm;
-    const unsigned OpcCMP64rm = Lite.CMP64rm;
-    const unsigned OpcJCC_1 = Lite.JCC_1;
-    const unsigned OpcCALL64 = Lite.CALL64pcrel32;
-    const unsigned OpcJMP_1 = Lite.JMP_1;
-    const unsigned R11 = Lite.R11;
-    const unsigned RSP = Lite.RSP;
-    const unsigned FS = Lite.FS;
-    const unsigned CondBE = goc::X86::COND_BE;
-    const char *MiPath = "real_x86_opcodes";
-    const char *ApiNote = "api=X86InstrInfoLite";
-#endif
 
     MachineBasicBlock &Entry = MF.front();
     MachineBasicBlock *CheckMBB = &Entry;
     MachineBasicBlock *OkMBB = MF.CreateMachineBasicBlock();
     MachineBasicBlock *MoreMBB = MF.CreateMachineBasicBlock();
 
-    OkMBB->splice(OkMBB->end(), CheckMBB, CheckMBB->begin(), CheckMBB->end());
-    OkMBB->transferSuccessorsAndUpdatePHIs(CheckMBB);
-
+    // Insert the empty blocks first: MF insertion walks each block's
+    // instructions to (re)register their reg operands on the MRI use lists, so
+    // instructions moved by splice (already listed) must not be present yet.
     auto CheckIt = CheckMBB->getIterator();
     MF.insert(++CheckIt, OkMBB);
     MF.push_back(MoreMBB);
+
+    OkMBB->splice(OkMBB->end(), CheckMBB, CheckMBB->begin(), CheckMBB->end());
+    OkMBB->transferSuccessorsAndUpdatePHIs(CheckMBB);
 
     CheckMBB->addSuccessor(OkMBB);
     CheckMBB->addSuccessor(MoreMBB);

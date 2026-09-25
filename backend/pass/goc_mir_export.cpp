@@ -34,13 +34,6 @@
 
 using namespace llvm;
 
-#if !GOC_HAVE_X86INSTRINFO
-ModulePass *createGocLowerGoFrameEmitPass(std::string, bool) {
-  errs() << "FATAL: GocLowerGoFrameEmitPass requires real X86InstrInfo headers\n";
-  return nullptr;
-}
-#else
-
 namespace {
 
 Function *makeExportFn(Module &M, StringRef Name) {
@@ -809,5 +802,3 @@ char GocLowerGoFrameEmitPass::ID = 0;
 ModulePass *createGocLowerGoFrameEmitPass(std::string OutDir, bool WithWB) {
   return new GocLowerGoFrameEmitPass(std::move(OutDir), WithWB);
 }
-
-#endif // GOC_HAVE_X86INSTRINFO

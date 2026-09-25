@@ -114,7 +114,6 @@ struct GocRebuildLISAfterStackCheck : public MachineFunctionPass {
     // (Always run rebuild-based spills below.)
 
     const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
-#if GOC_HAVE_X86INSTRINFO
     const X86InstrInfo *TII = goc::x86TII(MF);
     const unsigned OpcMOV64mr = X86::MOV64mr;
     const unsigned OpcMOV64rm = X86::MOV64rm;
@@ -126,21 +125,6 @@ struct GocRebuildLISAfterStackCheck : public MachineFunctionPass {
     const unsigned R8 = X86::R8;
     const unsigned R9 = X86::R9;
     const char *ApiNote = "api=X86InstrInfo";
-#else
-    const TargetInstrInfo *TII = goc::x86TII(MF);
-    goc::X86::InstrInfoLite Lite;
-    Lite.resolve(*TII, *TRI);
-    const unsigned OpcMOV64mr = Lite.MOV64mr;
-    const unsigned OpcMOV64rm = Lite.MOV64rm;
-    const unsigned AX = Lite.RAX;
-    const unsigned BX = Lite.RBX;
-    const unsigned CX = Lite.RCX;
-    const unsigned DI = Lite.RDI;
-    const unsigned SI = Lite.RSI;
-    const unsigned R8 = Lite.R8;
-    const unsigned R9 = Lite.R9;
-    const char *ApiNote = "api=X86InstrInfoLite";
-#endif
 
     // --- Safe liveness rebuild (iterative live-in / live-out) for virt regs ---
     MachineRegisterInfo &MRI = MF.getRegInfo();

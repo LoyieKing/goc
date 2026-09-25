@@ -1,8 +1,9 @@
 # name expect(pass|fail) substr_in_stderr(optional for fail)
 01_ok_outparam_stack.c pass
 02_ok_uptr_encode_heap.c pass
-03_err_sptr_to_heap.c fail sptr escape
+03_ok_sptr_to_cptr_uptr.c pass
 04_ok_auto_stack_struct.c pass
 05_err_gptr_mix_cptr.c fail gptr cannot
 06_ok_gptr_only.c pass
 07_err_return_sptr.c fail sptr escape
+08_ok_bare_tptr_auto_uptr.c pass

@@ -12,21 +12,22 @@ LLVM_X86_SRC_INCLUDE   := $(LLVM_X86_SRC)
 LLVM_X86_BUILD_INCLUDE := $(LLVM_X86_BUILD)
 
 HAVE_X86_HDR := $(shell test -f "$(LLVM_X86_SRC)/X86InstrInfo.h" && test -f "$(LLVM_X86_BUILD)/X86GenInstrInfo.inc" && echo 1 || echo 0)
-
-CXXFLAGS := $(shell $(LLVM_CFG) --cxxflags) -std=c++17 -fPIC -I.
-ifeq ($(HAVE_X86_HDR),1)
-  CXXFLAGS += -DGOC_HAVE_X86INSTRINFO=1 \
-              -I$(LLVM_X86_SRC_INCLUDE) -I$(LLVM_X86_BUILD_INCLUDE)
-  $(info goc-pass: real X86InstrInfo.h via $(LLVM_X86_SRC_INCLUDE) + $(LLVM_X86_BUILD_INCLUDE))
-else
-  $(info goc-pass: FALLBACK X86InstrInfoLite (missing $(LLVM_X86_SRC)/X86InstrInfo.h or GenInstrInfo.inc))
+ifeq ($(HAVE_X86_HDR),0)
+  $(error real X86InstrInfo headers required (X86InstrInfoLite fallback removed): missing $(LLVM_X86_SRC)/X86InstrInfo.h or $(LLVM_X86_BUILD)/X86GenInstrInfo.inc — point GOC_DOCS_ROOT/LLVM_X86_SRC/LLVM_X86_BUILD at a local llvm-project 19.1.7 source + build tree)
 endif
+
+CXXFLAGS := $(shell $(LLVM_CFG) --cxxflags) -std=c++17 -fPIC -I. -I$(LLVM_X86_SRC_INCLUDE) -I$(LLVM_X86_BUILD_INCLUDE)
+$(info goc-pass: real X86InstrInfo.h via $(LLVM_X86_SRC_INCLUDE) + $(LLVM_X86_BUILD_INCLUDE))
 
 LDFLAGS  := $(shell $(LLVM_CFG) --ldflags)
 LIBS     := -lLLVM-19
 
 OBJDIR := ../build/pass
 OUTDIR := ../build/pass-out
+
+# IR pass plugin (loaded by opt -load-pass-plugin): asks LLVM to report where
+# sptr-colored values live at each call site (see GocStackMap.cpp).
+STACKMAP_SO := $(OUTDIR)/GocStackMap.so
 
 OBJS := $(OBJDIR)/GocInsertStackCheck.o \
         $(OBJDIR)/GocExpandStoreGptr.o \
@@ -38,7 +39,17 @@ OBJS := $(OBJDIR)/GocInsertStackCheck.o \
 
 .PHONY: all clean run show-x86-paths
 
-all: $(OBJDIR)/goc-pass-driver $(OBJDIR)/libGocMachinePasses.so
+all: $(OBJDIR)/goc-pass-driver $(OBJDIR)/libGocMachinePasses.so $(STACKMAP_SO)
+
+$(OBJDIR)/GocStackMap.o: GocStackMap.cpp
+	@mkdir -p $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+# No -lLLVM: the plugin resolves LLVM symbols from the loading process, otherwise
+# its static initializers clash with the host opt/llc and dlopen crashes.
+$(STACKMAP_SO): $(OBJDIR)/GocStackMap.o
+	@mkdir -p $(OUTDIR)
+	$(CXX) -shared -o $@ $< $(LDFLAGS)
 
 show-x86-paths:
 	@echo "HAVE_X86_HDR=$(HAVE_X86_HDR)"

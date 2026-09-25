@@ -40,7 +40,6 @@ struct GocExpandStoreGptr : public MachineFunctionPass {
     if (MF.empty())
       return false;
 
-#if GOC_HAVE_X86INSTRINFO
     const X86InstrInfo *TII = goc::x86TII(MF);
     const unsigned OpcMOV64rm = X86::MOV64rm;
     const unsigned OpcMOV64mr = X86::MOV64mr;
@@ -57,42 +56,25 @@ struct GocExpandStoreGptr : public MachineFunctionPass {
     const unsigned CondE = X86::COND_E;
     const char *MiPath = "real_x86_opcodes_wb";
     const char *ApiNote = "api=X86InstrInfo";
-#else
-    const TargetInstrInfo *TII = goc::x86TII(MF);
-    goc::X86::InstrInfoLite Lite;
-    Lite.resolve(*TII, *MF.getSubtarget().getRegisterInfo());
-    const unsigned OpcMOV64rm = Lite.MOV64rm;
-    const unsigned OpcMOV64mr = Lite.MOV64mr;
-    const unsigned OpcCMP32mi = Lite.CMP32mi;
-    const unsigned OpcJCC_1 = Lite.JCC_1;
-    const unsigned OpcCALL64 = Lite.CALL64pcrel32;
-    const unsigned OpcADD64mi8 = Lite.ADD64mi8;
-    const unsigned RAX = Lite.RAX;
-    const unsigned RCX = Lite.RCX;
-    const unsigned RDX = Lite.RDX;
-    const unsigned R11 = Lite.R11;
-    const unsigned R14 = Lite.R14;
-    const unsigned FS = Lite.FS;
-    const unsigned CondE = goc::X86::COND_E;
-    const char *MiPath = "real_x86_opcodes_wb";
-    const char *ApiNote = "api=X86InstrInfoLite";
-#endif
 
     MachineBasicBlock &Entry = MF.front();
     MachineBasicBlock *CheckMBB = &Entry;
     MachineBasicBlock *DoWriteMBB = MF.CreateMachineBasicBlock();
     MachineBasicBlock *EnabledMBB = MF.CreateMachineBasicBlock();
 
-    DoWriteMBB->splice(DoWriteMBB->end(), CheckMBB, CheckMBB->begin(),
-                       CheckMBB->end());
-    DoWriteMBB->transferSuccessorsAndUpdatePHIs(CheckMBB);
-
+    // Insert the empty blocks first: MF insertion walks each block's
+    // instructions to (re)register their reg operands on the MRI use lists, so
+    // instructions moved by splice (already listed) must not be present yet.
     auto Ins = CheckMBB->getIterator();
     ++Ins;
     MF.insert(Ins, EnabledMBB);
     Ins = EnabledMBB->getIterator();
     ++Ins;
     MF.insert(Ins, DoWriteMBB);
+
+    DoWriteMBB->splice(DoWriteMBB->end(), CheckMBB, CheckMBB->begin(),
+                       CheckMBB->end());
+    DoWriteMBB->transferSuccessorsAndUpdatePHIs(CheckMBB);
 
     CheckMBB->addSuccessor(EnabledMBB);
     CheckMBB->addSuccessor(DoWriteMBB);

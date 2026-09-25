@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# P29: quickjs-ng via goc — color, compile to goobj, link into a Go binary.
+#
+# Per TU: patched clang (in-tree Sema) → colored IR (default cptr) →
+# LLVM O3, including inlining → stackmap roots on the surviving functions →
+# Go-ABI entry thunks (--goabi) → llc ISel → elfpack goobj. morestack is
+# inserted there, once per TEXT entry that still exists.
+# Then: pack every goobj into a Go binary (toolexec) with a freestanding libc
+# shim (no libc — QJS is meant to run on the goroutine stack) and run the smoke.
+#
+# STATUS: quickjs-ng's four TUs build into goobj. The default smoke exercises
+# JS_Eval, a Promise parent hook, and actual C-frame stack growth with per-call
+# sptr maps. This is not a claim that every JS API or ABI signature is covered.
+#
+# Prereqs: third_party/quickjs-ng (git clone), patched clang (GOC_CLANG),
+#          llc-19 / llvm-objdump-19 / ld.lld-19, Go 1.24+.
+set -euo pipefail
+ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+export GOC_ROOT="$ROOT"
+QJS="$ROOT/third_party/quickjs-ng"
+OUT="$ROOT/build/qjs"
+mkdir -p "$OUT"
+
+CLANG="${GOC_CLANG:-}"
+if [[ -z "$CLANG" ]]; then
+  for c in "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang" \
+           "$ROOT/third_party/llvm-clang-build/bin/clang"; do
+    [[ -x "$c" ]] && CLANG="$c" && break
+  done
+fi
+if [[ -z "$CLANG" || ! -x "$CLANG" ]]; then
+  echo "FAIL: set GOC_CLANG to the patched clang-19" >&2
+  exit 1
+fi
+export GOC_CLANG="$CLANG"
+export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
+[[ -d "$QJS" ]] || { echo "FAIL: clone quickjs-ng to third_party/quickjs-ng" >&2; exit 1; }
+GSTACK_PATCH="$ROOT/scripts/qjs-gstack.patch"
+if patch -R --dry-run --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH"; then
+  : # already present in this ignored checkout
+elif patch --dry-run --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH"; then
+  patch --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH"
+else
+  echo "FAIL: QuickJS source differs from scripts/qjs-gstack.patch" >&2
+  exit 1
+fi
+
+QJS_DEFS=(-DJS_NAN_BOXING=0 -D_GNU_SOURCE -DGOC_QJS_GSTACK=1)
+UPTR_DEFS=(-DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS -DGOC_DYNALLOC_POOL)
+export GOC_DEFAULT_PTR_COLOR=cptr   # bulk coloring: uncolored ptrs are cptr
+export GOC_NO_NOSPLIT=1             # let the meta say "splittable", not "nosplit"
+export GOC_MORESTACK="${GOC_MORESTACK:-1}"  # real split check + morestack stub in goc TEXT
+export GOC_SPTR_MAPS="${GOC_SPTR_MAPS:-1}"  # real locals maps at C call sites
+export GOC_CRESERVE="${GOC_CRESERVE:-8192}"  # fixed Go->C thunk frame, not a C-stack workaround
+export QJS_EVAL="${QJS_EVAL:-1}" QJS_PROMISE="${QJS_PROMISE:-1}"
+
+echo "=== [1/4] freestanding libc shim + uptr runtime → goobj ==="
+# Same mode as the QJS TUs, so cross-TU C references agree on names
+# (main.goc_abort.impl etc.). The ABIInternal thunks are dead weight here.
+env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_libc_shim.c" \
+  -o "$OUT/shim.o" --all --goabi "${QJS_DEFS[@]}"
+echo "  shim: $(go tool nm "$OUT/shim.o" | grep -c ' T ') TEXT"
+env -u GOC_PKG -u GOC_DEFAULT_PTR_COLOR -u GOC_IR_RENAMES \
+  "$ROOT/cmd/goc" build "$ROOT/runtime/uptr/goc_uptr_runtime.c" \
+  -o "$OUT/uptr.o" --all --goabi -I "$ROOT/runtime" "${UPTR_DEFS[@]}"
+echo "  uptr runtime: $(go tool nm "$OUT/uptr.o" | grep -c ' T ') TEXT"
+
+# Redirect QJS's libc references to the shim's goc_-prefixed symbols: -D for
+# source-level names, GOC_IR_RENAMES for compiler-emitted libcalls.
+SHIM_NAMES=$(go tool nm "$OUT/shim.o" | awk '$2=="T"{print $3}' \
+  | sed 's/^.*\.//; s/\.impl$//' | grep '^goc_' | sed 's/^goc_//' | sort -u \
+  | grep -v -x -e memcpy -e memmove -e memset | tr '\n' ' ')
+# LLVM lowers some intrinsics (e.g. floor/trunc) to bare libcalls *after* the
+# Go ABI IR rename. Bind only names the shim actually defined as ABI0 .impl
+# bodies; varargs and other skipped functions retain their plain names.
+GOC_LIBCALL_IMPL=$(go tool nm "$OUT/shim.o" | awk '
+  $2 == "T" && $3 ~ /^main\.[A-Za-z_][A-Za-z0-9_]*\.impl$/ {
+    sub(/^main\./, "", $3); sub(/\.impl$/, "", $3); print $3
+  }' | sort -u | tr '\n' ' ')
+export GOC_LIBCALL_IMPL
+SHIM_DEFS=""
+IR_RENAMES=""
+for n in $SHIM_NAMES; do
+  SHIM_DEFS="$SHIM_DEFS -D$n=goc_$n"
+  IR_RENAMES="$IR_RENAMES $n:goc_$n"
+done
+export GOC_IR_RENAMES="$IR_RENAMES"
+echo "  shim redirects: $(echo $SHIM_NAMES | wc -w) symbols"
+env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_promise_probe.c" \
+  -o "$OUT/promise_probe.o" --all --goabi "${QJS_DEFS[@]}"
+
+echo "=== [2/4] quickjs-ng TUs → goobj (colored, Go-ABI thunks) ==="
+for src in quickjs libregexp libunicode dtoa; do
+  env -u GOC_PKG "$ROOT/cmd/goc" build "$QJS/$src.c" -o "$OUT/$src.o" \
+    --all --goabi "${QJS_DEFS[@]}" $SHIM_DEFS
+  echo "  $src: $(go tool nm "$OUT/$src.o" | grep -c ' T ') TEXT"
+done
+
+echo "=== [3/4] link Go caller (toolexec packs goobjs; -lm via extld) ==="
+BINOBJ="$OUT/quickjs.o $OUT/libregexp.o $OUT/libunicode.o $OUT/dtoa.o $OUT/shim.o $OUT/uptr.o $OUT/promise_probe.o"
+( cd "$ROOT/tests/qjs" && \
+  CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
+  go build -a -ldflags="-extldflags=-lm" \
+    -toolexec "$ROOT/backend/tools/toolexec_pack_goobj.sh" \
+    -o "$OUT/qjs_test" . )
+
+echo "=== [4/4] run on the goroutine stack ==="
+set +e
+timeout 20 "$OUT/qjs_test"
+rc=$?
+set -e
+if [[ $rc -eq 0 ]]; then
+  echo "PASS p29-qjs (quickjs-ng on goroutine stack via goc)"
+else
+  echo "p29-qjs: FAIL — see docs/phases/p29-archive-P29-REPORT.md" >&2
+fi
+exit "$rc"

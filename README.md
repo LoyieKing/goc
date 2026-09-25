@@ -4,9 +4,12 @@
 morestack, stackmaps, and write barriers — so C (and eventually engines like
 QuickJS) can run on Go stacks without the usual cgo boundary tax.
 
-> Status: **research / experimental**. Phase **P28** delivers an in-tree Clang
-> Sema for pointer colors plus a **real-body** goobj path. A full QuickJS build
-> via `goc` is **not** done.
+> Status: **research / experimental**. Phase **P29** colors and builds all four
+> QuickJS-ng translation units with `goc`, then runs the engine on a Go
+> goroutine stack. Call-bearing functions may inline. The V8-v7 bench median
+> is 791 (two runs, 2026-09-25). The exercised CLI includes std/os/bjson
+> modules and workers; broader host compatibility, arbitrary ABI signatures,
+> and GC/preemption safety remain incomplete.
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![status](https://img.shields.io/badge/status-experimental-orange.svg)](docs/status.md)
@@ -30,11 +33,11 @@ contracts instead of fighting them.
 
 | Works today | Does **not** work yet |
 |-------------|------------------------|
-| In-tree Clang Sema colors + `sptr`→heap hard error (P28) | Full QuickJS-ng via `goc build` |
+| In-tree Clang Sema colors; stack stores into heap/global `T *` promote to `uptr` (raw `sptr` returns still error) | Full upstream QuickJS host/thread compatibility |
 | Out-of-tree Clang plugin fallback (P27) | Complete Go amd64 **ABIInternal** on arbitrary Clang IR |
 | Real-body goobj path (Clang IR → llc ISel → elfpack; not P21 seed MIR) | Full Spill→Maps→StackCheck→WB on arbitrary MachineFunctions |
 | Backend MIR passes + goobj encoder (P5–P16 research path) | AVX / x87 / EH on the Go-callable path |
-| `uptr` MSB / TLS helpers (P19/P22) | Production QJS interpreter on goroutine stacks |
+| QuickJS-ng four-TU `goc build`, Go-stack interpreter and 115/116 selected upstream JS tests | Production GC/preemption guarantees across arbitrary JS programs |
 | Curated goldens under `tests/` | Stable package API / releases |
 
 See [docs/status.md](docs/status.md) and [docs/roadmap.md](docs/roadmap.md).
@@ -42,7 +45,7 @@ See [docs/status.md](docs/status.md) and [docs/roadmap.md](docs/roadmap.md).
 ## Quick start
 
 **Deps:** `clang-19`, `clang++-19`, `llc-19`, `llvm-config-19`, `cmake`, `ninja`,
-Go 1.22+, `python3`, `rg` (ripgrep).
+Go 1.24+, `python3`, `rg` (ripgrep).
 
 ```bash
 git clone https://github.com/LoyieKing/goc.git
@@ -127,7 +130,7 @@ third_party/         Fetch instructions only (no vendored LLVM/QJS blobs)
 | [docs/syntax-guide.md](docs/syntax-guide.md) | Language contract (中文) |
 | [docs/glossary.md](docs/glossary.md) | Terms |
 | [docs/status.md](docs/status.md) | What works / what does not |
-| [docs/roadmap.md](docs/roadmap.md) | P28 status + P29 gaps |
+| [docs/roadmap.md](docs/roadmap.md) | P29 status and remaining gaps |
 | [docs/phases/](docs/phases/) | Condensed phase reports |
 | [clang/README.md](clang/README.md) | Build patched Clang |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
@@ -137,8 +140,10 @@ third_party/         Fetch instructions only (no vendored LLVM/QJS blobs)
 
 `goc` 是面向 **Go goroutine 用户栈** 的实验性 C 方言：用指针色
 （`cptr`/`sptr`/`uptr`/`auto_ptr`/`gptr`）表达逃逸与写屏障合同，目标是把
-QuickJS 一类 C 运行时跑在 Go 栈上、避开 cgo 税。当前进度到 **P28**（Clang
-in-tree Sema + real-body goobj）；**完整 QJS via goc 尚未完成**。语法合同见
+QuickJS 一类 C 运行时跑在 Go 栈上、避开 cgo 税。当前进度到 **P29**：四个
+QuickJS-ng TU 已经由 goc 着色、编译并在 Go 栈上运行，含调用的函数可以内联。
+V8-v7 中位 791。已实测 std/os/bjson 宿主模块和 worker，完整宿主兼容性及
+生产级 GC/抢占安全性仍未完成。语法合同见
 [docs/syntax-guide.md](docs/syntax-guide.md)。
 
 ## License

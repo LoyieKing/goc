@@ -38,8 +38,8 @@ compile_c() {
 echo "=== P27: OK / ERROR goldens ==="
 compile_c "$ROOT/tests/sema/01_ok_outparam_stack.c" 01_ok_outparam_stack 0
 pass "PASS P27-ok-outparam"
-compile_c "$ROOT/tests/sema/02_err_sptr_to_heap.c" 02_err_sptr_to_heap 1
-pass "PASS P27-err-sptr-heap"
+compile_c "$ROOT/tests/sema/02_ok_sptr_to_cptr_uptr.c" 02_ok_sptr_to_cptr_uptr 0
+pass "PASS P27-implicit-uptr-store"
 
 {
   echo "P27 results ($(date '+%Y-%m-%d %H:%M %Z'))"

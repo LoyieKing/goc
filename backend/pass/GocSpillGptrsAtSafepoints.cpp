@@ -326,7 +326,6 @@ struct GocSpillGptrsAtSafepoints : public MachineFunctionPass {
     MachineRegisterInfo &MRI = MF.getRegInfo();
     const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
 
-#if GOC_HAVE_X86INSTRINFO
     const X86InstrInfo *TII = goc::x86TII(MF);
     const unsigned OpcMOV64mr = X86::MOV64mr;
     const unsigned OpcMOV64rm = X86::MOV64rm;
@@ -335,18 +334,6 @@ struct GocSpillGptrsAtSafepoints : public MachineFunctionPass {
     const unsigned RCX = X86::RCX;
     const unsigned RDI = X86::RDI;
     const char *ApiNote = "api=X86InstrInfo";
-#else
-    const TargetInstrInfo *TII = goc::x86TII(MF);
-    goc::X86::InstrInfoLite Lite;
-    Lite.resolve(*TII, *TRI);
-    const unsigned OpcMOV64mr = Lite.MOV64mr;
-    const unsigned OpcMOV64rm = Lite.MOV64rm;
-    const unsigned RAX = Lite.RAX;
-    const unsigned RBX = Lite.RBX;
-    const unsigned RCX = Lite.RCX;
-    const unsigned RDI = Lite.RDI;
-    const char *ApiNote = "api=X86InstrInfoLite";
-#endif
 
     DenseSet<unsigned> Explicit;
     parseExplicitGptrVRegs(F, Explicit);

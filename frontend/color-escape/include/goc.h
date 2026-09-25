@@ -52,6 +52,10 @@ goc_uptr goc_uptr_from_sptr(goc_sptr p);
 goc_uptr goc_uptr_from_cptr(goc_cptr p);
 goc_sptr goc_uptr_as_sptr(goc_uptr u);
 goc_cptr goc_uptr_as_cptr(goc_uptr u);
+/* Compiler-inserted conversions for T* slots promoted to uptr storage. */
+goc_uptr goc_uptr_from_ptr(void *p);
+void *goc_uptr_decode(goc_uptr u);
+void *goc_uptr_require_cptr(void *p);
 /* Explicit-hi variants (tests / IR lower without TLS) */
 goc_uptr goc_uptr_from_sptr_hi(goc_sptr p, uintptr_t stack_hi);
 goc_uptr goc_uptr_from_cptr_hi(goc_cptr p, uintptr_t stack_hi);

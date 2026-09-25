@@ -1,0 +1,154 @@
+diff --git a/quickjs.c b/quickjs.c
+index 6ca030b..072e76a 100644
+--- a/quickjs.c
++++ b/quickjs.c
+@@ -48,6 +48,10 @@
+ #include "libregexp.h"
+ #include "dtoa.h"
+ 
++#ifdef GOC_QJS_GSTACK
++#include "../../runtime/goc_uptr.h"
++#endif
++
+ #if defined(EMSCRIPTEN) || defined(_MSC_VER)
+ #define DIRECT_DISPATCH  0
+ #else
+@@ -2305,8 +2309,18 @@ static inline uintptr_t js_get_stack_pointer(void)
+ static inline bool js_check_stack_overflow(JSRuntime *rt, size_t alloca_size)
+ {
+     uintptr_t sp;
++#ifdef GOC_QJS_GSTACK
++    /* Go may copy this frame to a new stack address at any nested call.
++       Measure the logical depth from the *current* g.stack.hi, not the
++       absolute stack_top captured when the runtime was created. */
++    uintptr_t hi = goc_stack_hi();
++    sp = js_get_stack_pointer() - alloca_size;
++    return unlikely(rt->stack_size != 0 &&
++                    (sp > hi || hi - sp > rt->stack_size));
++#else
+     sp = js_get_stack_pointer() - alloca_size;
+     return unlikely(sp < rt->stack_limit);
++#endif
+ }
+ 
+ JSRuntime *JS_NewRuntime2(const JSMallocFunctions *mf, void *opaque)
+diff --git a/libregexp.c b/libregexp.c
+index 49c474c..8abecac 100644
+--- a/libregexp.c
++++ b/libregexp.c
+@@ -2780,6 +2780,21 @@ typedef union {
+     } bp;
+ } StackElem;
+ 
++#ifdef GOC_QJS_GSTACK
++#include "../../runtime/goc_uptr.h"
++static inline uint8_t *goc_regexp_restore_capture(StackElem saved)
++{
++    /* capture[] is uptr-backed C heap storage. The undo stack retains its
++       encoded word; decode against the current g before writing it back. */
++    return goc_uptr_decode((goc_uptr)saved.ptr);
++}
++#else
++static inline uint8_t *goc_regexp_restore_capture(StackElem saved)
++{
++    return saved.ptr;
++}
++#endif
++
+ typedef struct {
+     const uint8_t *cbuf;
+     const uint8_t *cbuf_end;
+@@ -2837,6 +2852,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+     uint32_t val, c, idx;
+     const uint8_t *cbuf_end;
+     StackElem *sp, *bp, *stack_end;
++    uint32_t counters[256] = {0};
+ #ifdef DUMP_EXEC
+     const uint8_t *pc_start = pc; /* TEST */
+ #endif
+@@ -2890,6 +2906,28 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+         capture[idx] = (value);                         \
+     }
+ 
++    /* Loop registers are integers; their -1 wraparound sentinel must not be
++       encoded as a pointer when the goroutine stack can move. */
++#define COUNTER_UNDO_TAG ((intptr_t)1 << 32)
++#define SAVE_COUNTER_CHECK(idx, value)                            \
++    {                                                             \
++        StackElem *sp1 = sp;                                      \
++        for (;;) {                                                \
++            if (sp1 > bp) {                                       \
++                if (sp1[-2].val == ((idx) | COUNTER_UNDO_TAG))     \
++                    break;                                        \
++                sp1 -= 2;                                         \
++            } else {                                              \
++                CHECK_STACK_SPACE(2);                             \
++                sp[0].val = (idx) | COUNTER_UNDO_TAG;             \
++                sp[1].val = counters[(idx) - 2 * s->capture_count]; \
++                sp += 2;                                          \
++                break;                                            \
++            }                                                     \
++        }                                                         \
++        counters[(idx) - 2 * s->capture_count] = (value);          \
++    }
++
+ 
+ #ifdef DUMP_EXEC
+     printf("%5s %5s %5s %5s %s\n", "PC", "CP", "BP", "SP", "OPCODE");
+@@ -2914,7 +2952,11 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+                     return 0;
+                 /* undo the modifications to capture[] */
+                 while (sp > bp) {
+-                    capture[sp[-2].val] = sp[-1].ptr;
++                    if (sp[-2].val & COUNTER_UNDO_TAG)
++                        counters[(sp[-2].val & ~COUNTER_UNDO_TAG) -
++                                 2 * s->capture_count] = sp[-1].val;
++                    else
++                        capture[sp[-2].val] = goc_regexp_restore_capture(sp[-1]);
+                     sp -= 2;
+                 }
+                 
+@@ -2969,7 +3011,11 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+                 type = bp[-1].bp.type;
+                 /* undo the modifications to capture[] */
+                 while (sp > bp) {
+-                    capture[sp[-2].val] = sp[-1].ptr;
++                    if (sp[-2].val & COUNTER_UNDO_TAG)
++                        counters[(sp[-2].val & ~COUNTER_UNDO_TAG) -
++                                 2 * s->capture_count] = sp[-1].val;
++                    else
++                        capture[sp[-2].val] = goc_regexp_restore_capture(sp[-1]);
+                     sp -= 2;
+                 }
+                 pc = sp[-3].ptr;
+@@ -3116,7 +3162,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+             idx = 2 * s->capture_count + pc[0];
+             val = get_u32(pc + 1);
+             pc += 5;
+-            SAVE_CAPTURE_CHECK(idx, (void *)(uintptr_t)val);
++            SAVE_COUNTER_CHECK(idx, val);
+             break;
+         case REOP_loop:
+             {
+@@ -3125,8 +3171,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+                 val = get_u32(pc + 1);
+                 pc += 5;
+ 
+-                val2 = (uintptr_t)capture[idx] - 1;
+-                SAVE_CAPTURE_CHECK(idx, (void *)(uintptr_t)val2);
++                val2 = counters[idx - 2 * s->capture_count] - 1;
++                SAVE_COUNTER_CHECK(idx, val2);
+                 if (val2 != 0) {
+                     pc += (int)val;
+                     if (lre_poll_timeout(s))
+@@ -3147,8 +3193,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+                 pc += 9;
+ 
+                 /* decrement the counter */
+-                val2 = (uintptr_t)capture[idx] - 1;
+-                SAVE_CAPTURE_CHECK(idx, (void *)(uintptr_t)val2);
++                val2 = counters[idx - 2 * s->capture_count] - 1;
++                SAVE_COUNTER_CHECK(idx, val2);
+ 
+                 if (val2 > limit) {
+                     /* normal loop if counter > limit */

@@ -1,14 +1,14 @@
 > **Public export note:** paths in this guide refer to the `goc` repository
-> (`include/goc.h`, `cmd/goc`, `docs/`). The language contract is unchanged.
+> (`include/goc.h`, `cmd/goc`, `docs/`). The pointer-store rule is v0.2.2.
 
-# goc 语言语法指导（v0.2）
+# goc 语言语法指导（v0.2.2）
 
-**状态：** 已批准合同（2026-09-21：用户 + review 一致通过）  
+**状态：** 用户修订合同（2026-09-23）  
 **定位：** goc = 面向 Go 运行时的 C 方言：在 goroutine 用户栈上跑，遵守 Go 的 stackmap / morestack /（对 `gptr` 的）写屏障，同时保留接近 C 的代码形态。  
 **非目标：** 完整 ISO C；任意 libc 语义；通用「加速所有 cgo」。
 
 本文只描述**语法与类型合同**。实现分期、QJS 移植工程项见 [roadmap.md](roadmap.md)。  
-相对 v0.1：**删除 `dsptr` 语言表面**；引入显式 `sptr` / `uptr` / `auto_ptr`；`JSValue` 改为显式 struct（不再 NaN-box 整盒 scalar）。
+相对 v0.1：**删除 `dsptr` 语言表面**；引入显式 `sptr` / `uptr` / `auto_ptr`；`JSValue` 改为显式 struct（不再 NaN-box 整盒 scalar）。v0.2.2 窄化修订：`sptr` 赋给已染色为 `cptr` 的非栈 `T *` 存储时，编译器隐式用 `uptr` 表示该存储，不再报 sptr-escape 错误；源代码仍可保留 `T *`。
 
 ---
 
@@ -38,9 +38,9 @@
 | 写法 | 含义 | 典型指向 / 存储 |
 |---|---|---|
 | `cptr<T>` | 非栈对象指针 | C 堆 / 全局 / arena 等；**不是** Go 堆。指针*字*可在栈、寄存器或堆。直接寻址。 |
-| `sptr<T>` | 当前 g 栈对象指针 | 被指物在栈上。指针*字*只许在栈槽/寄存器；**禁止进堆字段**。直接寻址。跨 morestack：寄存器须 spill 到 stackmap 跟踪的槽。 |
+| `sptr<T>` | 当前 g 栈对象指针 | 被指物在栈上。原始绝对指针字只许在栈槽/寄存器；赋给非栈 `cptr<T>` / 已染色为 `cptr` 的 `T *` 时，目标存储改用 `uptr` 编码。直接寻址。跨 morestack：原始值须 spill 到 stackmap 跟踪的槽。 |
 | `uptr<T>` | `cptr\|sptr` 编码并集 | 可存任意处（含堆字段）。**不可直接解引用**；须先 decode。 |
-| `auto_ptr<T>` | 推断色；`T *` ≡ `auto_ptr<T>` | 逃逸敏感：优先 `cptr`/`sptr`；须入库则一开始收成 `uptr`。已钉 `sptr` 后逃逸 → 报错，无自动升格。 |
+| `auto_ptr<T>` | 推断色；`T *` ≡ `auto_ptr<T>` | 逃逸敏感：优先 `cptr`/`sptr`；须入库则收成 `uptr`。已钉 `sptr` 后赋给非栈 `cptr<T>` 存储是窄例外：该存储自动用 `uptr` 编码，不改变其它逃逸规则。 |
 | `gptr<T>` / `gptr<?>` | Go 堆指针（独立轨） | 与 `cptr`/`sptr`/`uptr`/`auto_ptr` **无隐式转换**。stackmap + 写屏障。禁止算术。 |
 | `void *` | ≡ `auto_ptr<void>`（再按位置精化） | 同 `T *` 规则 |
 
@@ -70,7 +70,7 @@
 **操作：**
 
 - `cptr<T>` ↔ `cptr<U>`：允许（任意互相转换，含经 `void *` / `auto_ptr` 精化路径）。  
-- `cptr` ↔ 整数 / 浮点 / `gptr` / `sptr`：默认禁止（`sptr`→`cptr` 仅当证明非栈源或经错误路径）。  
+- `cptr` ↔ 整数 / 浮点 / `gptr` / `sptr`：默认禁止。`sptr` 赋给非栈 `cptr<T>` / 已染色为 `cptr` 的 `T *` 左值时，不发生直接 `sptr`→`cptr` 转换，而是将该存储提升为 `uptr` 表示并插入编码/解码。
 - 解引用、算术：允许（结果仍为 `cptr`；越界 UB，同 C）。  
 - **stackmap：** 指针槽可进 map；搬栈时若值落在旧栈 `[lo,hi)` 才 `+delta`——但按合同合法 `cptr` 不应落在栈上，故通常不动。  
 - **写屏障：** 不走 Go 写屏障。
@@ -86,19 +86,19 @@
 - 解引用、算术：允许（结果仍为 `sptr`；越界 UB）。  
 - **stackmap：** 进 map；搬栈时对落在旧栈的值 `+delta`。  
 - **写屏障：** 无。  
-- 与 `cptr` / `gptr`：无隐式转换。
+- 与 `cptr` / `gptr`：无直接隐式转换。唯一例外：向非栈 `cptr<T>` / 已染色为 `cptr` 的 `T *` 存储赋值时，目标存储使用 `uptr` 编码；这不是让 `cptr` 值包含原始栈地址。
 
 **指针字存放（硬规则）：**
 
-> `sptr` 的指针*字*只许出现在**栈槽与寄存器**。  
-> **禁止**写入堆字段、全局、或其它可被堆持有的位置。  
-> 跨 morestack：寄存器中的 `sptr` **必须** spill 到 stackmap 跟踪的栈槽，再由运行时搬栈修正。
+> 原始绝对 `sptr` 指针*字*只许出现在**栈槽与寄存器**。  
+> 赋给非栈、已染色为 `cptr` 的 `T *` 存储时，编译器将该存储的有效色改为 `uptr`，插入 `goc_uptr_from_sptr` 编码；同一存储中的 `cptr` 值也按 `uptr` 表示。goc 管理的 `T *` 读取会自动解码。堆中不保存原始栈绝对地址。  
+> 跨 morestack：仍以原始 `sptr` 形式活跃的值**必须** spill 到 stackmap 跟踪的栈槽，再由运行时搬栈修正。
 
-需要把「指向栈对象」的引用挂进 runtime / 堆 → 编码为 `uptr`（§3.3），不得存绝对 `sptr`。
+需要把「指向栈对象」的引用挂进 runtime / 堆 → 存储表示必须是 `uptr`（§3.3），不得存绝对 `sptr`。若目标是 `cptr<T>` / 已染色为 `cptr` 的 `T *`，赋值处自动转换；显式 `uptr<T>` 仍是可见、可审计的选择。
 
 ### 3.3 `uptr<T>`
 
-用于「逻辑上可能是 `cptr` 或 `sptr`，且需要存进堆字段 / 长寿位置」的场景（典型：`JSStackFrame` 挂在 runtime 上）。
+用于「逻辑上可能是 `cptr` 或 `sptr`，且需要存进堆字段 / 长寿位置」的场景（典型：`JSStackFrame` 挂在 runtime 上）。显式 `uptr<T>` 值仍不可直接解引用；编译器为自动提升的 `cptr<T>` 存储维护相同的物理编码，并在保留 `T *` 源级访问时插入通用解码。
 
 | | 规则 |
 |---|---|
@@ -125,9 +125,9 @@ sptr<T>  goc_uptr_as_sptr(uptr<T> u);            // 要求 MSB=1，用 owner g �
 
 1. 能证明只指向非栈对象 → `cptr<T>`  
 2. 能证明只指向当前栈对象，且指针字**永不**入库 → `sptr<T>`  
-3. 两色都可能、或必须进堆字段 → **一开始就**收成 `uptr<T>`  
+3. 两色都可能、或必须进堆字段 → **一开始就**收成 `uptr<T>`；若 `sptr` 后来赋给已染色为 `cptr` 的非栈 `T *` 存储，仅该存储自动提升为 `uptr`，不要求改写该 `T *` 声明。  
 4. **实例敏感：** 若某 struct 类型在别处有堆用法、字段类型写的是 `auto_ptr`，但**本函数内该实例只活在栈上**，仍可收成 `cptr`/`sptr`，**不要**盲目整类型升成 `uptr`。  
-5. 若分析曾把某值收成 `sptr`，随后又发现逃逸 → **报错**（程序员应改成显式 `uptr` / 调整 `auto_ptr` 用法），**禁止**自动升格。
+5. 若分析曾把某值收成 `sptr`，随后赋给非栈 `cptr<T>` / 已染色为 `cptr` 的 `T *` 左值 → 对该存储自动执行 `uptr` 编码；其它逃逸（尤其返回值、`gptr` 目标、无法证明/改写的外部存储）仍 **报错**。不做类型范围的盲目升格。
 
 形参上的 `T *` 允许接收已精化的同族色（见 §4）；**不接收 `gptr`**。
 
@@ -156,14 +156,11 @@ auto_ptr<T> p = &x;   // 精化为 sptr<T>（栈被指物）
 - `&堆对象` / 分配器返回 → `cptr`（非栈）或 `gptr`（若来自 Go）。  
 - `&全局` → `cptr`（数据段）。
 
-**逃逸硬规则：**
+**逃逸与存储规则：**
 
-> 栈源**绝对地址**（已钉成 `sptr` 的值，或尚未编码的栈绝对字）**不得**存入堆字段、全局、或作为返回值逃出。  
-> **`sptr` 一旦逃逸 → 一律编译错误。禁止「逃逸时自动升格为 `uptr`」。**  
-> 需要把栈引用挂进堆 / 长寿位置时：  
-> - 在类型/写法上就用 **`auto_ptr`**（由染色一开始收成 `uptr`），或  
-> - **显式**调用 `goc_uptr_from_sptr`（等）写成 `uptr` 再入库。  
-> 已经写成 `sptr` 的值，编译器**不会**在逃逸点偷偷改色。
+> 栈源**绝对地址**不得原样存入堆字段、全局或其它非栈位置，也不得作为返回值逃出。  
+> **窄例外：** 若赋值目标是非栈 `cptr<T>` / 已染色为 `cptr` 的 `T *` 存储，编译器自动把该存储的有效色提升为 `uptr`，对 `sptr` 插入编码、对读取插入解码；QuickJS 等 C 源码可保留原有 `T *` 声明与赋值写法。  
+> 这不延长栈对象寿命；引用使用结束前，栈对象仍须存活。返回 `sptr`、存入 `gptr`、或逃入编译器无法改写的外部存储，仍是编译错误。其它场景仍可显式使用 `goc_uptr_from_sptr`。
 
 ---
 
@@ -174,7 +171,7 @@ auto_ptr<T> p = &x;   // 精化为 sptr<T>（栈被指物）
 | 位置 | `T *` / `auto_ptr<T>` |
 |---|---|
 | **函数形参**（goc TU 内） | 色模板 / 推断：可接收 `cptr` 或 `sptr`（推荐同色联锁）；必要时收成 `uptr`；**不接收 `gptr`** |
-| 返回值 / 局部 / 结构体字段 / 全局 | 按逃逸精化；字段若可能被堆持有且含栈引用 → 须一开始就是 `uptr`/`auto_ptr→uptr`；**`sptr` 逃逸 = 报错**（无自动升格） |
+| 返回值 / 局部 / 结构体字段 / 全局 | 按逃逸精化；堆字段中的栈引用以 `uptr` 表示。赋给非栈 `cptr<T>` 字段或全局 `T *` 时自动编码；返回 `sptr` 仍报错。 |
 
 ```c
 void foo(int *out);           // 形参 auto_ptr：可吃 &local（sptr）或堆缓冲（cptr）
@@ -187,7 +184,7 @@ struct S { int *q; };         // 若 S 实例可能进堆：q 不得收绝对 sp
 - 同色联锁：一函数内多个 `T *`/`U *` 形参默认同一精化色，避免 `2^n` 爆炸。  
 - 写穿 `*p`、读、再传入其它 `U *` 形参：同色实例均允许。  
 - **仅非栈源（`cptr`）或已 `uptr` 编码的实例允许：** 把指针字自身存进堆字段 / 全局 / 返回。  
-- 栈源 `sptr` 若直接入库 → **编译错误**（或强制改写为 `uptr` 编码，见 §3.6）。  
+- 栈源 `sptr` 写入非栈 `cptr<T>`/`T *` 字段 → 赋值处自动编码为 `uptr`，其源级 `T *` 读取自动解码；不要求逐站点改写成 `uptr`。  
 - `JSContext *` 等「永不为栈源」的接收者可由实现钉死为单一 `cptr`，不参与模板。
 
 ### 4.3 函数指针、导出、虚表
@@ -211,7 +208,7 @@ Go 导出入口同理：禁止 `auto_ptr` / 裸 `T *`；钉 `cptr`、`sptr`、`u
 |---|---|---|---|---|---|
 | scalar | C 规则 | 禁止（除内建） | 禁止 | 禁止（除内建） | 禁止 |
 | `cptr` | 禁止 | 允许（任意 `T`） | 禁止 | `goc_uptr_from_cptr` | 禁止 |
-| `sptr` | 禁止 | 禁止 | 允许 | `goc_uptr_from_sptr` | 禁止 |
+| `sptr` | 禁止 | 仅赋给非栈 `cptr<T>`/`T *` 存储时，存储自动提升为 `uptr`（非直接转换） | 允许 | `goc_uptr_from_sptr` | 禁止 |
 | `uptr` | 禁止直接当标量玩 MSB | `as_cptr`（MSB=0） | `as_sptr`（MSB=1，owner g） | 允许 | 禁止 |
 | `gptr` | 禁止 | 禁止 | 禁止 | 禁止 | 仅 API / `gptr<?>` 擦除 |
 | `auto_ptr` | — | 精化后 | 精化后 | 精化后 | 禁止 |
@@ -420,5 +417,6 @@ void use_go(gptr<GoObj> o, gptr<GoObj> *slot_on_go_heap) {
 | 0.1 | 2026-09-20 | 首版：色、`T *`、`dsptr`、逃逸、Go 非对称互操作、栈 API、JSValue scalar（NaN-box） |
 | 0.2 | 2026-09-21 | **批准合同：** 删除 `dsptr`；显式 `cptr`/`sptr`/`uptr`/`auto_ptr`/`gptr`；`uptr` MSB 编码（hi + int64 offset）；ABI 禁 auto_ptr；`JSValue` 改显式 struct |
 | 0.2.1 | 2026-09-21 | **`sptr` 逃逸 = 编译错误**；禁止逃逸自动升格 `uptr`；入库须显式 `uptr` 或 `auto_ptr` 预收成 `uptr` |
+| 0.2.2 | 2026-09-23 | 窄例外：`sptr` 赋给非栈 `cptr<T>` / 已染色为 `cptr` 的 `T *` 时，目标存储自动用 `uptr` 编码，goc 管理的 `T *` 读取自动解码；其它逃逸规则不变 |
 
-**相关：** `docs/roadmap.md`（产品与分期；其中旧「三色 / NaN-box」叙述以本指南 v0.2 为准）、`glossary.md`（术语；指针色条目已对齐）、`qjs-addr-of-local-analysis.md`（QJS `&local` 实证，历史分析）。
+**相关：** `docs/roadmap.md`（产品与分期；其中旧「三色 / NaN-box」叙述以本指南 v0.2.2 为准）、`glossary.md`（术语；指针色条目已对齐）、`qjs-addr-of-local-analysis.md`（QJS `&local` 实证，历史分析）。

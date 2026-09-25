@@ -35,33 +35,13 @@ compile_ok() {
     -o "$OUT/${base}.raw.ll" "$src" 2>"$OUT/${base}.clang.log"
 }
 
-compile_err() {
-  local src="$1" base="$2"
-  set +e
-  "$CLANG" -DGOC_USE_INTREE_ATTRS -I "$INC" \
-    -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
-    -o "$OUT/${base}.raw.ll" "$src" 2>"$OUT/${base}.clang.log"
-  local rc=$?
-  set -e
-  if [[ $rc -eq 0 ]]; then
-    echo "FAIL: expected Sema error for $src" >&2
-    cat "$OUT/${base}.clang.log" >&2
-    exit 1
-  fi
-  if ! rg -q 'goc: sptr escape' "$OUT/${base}.clang.log"; then
-    echo "FAIL: missing in-tree Sema sptr escape diagnostic" >&2
-    cat "$OUT/${base}.clang.log" >&2
-    exit 1
-  fi
-}
-
 echo "=== P28: OK out-param / stack ==="
 compile_ok "$ROOT/tests/sema/01_ok_outparam_stack.c" 01_ok_outparam_stack
 pass "PASS P28-sema-ok (in-tree clang, no -fplugin: 01_ok_outparam_stack)"
 
-echo "=== P28: ERROR Sema sptr→heap ==="
-compile_err "$ROOT/tests/sema/02_err_sptr_to_heap.c" 02_err_sptr_to_heap
-pass "PASS P28-sema-err (in-tree Sema rejects sptr→heap without -fplugin)"
+echo "=== P28: implicit uptr storage for cptr T* ==="
+compile_ok "$ROOT/tests/sema/02_ok_sptr_to_cptr_uptr.c" 02_ok_sptr_to_cptr_uptr
+pass "PASS P28-sema-implicit-uptr (in-tree Sema accepts cptr T* destination)"
 
 echo "=== P28: real-body goobj ==="
 "$ROOT/backend/realbody/goc_p28_realbody.sh" \

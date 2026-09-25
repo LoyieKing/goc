@@ -83,7 +83,7 @@ Harness 顺序 **L→W→S→A**。
 
 - Real `#include "X86InstrInfo.h"` via `_deps/llvm-project-19.1.7` + `X86CommonTableGen`.
 - `LiveIntervalsWrapperPass` via legacy `PassManager` (spill/maps before stackcheck).
-- Lite (`pass/vendor/X86InstrInfoLite.h`) is fallback only.
+- Lite fallback removed; real `X86InstrInfo.h` is required (missing headers fail the build).
 
 ## P6.1 (2026-09-21 Asia/Shanghai)
 

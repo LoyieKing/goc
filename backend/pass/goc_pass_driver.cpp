@@ -135,18 +135,8 @@ static Function *makeHoldArg(Module &M) {
 
 static unsigned x86RetOpcode(const TargetInstrInfo &TII,
                              const TargetRegisterInfo &TRI) {
-#if GOC_HAVE_X86INSTRINFO
   (void)TII; (void)TRI;
   return X86::RET64;
-#else
-  goc::X86::InstrInfoLite Lite;
-  Lite.resolve(TII, TRI);
-  // Lite may not cache RET64 — look up by name.
-  for (unsigned I = 0, E = TII.getNumOpcodes(); I != E; ++I)
-    if (TII.getName(I) == "RET64")
-      return I;
-  report_fatal_error("RET64 not found");
-#endif
 }
 
 
@@ -179,15 +169,8 @@ static void seedHoldLiveMIR(MachineFunction &MF) {
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-#if GOC_HAVE_X86INSTRINFO
   const unsigned OpcCALL64 = X86::CALL64pcrel32;
   const unsigned RAX = X86::RAX;
-#else
-  goc::X86::InstrInfoLite Lite;
-  Lite.resolve(*TII, *TRI);
-  const unsigned OpcCALL64 = Lite.CALL64pcrel32;
-  const unsigned RAX = Lite.RAX;
-#endif
 
   const TargetRegisterClass *GR64 = nullptr;
   for (unsigned I = 0, E = TRI->getNumRegClasses(); I != E; ++I) {
@@ -217,15 +200,8 @@ static void seedHoldArgMIR(MachineFunction &MF) {
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-#if GOC_HAVE_X86INSTRINFO
   const unsigned OpcCALL64 = X86::CALL64pcrel32;
   const unsigned RAX = X86::RAX;
-#else
-  goc::X86::InstrInfoLite Lite;
-  Lite.resolve(*TII, *TRI);
-  const unsigned OpcCALL64 = Lite.CALL64pcrel32;
-  const unsigned RAX = Lite.RAX;
-#endif
 
   const TargetRegisterClass *GR64 = nullptr;
   for (unsigned I = 0, E = TRI->getNumRegClasses(); I != E; ++I) {
@@ -258,17 +234,9 @@ static void seedHoldRegOnlyMIR(MachineFunction &MF) {
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-#if GOC_HAVE_X86INSTRINFO
   const unsigned OpcCALL64 = X86::CALL64pcrel32;
   const unsigned OpcMOV64ri = X86::MOV64ri;
   const unsigned RAX = X86::RAX;
-#else
-  goc::X86::InstrInfoLite Lite;
-  Lite.resolve(*TII, *TRI);
-  const unsigned OpcCALL64 = Lite.CALL64pcrel32;
-  const unsigned OpcMOV64ri = Lite.MOV64ri;
-  const unsigned RAX = Lite.RAX;
-#endif
 
   const TargetRegisterClass *GR64 = nullptr;
   for (unsigned I = 0, E = TRI->getNumRegClasses(); I != E; ++I) {
@@ -302,17 +270,9 @@ static void seedHoldTwoLiveMIR(MachineFunction &MF) {
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-#if GOC_HAVE_X86INSTRINFO
   const unsigned OpcCALL64 = X86::CALL64pcrel32;
   const unsigned RAX = X86::RAX;
   const unsigned RBX = X86::RBX; // ABIInternal arg1
-#else
-  goc::X86::InstrInfoLite Lite;
-  Lite.resolve(*TII, *TRI);
-  const unsigned OpcCALL64 = Lite.CALL64pcrel32;
-  const unsigned RAX = Lite.RAX;
-  const unsigned RBX = Lite.RBX;
-#endif
 
   const TargetRegisterClass *GR64 = nullptr;
   for (unsigned I = 0, E = TRI->getNumRegClasses(); I != E; ++I) {
@@ -362,11 +322,7 @@ struct GocDumpMirPass : public ModulePass {
       return false;
     }
     OS << "# P15 analysis MIR dump via llvm::printMIR (PassManager + LiveIntervals)\n";
-#if GOC_HAVE_X86INSTRINFO
     OS << "# X86InstrInfo: real headers\n";
-#else
-    OS << "# X86InstrInfo: Lite fallback\n";
-#endif
     // YAML MIR serialization (not MF.print debug text).
     printMIR(OS, M);
     for (Function &F : M) {
@@ -491,11 +447,7 @@ int main(int argc, char **argv) {
     OS << "stackguard0_offset 16\n";
     OS << "morestack runtime.morestack_noctxt\n";
     OS << "gclocals_prefix gclocals·\n";
-#if GOC_HAVE_X86INSTRINFO
     OS << "x86_instr_info real\n";
-#else
-    OS << "x86_instr_info lite_fallback\n";
-#endif
     OS << "liveintervals via=LiveIntervalsWrapperPass\n";
     for (auto &L : Recipe)
       OS << L << "\n";
@@ -541,9 +493,7 @@ int main(int argc, char **argv) {
     outs() << "PASS-DRIVER: wrote " << OutDir
          << "/{goc.mir,harness.mir,harness.meta.json,stackcheck.recipe.txt,mi_lower.txt,args_map.bin,locals_map.bin,maps.txt}"
          << " (PassManager + LiveIntervals + RebuildLIS + GoFrameLower"
-#if GOC_HAVE_X86INSTRINFO
          << " + real X86InstrInfo"
-#endif
          << ")\n";
   return 0;
 }
