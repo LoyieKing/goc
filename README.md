@@ -25,6 +25,7 @@ git clone https://github.com/LoyieKing/goc.git
 cd goc
 export GOC_ROOT="$(pwd)"
 
+# First-time build, link, and the Go/C boundary: docs/guide.md
 # Patched Clang: clang/README.md
 export GOC_CLANG=/path/to/llvm-19.1.7-clang-build/bin/clang
 
@@ -87,17 +88,19 @@ scripts/          Clang patches, QuickJS build, benches
 
 - Go amd64 ABIInternal covers the int/pointer subset (at most six arguments). Variadics and other aggregates stay SysV.
 - AVX, x87, and EH are not on the Go-callable path.
-- The QuickJS build uses a freestanding libc shim, not glibc. The alloca pool is single-goroutine.
+- The QuickJS build uses a freestanding libc shim, not glibc. `alloca(n)` is a function-scoped `cptr` ([syntax-guide §7.2](docs/syntax-guide.md)); the optional pool is single-goroutine.
 - `uptr` decode uses the owner goroutine's `stack.hi`. Decoding with another `g` is an error.
 
 ## Docs
 
 | Doc | |
 |-----|--|
+| [docs/guide.md](docs/guide.md) | First-use guide (中文 / English) |
 | [docs/syntax-guide.md](docs/syntax-guide.md) | Language contract |
 | [docs/architecture.md](docs/architecture.md) | Pipeline |
 | [docs/glossary.md](docs/glossary.md) | Terms |
 | [docs/benchmark.md](docs/benchmark.md) | Latest comparison |
+| [docs/todo.md](docs/todo.md) | Next version |
 | [clang/README.md](clang/README.md) | Build patched Clang |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Patches |
 | [SECURITY.md](SECURITY.md) | Reporting |
@@ -106,8 +109,10 @@ scripts/          Clang patches, QuickJS build, benches
 
 `goc` 把带指针色的 C 编到 goroutine 用户栈上，和 Go 共用 morestack 与
 stackmap，而不是走 cgo。`uptr` 用最高位区分绝对地址和相对 `g.stack.hi` 的
-偏移。语法合同见 [docs/syntax-guide.md](docs/syntax-guide.md)。横向跑分见
-[docs/benchmark.md](docs/benchmark.md)。
+偏移。第一次编译和链进 Go 见 [docs/guide.md](docs/guide.md)。语法合同见
+[docs/syntax-guide.md](docs/syntax-guide.md)。横向跑分见
+[docs/benchmark.md](docs/benchmark.md)。下一版是 linux/arm64 后端，见
+[docs/todo.md](docs/todo.md)。
 
 ## License
 

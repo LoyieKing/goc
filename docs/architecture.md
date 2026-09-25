@@ -42,10 +42,10 @@ Go link
 | `include/goc.h` | `cptr` / `sptr` / `uptr` / `auto_ptr` / `gptr` |
 | `clang/patches`, `clang/sema` | In-tree Sema for LLVM 19.1.7 |
 | `clang/plugin` | Same checks as an out-of-tree plugin |
-| `frontend/color-escape` | Escape refine; inserts uptr encode/decode |
+| `frontend/color-escape` | Escape refine; lowers dynamic `alloca`; inserts uptr encode/decode |
 | `backend/pass` | Stack maps, safepoint spills, morestack insertion |
 | `backend/goobj/elfpack` | ELF bytes and relocations → goobj |
-| `runtime/uptr` | MSB encode/decode; `g` from `FS:-8` |
+| `runtime/uptr` | MSB encode/decode; `g` from `FS:-8`; `goc_dynalloc` / `goc_dynrelease` |
 
 Drivers pick clang via `GOC_CLANG`, then
 `third_party/llvm-*-clang-build`, then system `clang-19` plus the plugin.
@@ -61,9 +61,18 @@ One machine word.
 `stack.lo` is `g+0`, `stack.hi` is `g+8`. A stack copy does not rewrite a
 stored offset; the next decode adds the new `hi`.
 
+## alloca
+
+Color-escape rewrites dynamic `alloca` to `goc_dynalloc` / `goc_dynrelease`
+before coloring. The result is a `cptr` that lives until the function
+returns. Go's pcsp table cannot describe a mid-frame SP change, so this is
+not a variable-length goroutine frame. Contract: syntax-guide §7.2.
+
 ## Not supported
 
 - Full ISO C or a hosted libc.
 - AVX, x87, and EH on the Go-callable path.
+- `stacksave` / `stackrestore`, and a VLA that does not lower to `alloca i8` with alignment ≤ 16.
 - Go ABIInternal for variadics and unsupported aggregates.
-- Decoding `uptr` with a goroutine other than the owner.
+- Using `sptr` / `uptr`, or a context that holds them (`JSContext`), on a goroutine other than the owner. The current word has no goroutine pointer, so the offset is added to the wrong `stack.hi`. Contract: syntax-guide §8.3. A later opt-in switch can carry the goroutine pointer; the default stays one word. [todo.md](todo.md).
+- linux/arm64. The product backend is amd64. Next version: [todo.md](todo.md).
