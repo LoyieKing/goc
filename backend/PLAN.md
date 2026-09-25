@@ -24,7 +24,7 @@
 ## 诚实缺口
 
 - llvm::LiveIntervals 构造函数在 PassManager 外为 private → 使用 SlotIndexes + 等价 dataflow（文档标明）  
-- Distro 仍无 `X86InstrInfo.h` → Lite 按名解析  
+- Lite 回退已移除：构建强制真 `X86InstrInfo.h`（需本地 llvm-project 19.1.7 + `X86Gen*.inc`；distro `llvm-19-dev` 不含）  
 - 不发射寄存器 pointer-map 位（对齐 Go spill→Locals 主路径）
 
 

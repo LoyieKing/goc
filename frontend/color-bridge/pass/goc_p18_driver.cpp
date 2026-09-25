@@ -45,16 +45,9 @@ static cl::opt<std::string> OutDir("outdir", cl::desc("Output directory"),
 
 static unsigned x86RetOpcode(const TargetInstrInfo &TII,
                              const TargetRegisterInfo &TRI) {
-#if GOC_HAVE_X86INSTRINFO
   (void)TII;
   (void)TRI;
   return X86::RET64;
-#else
-  for (unsigned I = 0, E = TII.getNumOpcodes(); I != E; ++I)
-    if (TII.getName(I) == "RET64")
-      return I;
-  report_fatal_error("RET64 not found");
-#endif
 }
 
 static const TargetRegisterClass *findGR64(const TargetRegisterInfo &TRI) {
@@ -83,15 +76,8 @@ static void seedLiveAcrossCall(MachineFunction &MF) {
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-#if GOC_HAVE_X86INSTRINFO
   const unsigned OpcCALL64 = X86::CALL64pcrel32;
   const unsigned RAX = X86::RAX;
-#else
-  goc::X86::InstrInfoLite Lite;
-  Lite.resolve(*TII, *TRI);
-  const unsigned OpcCALL64 = Lite.CALL64pcrel32;
-  const unsigned RAX = Lite.RAX;
-#endif
   const TargetRegisterClass *GR64 = findGR64(*TRI);
   if (!GR64)
     report_fatal_error("P18: GR64 missing");

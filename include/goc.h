@@ -5,7 +5,9 @@
  * are registered by the plugin and lowered to AnnotateAttr "goc.color.*".
  * Without the plugin, fall back to clang::annotate (P17-compatible).
  *
- * Sema (plugin): sptr store to heap/global = hard error; no dsptr; no auto-promote.
+ * Product path: a stack pointer stored into non-stack cptr/auto T* is promoted
+ * to uptr by the IR pass. Unsupported escapes and raw sptr returns stay hard
+ * errors. No dsptr. The P27 plugin still rejects a sptr store to heap/global.
  */
 #ifndef GOC_H
 #define GOC_H

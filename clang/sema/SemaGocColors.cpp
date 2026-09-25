@@ -1,7 +1,8 @@
 //===- SemaGocColors.cpp - goc pointer-color Sema (P28 in-tree) -----------===//
 //
 // Contract (goc-syntax-guide.md v0.2.1):
-//   sptr store to heap/global/return = hard error; no auto-promote; no dsptr.
+//   sptr to non-stack cptr/auto T* storage promotes that storage to uptr in
+//   the IR pass; unsupported escapes and raw sptr returns remain hard errors.
 //
 // Attr.td defines GocCPtr/SPtr/UPtr/AutoPtr/GPtr with SimpleHandler=1.
 // This file:
@@ -141,11 +142,11 @@ static GocColor colorOfExpr(const Expr *E) {
               dyn_cast<DeclRefExpr>(UO->getSubExpr()->IgnoreParenImpCasts())) {
         if (const auto *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
           GocColor C = colorFromDecl(VD);
-          if (C == GocColor::None && VD->hasLocalStorage())
-            return GocColor::SPtr;
-          if (C == GocColor::Auto && VD->hasLocalStorage())
-            return GocColor::SPtr;
-          return C != GocColor::None ? C : GocColor::SPtr;
+          if (C != GocColor::None && C != GocColor::Auto)
+            return C;
+          // Address of a stack object is sptr; the address of a global/static
+          // object is cptr (contract 3.1: cptr covers globals / data segment).
+          return VD->hasLocalStorage() ? GocColor::SPtr : GocColor::CPtr;
         }
       }
     }
@@ -199,6 +200,24 @@ static bool destIsNonStack(const Expr *LHS) {
   return false;
 }
 
+static GocColor colorOfLValue(const Expr *LHS) {
+  if (!LHS)
+    return GocColor::None;
+  LHS = LHS->IgnoreParenImpCasts();
+  if (const auto *DRE = dyn_cast<DeclRefExpr>(LHS))
+    return colorFromDecl(DRE->getDecl());
+  if (const auto *ME = dyn_cast<MemberExpr>(LHS))
+    return colorFromDecl(ME->getMemberDecl());
+  return GocColor::None;
+}
+
+static bool acceptsImplicitUptrStorage(const Expr *LHS) {
+  if (!LHS || !LHS->getType()->isPointerType())
+    return false;
+  GocColor C = colorOfLValue(LHS);
+  return C == GocColor::None || C == GocColor::Auto || C == GocColor::CPtr;
+}
+
 static bool isSptrValue(GocColor C) { return C == GocColor::SPtr; }
 
 class GocMirrorVisitor : public RecursiveASTVisitor<GocMirrorVisitor> {
@@ -235,9 +254,8 @@ public:
   explicit GocEscapeVisitor(ASTContext &Ctx) : Diags(Ctx.getDiagnostics()) {
     DiagSptrStore = Diags.getCustomDiagID(
         DiagnosticsEngine::Error,
-        "goc: sptr escape — storing stack pointer (%0) into non-stack location "
-        "(heap/global/field via pointer); encode with goc_uptr_from_sptr or keep "
-        "on stack (no auto-promote; no dsptr)");
+        "goc: sptr escape — destination is not a cptr/auto T* storage eligible "
+        "for implicit uptr encoding (%0)");
     DiagSptrReturn = Diags.getCustomDiagID(
         DiagnosticsEngine::Error,
         "goc: sptr escape — returning stack pointer (%0) from function");
@@ -251,7 +269,12 @@ public:
     GocColor RHS = colorOfExpr(BO->getRHS());
     if (!isSptrValue(RHS))
       return true;
-    if (!destIsNonStack(BO->getLHS()))
+    bool NonStack = destIsNonStack(BO->getLHS());
+    GocColor DestColor = colorOfLValue(BO->getLHS());
+    if (acceptsImplicitUptrStorage(BO->getLHS()) &&
+        (NonStack || DestColor == GocColor::CPtr))
+      return true; // the IR pass encodes this store and decodes T* loads
+    if (!NonStack)
       return true;
     Diags.Report(BO->getExprLoc(), DiagSptrStore) << colorName(RHS);
     Diags.Report(BO->getRHS()->getExprLoc(), DiagNoteColor) << colorName(RHS);

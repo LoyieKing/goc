@@ -3,6 +3,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 DOCS="$(cd "$ROOT/.." && pwd)"
+REPO="$(cd "$ROOT/../.." && pwd)"
 cd "$ROOT"
 
 echo "=== P17: build goc-color-escape ==="
@@ -41,10 +42,16 @@ run_one() {
 
   if ! "$CLANG" -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
       -I "$INCDIR" -o "$ll" "$src" 2>"$OUT/${base}.clang.err"; then
-    echo "FAIL $base (clang frontend)"
-    REPORT_LINES+=("FAIL $base — clang failed")
-    FAIL=$((FAIL + 1))
-    cat "$OUT/${base}.clang.err" || true
+    if [[ "$expect" == "fail" ]] && grep -Eiq "${needle:-sptr escape|gptr cannot|error}" "$OUT/${base}.clang.err"; then
+      echo "PASS $base (Sema diagnostic OK)"
+      REPORT_LINES+=("PASS $base (expected Sema error: matched)")
+      PASS=$((PASS + 1))
+    else
+      echo "FAIL $base (clang frontend)"
+      REPORT_LINES+=("FAIL $base — clang failed")
+      FAIL=$((FAIL + 1))
+      cat "$OUT/${base}.clang.err" || true
+    fi
     return
   fi
 
@@ -82,6 +89,36 @@ while read -r name expect needle; do
   [[ -z "${name:-}" || "$name" =~ ^# ]] && continue
   run_one "$ROOT/tests/$name" "$expect" "${needle:-}"
 done < "$ROOT/tests/EXPECTATIONS"
+
+echo "=== P17: automatic uptr storage round-trip ==="
+UPTR_SRC="$ROOT/tests/09_auto_uptr_storage_roundtrip.c"
+UPTR_LL="$OUT/09_auto_uptr_storage_roundtrip.ll"
+UPTR_COLOR_LL="$OUT/09_auto_uptr_storage_roundtrip.color.ll"
+UPTR_BIN="$OUT/09_auto_uptr_storage_roundtrip"
+"$CLANG" -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
+  -I "$INCDIR" -I "$REPO/runtime" -o "$UPTR_LL" "$UPTR_SRC"
+"$PASS_BIN" "$UPTR_LL" -o "$UPTR_COLOR_LL" >"$OUT/09_auto_uptr_storage_roundtrip.log" 2>&1
+"$CLANG" -O0 -I "$INCDIR" -I "$REPO/runtime" \
+  "$UPTR_COLOR_LL" "$REPO/runtime/uptr/goc_uptr_runtime.c" -o "$UPTR_BIN"
+"$UPTR_BIN"
+echo "PASS automatic uptr storage round-trip after stack.hi movement"
+REPORT_LINES+=("PASS automatic uptr storage round-trip after stack.hi movement")
+PASS=$((PASS + 1))
+
+MIXED_SRC="$ROOT/tests/10_auto_uptr_mixed_destination.c"
+MIXED_LL="$OUT/10_auto_uptr_mixed_destination.ll"
+MIXED_COLOR_LL="$OUT/10_auto_uptr_mixed_destination.color.ll"
+MIXED_BIN="$OUT/10_auto_uptr_mixed_destination"
+"$CLANG" -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
+  -I "$INCDIR" -I "$REPO/runtime" -o "$MIXED_LL" "$MIXED_SRC"
+"$PASS_BIN" "$MIXED_LL" -o "$MIXED_COLOR_LL" >"$OUT/10_auto_uptr_mixed_destination.log" 2>&1
+"$CLANG" -O0 -I "$INCDIR" -I "$REPO/runtime" \
+  "$MIXED_COLOR_LL" "$REPO/runtime/uptr/goc_uptr_runtime.c" -o "$MIXED_BIN"
+"$MIXED_BIN"
+"$MIXED_BIN" local
+echo "PASS mixed stack/global uptr storage after stack.hi movement"
+REPORT_LINES+=("PASS mixed stack/global uptr storage after stack.hi movement")
+PASS=$((PASS + 1))
 
 echo "=== P17 summary: $PASS passed, $FAIL failed ==="
 {

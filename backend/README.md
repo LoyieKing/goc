@@ -74,7 +74,7 @@ Pass 顺序：`Spill(LIS)` → `EmitMaps` → `StackCheck(CFG)` → **`RebuildLI
 | 真 `llvm::LiveIntervals`（`LiveIntervalsWrapperPass` + `SlotIndexesWrapperPass`，legacy `PassManager`） | ✅ spill 用 `LI.liveAt(CallIdx)`；maps `locals_source liveintervals` |
 | 多 FI 真 Go SP 偏移（禁 FI×8） | ✅ `hold_two` locals byte=`0x0c`（SP+16|SP+24）；错误 `0x03` 会 FAIL |
 | 真 `X86InstrInfo.h` | ✅ 本地 llvm-project **19.1.7** + `ninja X86CommonTableGen`；`-I` 见 `pass/Makefile`（`LLVM_X86_SRC_INCLUDE`） |
-| Lite fallback | `pass/vendor/X86InstrInfoLite.h` **仅**在缺头/缺 `.inc` 时 |
+| Lite fallback | ❌ 已移除 — 强制真 `X86InstrInfo.h`（缺头/缺 `.inc` 时 `$(error)` 编译失败） |
 | 独立 goobj | ✅ `goobj/enc/` vendored encode；`run_binwriter.sh` **无** GOROOT overlay |
 | 收紧 gptr 识别（非每个 GR64） | ✅ R1 attr / R2 ptr-arg COPY / R3 ptr-load·alloca / R4 LLT；reject every_GR64 |
 | 寄存器-only 硬例 **S3** | ✅ `goc_hold_regonly`：跨 CALL 仅 vreg 活；无 spill 则无 maps → FAIL；integer decoy 不 spill |
@@ -165,7 +165,7 @@ PASS p5-machinepass-goobj (L+S+S2+S3+A[+W])
 
 ## 5. 诚实缺口
 
-1. Distro `llvm-19-dev` 仍无 Target/X86 头；本树用 **本地 19.1.7 源码 + tablegen**。缺构建时回退 Lite。  
+1. Distro `llvm-19-dev` 仍无 Target/X86 头；本树用 **本地 19.1.7 源码 + tablegen**。Lite 回退已删除，缺头则 `$(error)`。  
 2. 独立 goobj：`goobj/enc/` vendored（**无** GOROOT overlay）。  
 3. 真 `LiveIntervals` 经 PassManager（CALL spill）；合成 morestack 环上**不**盲重跑 LIS。P8：StackCheck 后 **安全固定点 liveness** 覆盖 morestack spill（`GocRebuildLISAfterStackCheck`）。
 3b. gptr 识别收紧：见 spill pass 头注释 R1–R4（禁止「每个 GR64」）。  

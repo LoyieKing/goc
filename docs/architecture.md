@@ -17,7 +17,8 @@ user stack**, participating in Go’s:
       ▼
   Clang 19  (+ goc Attr.td + SemaGocColors)
       │   native attrs → AnnotateAttr "goc.color.*"
-      │   Sema: sptr escape to heap/global = hard error
+      │   Sema + IR: stack pointer stored to heap/global T* → uptr;
+      │   raw sptr return / unsupported escape = hard error
       ▼
   LLVM IR   (!goc.color metadata / annotations)
       │

@@ -9,12 +9,11 @@ LLVM_X86_SRC  ?= $(GOC_DOCS_ROOT)/_deps/llvm-project-19.1.7/llvm/lib/Target/X86
 LLVM_X86_BUILD?= $(GOC_DOCS_ROOT)/_deps/llvm-19.1.7-build/lib/Target/X86
 
 HAVE_X86_HDR := $(shell test -f "$(LLVM_X86_SRC)/X86InstrInfo.h" && test -f "$(LLVM_X86_BUILD)/X86GenInstrInfo.inc" && echo 1 || echo 0)
-
-CXXFLAGS := $(shell $(LLVM_CFG) --cxxflags) -std=c++17 -fPIC -I. -I$(P5_PASS)
-ifeq ($(HAVE_X86_HDR),1)
-  CXXFLAGS += -DGOC_HAVE_X86INSTRINFO=1 \
-              -I$(LLVM_X86_SRC) -I$(LLVM_X86_BUILD)
+ifeq ($(HAVE_X86_HDR),0)
+  $(error real X86InstrInfo headers required (X86InstrInfoLite fallback removed): missing $(LLVM_X86_SRC)/X86InstrInfo.h or $(LLVM_X86_BUILD)/X86GenInstrInfo.inc — point GOC_DOCS_ROOT/LLVM_X86_SRC/LLVM_X86_BUILD at a local llvm-project 19.1.7 source + build tree)
 endif
+
+CXXFLAGS := $(shell $(LLVM_CFG) --cxxflags) -std=c++17 -fPIC -I. -I$(P5_PASS) -I$(LLVM_X86_SRC) -I$(LLVM_X86_BUILD)
 
 LDFLAGS  := $(shell $(LLVM_CFG) --ldflags)
 LIBS     := -lLLVM-19

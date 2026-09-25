@@ -47,13 +47,6 @@ static cl::list<std::string> InputFiles(cl::Positional, cl::desc("<bridged.ll>..
 static cl::opt<std::string> OutDir("outdir", cl::desc("Output directory"),
                                   cl::init("build/p21-out"));
 
-#if !GOC_HAVE_X86INSTRINFO
-int main(int, char **) {
-  errs() << "FATAL: P21 vertical requires real X86InstrInfo (local LLVM 19 tree)\n";
-  return 1;
-}
-#else
-
 static Function *getOrInsertDecl(Module &M, StringRef Name) {
   if (Function *F = M.getFunction(Name))
     return F;
@@ -534,5 +527,3 @@ int main(int argc, char **argv) {
          << " any_wb=" << AnyWB << " any_spill=" << AnySpill << "\n";
   return 0;
 }
-
-#endif // GOC_HAVE_X86INSTRINFO
