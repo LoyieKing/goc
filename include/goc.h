@@ -67,6 +67,11 @@ uintptr_t goc_stack_hi(void);
 uintptr_t goc_stack_lo(void);
 bool goc_stack_check(size_t need);
 
+/* alloca(n) lowering (syntax-guide §7.2). Compiler-inserted. Result is cptr,
+ * not a goroutine-stack sptr. scope is the function watermark. */
+goc_cptr goc_dynalloc(size_t bytes, void **scope);
+void goc_dynrelease(void **scope);
+
 typedef struct JSObject JSObject;
 typedef struct JSValue {
   int tagged_value;

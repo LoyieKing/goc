@@ -1,13 +1,14 @@
 > **Public export note:** paths in this guide refer to the `goc` repository
 > (`include/goc.h`, `cmd/goc`, `docs/`). The pointer-store rule is v0.2.2.
+> The `alloca` contract is v0.2.3. The same-goroutine rule for `sptr` / `uptr` is v0.2.4.
 
-# goc 语言语法指导（v0.2.2）
+# goc 语言语法指导（v0.2.4）
 
 **定位：** goc = 面向 Go 运行时的 C 方言：在 goroutine 用户栈上跑，遵守 Go 的 stackmap / morestack /（对 `gptr` 的）写屏障，同时保留接近 C 的代码形态。  
 **非目标：** 完整 ISO C；任意 libc 语义；通用「加速所有 cgo」。
 
 本文只描述**语法与类型合同**。  
-相对 v0.1：**删除 `dsptr` 语言表面**；引入显式 `sptr` / `uptr` / `auto_ptr`；`JSValue` 改为显式 struct（不再 NaN-box 整盒 scalar）。v0.2.2 窄化修订：`sptr` 赋给已染色为 `cptr` 的非栈 `T *` 存储时，编译器隐式用 `uptr` 表示该存储，不再报 sptr-escape 错误；源代码仍可保留 `T *`。
+相对 v0.1：**删除 `dsptr` 语言表面**；引入显式 `sptr` / `uptr` / `auto_ptr`；`JSValue` 改为显式 struct（不再 NaN-box 整盒 scalar）。v0.2.2 窄化修订：`sptr` 赋给已染色为 `cptr` 的非栈 `T *` 存储时，编译器隐式用 `uptr` 表示该存储，不再报 sptr-escape 错误；源代码仍可保留 `T *`。v0.2.3：`alloca(n)` 降为函数作用域的 `cptr` 分配（§7.2），不再列为禁止，也不恢复成 `sptr` 变长栈帧。v0.2.4：`sptr` 与 `uptr`（MSB=1）严格绑定所属 goroutine（§3.2、§8.3）。持有它们的 context 只能在那一条 goroutine 上调用；换 goroutine 会把 offset 加到错误的 `stack.hi` 上。
 
 ---
 
@@ -17,7 +18,7 @@
 |---|---|
 | 基线 | C11 子集（控制流、表达式、struct、固定数组、`_Alignas`、内联等） |
 | 表面扩展 | 指针色类型（`cptr` / `sptr` / `uptr` / `auto_ptr` / `gptr`）、方言内建/属性、与 Go 的导入导出声明 |
-| 禁止/推迟 | 含指针的 union；用户级 tagged pointer；随意指针↔整数；VLA/`alloca`（见 §7）；跨 Go 帧的 `setjmp`/`longjmp`；在 goc 里起 OS 线程再回调 Go；**`dsptr`（已移出语言表面，由 `uptr` 覆盖）** |
+| 禁止/推迟 | 含指针的 union；用户级 tagged pointer；随意指针↔整数；非 §7.2 形状的 VLA；跨 Go 帧的 `setjmp`/`longjmp`；在 goc 里起 OS 线程再回调 Go；跨 goroutine 使用 `sptr` / `uptr` 或持有它们的 context（§8.3）；**`dsptr`（已移出语言表面，由 `uptr` 覆盖）** |
 
 源文件建议扩展名：`.goc` / `.c`（由构建用 `goc` 驱动编译，而非系统 cc）。
 
@@ -78,7 +79,7 @@
 
 ### 3.2 `sptr<T>`
 
-**值域：** `NULL`，或指向**当前 owner g** 用户栈上的 `T`。
+**值域：** `NULL`，或指向**所属 goroutine** 用户栈上的 `T`。当前表示是一个机器字，不携带 goroutine 指针。解引用和搬栈修正都相对这条 goroutine。换一条 goroutine 再使用，地址不再指向原来的栈对象。
 
 **操作：**
 
@@ -106,7 +107,7 @@
 | 解引用 | **禁止直接 `*`**；须先 decode 成临时 `cptr` 或 `sptr` |
 | 搬栈 | 堆上 MSB=1 的 offset **不变**；MSB=0 的绝对 `cptr` 通常不在栈上故不动 |
 | 寿命 | **不延长**栈对象寿命；帧返回前必须 unlink / 清空 |
-| 解码 | 仅用 **owner g** 的 `stack.hi`；跨 g 解码 = **错误** |
+| 解码 | 仅用 **所属 goroutine** 的 `stack.hi`。当前表示不携带 `g`，实现用当前 goroutine。跨 goroutine 解码把 offset 加到错误的 `stack.hi` 上，得到错误地址。这是合同错误（§8.3）。 |
 
 ```c
 // 示意内建（名称待定）
@@ -268,22 +269,56 @@ cptr<JSObject> js_get_obj(JSValue v) {
 
 ### 7.1 方言栈 API（替代 C builtin）
 
-禁止依赖 `__builtin_frame_address` / 手写栈极限假设。使用 goc 提供的 API（名称待定），例如：
+禁止依赖 `__builtin_frame_address` 或创建时记下的绝对栈顶。栈界用下面两个函数，读的是当前 `g`。`goc_stack_check` 仍是占位，不代替 morestack。
 
 ```c
 uintptr_t goc_stack_hi(void);
 uintptr_t goc_stack_lo(void);
-bool      goc_stack_check(size_t need);   // 与 morestack 合同一致
+bool      goc_stack_check(size_t need);   // 占位，不代替 morestack
 ```
 
-### 7.2 `alloca` / VLA
+### 7.2 `alloca`
 
-- **当前：** 不作为一等优化；移植代码暂用 `malloc` + `free`（或方言堆分配）替代。  
-- **未来：** 可恢复受限栈分配（结果为 `sptr`，走 §3.6 逃逸规则）。
+源码仍写 `alloca(n)`。着色前，编译器把动态 `alloca` 换成 `goc_dynalloc` / `goc_dynrelease`。结果是 `cptr`，不在 goroutine 栈上，也不是 `sptr`。Go 的 pcsp 描述不了帧中间改 SP，所以没有变长栈帧。
+
+寿命与 C `alloca` 相同：活到函数返回。同一函数里多次分配都留到每个 `return` 前一次释放。不支持中途用 `stacksave` / `stackrestore` 回收。
+
+接受的形状就是 clang 给 `alloca(n)` 的 IR：
+
+- 元素类型 `i8`
+- 对齐不超过 16
+- 尺寸是不超过 64 位的整数
+
+分配按 16 字节对齐。不满足则编译失败，不静默改写：
+
+- `stacksave` / `stackrestore`
+- 异常、`invoke`，以及其它非局部退出
+- 降不到上述形状的 VLA（例如元素不是 `i8` 的 `int a[n]`）
+
+降级 API 声明在 `include/goc.h`。用户写 `alloca`；编译器插入调用。手写调用同样得到 `cptr`，不会变成 `sptr`。手写时由调用方持有 `scope`，编译器只给 `alloca` 插释放。
+
+```c
+goc_cptr goc_dynalloc(size_t bytes, void **scope);
+void     goc_dynrelease(void **scope);
+```
+
+`scope` 是水位。函数入口置 `NULL`。这次执行里第一次分配记下水位；池地址永非 `NULL`，所以后面的 `alloca` 不改它。返回时水位以上全部丢掉，再把 `*scope` 清掉。失败不返回 `NULL`，直接 `goc_uptr_fatal`：`scope` 为空、尺寸溢出、池耗尽。pool 路径上，释放时水位不在池内也是致命错误。
+
+两套实现，签名和颜色相同：
+
+| 构建 | 行为 |
+|---|---|
+| 定义 `GOC_DYNALLOC_POOL` | 进程全局 bump pool。默认 16 MiB，`-DGOC_DYNALLOC_POOL_SIZE=` 可改。只许一个 goroutine 调用；两个同时调用会踩同一个游标。不清零，与 C `alloca` 一致。 |
+| 未定义 | 每次 `malloc` / `free`。freestanding 路径清零。指针仍是 `cptr`。 |
+
+`GOC_INLINE_DYNALLOC=1` 只把 pool 路径的 bump 内联进调用点，不改变上面的合同。
+
+引擎自己的栈预算不是本条。`alloca` 不再消耗 goroutine 栈之后，用绝对 SP 减去 `alloca_size` 去比一个创建时记下的栈顶，是那个引擎的事。编译器不改那些函数。
 
 ### 7.3 分配器
 
 C 堆：`malloc`/`free` 或 `goc_alloc` 族 → `cptr`。  
+`alloca` 的降级（§7.2）也是 `cptr`，但是函数作用域，不是一般的 `malloc`。  
 Go 堆：仅能通过 Go/绑定 API → `gptr`。
 
 ---
@@ -310,9 +345,16 @@ int qjs_eval(cptr<JSContext> ctx, goc_go_string src);
 Go 结构平行头由绑定生成器生成；手写 Go 布局属违规。  
 `string` / `slice` 头：ptr 字为 `gptr`，len/cap 为 scalar（拆开标色）。
 
-### 8.3 Owner goroutine
+### 8.3 同一 goroutine
 
-「一 JS runtime 一条 owner g」是 **引擎实现纪律**，不是 goc 语法条款；goc 不为此增加关键字。方言只保证：`sptr` 与 `uptr`（MSB=1）的解码相对 **owner / 当前 g** 的 `stack.hi`；跨 g = 错误。
+`sptr` 和 `uptr`（MSB=1）都相对所属 goroutine 的 `stack.hi`。当前表示是一个机器字：`sptr` 是这条栈上的绝对地址，`uptr` 的 MSB=1 是相对这条 `stack.hi` 的 offset。两者都不携带 goroutine 指针，运行时用的是当前 `g`。
+
+因此这是语法合同，不是引擎偏好：
+
+- 任何 goc 调用，只要参数、返回值，或被调用对象里活着 `sptr` / `uptr`，就必须落在创建这些指针的同一条 goroutine 上。
+- 带 context 的 API 同样受这条约束。QuickJS 的 `JSContext` / `JSRuntime`，以及任何把栈帧链、父指针、回溯栈编进对象的 context，都算。把 `JSContext` 交给另一条 goroutine 再调用，offset 会加上那条 goroutine 的 `stack.hi`，指针解到错误地址。
+- 编译器当前不插入跨 goroutine 检查。违反仍是合同错误，不是未定义的实现细节。
+- 下一版不改变本条的默认表示。带所属 goroutine 指针的双 64 位形式由开关打开，默认关。见 [todo.md](todo.md)。
 
 ---
 
@@ -388,6 +430,7 @@ void use_go(gptr<GoObj> o, gptr<GoObj> *slot_on_go_heap) {
 5. `sptr` 指针字禁止进堆字段；跨 morestack 须 spill 到 stackmap 槽。  
 6. `gptr` 独轨 + stackmap + 写屏障；与其它色无隐式转换。  
 7. 栈探测用方言 API，不用 C builtin。  
-8. `alloca` 降为堆分配，不是栈上变长帧。  
+8. `alloca(n)` 降为函数作用域的 `cptr`（§7.2），不是栈上变长帧，也不是 `sptr`。  
 9. 函数指针 / 导出 / 虚表 ABI 必须钉死色（禁止 `auto_ptr` / 裸 `T *`）。  
 10. `JSValue` 为显式 struct（tag + 色指针字段），**不是** NaN-box scalar；禁止 ptr/double/int union 叠字。
+11. `sptr` / `uptr` 绑定所属 goroutine（§8.3）。持有它们的 context 只能在那一条 goroutine 上调用，否则 offset 解到错误地址。

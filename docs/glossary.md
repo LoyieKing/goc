@@ -8,10 +8,10 @@
 指向非栈对象（C 堆、全局、arena）。不是 Go 堆。直接寻址。不走 Go 写屏障。
 
 ### sptr
-指向当前 goroutine 栈上的对象。原始指针字只许在寄存器或栈槽里。写入非栈的 `T *` 时，那个存储改用 `uptr` 编码，不把绝对栈地址放进堆。
+指向所属 goroutine 栈上的对象。当前是一个机器字，不携带 goroutine 指针。原始指针字只许在寄存器或栈槽里。写入非栈的 `T *` 时，那个存储改用 `uptr` 编码，不把绝对栈地址放进堆。换一条 goroutine 再使用是合同错误。
 
 ### uptr
-`cptr|sptr` 的编码字，可以放进堆。MSB 为 0 是绝对地址；MSB 为 1 是相对 owner `g.stack.hi` 的 int64 偏移，`abs = stack.hi + stored`。不能直接解引用。只用所属 goroutine 的 `stack.hi` 解码。
+`cptr|sptr` 的编码字，可以放进堆。MSB 为 0 是绝对地址；MSB 为 1 是相对所属 goroutine `g.stack.hi` 的 int64 偏移，`abs = stack.hi + stored`。不能直接解引用。当前表示不携带 goroutine 指针，只能用所属 goroutine 的 `stack.hi` 解码。持有它的 context 不能交给另一条 goroutine。
 
 ### auto_ptr
 推断色。`T *` 就是它。能证明只指向栈且指针字不入库时收成 `sptr`；必须入库时收成 `uptr`。
@@ -32,6 +32,12 @@ Go 堆指针。与其它色没有隐式转换。活值进 stackmap；写入 Go �
 
 ### NOSPLIT
 静态栈预算内不触发 morestack。超过预算由链接器拒绝。
+
+### alloca
+源码里的 `alloca(n)`。着色前降成 `goc_dynalloc`，结果是 `cptr`，活到函数返回。不是 goroutine 栈上的变长帧。合同见 syntax-guide §7.2。
+
+### goc_dynalloc / goc_dynrelease
+`alloca` 的降级 API。`scope` 是函数水位。定义 `GOC_DYNALLOC_POOL` 时走单 goroutine bump pool；否则 `malloc` / `free`。失败是 `goc_uptr_fatal`，不返回 `NULL`。
 
 ## ABI
 
