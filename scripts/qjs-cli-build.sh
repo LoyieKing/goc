@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
 OUT="$ROOT/build/qjs"
-export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
+# O2 = O3 within noise for QuickJS (callgrind instr -0.0003%, V8/fixed within
+# run-to-run spread; perf-opt item 4), builds faster and matches native -O2.
+export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-2}"
 
 # This checks the engine object and its moving-stack smoke before installing a
 # command that will run arbitrary input. The upstream QuickJS tree is untouched.
