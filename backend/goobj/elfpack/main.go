@@ -195,7 +195,24 @@ func parseLLVMStackMaps(ef *elf.File) map[string][]smapRecord {
 					continue
 				}
 				// debug/elf.Symbols omits the ELF null symbol (index zero).
-				nameByFunc[(off-16)/24] = syms[si-1].Name
+				sym := syms[si-1]
+				if elf.ST_TYPE(sym.Info) == elf.STT_SECTION || sym.Name == "" {
+					// A file-local function is relocated against its section
+					// symbol plus an addend (llvm-mc does this for every
+					// static function). Resolve it to the function symbol at
+					// that offset; otherwise its records would be dropped and
+					// its compiler roots (goc.arganchor/anchor/spill.root)
+					// would be missing from every per-call map.
+					addend := int64(binary.LittleEndian.Uint64(rd[j+16:]))
+					for _, fs := range syms {
+						if elf.ST_TYPE(fs.Info) == elf.STT_FUNC && fs.Section == sym.Section &&
+							int64(fs.Value) == int64(sym.Value)+addend {
+							sym = fs
+							break
+						}
+					}
+				}
+				nameByFunc[(off-16)/24] = sym.Name
 			}
 		}
 	}
@@ -1324,7 +1341,7 @@ func main() {
 		defer smapFile.Close()
 	}
 	recsByName := parseLLVMStackMaps(smapFile)
-	if *stackmapElf != "" {
+	if *stackmapElf != "" || len(recsByName) > 0 {
 		n := 0
 		for _, recs := range recsByName {
 			n += len(recs)
@@ -1381,7 +1398,40 @@ func main() {
 		}
 		maps := [][]byte{base}
 		trans := []pcValue{{PC: 0, Value: 0}}
-		for _, rec := range recs {
+		// Several stackmap records can precede one CALL: goc-stackmap's
+		// spill-root record and goc-reanchor's anchor record are separate
+		// intrinsics at the same site. Each names only its own roots, and the
+		// pcdata value at the CALL is whichever transition comes last, so
+		// the roots of the other records would be missing from the map the
+		// copier uses there. Group records by the first CALL at or after
+		// them and emit one transition with the union of their roots.
+		var callOffs []int64
+		for _, c := range rq.calls {
+			if off, ok := c.offset(); ok {
+				callOffs = append(callOffs, off)
+			}
+		}
+		sort.Slice(callOffs, func(a, b int) bool { return callOffs[a] < callOffs[b] })
+		siteOf := func(insn uint32) int64 {
+			k := sort.Search(len(callOffs), func(j int) bool { return callOffs[j] >= int64(insn) })
+			if k < len(callOffs) {
+				return callOffs[k]
+			}
+			return -1 - int64(insn)
+		}
+		covered := map[int64]bool{}
+		recs = append([]smapRecord(nil), recs...)
+		sort.SliceStable(recs, func(a, b int) bool { return recs[a].insnOff < recs[b].insnOff })
+		for ri := 0; ri < len(recs); {
+			rj := ri + 1
+			for rj < len(recs) && siteOf(recs[rj].insnOff) == siteOf(recs[ri].insnOff) {
+				rj++
+			}
+			rec := recs[ri]
+			for _, more := range recs[ri+1 : rj] {
+				rec.locs = append(append([]smapLoc(nil), rec.locs...), more.locs...)
+			}
+			ri = rj
 			bits := append([]byte(nil), base...)
 			for _, l := range rec.locs {
 				// This pass's tagged records contain the addresses of
@@ -1435,7 +1485,22 @@ func main() {
 				}
 			}
 			trans = append(trans, pcValue{PC: int64(rec.insnOff), Value: int32(idx)})
+			if site := siteOf(rec.insnOff); site >= 0 {
+				covered[site] = true
+			}
 		}
+		// A CALL with no record of its own must not inherit the previous
+		// record's map just because it comes later in the block layout
+		// (e.g. the level==0 js_parse_unary tail call placed after a loop
+		// call site): that map may name roots that are uninitialized on
+		// this path, and the copier throws on them ("bad pointer in frame")
+		// or adjusts garbage. Such a call gets the function-wide map.
+		for _, off := range callOffs {
+			if !covered[off] {
+				trans = append(trans, pcValue{PC: off, Value: 0})
+			}
+		}
+		sort.SliceStable(trans, func(a, b int) bool { return trans[a].PC < trans[b].PC })
 		if sysvSplit {
 			// The body map describes actual frame slots; applying it while the
 			// stub holds argument registers would adjust unrelated scalar data.

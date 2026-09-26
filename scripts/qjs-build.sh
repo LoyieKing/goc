@@ -25,12 +25,17 @@ export GOC_CLANG="$CLANG"
 export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
 [[ -d "$QJS" ]] || { echo "FAIL: clone quickjs-ng to third_party/quickjs-ng" >&2; exit 1; }
 GSTACK_PATCH="$ROOT/scripts/qjs-gstack.patch"
-if patch -R --dry-run --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH"; then
+# `patch -R --dry-run --batch` succeeds on an *unpatched* tree too ("Unreversed
+# patch detected! Ignoring -R." then a forward dry run), so the old check never
+# applied the patch. -f makes -R literal: it succeeds only if this exact patch
+# is already in. An older revision of the patch makes both checks fail.
+if patch -R --dry-run -f --silent -d "$QJS" -p1 -i "$GSTACK_PATCH" >/dev/null 2>&1; then
   : # already present in this ignored checkout
-elif patch --dry-run --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH"; then
-  patch --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH"
+elif patch --dry-run -N --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH" >/dev/null 2>&1; then
+  patch -N --batch --silent -d "$QJS" -p1 -i "$GSTACK_PATCH"
 else
-  echo "FAIL: QuickJS source differs from scripts/qjs-gstack.patch" >&2
+  echo "FAIL: QuickJS source differs from scripts/qjs-gstack.patch (an older" \
+       "revision applied? restore the pristine files and rerun)" >&2
   exit 1
 fi
 
@@ -98,6 +103,14 @@ echo "=== [4/4] run on the goroutine stack ==="
 set +e
 timeout 20 "$OUT/qjs_test"
 rc=$?
+if [[ $rc -eq 0 ]]; then
+  # Golden stack-growth test: fresh goroutines with varied stack pre-fill so
+  # morestack copies land at many different points inside parser/interpreter
+  # C frames (frame addresses live across calls, callee-saved regs, spills).
+  echo "--- growth sweep (QJS_GROWTH_SWEEP=${QJS_GROWTH_SWEEP:-300}) ---"
+  QJS_GROWTH_SWEEP="${QJS_GROWTH_SWEEP:-300}" timeout 120 "$OUT/qjs_test"
+  rc=$?
+fi
 set -e
 if [[ $rc -eq 0 ]]; then
   echo "PASS qjs-build"

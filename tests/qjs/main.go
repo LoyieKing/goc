@@ -252,6 +252,125 @@ func checkEval(ctx unsafe.Pointer, label string, result jsValue) {
 	failed = true
 }
 
+// padStack burns about big*~112 + small*~32 bytes of goroutine stack before
+// calling f, so a fresh goroutine (8 KiB initial stack) reaches morestack at
+// a different point inside QuickJS for every (big, small) pair.
+//
+//go:noinline
+func padStack(big, small int, f func()) {
+	var buf [64]byte
+	buf[big&63] = byte(big)
+	if big > 0 {
+		padStack(big-1, small, f)
+	} else if small > 0 {
+		padSmall(small-1, f)
+	} else {
+		f()
+	}
+	runtime.KeepAlive(&buf)
+}
+
+//go:noinline
+func padSmall(n int, f func()) {
+	var b [1]byte
+	b[0] = byte(n)
+	if n > 0 {
+		padSmall(n-1, f)
+	} else {
+		f()
+	}
+	runtime.KeepAlive(&b)
+}
+
+// growthSweepSource touches the parser (arrow functions, nested blocks, loop
+// labels), the interpreter (closures, exceptions, generators), libregexp and
+// JSON while the goroutine stack is still small, so the copy lands in a
+// different C frame on each iteration. It evaluates to 7 only if every
+// sub-result is right.
+const growthSweepSource = `
+var r = [1, 2, 3].map(x => x * 2).reduce((a, b) => a + b, 0);
+function f(a) { try { throw new Error("e" + a); } catch (e) { return e.message.length; } }
+var s = JSON.stringify({a: [1, {b: 2}]});
+var m = /(\d+)-(\d+)/.exec("10-20");
+var t = 0; outer: for (let i = 0; i < 4; i++) { for (let j = 0; j < 4; j++) { if (j == 2) continue outer; t += i + j; } }
+function* g() { yield 1; yield 2; }
+var gs = 0; for (const v of g()) gs += v;
+var o = {k: 1, get kk() { return this.k + 1; }};
+Promise.resolve(1).then(x => x + 6);
+(r === 12 && f(5) === 2 && s.length === 17 && m[2] === "20" && t === 16 && gs === 3 && o.kk === 2) ? 7 : 0
+`
+
+// runGrowthSweep evaluates growthSweepSource on n fresh goroutines with
+// different stack pre-fills. Each goroutine owns its own runtime and context
+// (sptr/uptr values must not cross goroutines, syntax-guide §8.3). It is the
+// stack-copy stress for frame addresses that live in registers or spill slots
+// across calls: any stale address shows up as a wrong result or a crash.
+func runGrowthSweep(n int) {
+	text := growthSweepSource
+	if f := os.Getenv("QJS_GROWTH_FILE"); f != "" {
+		// Debug/stress: any script without host bindings; the sweep
+		// appends ";7" so a clean run still evaluates to 7.
+		b, err := os.ReadFile(f)
+		if err != nil {
+			fmt.Printf("FAIL qjs-growth-sweep: %v\n", err)
+			failed = true
+			return
+		}
+		text = string(b) + "\n;7\n"
+	}
+	src := append([]byte(text), 0)
+	filename := []byte("<qjs-growth>\x00")
+	bad := 0
+	type result struct {
+		ok  bool
+		msg string
+	}
+	done := make(chan result)
+	pregrow := os.Getenv("QJS_GROWTH_PREGROW") == "1"
+	for i := 0; i < n; i++ {
+		big, small := i/4, i%4*3
+		go padStack(big, small, func() {
+			if pregrow {
+				padStack(4096, 0, func() {}) // grow first: no copy while C runs
+			}
+			rt := JS_NewRuntime()
+			ctx := JS_NewContext(rt)
+			res := JS_Eval(ctx, &src[0], uint64(len(src)-1), &filename[0], jsEvalGlobal)
+			r := result{ok: res.tag == 0 && int32(res.payload) == 7}
+			if !r.ok {
+				r.msg = fmt.Sprintf("lo=%#x tag=%#x", res.payload, res.tag)
+				if res.tag == 6 {
+					exc := JS_GetException(ctx)
+					text := JS_ToCStringLen2(ctx, nil, exc, false)
+					r.msg += " " + cstr(text)
+					if text != nil {
+						JS_FreeCString(ctx, text)
+					}
+					JS_FreeValue(ctx, exc)
+				}
+			}
+			JS_FreeValue(ctx, res)
+			JS_FreeContext(ctx)
+			JS_FreeRuntime(rt)
+			done <- r
+		})
+		if r := <-done; !r.ok {
+			if bad < 5 {
+				fmt.Printf("FAIL qjs-growth-sweep[%d]: %s\n", i, r.msg)
+			}
+			bad++
+		}
+	}
+	runtime.KeepAlive(src)
+	runtime.KeepAlive(filename)
+	if bad != 0 {
+		fmt.Printf("FAIL qjs-growth-sweep: %d/%d iterations wrong\n", bad, n)
+		failed = true
+	} else {
+		fmt.Printf("PASS qjs-growth-sweep: %d stack pre-fills\n", n)
+	}
+}
+
 func main() {
 	fmt.Println("MARK start")
 	if v := cstr(JS_GetVersion()); v == "" {
@@ -283,6 +402,9 @@ func main() {
 			} else {
 				fmt.Printf("PASS qjs-frame-chain-after-growth (heap=%d): 3\n", heap)
 			}
+		}
+		if n, err := strconv.Atoi(os.Getenv("QJS_GROWTH_SWEEP")); err == nil && n > 0 {
+			runGrowthSweep(n)
 		}
 		if os.Getenv("QJS_EVAL") == "1" {
 			ctx := JS_NewContext(rt)
