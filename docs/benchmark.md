@@ -11,6 +11,8 @@
 | Bellard | QuickJS 2026-06-04 |
 | Goja | `cfe4039cb6d77b297d8b637182f774fa4a54b7d5` |
 
+native ng 的构建：同一份 quickjs-ng 源码，CMake `Release`，编译器 `clang-19`，即 `-O2 -DNDEBUG -std=gnu11 -funsigned-char`（外加上游 CMakeLists 的 `-fvisibility=hidden` 和警告开关，宏 `-D_GNU_SOURCE -DQUICKJS_NG_BUILD`）。goc 侧 `scripts/qjs-build.sh` 也用 `-DNDEBUG`，O 级见 `GOC_OPT_LEVEL`；它不加 `-funsigned-char`（shim 与 cli host 共用这组宏，改 char 符号会改变它们的语义）。
+
 native ng 不加 `-C` 时会把这些文件当成模块，松散赋值直接 ReferenceError。下面的 ng 数字都是 `-C`。除 V8-v7 的 goc 两轮平均外，都是一轮。
 
 ## 总览

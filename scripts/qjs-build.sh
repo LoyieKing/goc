@@ -39,7 +39,8 @@ else
   exit 1
 fi
 
-QJS_DEFS=(-DJS_NAN_BOXING=0 -D_GNU_SOURCE -DGOC_QJS_GSTACK=1)
+# -DNDEBUG: same as the native reference (CMake Release: clang-19 -O2 -DNDEBUG).
+QJS_DEFS=(-DJS_NAN_BOXING=0 -D_GNU_SOURCE -DGOC_QJS_GSTACK=1 -DNDEBUG)
 UPTR_DEFS=(-DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS -DGOC_DYNALLOC_POOL)
 export GOC_DEFAULT_PTR_COLOR=cptr   # bulk coloring: uncolored ptrs are cptr
 export GOC_NO_NOSPLIT=1             # let the meta say "splittable", not "nosplit"

@@ -14,11 +14,11 @@ export GOC_DEFAULT_PTR_COLOR=cptr GOC_NO_NOSPLIT=1 GOC_MORESTACK=1
 export GOC_SPTR_MAPS=1 GOC_CRESERVE=8192 GOC_INLINE_DYNALLOC=1
 
 "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_host.c" \
-  -o "$OUT/cli_host.o" --all --goabi -DJS_NAN_BOXING=0 -D_GNU_SOURCE
+  -o "$OUT/cli_host.o" --all --goabi -DJS_NAN_BOXING=0 -D_GNU_SOURCE -DNDEBUG
 "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_std_os.c" \
-  -o "$OUT/cli_std_os.o" --all --goabi -DJS_NAN_BOXING=0 -D_GNU_SOURCE
+  -o "$OUT/cli_std_os.o" --all --goabi -DJS_NAN_BOXING=0 -D_GNU_SOURCE -DNDEBUG
 "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_worker.c" \
-  -o "$OUT/cli_worker.o" --all --goabi -DJS_NAN_BOXING=0 -D_GNU_SOURCE
+  -o "$OUT/cli_worker.o" --all --goabi -DJS_NAN_BOXING=0 -D_GNU_SOURCE -DNDEBUG
 
 BINOBJ="$OUT/quickjs.o $OUT/libregexp.o $OUT/libunicode.o $OUT/dtoa.o $OUT/shim.o $OUT/uptr.o $OUT/cli_host.o $OUT/cli_std_os.o $OUT/cli_worker.o"
 ( cd "$ROOT/tests/qjscli" && \
