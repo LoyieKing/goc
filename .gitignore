@@ -45,3 +45,7 @@ goc-test*.log
 cmd/goc-p8
 cmd/elfpack
 /bin/
+
+# Python bytecode (scripts import backend/realbody helpers)
+__pycache__/
+*.pyc
