@@ -22,7 +22,9 @@ if [[ -z "$CLANG" || ! -x "$CLANG" ]]; then
   exit 1
 fi
 export GOC_CLANG="$CLANG"
-export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
+# O2 = O3 within noise for QuickJS (callgrind instr -0.0003%, V8/fixed within
+# run-to-run spread; perf-opt item 4), builds faster and matches native -O2.
+export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-2}"
 [[ -d "$QJS" ]] || { echo "FAIL: clone quickjs-ng to third_party/quickjs-ng" >&2; exit 1; }
 GSTACK_PATCH="$ROOT/scripts/qjs-gstack.patch"
 # `patch -R --dry-run --batch` succeeds on an *unpatched* tree too ("Unreversed

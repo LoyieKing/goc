@@ -20,7 +20,7 @@ LLVM IR  (!goc.color)
 frontend/color-escape
     │
     ▼
-opt O3, then goc-stackmap / goc-reanchor
+opt O$GOC_OPT_LEVEL (QuickJS: O2), then goc-stackmap / goc-reanchor
     │  frame addresses used after a safepoint are re-derived as plain GEPs
     │  (goc.fa; GOC_FRAMEADDR_MODE=asm keeps the legacy opaque leaq)
     │  hot uptr helpers are inlined to a volatile FS:-8 load
