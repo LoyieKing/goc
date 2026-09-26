@@ -31,6 +31,19 @@ _Alignas(16) static unsigned char g_arena[ARENA_SIZE];
 static size_t g_arena_off;
 static GocAllocHeader *g_last_block, *g_free_blocks;
 
+/* Size-class cache for small blocks. A freed block with capacity <= 512 goes
+ * on the LIFO list for capacity/16 instead of the coalescing first-fit list,
+ * and a small malloc pops that list first (exact fit, O(1)). Cached blocks
+ * are marked GOC_BLOCK_CACHED: not free for coalescing (neighbours skip them),
+ * but a second free() still traps. Every block keeps the full header, so
+ * free/realloc/malloc_usable_size and 16-byte alignment are unchanged.
+ * Single-goroutine only, like the rest of this heap: QuickJS runs one
+ * runtime per goroutine and the shim has no locks (see pthread shims). */
+#define GOC_BLOCK_FREE 1u
+#define GOC_BLOCK_CACHED 2u
+#define GOC_SMALL_MAX 512u
+static GocAllocHeader *g_small_free[GOC_SMALL_MAX / 16u + 1u];
+
 static int goc_in_static_arena(const void *p) {
   uintptr_t address = (uintptr_t)p;
   return address >= (uintptr_t)g_arena &&
@@ -49,7 +62,7 @@ static void goc_unlink_free(GocAllocHeader *h) {
 }
 
 static void goc_link_free(GocAllocHeader *h) {
-  h->is_free = 1;
+  h->is_free = GOC_BLOCK_FREE;
   h->prev_free = NULL;
   h->next_free = g_free_blocks;
   if (g_free_blocks)
@@ -78,6 +91,16 @@ void *goc_malloc(size_t n) {
   if (n > SIZE_MAX - 15u)
     return NULL;
   size_t aligned = (n + 15u) & ~(size_t)15u;
+  if (aligned <= GOC_SMALL_MAX) {
+    GocAllocHeader *c = g_small_free[aligned >> 4];
+    if (c) {
+      g_small_free[aligned >> 4] = c->next_free;
+      c->next_free = NULL;
+      c->is_free = 0;
+      c->size = n;
+      return c + 1;
+    }
+  }
   for (GocAllocHeader *h = g_free_blocks; h; h = h->next_free) {
     if (h->capacity < aligned)
       continue;
@@ -132,7 +155,15 @@ void goc_free(void *p) {
   GocAllocHeader *h = (GocAllocHeader *)p - 1;
   if (h->is_free)
     __builtin_trap();
-  if (h->prev_phys && h->prev_phys->is_free) {
+  if (h->capacity <= GOC_SMALL_MAX) {
+    /* capacity is a multiple of 16 (aligned request or split remainder). */
+    h->is_free = GOC_BLOCK_CACHED;
+    h->prev_free = NULL;
+    h->next_free = g_small_free[h->capacity >> 4];
+    g_small_free[h->capacity >> 4] = h;
+    return;
+  }
+  if (h->prev_phys && h->prev_phys->is_free == GOC_BLOCK_FREE) {
     GocAllocHeader *prev = h->prev_phys;
     goc_unlink_free(prev);
     prev->capacity += sizeof(GocAllocHeader) + h->capacity;
@@ -141,7 +172,7 @@ void goc_free(void *p) {
       h->next_phys->prev_phys = prev;
     h = prev;
   }
-  if (h->next_phys && h->next_phys->is_free) {
+  if (h->next_phys && h->next_phys->is_free == GOC_BLOCK_FREE) {
     GocAllocHeader *next = h->next_phys;
     goc_unlink_free(next);
     h->capacity += sizeof(GocAllocHeader) + next->capacity;
@@ -154,6 +185,9 @@ void goc_free(void *p) {
   goc_link_free(h);
 }
 
+void *goc_memcpy(void *d, const void *s, size_t n);
+void *goc_memset(void *d, int c, size_t n);
+
 void *goc_calloc(size_t n, size_t sz) {
   if (sz && n > SIZE_MAX / sz)
     return NULL;
@@ -161,8 +195,7 @@ void *goc_calloc(size_t n, size_t sz) {
   unsigned char *p = (unsigned char *)goc_malloc(total);
   if (!p)
     return NULL;
-  for (size_t i = 0; i < total; i++)
-    p[i] = 0;
+  goc_memset(p, 0, total);
   return p;
 }
 
@@ -182,8 +215,7 @@ void *goc_realloc(void *p, size_t n) {
   if (!np)
     return NULL;
   size_t copied = n < h->size ? n : h->size;
-  for (size_t i = 0; i < copied; i++)
-    np[i] = ((unsigned char *)p)[i];
+  goc_memcpy(np, p, copied);
   goc_free(p);
   return np;
 }
@@ -193,16 +225,60 @@ size_t goc_malloc_usable_size(void *p) {
 }
 
 /* ---------- string / memory ops ---------- */
+/* Small sizes (<= 64 bytes) use overlapping unaligned 8/4/2/1-byte accesses:
+ * every load happens before any store, so the same helper serves memmove.
+ * Fixed-size __builtin_memcpy lowers to a single load/store, never a call.
+ * Larger sizes use rep movsb/stosb (ERMS). */
+static inline uint64_t goc_ld8(const unsigned char *p) { uint64_t v; __builtin_memcpy(&v, p, 8); return v; }
+static inline void goc_st8(unsigned char *p, uint64_t v) { __builtin_memcpy(p, &v, 8); }
+static inline uint32_t goc_ld4(const unsigned char *p) { uint32_t v; __builtin_memcpy(&v, p, 4); return v; }
+static inline void goc_st4(unsigned char *p, uint32_t v) { __builtin_memcpy(p, &v, 4); }
+
+static inline void goc_copy_small(unsigned char *d, const unsigned char *s, size_t n) {
+  if (n >= 16) {
+    if (n <= 32) {
+      uint64_t a = goc_ld8(s), b = goc_ld8(s + 8);
+      uint64_t c = goc_ld8(s + n - 16), e = goc_ld8(s + n - 8);
+      goc_st8(d, a); goc_st8(d + 8, b);
+      goc_st8(d + n - 16, c); goc_st8(d + n - 8, e);
+    } else {
+      uint64_t a0 = goc_ld8(s), a1 = goc_ld8(s + 8), a2 = goc_ld8(s + 16), a3 = goc_ld8(s + 24);
+      uint64_t b0 = goc_ld8(s + n - 32), b1 = goc_ld8(s + n - 24);
+      uint64_t b2 = goc_ld8(s + n - 16), b3 = goc_ld8(s + n - 8);
+      goc_st8(d, a0); goc_st8(d + 8, a1); goc_st8(d + 16, a2); goc_st8(d + 24, a3);
+      goc_st8(d + n - 32, b0); goc_st8(d + n - 24, b1);
+      goc_st8(d + n - 16, b2); goc_st8(d + n - 8, b3);
+    }
+  } else if (n >= 8) {
+    uint64_t a = goc_ld8(s), b = goc_ld8(s + n - 8);
+    goc_st8(d, a); goc_st8(d + n - 8, b);
+  } else if (n >= 4) {
+    uint32_t a = goc_ld4(s), b = goc_ld4(s + n - 4);
+    goc_st4(d, a); goc_st4(d + n - 4, b);
+  } else if (n) {
+    unsigned char a = s[0], b = s[n >> 1], c = s[n - 1];
+    d[0] = a; d[n >> 1] = b; d[n - 1] = c;
+  }
+}
+
 void *goc_memcpy(void *d, const void *s, size_t n) {
   /* A C loop is recognized as a memcpy libcall at -O3 and recursively
    * enters this freestanding implementation. */
   void *result = d;
+  if (n <= 64) {
+    goc_copy_small((unsigned char *)d, (const unsigned char *)s, n);
+    return result;
+  }
   __asm__ volatile("rep movsb" : "+D"(d), "+S"(s), "+c"(n) : : "memory");
   return result;
 }
 
 void *goc_memmove(void *d, const void *s, size_t n) {
   void *result = d;
+  if (n <= 64) {
+    goc_copy_small((unsigned char *)d, (const unsigned char *)s, n);
+    return result;
+  }
   if ((uintptr_t)d > (uintptr_t)s && (uintptr_t)d - (uintptr_t)s < n) {
     unsigned char *end = (unsigned char *)d + n - 1;
     const unsigned char *from = (const unsigned char *)s + n - 1;
@@ -217,6 +293,25 @@ void *goc_memmove(void *d, const void *s, size_t n) {
 void *goc_memset(void *d, int c, size_t n) {
   void *result = d;
   unsigned char byte = (unsigned char)c;
+  if (n <= 64) {
+    unsigned char *p = (unsigned char *)d;
+    uint64_t v = (uint64_t)byte * 0x0101010101010101ull;
+    if (n >= 16) {
+      goc_st8(p, v); goc_st8(p + 8, v);
+      goc_st8(p + n - 16, v); goc_st8(p + n - 8, v);
+      if (n > 32) {
+        goc_st8(p + 16, v); goc_st8(p + 24, v);
+        goc_st8(p + n - 32, v); goc_st8(p + n - 24, v);
+      }
+    } else if (n >= 8) {
+      goc_st8(p, v); goc_st8(p + n - 8, v);
+    } else if (n >= 4) {
+      goc_st4(p, (uint32_t)v); goc_st4(p + n - 4, (uint32_t)v);
+    } else if (n) {
+      p[0] = byte; p[n >> 1] = byte; p[n - 1] = byte;
+    }
+    return result;
+  }
   __asm__ volatile("rep stosb" : "+D"(d), "+c"(n) : "a"(byte) : "memory");
   return result;
 }
