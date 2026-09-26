@@ -48,7 +48,24 @@ if [[ -z "$CLANG" ]]; then
   done
   [[ -n "$CLANG" ]] || CLANG="${CLANG_FALLBACK:-clang-19}"
 fi
-LLC="${LLC:-llc-19}"
+# GOC_FRAMEADDR_MODE=gep (default): goc-reanchor rematerializes frame
+# addresses as plain GEPs, which is only safe with goc-llc's post-RA
+# GocFrameAddrFix pass (backend/pass/goc_llc.cpp). asm: the old opaque leaq
+# per use; stock llc is enough.
+GOC_LLC_BIN="$ROOT/backend/build/pass-out/goc-llc"
+if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
+  if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
+    make -C "$ROOT/backend/pass" "$GOC_LLC_BIN" >&2 || true
+  fi
+  if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
+    echo "realbody: FATAL missing $GOC_LLC_BIN; GOC_FRAMEADDR_MODE=gep needs its" \
+         "frame-address fix (build it, or set GOC_FRAMEADDR_MODE=asm)" >&2
+    exit 1
+  fi
+  LLC="${LLC:-$GOC_LLC_BIN}"
+else
+  LLC="${LLC:-llc-19}"
+fi
 MC="${LLVM_MC:-llvm-mc-19}"
 OBJDUMP="${OBJDUMP:-llvm-objdump-19}"
 OPT="${OPT:-opt-19}"
@@ -184,9 +201,12 @@ fi
 # stays active until the next safepoint. Call-frame opt turns a reserved
 # outgoing area into PUSH/POP around a call, so SP is not the constant pcsp
 # claims and the unwinder reads g as a return PC.
+# Tail merging would hoist a CALL shared by two blocks into a common tail and
+# leave each stackmap record before a JMP; elfpack attaches a record to the
+# next CALL in layout order, so the merged CALL would get another path's roots.
 LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
           -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
-          -no-stack-slot-sharing -no-x86-call-frame-opt)
+          -no-stack-slot-sharing -no-x86-call-frame-opt -enable-tail-merge=false)
 if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-reserve-goc-r14)
   echo "realbody: GOC_FIXED_G=1 llc=$LLC" >&2

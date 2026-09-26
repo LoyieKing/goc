@@ -48,6 +48,7 @@
 // goc-reanchor so growth can still adjust them.
 #include <algorithm>
 #include <optional>
+#include <memory>
 #include <cstdlib>
 #include <cstring>
 
@@ -55,6 +56,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -78,11 +80,65 @@ namespace {
 DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL);
 std::optional<std::pair<AllocaInst *, int64_t>>
 pureFrameAddress(Value *V, const DataLayout &DL);
-CallInst *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL);
+Value *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL);
 bool rematerializableFrameAddress(Value *V, const DataLayout &DL);
 bool ignoreUse(const Instruction *User);
 bool separatedBySafepoint(const Instruction *Def, const Instruction *UsePoint);
 Instruction *usePoint(Use &U);
+
+// Liveness of one value across safepoints, by backward propagation from its
+// use points (a PHI operand is used at its incoming block's terminator).
+// Def is the defining instruction (nullptr: defined on entry, e.g. an
+// argument anchor stored in the entry block). A value is live across CB iff
+// some use is reachable from CB without passing through Def. Dominance
+// (DT.dominates(CB, Use)) is *not* enough: after a call on one arm of an if,
+// or inside a loop, the later use is reachable but not dominated, and a root
+// omitted there is left stale by a stack copy. Live across CB also implies
+// Def dominates CB (a path CB->use avoiding Def plus a path entry->CB
+// avoiding Def would reach the use undefined), so every slot listed is
+// initialized.
+struct CrossCallLiveness {
+  const Instruction *Def;
+  DenseSet<const BasicBlock *> liveOut;
+  DenseMap<const BasicBlock *, SmallVector<const Instruction *, 4>> usesIn;
+
+  CrossCallLiveness(const Instruction *D, ArrayRef<Instruction *> UsePoints)
+      : Def(D) {
+    const BasicBlock *DefBB = D ? D->getParent() : nullptr;
+    SmallVector<const BasicBlock *, 32> work;
+    DenseSet<const BasicBlock *> liveIn;
+    for (const Instruction *U : UsePoints) {
+      const BasicBlock *B = U->getParent();
+      usesIn[B].push_back(U);
+      // A use after Def in Def's own block is satisfied locally.
+      if (B == DefBB && D != U && D->comesBefore(U))
+        continue;
+      if (liveIn.insert(B).second)
+        work.push_back(B);
+    }
+    while (!work.empty()) {
+      const BasicBlock *B = work.pop_back_val();
+      for (const BasicBlock *P : predecessors(B)) {
+        liveOut.insert(P);
+        if (P == DefBB)
+          continue; // Def (re)defines the value at the end of this path
+        if (liveIn.insert(P).second)
+          work.push_back(P);
+      }
+    }
+  }
+
+  bool liveAcross(const Instruction *CB) const {
+    const BasicBlock *B = CB->getParent();
+    if (Def && Def->getParent() == B && CB->comesBefore(Def))
+      return false; // reaches Def before any use in this block
+    if (auto It = usesIn.find(B); It != usesIn.end())
+      for (const Instruction *U : It->second)
+        if (U != CB && CB->comesBefore(U))
+          return true;
+    return liveOut.count(B) != 0;
+  }
+};
 // Replace uses of a frame address that a call can sit between with a fresh
 // LEA. The address is then not live across morestack, so llc does not spill
 // it in the prologue.
@@ -513,10 +569,22 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
     }
 
     DenseMap<CallBase *, SmallVector<Instruction *, 16>> liveAt;
+    DenseMap<Instruction *, std::unique_ptr<CrossCallLiveness>> liveness;
+    for (Instruction *V : sptr) {
+      SmallVector<Instruction *, 16> pts;
+      for (Use &U : V->uses())
+        if (isa<Instruction>(U.getUser()))
+          pts.push_back(usePoint(U));
+      liveness[V] = std::make_unique<CrossCallLiveness>(V, pts);
+    }
     for (CallBase *CB : sites) {
       for (Instruction *V : sptr) {
         if (V == CB || !DT.dominates(V, CB))
           continue;
+        if (liveness[V]->liveAcross(CB)) {
+          liveAt[CB].push_back(V);
+          continue;
+        }
         // An argument is live through the call even when its last use is
         // precisely that call. A callee can grow the stack before it reads
         // the argument, so dropping last-use sptr values loses a root.
@@ -725,6 +793,7 @@ Instruction *usePoint(Use &U) {
   return User;
 }
 
+
 std::optional<std::pair<AllocaInst *, int64_t>>
 pureFrameAddress(Value *V, const DataLayout &DL) {
   int64_t Off = 0;
@@ -754,7 +823,26 @@ pureFrameAddress(Value *V, const DataLayout &DL) {
   return std::nullopt;
 }
 
-CallInst *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
+// Frame-address rematerialization mode. "gep" (default): a plain GEP of the
+// alloca / byval argument at the use, which llc folds into addressing modes.
+// Plain IR is not enough on its own: DAG/Machine CSE, LICM and the register
+// allocator may still compute the LEA before the call and keep it in a
+// callee-saved register or spill slot. goc-llc's GocFrameAddrFix pass
+// (backend/pass/goc_llc.cpp) repairs exactly those: after every call it
+// re-derives each live callee-saved register / spill slot that holds
+// RBP/RSP+const. realbody refuses to use this mode with a stock llc.
+// "asm": the previous opaque `asm sideeffect "leaq"` per use (no MI pass
+// needed, but it blocks folding and CSE everywhere).
+bool frameAddrAsmMode() {
+  static int Mode = -1;
+  if (Mode < 0) {
+    const char *E = std::getenv("GOC_FRAMEADDR_MODE");
+    Mode = (E && std::strcmp(E, "asm") == 0) ? 1 : 0;
+  }
+  return Mode == 1;
+}
+
+Value *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
   Value *Addr = nullptr;
   int64_t Off = 0;
   if (auto Frame = pureFrameAddress(V, DL)) {
@@ -791,6 +879,14 @@ CallInst *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
   }
   if (!Addr)
     return nullptr;
+  if (!frameAddrAsmMode()) {
+    Value *R = Addr;
+    if (Off != 0)
+      R = B.CreateInBoundsGEP(B.getInt8Ty(), Addr, B.getInt64(Off), "goc.fa");
+    if (R->getType() != V->getType())
+      R = B.CreatePointerBitCastOrAddrSpaceCast(R, V->getType());
+    return R;
+  }
   if (Off != 0)
     Addr = B.CreateGEP(B.getInt8Ty(), Addr, B.getInt64(Off));
   FunctionType *FT = FunctionType::get(V->getType(), {Addr->getType()}, false);
@@ -835,7 +931,7 @@ unsigned rematCrossSafepointUses(Value *V, const DataLayout &DL, Function &F) {
   SmallVector<Use *, 16> uses;
   for (Use &U : V->uses())
     uses.push_back(&U);
-  DenseMap<std::pair<PHINode *, BasicBlock *>, CallInst *> shared;
+  DenseMap<std::pair<PHINode *, BasicBlock *>, Value *> shared;
   unsigned n = 0;
   for (Use *U : uses) {
     auto *User = dyn_cast<Instruction>(U->getUser());
@@ -862,7 +958,7 @@ unsigned rematCrossSafepointUses(Value *V, const DataLayout &DL, Function &F) {
     }
     if (!cross)
       continue;
-    CallInst *R = nullptr;
+    Value *R = nullptr;
     if (auto *Phi = dyn_cast<PHINode>(User)) {
       BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
       auto Key = std::make_pair(Phi, Inc);
@@ -1104,10 +1200,91 @@ DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL) {
   return stack;
 }
 
+// llc's StackColoring merges allocas whose lifetime.start/end ranges are
+// disjoint (-no-stack-slot-sharing only covers spill slots). A frame word
+// that realbody reports as a pointer slot must keep its own slot: a merged
+// object carries the other alloca's name in the post-PEI MIR (realbody then
+// cannot find it) and can hold a scalar while the map calls it a pointer.
+// The leaq asm hid most such loads from realbody's check; with plain GEPs
+// they are visible, so drop the markers of every alloca realbody may report:
+// frame-word-tagged allocas and allocas that receive a pointer or sptr store.
+bool unmergeReportedAllocas(Function &F) {
+  DenseSet<AllocaInst *> keep;
+  DenseMap<StringRef, AllocaInst *> byName;
+  for (Instruction &I : instructions(F))
+    if (auto *AI = dyn_cast<AllocaInst>(&I))
+      if (AI->hasName())
+        byName[AI->getName()] = AI;
+  auto tagged = [&](const Instruction &I) {
+    if (const MDNode *N = I.getMetadata("goc.frame.words"))
+      if (N->getNumOperands() >= 2)
+        if (const auto *S = dyn_cast<MDString>(N->getOperand(1)))
+          if (AllocaInst *AI = byName.lookup(S->getString()))
+            keep.insert(AI);
+  };
+  for (Instruction &I : instructions(F)) {
+    tagged(I);
+    if (auto *AI = dyn_cast<AllocaInst>(&I))
+      if (AI->getMetadata("goc.frame.words"))
+        keep.insert(AI);
+    auto *St = dyn_cast<StoreInst>(&I);
+    if (!St)
+      continue;
+    Value *Val = St->getValueOperand();
+    auto *VI = dyn_cast<Instruction>(Val);
+    if (!Val->getType()->isPointerTy() && !(VI && isSptrColored(*VI)))
+      continue;
+    if (auto *AI = dyn_cast<AllocaInst>(getUnderlyingObject(St->getPointerOperand())))
+      keep.insert(AI);
+  }
+  if (keep.empty())
+    return false;
+  SmallVector<IntrinsicInst *, 16> dead;
+  for (Instruction &I : instructions(F))
+    if (auto *II = dyn_cast<IntrinsicInst>(&I))
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+          II->getIntrinsicID() == Intrinsic::lifetime_end)
+        if (auto *AI = dyn_cast<AllocaInst>(getUnderlyingObject(II->getArgOperand(1))))
+          if (keep.count(AI))
+            dead.push_back(II);
+  for (IntrinsicInst *II : dead)
+    II->eraseFromParent();
+  return !dead.empty();
+}
+
 struct GocReanchor : PassInfoMixin<GocReanchor> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
     if (F.isDeclaration())
       return PreservedAnalyses::all();
+    bool Changed = false;
+    if (!frameAddrAsmMode()) {
+      Changed |= unmergeReportedAllocas(F);
+      Changed |= addOldFramePointerSlot(F);
+    }
+    PreservedAnalyses PA = run2(F, FAM);
+    return Changed ? PreservedAnalyses::none() : PA;
+  }
+
+  // goc-llc's GocFrameAddrFix stores RBP here right before a call after
+  // which it must rebase a derived frame address (&a[i] kept in a
+  // callee-saved register, or a merge of &local with a heap pointer). The
+  // slot is not in any stack map, so a stack copy moves it verbatim and it
+  // still holds the pre-call RBP afterwards: delta = RBP - goc.oldfp.
+  static bool addOldFramePointerSlot(Function &F) {
+    bool AnySafe = false;
+    for (Instruction &I : instructions(F))
+      if (isSafepoint(I)) {
+        AnySafe = true;
+        break;
+      }
+    if (!AnySafe)
+      return false;
+    IRBuilder<> B(&*F.getEntryBlock().getFirstInsertionPt());
+    B.CreateAlloca(B.getInt64Ty(), nullptr, "goc.oldfp");
+    return true;
+  }
+
+  PreservedAnalyses run2(Function &F, FunctionAnalysisManager &FAM) {
     bool AnySafe = false;
     for (Instruction &I : instructions(F))
       if (isSafepoint(I)) {
@@ -1242,15 +1419,17 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
     auto publish = [&](Instruction *Def, Value *Saved, Value *Anchor,
                        ArrayRef<Instruction *> UsePoints) {
       SmallVector<CallBase *, 8> invalidators;
+      CrossCallLiveness L(Def, UsePoints);
       for (CallBase *CB : safepoints) {
         if (Def && !DT.dominates(Def, CB))
           continue;
-        bool live = false;
-        for (Instruction *U : UsePoints)
-          if (U != CB && DT.dominates(CB, U)) {
-            live = true;
-            break;
-          }
+        bool live = L.liveAcross(CB);
+        if (!live)
+          for (Instruction *U : UsePoints)
+            if (U != CB && DT.dominates(CB, U)) {
+              live = true;
+              break;
+            }
         if (!live)
           continue;
         invalidators.push_back(CB);
@@ -1262,13 +1441,13 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
     IRBuilder<> Entry(&*F.getEntryBlock().getFirstInsertionPt());
     for (Fix &fix : fixes) {
       if (rematerializableFrameAddress(fix.Def, DL)) {
-        DenseMap<std::pair<PHINode *, BasicBlock *>, CallInst *> shared;
+        DenseMap<std::pair<PHINode *, BasicBlock *>, Value *> shared;
         for (Use *U : fix.Uses) {
           auto *User = cast<Instruction>(U->getUser());
           if (auto *Phi = dyn_cast<PHINode>(User)) {
             BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
             auto Key = std::make_pair(Phi, Inc);
-            CallInst *R = shared.lookup(Key);
+            Value *R = shared.lookup(Key);
             if (!R) {
               IRBuilder<> B(Inc->getTerminator());
               R = rematFrameAddress(B, fix.Def, DL);
@@ -1281,7 +1460,7 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
             continue;
           }
           IRBuilder<> B(usePoint(*U));
-          CallInst *R = rematFrameAddress(B, fix.Def, DL);
+          Value *R = rematFrameAddress(B, fix.Def, DL);
           if (!R)
             report_fatal_error("goc-reanchor: frame address did not rematerialize");
           U->set(R);
@@ -1361,13 +1540,13 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
     }
     for (ArgFix &fix : argFixes) {
       if (fix.Arg->hasByValAttr()) {
-        DenseMap<std::pair<PHINode *, BasicBlock *>, CallInst *> shared;
+        DenseMap<std::pair<PHINode *, BasicBlock *>, Value *> shared;
         for (Use *U : fix.Uses) {
           auto *User = cast<Instruction>(U->getUser());
           if (auto *Phi = dyn_cast<PHINode>(User)) {
             BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
             auto Key = std::make_pair(Phi, Inc);
-            CallInst *R = shared.lookup(Key);
+            Value *R = shared.lookup(Key);
             if (!R) {
               IRBuilder<> B(Inc->getTerminator());
               R = rematFrameAddress(B, fix.Arg, DL);
@@ -1380,7 +1559,7 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
             continue;
           }
           IRBuilder<> B(usePoint(*U));
-          CallInst *R = rematFrameAddress(B, fix.Arg, DL);
+          Value *R = rematFrameAddress(B, fix.Arg, DL);
           if (!R)
             report_fatal_error("goc-reanchor: byval address did not rematerialize");
           U->set(R);

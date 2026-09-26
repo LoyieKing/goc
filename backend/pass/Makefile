@@ -28,6 +28,7 @@ OUTDIR := ../build/pass-out
 # IR pass plugin (loaded by opt -load-pass-plugin): asks LLVM to report where
 # sptr-colored values live at each call site (see GocStackMap.cpp).
 STACKMAP_SO := $(OUTDIR)/GocStackMap.so
+GOC_LLC     := $(OUTDIR)/goc-llc
 
 OBJS := $(OBJDIR)/GocInsertStackCheck.o \
         $(OBJDIR)/GocExpandStoreGptr.o \
@@ -39,7 +40,7 @@ OBJS := $(OBJDIR)/GocInsertStackCheck.o \
 
 .PHONY: all clean run show-x86-paths
 
-all: $(OBJDIR)/goc-pass-driver $(OBJDIR)/libGocMachinePasses.so $(STACKMAP_SO)
+all: $(OBJDIR)/goc-pass-driver $(OBJDIR)/libGocMachinePasses.so $(STACKMAP_SO) $(GOC_LLC)
 
 $(OBJDIR)/GocStackMap.o: GocStackMap.cpp
 	@mkdir -p $(OBJDIR)
@@ -50,6 +51,12 @@ $(OBJDIR)/GocStackMap.o: GocStackMap.cpp
 $(STACKMAP_SO): $(OBJDIR)/GocStackMap.o
 	@mkdir -p $(OUTDIR)
 	$(CXX) -shared -o $@ $< $(LDFLAGS)
+
+# llc-19 plus the post-RA GocFrameAddrFix pass (see goc_llc.cpp). realbody
+# uses it by default (GOC_FRAMEADDR_MODE=gep).
+$(GOC_LLC): goc_llc.cpp
+	@mkdir -p $(OUTDIR)
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $< $(LDFLAGS) $(LIBS)
 
 show-x86-paths:
 	@echo "HAVE_X86_HDR=$(HAVE_X86_HDR)"

@@ -1,5 +1,4 @@
 diff --git a/quickjs.c b/quickjs.c
-index 6ca030b..072e76a 100644
 --- a/quickjs.c
 +++ b/quickjs.c
 @@ -48,6 +48,10 @@
@@ -13,7 +12,7 @@ index 6ca030b..072e76a 100644
  #if defined(EMSCRIPTEN) || defined(_MSC_VER)
  #define DIRECT_DISPATCH  0
  #else
-@@ -2305,8 +2309,18 @@ static inline uintptr_t js_get_stack_pointer(void)
+@@ -2305,8 +2309,18 @@
  static inline bool js_check_stack_overflow(JSRuntime *rt, size_t alloca_size)
  {
      uintptr_t sp;
@@ -33,10 +32,9 @@ index 6ca030b..072e76a 100644
  
  JSRuntime *JS_NewRuntime2(const JSMallocFunctions *mf, void *opaque)
 diff --git a/libregexp.c b/libregexp.c
-index 49c474c..ee96267 100644
 --- a/libregexp.c
 +++ b/libregexp.c
-@@ -2780,6 +2780,25 @@ typedef union {
+@@ -2780,6 +2780,25 @@
      } bp;
  } StackElem;
  
@@ -62,15 +60,23 @@ index 49c474c..ee96267 100644
  typedef struct {
      const uint8_t *cbuf;
      const uint8_t *cbuf_end;
-@@ -2837,6 +2856,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2837,9 +2856,15 @@
      uint32_t val, c, idx;
      const uint8_t *cbuf_end;
      StackElem *sp, *bp, *stack_end;
-+    uint32_t counters[256] = {0};
++    /* Loop registers (idx - 2 * capture_count < register count <= 255).
++       pc still points just past the bytecode header here; clear only the
++       registers this regexp uses, not all 1 KiB, on every exec. */
++    uint32_t counters[256];
  #ifdef DUMP_EXEC
      const uint8_t *pc_start = pc; /* TEST */
  #endif
-@@ -2890,6 +2910,28 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
++    memset(counters, 0,
++           sizeof(counters[0]) * pc[RE_HEADER_REGISTER_COUNT - RE_HEADER_LEN]);
+     cbuf_type = s->cbuf_type;
+     cbuf_end = s->cbuf_end;
+ 
+@@ -2890,6 +2915,28 @@
          capture[idx] = (value);                         \
      }
  
@@ -99,7 +105,7 @@ index 49c474c..ee96267 100644
  
  #ifdef DUMP_EXEC
      printf("%5s %5s %5s %5s %s\n", "PC", "CP", "BP", "SP", "OPCODE");
-@@ -2914,12 +2956,16 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2914,12 +2961,16 @@
                      return 0;
                  /* undo the modifications to capture[] */
                  while (sp > bp) {
@@ -119,7 +125,7 @@ index 49c474c..ee96267 100644
                  type = sp[-1].bp.type;
                  bp = s->stack_buf + sp[-1].bp.val;
                  sp -= 3;
-@@ -2941,8 +2987,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2941,8 +2992,8 @@
                  for(;;) {
                      sp1 = sp;
                      sp = bp;
@@ -130,7 +136,7 @@ index 49c474c..ee96267 100644
                      type = sp[-1].bp.type;
                      bp = s->stack_buf + sp[-1].bp.val;
                      sp[-1].ptr = (void *)sp1; /* save the next value for the copy step */
-@@ -2954,7 +3000,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2954,7 +3005,7 @@
                      /* keep the undo info if there is a saved state */
                      sp1 = sp;
                      while (sp1 < sp_top) {
@@ -139,7 +145,7 @@ index 49c474c..ee96267 100644
                          sp1 += 3;
                          while (sp1 < next_sp)
                              *sp++ = *sp1++;
-@@ -2969,11 +3015,15 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -2969,11 +3020,15 @@
                  type = bp[-1].bp.type;
                  /* undo the modifications to capture[] */
                  while (sp > bp) {
@@ -158,7 +164,7 @@ index 49c474c..ee96267 100644
                  type = sp[-1].bp.type;
                  bp = s->stack_buf + sp[-1].bp.val;
                  sp -= 3;
-@@ -3116,7 +3166,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -3116,7 +3171,7 @@
              idx = 2 * s->capture_count + pc[0];
              val = get_u32(pc + 1);
              pc += 5;
@@ -167,7 +173,7 @@ index 49c474c..ee96267 100644
              break;
          case REOP_loop:
              {
-@@ -3125,8 +3175,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -3125,8 +3180,8 @@
                  val = get_u32(pc + 1);
                  pc += 5;
  
@@ -178,7 +184,7 @@ index 49c474c..ee96267 100644
                  if (val2 != 0) {
                      pc += (int)val;
                      if (lre_poll_timeout(s))
-@@ -3147,8 +3197,8 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
+@@ -3147,8 +3202,8 @@
                  pc += 9;
  
                  /* decrement the counter */
