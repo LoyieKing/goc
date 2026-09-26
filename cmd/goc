@@ -24,7 +24,7 @@ Usage:
 Environment:
   GOC_ROOT     Repository root (default: parent of cmd/)
   GOC_CLANG    Path to patched clang-19 (preferred)
-  GOC_OPT_LEVEL  LLVM IR optimization level 0..3 (default 0); QuickJS scripts default 2
+  GOC_OPT_LEVEL  LLVM IR optimization level 0..3 (default 0); QuickJS scripts default 3
   LLC          llc binary (default: llc-19)
   CLANG_FALLBACK  System clang when GOC_CLANG unset (default: clang-19)
 
