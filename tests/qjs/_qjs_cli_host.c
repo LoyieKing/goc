@@ -1,4 +1,12 @@
+#ifdef GOC_QJS_BELLARD
+#include "../../third_party/quickjs-bellard/quickjs.h"
+#include "_qjs_bellard_compat.h"
+#else
 #include "../../third_party/quickjs-ng/quickjs.h"
+#endif
+#ifndef GOC_QJS_TRACKER_BOOL
+#define GOC_QJS_TRACKER_BOOL bool
+#endif
 
 int goc_qjs_cli_std_extra_add(JSContext *ctx, JSModuleDef *module);
 int goc_qjs_cli_std_extra_init(JSContext *ctx, JSModuleDef *module);
@@ -661,8 +669,10 @@ static const JSCFunctionListEntry goc_qjs_cli_bjson_funcs[] = {
   BJSON_FLAG(READ_OBJ_REFERENCE),
   BJSON_FLAG(WRITE_OBJ_BYTECODE),
   BJSON_FLAG(WRITE_OBJ_REFERENCE),
+#ifdef JS_WRITE_OBJ_STRIP_DEBUG /* quickjs-ng only */
   BJSON_FLAG(WRITE_OBJ_STRIP_DEBUG),
   BJSON_FLAG(WRITE_OBJ_STRIP_SOURCE),
+#endif
 #undef BJSON_FLAG
 };
 
@@ -708,7 +718,11 @@ static JSValue goc_qjs_cli_get_string_kind(JSContext *ctx,
   (void)this_val;
   if (argc < 1)
     return JS_NewInt32(ctx, -1);
+#ifdef GOC_QJS_BELLARD
+  return JS_NewInt32(ctx, -1); /* ng-internal js_std_cmd; not in Bellard */
+#else
   return JS_NewInt32(ctx, (int32_t)js_std_cmd(3, ctx, &argv[0]));
+#endif
 }
 
 typedef struct GocQjsRejection {
@@ -734,7 +748,8 @@ static GocQjsRejectionState *goc_qjs_cli_state(JSContext *ctx) {
 }
 
 static void goc_qjs_cli_rejection_tracker(JSContext *ctx, JSValueConst promise,
-                                            JSValueConst reason, bool is_handled,
+                                            JSValueConst reason,
+                                            GOC_QJS_TRACKER_BOOL is_handled,
                                             void *opaque) {
   GocQjsRejectionState *state = opaque;
   if (is_handled) {

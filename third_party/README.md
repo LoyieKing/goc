@@ -29,6 +29,18 @@ git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng
 Do **not** commit the cloned tree. `scripts/qjs-build.sh` builds it with
 `JS_NAN_BOXING=0`.
 
+## Bellard QuickJS (optional, `QJS_FLAVOR=bellard`)
+
+```bash
+curl -LO https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz
+tar xf quickjs-2026-06-04.tar.xz
+mv quickjs-2026-06-04 third_party/quickjs-bellard
+QJS_FLAVOR=bellard scripts/qjs-cli-build.sh   # -> build/qjs-bellard/qjscli
+```
+
+Unpack the pristine release; `scripts/qjs-build.sh` applies
+`scripts/qjs-gstack-bellard.patch` itself. Do **not** commit the tree.
+
 ## CMake
 
 Any recent CMake ≥ 3.20 works. You may unpack an official binary under

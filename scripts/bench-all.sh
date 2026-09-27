@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Same-session four-engine benchmark run for docs/benchmark.md.
+# Same-session five-engine benchmark run for docs/benchmark.md.
 #
 # Timed suites are pinned to one core (taskset -c $CPU) and interleaved: each
 # round runs every engine once, and the engine order rotates between rounds.
@@ -8,7 +8,8 @@
 # turns it into all.json and scripts/bench-charts.py draws the charts.
 #
 # Inputs (override with env):
-#   GOC      build/qjs/qjscli          (scripts/qjs-cli-build.sh, O3 + NDEBUG)
+#   GOC      build/qjs/qjscli          (goc-ng: scripts/qjs-cli-build.sh, O3 + NDEBUG)
+#   GOCB     build/qjs-bellard/qjscli  (goc-bellard: QJS_FLAVOR=bellard scripts/qjs-cli-build.sh)
 #   NG       native QuickJS-ng 0.17.0 qjs (CMake Release, clang-19 -O2 -DNDEBUG)
 #   BELLARD  Bellard QuickJS 2026-06-04 qjs (upstream Makefile, gcc -O2)
 #   GOJA     gojacli from scripts/gojacli (Goja cfe4039)
@@ -23,6 +24,7 @@ set -uo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 PS=/workspace/perf-study
 GOC="${GOC:-$ROOT/build/qjs/qjscli}"
+GOCB="${GOCB:-$ROOT/build/qjs-bellard/qjscli}"
 NG="${NG:-$PS/native/b-O2/qjs}"
 BELLARD="${BELLARD:-$PS/bellard/quickjs-2026-06-04/qjs}"
 GOJA="${GOJA:-$PS/goja-cli/gojacli}"
@@ -36,12 +38,13 @@ CPU="${CPU:-3}"
 ROUNDS_V8="${ROUNDS_V8:-5}" ROUNDS_SS="${ROUNDS_SS:-3}"
 ROUNDS_MICRO="${ROUNDS_MICRO:-3}" ROUNDS_MICROCALL="${ROUNDS_MICROCALL:-5}"
 SKIP="${SKIP:-}"
-ENGINES=(goc ng bellard goja)
+ENGINES=(goc-ng goc-bellard ng bellard goja)
 mkdir -p "$OUT"
 
 cmd() {  # cmd ENGINE [micro] -> command prefix (file appended by caller)
   case "$1" in
-    goc)     echo "$GOC --stack-size 16384" ;;
+    goc-ng)  echo "$GOC --stack-size 16384" ;;
+    goc-bellard) echo "$GOCB --stack-size 16384" ;;
     ng)      echo "$NG -C --stack-size 16384" ;;
     bellard) echo "$BELLARD --stack-size 16M" ;;
     goja)    if [[ "${2:-}" == micro ]]; then echo "$GOJA --micro"; else echo "$GOJA"; fi ;;
@@ -90,7 +93,7 @@ if ! skip ss; then
 fi
 
 if ! skip micro; then
-  # qjscli (goc) has no console global; give every engine the same fallback
+  # qjscli (goc-ng / goc-bellard) has no console global; give every engine the same fallback
   # that the V8 and SunSpider files carry.
   MB="$(mktemp /tmp/microbench-XXXX.js)"
   { echo 'if (typeof console === "undefined") globalThis.console = { log: print };'; cat "$MICROJS"; } > "$MB"
@@ -104,23 +107,23 @@ fi
 
 if ! skip microcall; then
   for ((r = 1; r <= ROUNDS_MICROCALL; r++)); do
-    GOC_QJS="$GOC" NATIVE_QJS="$NG" BELLARD_QJS="$BELLARD" GOJA_CLI="$GOJA" pin "$ROOT/scripts/microcall-bench.sh" > "$OUT/microcall-r$r.txt" 2>&1
+    GOC_QJS="$GOC" GOC_BELLARD_QJS="$GOCB" NATIVE_QJS="$NG" BELLARD_QJS="$BELLARD" GOJA_CLI="$GOJA" pin "$ROOT/scripts/microcall-bench.sh" > "$OUT/microcall-r$r.txt" 2>&1
     echo "microcall r$r $(grep '^score' "$OUT/microcall-r$r.txt")"
   done
 fi
 
 if ! skip t262; then
   python3 "$ROOT/scripts/test262-sample.py" --test262 "$T262" \
-    --engine "goc=$(cmd goc)" --engine "ng=$(cmd ng)" \
-    --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
+    --engine "goc-ng=$(cmd goc-ng)" --engine "goc-bellard=$(cmd goc-bellard)" \
+    --engine "ng=$(cmd ng)" --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
     --out "$OUT/test262-results.json" > "$OUT/test262-summary.txt" 2>&1
   grep -E 'pass$|differ' "$OUT/test262-summary.txt"
 fi
 
 if ! skip qjs; then
   python3 "$ROOT/scripts/qjs-official-tests.py" --tests "$QJSTESTS" \
-    --engine "goc=$(cmd goc)" --engine "ng=$(cmd ng)" \
-    --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
+    --engine "goc-ng=$(cmd goc-ng)" --engine "goc-bellard=$(cmd goc-bellard)" \
+    --engine "ng=$(cmd ng)" --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
     --out "$OUT/qjs-tests-results.json" > "$OUT/qjs-tests-summary.txt" 2>&1
   grep -E 'pass|differ' "$OUT/qjs-tests-summary.txt" | grep -v '^  '
 fi

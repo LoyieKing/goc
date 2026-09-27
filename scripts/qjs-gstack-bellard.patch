@@ -1,0 +1,231 @@
+goc: Bellard QuickJS 2026-06-04 on moving goroutine stacks (QJS_FLAVOR=bellard).
+Applied by scripts/qjs-build.sh to third_party/quickjs-bellard (pristine
+https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz). Everything is under
+#ifdef GOC_QJS_GSTACK, so a native build of the patched tree is unchanged.
+ - quickjs.c js_check_stack_overflow: measure depth from the current
+   g.stack.hi (same as scripts/qjs-gstack.patch for quickjs-ng).
+ - quickjs.c JS_AtomGetStrRT: the pure-ASCII fast path copies into the
+   caller's buffer instead of returning the atom's heap bytes (a function
+   returning either a stack buffer or a heap pointer is rejected by the goc
+   escape check). Names longer than 63 bytes are truncated in the messages
+   that use it, as Bellard already does for non-ASCII names.
+ - libregexp.c lre_exec_backtrack: identical to the quickjs-ng hunks (saved
+   pointers decoded from uptr words, loop counters kept out of capture[]).
+
+--- a/quickjs.c
++++ b/quickjs.c
+@@ -47,6 +47,10 @@
+ #include "libunicode.h"
+ #include "dtoa.h"
+ 
++#ifdef GOC_QJS_GSTACK
++#include "../../runtime/goc_uptr.h"
++#endif
++
+ #define OPTIMIZE         1
+ #define SHORT_OPCODES    1
+ #if defined(__EMSCRIPTEN__)
+@@ -2059,8 +2063,18 @@
+ static inline BOOL js_check_stack_overflow(JSRuntime *rt, size_t alloca_size)
+ {
+     uintptr_t sp;
++#ifdef GOC_QJS_GSTACK
++    /* Go may copy this frame to a new stack address at any nested call.
++       Measure the logical depth from the *current* g.stack.hi, not the
++       absolute stack_top captured when the runtime was created. */
++    uintptr_t hi = goc_stack_hi();
++    sp = js_get_stack_pointer() - alloca_size;
++    return unlikely(rt->stack_size != 0 &&
++                    (sp > hi || hi - sp > rt->stack_size));
++#else
+     sp = js_get_stack_pointer() - alloca_size;
+     return unlikely(sp < rt->stack_limit);
++#endif
+ }
+ #endif
+ 
+@@ -3567,8 +3581,20 @@
+                     for(i = 0; i < str->len; i++) {
+                         c |= str->u.str8[i];
+                     }
+-                    if (c < 0x80)
++                    if (c < 0x80) {
++#ifdef GOC_QJS_GSTACK
++                        /* goc: buf is a caller stack buffer. Returning either
++                           buf or a heap pointer from one function is a mixed
++                           stack/heap return the goc escape check rejects, so
++                           copy (truncating like the non-ASCII path below). */
++                        i = min_int(str->len, buf_size - 1);
++                        memcpy(buf, str->u.str8, i);
++                        buf[i] = '\0';
++                        return buf;
++#else
+                         return (const char *)str->u.str8;
++#endif
++                    }
+                 }
+                 for(i = 0; i < str->len; i++) {
+                     c = string_get(str, i);
+--- a/libregexp.c
++++ b/libregexp.c
+@@ -2722,6 +2722,25 @@
+     } bp;
+ } StackElem;
+ 
++#ifdef GOC_QJS_GSTACK
++#include "../../runtime/goc_uptr.h"
++/* Decode the saved word as an integer. A pointer-typed helper return is
++   colored cptr and the return guard traps when the address is still on
++   this goroutine (function-local input, regex bytecode). */
++#define goc_regexp_restore_capture(elem) \
++    ((uint8_t *)goc_uptr_decode((goc_uptr)(elem).val))
++#else
++#define goc_regexp_restore_capture(elem) ((elem).ptr)
++#endif
++#ifdef GOC_QJS_GSTACK
++/* Load the encoded word as an integer. A pointer-typed load is colored cptr
++   and the return guard traps when the address is still on this goroutine. */
++#define goc_regexp_restore_ptr(elem) \
++    ((uint8_t *)goc_uptr_decode((goc_uptr)(elem).val))
++#else
++#define goc_regexp_restore_ptr(elem) ((elem).ptr)
++#endif
++
+ typedef struct {
+     const uint8_t *cbuf;
+     const uint8_t *cbuf_end;
+@@ -2779,9 +2798,15 @@
+     uint32_t val, c, idx;
+     const uint8_t *cbuf_end;
+     StackElem *sp, *bp, *stack_end;
++    /* Loop registers (idx - 2 * capture_count < register count <= 255).
++       pc still points just past the bytecode header here; clear only the
++       registers this regexp uses, not all 1 KiB, on every exec. */
++    uint32_t counters[256];
+ #ifdef DUMP_EXEC
+     const uint8_t *pc_start = pc; /* TEST */
+ #endif
++    memset(counters, 0,
++           sizeof(counters[0]) * pc[RE_HEADER_REGISTER_COUNT - RE_HEADER_LEN]);
+     cbuf_type = s->cbuf_type;
+     cbuf_end = s->cbuf_end;
+ 
+@@ -2832,6 +2857,28 @@
+         capture[idx] = (value);                         \
+     }
+ 
++    /* Loop registers are integers; their -1 wraparound sentinel must not be
++       encoded as a pointer when the goroutine stack can move. */
++#define COUNTER_UNDO_TAG ((intptr_t)1 << 32)
++#define SAVE_COUNTER_CHECK(idx, value)                            \
++    {                                                             \
++        StackElem *sp1 = sp;                                      \
++        for (;;) {                                                \
++            if (sp1 > bp) {                                       \
++                if (sp1[-2].val == ((idx) | COUNTER_UNDO_TAG))     \
++                    break;                                        \
++                sp1 -= 2;                                         \
++            } else {                                              \
++                CHECK_STACK_SPACE(2);                             \
++                sp[0].val = (idx) | COUNTER_UNDO_TAG;             \
++                sp[1].val = counters[(idx) - 2 * s->capture_count]; \
++                sp += 2;                                          \
++                break;                                            \
++            }                                                     \
++        }                                                         \
++        counters[(idx) - 2 * s->capture_count] = (value);          \
++    }
++
+ 
+ #ifdef DUMP_EXEC
+     printf("%5s %5s %5s %5s %s\n", "PC", "CP", "BP", "SP", "OPCODE");
+@@ -2856,12 +2903,16 @@
+                     return 0;
+                 /* undo the modifications to capture[] */
+                 while (sp > bp) {
+-                    capture[sp[-2].val] = sp[-1].ptr;
++                    if (sp[-2].val & COUNTER_UNDO_TAG)
++                        counters[(sp[-2].val & ~COUNTER_UNDO_TAG) -
++                                 2 * s->capture_count] = sp[-1].val;
++                    else
++                        capture[sp[-2].val] = goc_regexp_restore_capture(sp[-1]);
+                     sp -= 2;
+                 }
+                 
+-                pc = sp[-3].ptr;
+-                cptr = sp[-2].ptr;
++                pc = goc_regexp_restore_ptr(sp[-3]);
++                cptr = goc_regexp_restore_ptr(sp[-2]);
+                 type = sp[-1].bp.type;
+                 bp = s->stack_buf + sp[-1].bp.val;
+                 sp -= 3;
+@@ -2883,8 +2934,8 @@
+                 for(;;) {
+                     sp1 = sp;
+                     sp = bp;
+-                    pc = sp[-3].ptr;
+-                    cptr = sp[-2].ptr;
++                    pc = goc_regexp_restore_ptr(sp[-3]);
++                    cptr = goc_regexp_restore_ptr(sp[-2]);
+                     type = sp[-1].bp.type;
+                     bp = s->stack_buf + sp[-1].bp.val;
+                     sp[-1].ptr = (void *)sp1; /* save the next value for the copy step */
+@@ -2896,7 +2947,7 @@
+                     /* keep the undo info if there is a saved state */
+                     sp1 = sp;
+                     while (sp1 < sp_top) {
+-                        next_sp = (void *)sp1[2].ptr;
++                        next_sp = (StackElem *)goc_regexp_restore_ptr(sp1[2]);
+                         sp1 += 3;
+                         while (sp1 < next_sp)
+                             *sp++ = *sp1++;
+@@ -2911,11 +2962,15 @@
+                 type = bp[-1].bp.type;
+                 /* undo the modifications to capture[] */
+                 while (sp > bp) {
+-                    capture[sp[-2].val] = sp[-1].ptr;
++                    if (sp[-2].val & COUNTER_UNDO_TAG)
++                        counters[(sp[-2].val & ~COUNTER_UNDO_TAG) -
++                                 2 * s->capture_count] = sp[-1].val;
++                    else
++                        capture[sp[-2].val] = goc_regexp_restore_capture(sp[-1]);
+                     sp -= 2;
+                 }
+-                pc = sp[-3].ptr;
+-                cptr = sp[-2].ptr;
++                pc = goc_regexp_restore_ptr(sp[-3]);
++                cptr = goc_regexp_restore_ptr(sp[-2]);
+                 type = sp[-1].bp.type;
+                 bp = s->stack_buf + sp[-1].bp.val;
+                 sp -= 3;
+@@ -3056,7 +3111,7 @@
+             idx = 2 * s->capture_count + pc[0];
+             val = get_u32(pc + 1);
+             pc += 5;
+-            SAVE_CAPTURE_CHECK(idx, (void *)(uintptr_t)val);
++            SAVE_COUNTER_CHECK(idx, val);
+             break;
+         case REOP_loop:
+             {
+@@ -3065,8 +3120,8 @@
+                 val = get_u32(pc + 1);
+                 pc += 5;
+ 
+-                val2 = (uintptr_t)capture[idx] - 1;
+-                SAVE_CAPTURE_CHECK(idx, (void *)(uintptr_t)val2);
++                val2 = counters[idx - 2 * s->capture_count] - 1;
++                SAVE_COUNTER_CHECK(idx, val2);
+                 if (val2 != 0) {
+                     pc += (int)val;
+                     if (lre_poll_timeout(s))
+@@ -3087,8 +3142,8 @@
+                 pc += 9;
+ 
+                 /* decrement the counter */
+-                val2 = (uintptr_t)capture[idx] - 1;
+-                SAVE_CAPTURE_CHECK(idx, (void *)(uintptr_t)val2);
++                val2 = counters[idx - 2 * s->capture_count] - 1;
++                SAVE_COUNTER_CHECK(idx, val2);
+ 
+                 if (val2 > limit) {
+                     /* normal loop if counter > limit */

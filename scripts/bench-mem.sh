@@ -11,8 +11,9 @@
 #      <workload> <max_rss_kb> <elapsed_s> <exit_status>
 #
 # Part 2, multi-instance scaling: N JS runtimes kept alive in one process,
-# N in $NS. goc: build/qjs/qjsmem (qjscli built with -tags qjsmem, see
-# tests/qjscli/mem_instances.go). native ng / Bellard: tests/qjsmem/threads.c
+# N in $NS. goc-ng: build/qjs/qjsmem (qjscli built with -tags qjsmem, see
+# tests/qjscli/mem_instances.go); goc-bellard: build/qjs-bellard/qjsmem (the
+# same probe, QJS_FLAVOR=bellard). native ng / Bellard: tests/qjsmem/threads.c
 # linked against each engine's own build. Goja: scripts/gojamem. Not pinned
 # (see the doc for why). ng also runs with MALLOC_ARENA_MAX=1 (engine
 # "ng-arena1").
@@ -25,6 +26,8 @@ ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 PS=/workspace/perf-study
 GOC="${GOC:-$ROOT/build/qjs/qjscli}"
 GOCMEM="${GOCMEM:-$ROOT/build/qjs/qjsmem}"
+GOCB="${GOCB:-$ROOT/build/qjs-bellard/qjscli}"
+GOCBMEM="${GOCBMEM:-$ROOT/build/qjs-bellard/qjsmem}"
 NG="${NG:-$PS/native/b-O2/qjs}"
 NGDIR="${NGDIR:-$PS/native}"             # quickjs.h; library in $NGDIR/b-O2/libqjs.a
 BELLARD="${BELLARD:-$PS/bellard/quickjs-2026-06-04/qjs}"
@@ -41,13 +44,14 @@ CPU="${CPU:-3}"
 ROUNDS="${ROUNDS:-3}"
 NS="${NS:-0 1 10 100 1000}"
 SKIP="${SKIP:-}"
-ENGINES=(goc ng bellard goja)
+ENGINES=(goc-ng goc-bellard ng bellard goja)
 mkdir -p "$OUT" "$HB"
 skip() { [[ " $SKIP " == *" $1 "* ]]; }
 
 cmd() {  # same command lines as scripts/bench-all.sh
   case "$1" in
-    goc)     echo "$GOC --stack-size 16384" ;;
+    goc-ng)  echo "$GOC --stack-size 16384" ;;
+    goc-bellard) echo "$GOCB --stack-size 16384" ;;
     ng)      echo "$NG -C --stack-size 16384" ;;
     bellard) echo "$BELLARD --stack-size 16M" ;;
     goja)    if [[ "${2:-}" == micro ]]; then echo "$GOJA --micro"; else echo "$GOJA"; fi ;;
@@ -72,6 +76,11 @@ if [[ ! -x "$GOCMEM" || "${REBUILD:-0}" == 1 ]]; then
   QJSCLI_TAGS=qjsmem QJSCLI_OUT="$GOCMEM" "$ROOT/scripts/qjs-cli-build.sh" > "$HB/qjsmem-build.log" 2>&1 \
     || { echo "qjsmem build failed, see $HB/qjsmem-build.log"; exit 1; }
 fi
+if [[ ! -x "$GOCBMEM" || "${REBUILD:-0}" == 1 ]]; then
+  QJS_FLAVOR=bellard QJSCLI_TAGS=qjsmem QJSCLI_OUT="$GOCBMEM" "$ROOT/scripts/qjs-cli-build.sh" \
+    > "$HB/qjsmem-bellard-build.log" 2>&1 \
+    || { echo "goc-bellard qjsmem build failed, see $HB/qjsmem-bellard-build.log"; exit 1; }
+fi
 clang-19 -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"ng"' -I"$NGDIR" "$ROOT/tests/qjsmem/threads.c" \
   "$NGDIR/b-O2/libqjs.a" -lm -lpthread -o "$HB/threads-ng" || exit 1
 gcc -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"bellard"' -I"$BDIR" "$ROOT/tests/qjsmem/threads.c" \
@@ -86,7 +95,7 @@ INST="$ROOT/tests/qjscli/instance.js"
   echo "go: $(go version)"
   echo "GOGC=${GOGC:-<unset, default 100>} GOMEMLIMIT=${GOMEMLIMIT:-<unset>}"
   for e in "${ENGINES[@]}"; do echo "$e: $(cmd "$e")  sha256=$(sha256sum "$(cmd "$e" | cut -d' ' -f1)" | cut -c1-16)"; done
-  for b in "$GOCMEM" "$HB/threads-ng" "$HB/threads-bellard" "$HB/gojamem"; do
+  for b in "$GOCMEM" "$GOCBMEM" "$HB/threads-ng" "$HB/threads-bellard" "$HB/gojamem"; do
     echo "harness: ${b#$ROOT/}  sha256=$(sha256sum "$b" | cut -c1-16)"
   done
   echo "rounds: $ROUNDS; N: $NS; C harness thread stack: ${QJSMEM_STACK_KB:-1024} KiB"
@@ -127,10 +136,11 @@ if ! skip inst; then
   for ((r = 1; r <= ROUNDS; r++)); do
     f="$OUT/mem-inst-r$r.txt"; touch "$f"
     for n in $NS; do
-      for e in goc ng ng-arena1 bellard goja; do
+      for e in goc-ng goc-bellard ng ng-arena1 bellard goja; do
         grep -q "^MEMINST {\"tag\":\"$e\",\"n\":$n," "$f" && continue
         case $e in
-          goc)       line=$("$GOCMEM" --mem-instances "$n" 2>/dev/null) ;;
+          goc-ng)    line=$("$GOCMEM" --mem-instances "$n" 2>/dev/null) ;;
+          goc-bellard) line=$("$GOCBMEM" --mem-instances "$n" 2>/dev/null) ;;
           ng)        line=$("$HB/threads-ng" "$n" "$INST" 2>/dev/null) ;;
           ng-arena1) line=$(MALLOC_ARENA_MAX=1 "$HB/threads-ng" "$n" "$INST" 2>/dev/null) ;;
           bellard)   line=$("$HB/threads-bellard" "$n" "$INST" 2>/dev/null) ;;

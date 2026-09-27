@@ -21,6 +21,7 @@ third_party/llvm-*-build/
 third_party/cmake-*/
 third_party/ninja
 third_party/quickjs-ng/
+third_party/quickjs-bellard/
 
 # Go module vendor trees (not our pass/vendor lite headers)
 /vendor/

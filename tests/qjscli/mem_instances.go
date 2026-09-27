@@ -29,6 +29,10 @@ import (
 //go:embed instance.js
 var memInstanceScript string
 
+// qjsFlavor is set by scripts/qjs-cli-build.sh for QJS_FLAVOR=bellard
+// (-X main.qjsFlavor=bellard); the ng build keeps the default.
+var qjsFlavor = "ng"
+
 func init() {
 	if len(os.Args) == 3 && os.Args[1] == "--mem-instances" {
 		n, err := strconv.Atoi(os.Args[2])
@@ -106,7 +110,11 @@ func memInstances(n int) int {
 	runtime.GC()
 	debug.FreeOSMemory()
 	gc := snap()
-	out, _ := json.Marshal(map[string]any{"engine": "goc", "n": n, "gogc": os.Getenv("GOGC"),
+	engine := "goc"
+	if qjsFlavor == "bellard" {
+		engine = "goc-bellard"
+	}
+	out, _ := json.Marshal(map[string]any{"engine": engine, "n": n, "gogc": os.Getenv("GOGC"),
 		"base": base, "live": live, "after_gc": gc})
 	fmt.Println("MEMINST " + string(out))
 	close(release)

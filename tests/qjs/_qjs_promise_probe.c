@@ -1,7 +1,11 @@
 /* Promise-hook path: an initialized child must observe the parent promise
  * through JSRuntime.parent_promise, even when the C call tree grows the g stack.
  */
+#ifdef GOC_QJS_BELLARD
+#include "../../third_party/quickjs-bellard/quickjs.h"
+#else
 #include "../../third_party/quickjs-ng/quickjs.h"
+#endif
 #include "../../runtime/goc_uptr.h"
 
 typedef struct GocLink {
@@ -55,6 +59,14 @@ int goc_qjs_frame_chain_probe(int heap_frame) {
 
 static int goc_qjs_parent_count;
 
+#ifdef GOC_QJS_BELLARD
+/* Bellard's QuickJS has neither JS_GetVersion nor JS_SetPromiseHook. The smoke
+ * prints the release string and runs with QJS_PROMISE=0 (no hook probe). */
+const char *JS_GetVersion(void) { return "bellard-" CONFIG_VERSION; }
+void goc_qjs_install_promise_hook(JSRuntime *rt) { (void)rt; goc_qjs_parent_count = 0; }
+int goc_qjs_promise_parent_hooks(void) { return goc_qjs_parent_count; }
+#else
+
 static void goc_qjs_promise_hook(JSContext *ctx, JSPromiseHookType type,
                                  JSValueConst promise, JSValueConst parent,
                                  void *opaque) {
@@ -71,3 +83,4 @@ void goc_qjs_install_promise_hook(JSRuntime *rt) {
 }
 
 int goc_qjs_promise_parent_hooks(void) { return goc_qjs_parent_count; }
+#endif

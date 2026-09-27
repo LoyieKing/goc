@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Microcall score: geometric mean of calls/ms on the call-shaped cases.
 # Higher is faster. Controls (arith, propget) are printed but not scored.
-# goc and native ng always run; Bellard QuickJS and Goja run too when
-# BELLARD_QJS / GOJA_CLI point at their binaries (scripts/bench-all.sh sets both).
+# goc (goc-ng) and native ng always run; goc-bellard, Bellard QuickJS and Goja
+# run too when GOC_BELLARD_QJS / BELLARD_QJS / GOJA_CLI point at their binaries
+# (scripts/bench-all.sh sets all three).
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 JS="$ROOT/tests/bench/microcall.js"
 GOC="${GOC_QJS:-$ROOT/build/qjs/qjscli}"
 NATIVE="${NATIVE_QJS:-/tmp/goc-bench-v8/quickjs-native-build/qjs}"
 BELLARD="${BELLARD_QJS:-}"
+GOCB="${GOC_BELLARD_QJS:-}"
 GOJA="${GOJA_CLI:-}"
 
 run_one() {  # run_one NAME BIN [ARGS...]
@@ -25,6 +27,7 @@ run_one() {  # run_one NAME BIN [ARGS...]
 names=(goc native)
 run_one goc "$GOC" --stack-size 16384
 run_one native "$NATIVE" --stack-size 16384
+if [[ -n "$GOCB" ]]; then run_one goc-bellard "$GOCB" --stack-size 16384; names+=(goc-bellard); fi
 if [[ -n "$BELLARD" ]]; then run_one bellard "$BELLARD" --stack-size 16M; names+=(bellard); fi
 if [[ -n "$GOJA" ]]; then run_one goja "$GOJA"; names+=(goja); fi
 python3 - "${names[@]}" << 'PY'

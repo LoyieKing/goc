@@ -8,7 +8,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#ifdef GOC_QJS_BELLARD
+#include "../../third_party/quickjs-bellard/quickjs.h"
+#include "_qjs_bellard_compat.h"
+#else
 #include "../../third_party/quickjs-ng/quickjs.h"
+#endif
 
 extern int goc_qjs_cli_install(JSContext *ctx);
 extern int goc_qjs_cli_unhandled_rejections(JSContext *ctx);

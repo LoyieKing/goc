@@ -940,6 +940,45 @@ double strtod(const char *input, char **end) {
 
 double goc_fabs(double x) { return __builtin_fabs(x); }
 
+#ifdef GOC_QJS_BELLARD
+/* ---------- compiler-rt: unsigned 128-bit division ----------
+ * Bellard's BigInt divides unsigned __int128 values (js_bigint_divrem,
+ * js_bigint_to_string1); LLVM lowers that to a __udivti3 libcall. libgcc is
+ * not linked into the goobj, so provide it here: one divq when the divisor
+ * fits in 64 bits, shift-subtract otherwise. quickjs-ng never emits it. */
+typedef unsigned __int128 goc_u128;
+static inline uint64_t goc_divq(uint64_t hi, uint64_t lo, uint64_t d) {
+  uint64_t q, r;  /* requires hi < d */
+  __asm__("divq %4" : "=a"(q), "=d"(r) : "a"(lo), "d"(hi), "r"(d) : "cc");
+  (void)r;
+  return q;
+}
+goc_u128 __udivti3(goc_u128 n, goc_u128 d) {
+  uint64_t dh = (uint64_t)(d >> 64), dl = (uint64_t)d;
+  uint64_t nh = (uint64_t)(n >> 64), nl = (uint64_t)n;
+  if (dh == 0) {
+    if (dl == 0)
+      __builtin_trap();
+    uint64_t qh = nh / dl, rh = nh % dl;
+    return ((goc_u128)qh << 64) | goc_divq(rh, nl, dl);
+  }
+  if (n < d)
+    return 0;
+  int shift = __builtin_clzll(dh) - __builtin_clzll(nh);
+  goc_u128 q = 0;
+  d <<= shift;
+  for (int i = 0; i <= shift; i++) {
+    q <<= 1;
+    if (n >= d) {
+      n -= d;
+      q |= 1;
+    }
+    d >>= 1;
+  }
+  return q;
+}
+#endif
+
 /* ---------- bare-name aliases for compiler-emitted libcalls ----------
  * llc lowers llvm.memcpy/memset/memmove intrinsics (struct copies) to these
  * libcall names; -D macros cannot rename them, so provide the names here as
