@@ -1,0 +1,40 @@
+--------------------------------------------------------------------------------
+Profile data file 'nat.cg' (creator: callgrind-3.24.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 13404264
+Trigger: Program termination
+Profiled target:  /workspace/perf-study/bellard/clang-O3-NDEBUG/qjs sb.js (PID 2756938, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                  
+--------------------------------------------------------------------------------
+63,070,000 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                   file:function
+--------------------------------------------------------------------------------
+33,442,813 (53.02%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:JS_CallInternal'2 [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+11,853,805 (18.79%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:JS_ConcatStringInPlace [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+ 4,200,000 ( 6.66%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:__JS_AtomToValue [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+ 3,868,341 ( 6.13%)  ./string/../sysdeps/x86_64/multiarch/memmove-vec-unaligned-erms.S:__memcpy_avx_unaligned_erms [/usr/lib/x86_64-linux-gnu/libc.so.6]
+ 2,571,019 ( 4.08%)  ./quickjs.h:JS_CallInternal'2
+ 1,515,397 ( 2.40%)  ./malloc/./malloc/malloc.c:malloc_usable_size [/usr/lib/x86_64-linux-gnu/libc.so.6]
+   869,331 ( 1.38%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:JS_ConcatString1 [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+   655,148 ( 1.04%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:JS_ConcatString [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+   454,859 ( 0.72%)  ./malloc/./malloc/malloc.c:free [/usr/lib/x86_64-linux-gnu/libc.so.6]
+   432,094 ( 0.69%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:__JS_FreeValueRT [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+   377,402 ( 0.60%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:__js_malloc [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+   303,867 ( 0.48%)  ./malloc/./malloc/malloc.c:malloc [/usr/lib/x86_64-linux-gnu/libc.so.6]
+   209,224 ( 0.33%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:js_def_malloc [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+   203,214 ( 0.32%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:js_def_malloc_usable_size [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]
+   188,141 ( 0.30%)  /tmp/bb-clang-O3-NDEBUG/quickjs-2026-06-04/quickjs.c:js_malloc_new_arena [/workspace/perf-study/bellard/clang-O3-NDEBUG/qjs]

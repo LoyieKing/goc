@@ -1,0 +1,40 @@
+--------------------------------------------------------------------------------
+Profile data file 'goc.cg' (creator: callgrind-3.24.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 101137644
+Trigger: Program termination
+Profiled target:  /workspace/goc/build/qjs-bellard/qjscli sb.js (PID 2756939, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                   
+--------------------------------------------------------------------------------
+196,532,366 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                   file:function
+--------------------------------------------------------------------------------
+82,462,412 (41.96%)  ???:main.goc_memcpy.impl [/workspace/goc/build/qjs-bellard/qjscli]
+37,707,962 (19.19%)  ???:main.quickjs_c.JS_CallInternal'2 [/workspace/goc/build/qjs-bellard/qjscli]
+14,652,193 ( 7.46%)  ???:main.quickjs_c.JS_ConcatStringInPlace [/workspace/goc/build/qjs-bellard/qjscli]
+ 7,977,200 ( 4.06%)  ???:main.quickjs_c.JS_ConcatString1 [/workspace/goc/build/qjs-bellard/qjscli]
+ 7,438,200 ( 3.78%)  ???:main.quickjs_c.JS_ConcatString [/workspace/goc/build/qjs-bellard/qjscli]
+ 6,823,220 ( 3.47%)  ???:main.goc_malloc.impl [/workspace/goc/build/qjs-bellard/qjscli]
+ 5,803,867 ( 2.95%)  ???:main.quickjs_c.__JS_AtomToValue [/workspace/goc/build/qjs-bellard/qjscli]
+ 5,729,422 ( 2.92%)  ???:main.goc_free.impl [/workspace/goc/build/qjs-bellard/qjscli]
+ 4,374,444 ( 2.23%)  ???:main.__JS_FreeValueRT.impl [/workspace/goc/build/qjs-bellard/qjscli]
+ 3,901,586 ( 1.99%)  ???:main.quickjs_c.js_def_malloc [/workspace/goc/build/qjs-bellard/qjscli]
+ 3,705,930 ( 1.89%)  ???:main.memcpy.impl [/workspace/goc/build/qjs-bellard/qjscli]
+ 2,802,200 ( 1.43%)  ???:main.quickjs_c.set_value [/workspace/goc/build/qjs-bellard/qjscli]
+ 2,772,171 ( 1.41%)  ???:main.quickjs_c.js_def_free [/workspace/goc/build/qjs-bellard/qjscli]
+ 2,514,670 ( 1.28%)  ???:main.quickjs_c.__js_malloc [/workspace/goc/build/qjs-bellard/qjscli]
+ 2,148,776 ( 1.09%)  ???:main.goc_malloc_usable_size.impl [/workspace/goc/build/qjs-bellard/qjscli]
