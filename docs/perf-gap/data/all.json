@@ -1,0 +1,6229 @@
+{
+ "env": {
+  "docs/perf-gap/data/raw/env.txt": [
+   "date: 2026-09-27 17:18:54 KST",
+   "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
+   "goc commit: 8973a12d823cdcad8068a334491a1ac677d95433",
+   "ng-gcc-O2: /workspace/perf-study/native/b-gcc-O2/qjs -C --stack-size 16384  sha256=8022cec569597b53",
+   "ng-clang-O2: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f",
+   "ng-clang-O3: /workspace/perf-study/native/b-O3/qjs -C --stack-size 16384  sha256=f6c6728590569e58",
+   "ng-clang-O3-gocflags: /workspace/perf-study/native/b-gocfull/qjs -C --stack-size 16384  sha256=3b0a30603d2a41e6",
+   "goc-ng: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=9b0c675097a6c00b",
+   "bellard-gcc-O2: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
+   "bellard-gcc-O2-NDEBUG: /workspace/perf-study/bellard/gcc-O2-NDEBUG/qjs --stack-size 16M  sha256=45070f584dad87fc",
+   "bellard-clang-O2: /workspace/perf-study/bellard/clang-O2/qjs --stack-size 16M  sha256=d9d6b42df26072c9",
+   "bellard-clang-O2-NDEBUG: /workspace/perf-study/bellard/clang-O2-NDEBUG/qjs --stack-size 16M  sha256=cbb3f4b668f1af75",
+   "bellard-clang-O3: /workspace/perf-study/bellard/clang-O3-NDEBUG/qjs --stack-size 16M  sha256=925378f080927880",
+   "bellard-clang-O3-gocflags: /workspace/perf-study/bellard/clang-O3-gocfull/qjs --stack-size 16M  sha256=5724ba469d44c2da",
+   "goc-bellard: /workspace/goc/build/qjs-bellard/qjscli --stack-size 16384  sha256=ff920f74ab585712",
+   "rounds: v8=5 ss=3 micro=3 microcall=5"
+  ]
+ },
+ "engines": [
+  "ng-gcc-O2",
+  "ng-clang-O2",
+  "ng-clang-O3",
+  "ng-clang-O3-gocflags",
+  "goc-ng",
+  "bellard-gcc-O2",
+  "bellard-gcc-O2-NDEBUG",
+  "bellard-clang-O2",
+  "bellard-clang-O2-NDEBUG",
+  "bellard-clang-O3",
+  "bellard-clang-O3-gocflags",
+  "goc-bellard"
+ ],
+ "raw": {
+  "ng-gcc-O2": {
+   "v8_rounds": [
+    {
+     "Richards": 710,
+     "DeltaBlue": 782,
+     "Crypto": 434,
+     "RayTrace": 1551,
+     "EarleyBoyer": 2063,
+     "RegExp": 399,
+     "Splay": 2855,
+     "NavierStokes": 1337,
+     "Score": 1020
+    },
+    {
+     "Richards": 712,
+     "DeltaBlue": 778,
+     "Crypto": 438,
+     "RayTrace": 1554,
+     "EarleyBoyer": 2062,
+     "RegExp": 407,
+     "Splay": 2820,
+     "NavierStokes": 1350,
+     "Score": 1024
+    },
+    {
+     "Richards": 693,
+     "DeltaBlue": 760,
+     "Crypto": 430,
+     "RayTrace": 1594,
+     "EarleyBoyer": 2015,
+     "RegExp": 410,
+     "Splay": 2779,
+     "NavierStokes": 1312,
+     "Score": 1011
+    },
+    {
+     "Richards": 721,
+     "DeltaBlue": 779,
+     "Crypto": 440,
+     "RayTrace": 1544,
+     "EarleyBoyer": 2085,
+     "RegExp": 414,
+     "Splay": 2885,
+     "NavierStokes": 1349,
+     "Score": 1032
+    },
+    {
+     "Richards": 684,
+     "DeltaBlue": 767,
+     "Crypto": 439,
+     "RayTrace": 1515,
+     "EarleyBoyer": 2022,
+     "RegExp": 408,
+     "Splay": 2757,
+     "NavierStokes": 1330,
+     "Score": 1007
+    }
+   ],
+   "v8": {
+    "Richards": 710,
+    "DeltaBlue": 778,
+    "Crypto": 438,
+    "RayTrace": 1551,
+    "EarleyBoyer": 2062,
+    "RegExp": 408,
+    "Splay": 2820,
+    "NavierStokes": 1337,
+    "Score": 1020
+   },
+   "v8_score_spread": [
+    1007,
+    1032
+   ],
+   "ss": {
+    "3d-cube": 27.5,
+    "3d-morph": 36.0,
+    "3d-raytrace": 3.1429,
+    "access-binary-trees": 14.4545,
+    "access-fannkuch": 92.0,
+    "access-nbody": 18.875,
+    "access-nsieve": 39.5,
+    "bitops-3bit-bits-in-byte": 36.0,
+    "bitops-bits-in-byte": 55.6667,
+    "bitops-bitwise-and": 28.6,
+    "bitops-nsieve-bits": 54.6667,
+    "controlflow-recursive": 15.9,
+    "crypto-aes": 29.1667,
+    "crypto-md5": 17.2222,
+    "crypto-sha1": 18.2222,
+    "date-format-tofte": 6.6,
+    "date-format-xparb": 3.0,
+    "math-cordic": 33.2,
+    "math-partial-sums": 15.9,
+    "math-spectral-norm": 19.875,
+    "regexp-dna": 38.5,
+    "string-base64": 19.875,
+    "string-fasta": 55.3333,
+    "string-tagcloud": 30.2,
+    "string-unpack-code": 52.6667,
+    "string-validate-input": 14.1818
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 14.57,
+    "empty_down_loop": 17.37,
+    "empty_down_loop2": 20.17,
+    "empty_do_loop": 17.11,
+    "date_now": 65.8,
+    "date_parse": 564.33,
+    "prop_read": 16.83,
+    "prop_write": 9.16,
+    "prop_update": 17.03,
+    "prop_create": 76.41,
+    "prop_clone": 55.49,
+    "prop_delete": 98.08,
+    "array_read": 22.22,
+    "array_write": 24.74,
+    "array_update": 22.8,
+    "array_prop_create": 47.42,
+    "array_slice": 14.53,
+    "array_length_read": 16.04,
+    "array_length_decr": 59.16,
+    "array_hole_length_decr": 80.36,
+    "array_push": 43.65,
+    "array_pop": 87.85,
+    "typed_array_read": 23.43,
+    "typed_array_write": 27.13,
+    "arguments_read": 184.9,
+    "arguments_strict_read": 151.36,
+    "global_read": 16.57,
+    "global_write": 9.27,
+    "global_write_strict": 9.33,
+    "local_destruct": 32.52,
+    "global_destruct": 45.14,
+    "global_destruct_strict": 46.28,
+    "global_func_call": 44.95,
+    "func_call": 42.12,
+    "func_closure_call": 31.56,
+    "int_arith": 46.41,
+    "float_arith": 38.55,
+    "map_set_string": 213.6,
+    "map_set_int": 2816.15,
+    "map_set_bigint": 4839.85,
+    "map_delete": 204.36,
+    "weak_map_set": 168.32,
+    "weak_map_delete": 300.06,
+    "array_for": 30.76,
+    "array_for_in": 50.36,
+    "array_for_of": 29.52,
+    "math_min": 54.15,
+    "regexp_ascii": 236.61,
+    "regexp_utf16": 232.55,
+    "regexp_replace": 1815.01,
+    "string_length": 16.68,
+    "string_build1": 49.79,
+    "string_build1x": 47.89,
+    "string_build2c": 61.47,
+    "string_build2": 49.08,
+    "string_build3": 51.79,
+    "string_build4": 50.75,
+    "string_build_large1": 68.57,
+    "string_build_large2": 55.67,
+    "int_to_string": 39.24,
+    "int_toString": 53.77,
+    "float_to_string": 222.01,
+    "float_toString": 233.45,
+    "float_toFixed": 106.72,
+    "float_toPrecision": 133.2,
+    "float_toExponential": 117.18,
+    "string_to_int": 83.25,
+    "string_to_float": 99.69,
+    "bigint32_arith": 51.48,
+    "bigint64_arith": 63.36,
+    "bigint256_arith": 102.9,
+    "sort_bench": 15.2
+   },
+   "microcall_scores": [
+    13576,
+    13631,
+    13599,
+    13377,
+    13695
+   ],
+   "microcall": 13599,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 64,
+    "id": 55.5,
+    "six": 137,
+    "eight": 182,
+    "method": 73,
+    "depth4": 28.5,
+    "closure": 63,
+    "mutual": 62,
+    "sched": 85.5
+   }
+  },
+  "ng-clang-O2": {
+   "v8_rounds": [
+    {
+     "Richards": 784,
+     "DeltaBlue": 775,
+     "Crypto": 857,
+     "RayTrace": 1798,
+     "EarleyBoyer": 2292,
+     "RegExp": 407,
+     "Splay": 3110,
+     "NavierStokes": 1566,
+     "Score": 1198
+    },
+    {
+     "Richards": 791,
+     "DeltaBlue": 796,
+     "Crypto": 851,
+     "RayTrace": 1737,
+     "EarleyBoyer": 2251,
+     "RegExp": 403,
+     "Splay": 3162,
+     "NavierStokes": 1565,
+     "Score": 1196
+    },
+    {
+     "Richards": 786,
+     "DeltaBlue": 782,
+     "Crypto": 850,
+     "RayTrace": 1793,
+     "EarleyBoyer": 2245,
+     "RegExp": 405,
+     "Splay": 3167,
+     "NavierStokes": 1583,
+     "Score": 1199
+    },
+    {
+     "Richards": 771,
+     "DeltaBlue": 780,
+     "Crypto": 787,
+     "RayTrace": 1766,
+     "EarleyBoyer": 2269,
+     "RegExp": 403,
+     "Splay": 3224,
+     "NavierStokes": 1576,
+     "Score": 1185
+    },
+    {
+     "Richards": 761,
+     "DeltaBlue": 772,
+     "Crypto": 821,
+     "RayTrace": 1652,
+     "EarleyBoyer": 2255,
+     "RegExp": 407,
+     "Splay": 3243,
+     "NavierStokes": 1574,
+     "Score": 1179
+    }
+   ],
+   "v8": {
+    "Richards": 784,
+    "DeltaBlue": 780,
+    "Crypto": 850,
+    "RayTrace": 1766,
+    "EarleyBoyer": 2255,
+    "RegExp": 405,
+    "Splay": 3167,
+    "NavierStokes": 1574,
+    "Score": 1196
+   },
+   "v8_score_spread": [
+    1179,
+    1199
+   ],
+   "ss": {
+    "3d-cube": 26.5,
+    "3d-morph": 21.1429,
+    "3d-raytrace": 2.375,
+    "access-binary-trees": 13.1667,
+    "access-fannkuch": 66.3333,
+    "access-nbody": 16.7778,
+    "access-nsieve": 35.4,
+    "bitops-3bit-bits-in-byte": 11.6429,
+    "bitops-bits-in-byte": 25.1667,
+    "bitops-bitwise-and": 15.1,
+    "bitops-nsieve-bits": 21.0,
+    "controlflow-recursive": 7.3333,
+    "crypto-aes": 21.8571,
+    "crypto-md5": 7.9444,
+    "crypto-sha1": 7.9412,
+    "date-format-tofte": 4.8333,
+    "date-format-xparb": 3.0,
+    "math-cordic": 26.6667,
+    "math-partial-sums": 13.3333,
+    "math-spectral-norm": 9.3125,
+    "regexp-dna": 43.0,
+    "string-base64": 14.1818,
+    "string-fasta": 51.0,
+    "string-tagcloud": 29.5,
+    "string-unpack-code": 47.5,
+    "string-validate-input": 13.0
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 16.71,
+    "empty_down_loop": 18.11,
+    "empty_down_loop2": 21.58,
+    "empty_do_loop": 18.09,
+    "date_now": 70.95,
+    "date_parse": 534.52,
+    "prop_read": 12.27,
+    "prop_write": 17.99,
+    "prop_update": 17.97,
+    "prop_create": 58.71,
+    "prop_clone": 47.05,
+    "prop_delete": 82.51,
+    "array_read": 11.95,
+    "array_write": 28.5,
+    "array_update": 14.18,
+    "array_prop_create": 34.06,
+    "array_slice": 16.31,
+    "array_length_read": 12.44,
+    "array_length_decr": 45.74,
+    "array_hole_length_decr": 64.76,
+    "array_push": 34.91,
+    "array_pop": 65.0,
+    "typed_array_read": 12.7,
+    "typed_array_write": 31.2,
+    "arguments_read": 140.7,
+    "arguments_strict_read": 114.42,
+    "global_read": 10.49,
+    "global_write": 12.22,
+    "global_write_strict": 12.06,
+    "local_destruct": 28.14,
+    "global_destruct": 40.64,
+    "global_destruct_strict": 39.06,
+    "global_func_call": 23.74,
+    "func_call": 21.87,
+    "func_closure_call": 27.73,
+    "int_arith": 19.52,
+    "float_arith": 25.43,
+    "map_set_string": 180.7,
+    "map_set_int": 4190.56,
+    "map_set_bigint": 4417.56,
+    "map_delete": 181.9,
+    "weak_map_set": 147.73,
+    "weak_map_delete": 265.89,
+    "array_for": 19.34,
+    "array_for_in": 57.56,
+    "array_for_of": 20.63,
+    "math_min": 30.35,
+    "regexp_ascii": 206.08,
+    "regexp_utf16": 233.54,
+    "regexp_replace": 1726.48,
+    "string_length": 14.78,
+    "string_build1": 44.47,
+    "string_build1x": 43.73,
+    "string_build2c": 62.28,
+    "string_build2": 47.87,
+    "string_build3": 43.75,
+    "string_build4": 45.88,
+    "string_build_large1": 57.36,
+    "string_build_large2": 54.23,
+    "int_to_string": 35.67,
+    "int_toString": 41.77,
+    "float_to_string": 218.49,
+    "float_toString": 223.73,
+    "float_toFixed": 90.06,
+    "float_toPrecision": 109.67,
+    "float_toExponential": 105.96,
+    "string_to_int": 84.06,
+    "string_to_float": 101.11,
+    "bigint32_arith": 40.55,
+    "bigint64_arith": 53.94,
+    "bigint256_arith": 100.36,
+    "sort_bench": 19.3
+   },
+   "microcall_scores": [
+    22743,
+    23335,
+    23158,
+    23260,
+    23578
+   ],
+   "microcall": 23260,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 31.5,
+    "id": 35,
+    "six": 61,
+    "eight": 70,
+    "method": 69,
+    "depth4": 23,
+    "closure": 38,
+    "mutual": 26,
+    "sched": 67.5
+   }
+  },
+  "ng-clang-O3": {
+   "v8_rounds": [
+    {
+     "Richards": 802,
+     "DeltaBlue": 771,
+     "Crypto": 847,
+     "RayTrace": 1672,
+     "EarleyBoyer": 2196,
+     "RegExp": 377,
+     "Splay": 3090,
+     "NavierStokes": 1515,
+     "Score": 1165
+    },
+    {
+     "Richards": 786,
+     "DeltaBlue": 752,
+     "Crypto": 835,
+     "RayTrace": 1728,
+     "EarleyBoyer": 2200,
+     "RegExp": 369,
+     "Splay": 3199,
+     "NavierStokes": 1511,
+     "Score": 1163
+    },
+    {
+     "Richards": 809,
+     "DeltaBlue": 778,
+     "Crypto": 801,
+     "RayTrace": 1804,
+     "EarleyBoyer": 2267,
+     "RegExp": 380,
+     "Splay": 3126,
+     "NavierStokes": 1518,
+     "Score": 1178
+    },
+    {
+     "Richards": 783,
+     "DeltaBlue": 771,
+     "Crypto": 846,
+     "RayTrace": 1760,
+     "EarleyBoyer": 2245,
+     "RegExp": 374,
+     "Splay": 3216,
+     "NavierStokes": 1528,
+     "Score": 1178
+    },
+    {
+     "Richards": 808,
+     "DeltaBlue": 777,
+     "Crypto": 852,
+     "RayTrace": 1749,
+     "EarleyBoyer": 2256,
+     "RegExp": 377,
+     "Splay": 3227,
+     "NavierStokes": 1521,
+     "Score": 1186
+    }
+   ],
+   "v8": {
+    "Richards": 802,
+    "DeltaBlue": 771,
+    "Crypto": 846,
+    "RayTrace": 1749,
+    "EarleyBoyer": 2245,
+    "RegExp": 377,
+    "Splay": 3199,
+    "NavierStokes": 1518,
+    "Score": 1178
+   },
+   "v8_score_spread": [
+    1163,
+    1186
+   ],
+   "ss": {
+    "3d-cube": 26.1667,
+    "3d-morph": 20.625,
+    "3d-raytrace": 2.25,
+    "access-binary-trees": 12.6667,
+    "access-fannkuch": 69.0,
+    "access-nbody": 14.9,
+    "access-nsieve": 36.0,
+    "bitops-3bit-bits-in-byte": 10.7857,
+    "bitops-bits-in-byte": 23.4286,
+    "bitops-bitwise-and": 14.4545,
+    "bitops-nsieve-bits": 21.5714,
+    "controlflow-recursive": 7.2381,
+    "crypto-aes": 22.4286,
+    "crypto-md5": 7.7368,
+    "crypto-sha1": 7.6316,
+    "date-format-tofte": 4.6667,
+    "date-format-xparb": 2.625,
+    "math-cordic": 26.5,
+    "math-partial-sums": 13.5455,
+    "math-spectral-norm": 9.2353,
+    "regexp-dna": 45.0,
+    "string-base64": 14.2727,
+    "string-fasta": 48.6667,
+    "string-tagcloud": 29.6,
+    "string-unpack-code": 48.25,
+    "string-validate-input": 13.1818
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 15.29,
+    "empty_down_loop": 16.36,
+    "empty_down_loop2": 20.76,
+    "empty_do_loop": 18.91,
+    "date_now": 68.57,
+    "date_parse": 490.67,
+    "prop_read": 11.04,
+    "prop_write": 17.46,
+    "prop_update": 17.29,
+    "prop_create": 56.31,
+    "prop_clone": 43.43,
+    "prop_delete": 77.19,
+    "array_read": 11.36,
+    "array_write": 28.24,
+    "array_update": 14.26,
+    "array_prop_create": 34.23,
+    "array_slice": 16.45,
+    "array_length_read": 11.64,
+    "array_length_decr": 45.48,
+    "array_hole_length_decr": 62.35,
+    "array_push": 33.51,
+    "array_pop": 66.85,
+    "typed_array_read": 12.11,
+    "typed_array_write": 30.14,
+    "arguments_read": 140.6,
+    "arguments_strict_read": 116.22,
+    "global_read": 9.47,
+    "global_write": 12.93,
+    "global_write_strict": 12.7,
+    "local_destruct": 26.49,
+    "global_destruct": 37.38,
+    "global_destruct_strict": 37.16,
+    "global_func_call": 23.54,
+    "func_call": 22.98,
+    "func_closure_call": 28.09,
+    "int_arith": 17.48,
+    "float_arith": 25.31,
+    "map_set_string": 169.16,
+    "map_set_int": 4115.39,
+    "map_set_bigint": 4367.44,
+    "map_delete": 165.77,
+    "weak_map_set": 149.49,
+    "weak_map_delete": 258.83,
+    "array_for": 18.85,
+    "array_for_in": 55.42,
+    "array_for_of": 22.51,
+    "math_min": 30.38,
+    "regexp_ascii": 200.28,
+    "regexp_utf16": 216.32,
+    "regexp_replace": 1700.22,
+    "string_length": 13.63,
+    "string_build1": 42.08,
+    "string_build1x": 41.51,
+    "string_build2c": 57.89,
+    "string_build2": 46.33,
+    "string_build3": 43.41,
+    "string_build4": 46.09,
+    "string_build_large1": 55.07,
+    "string_build_large2": 51.53,
+    "int_to_string": 32.95,
+    "int_toString": 45.6,
+    "float_to_string": 207.41,
+    "float_toString": 224.1,
+    "float_toFixed": 88.68,
+    "float_toPrecision": 106.73,
+    "float_toExponential": 103.52,
+    "string_to_int": 85.58,
+    "string_to_float": 105.86,
+    "bigint32_arith": 40.17,
+    "bigint64_arith": 51.27,
+    "bigint256_arith": 93.69,
+    "sort_bench": 18.81
+   },
+   "microcall_scores": [
+    22630,
+    23088,
+    22371,
+    22709,
+    22706
+   ],
+   "microcall": 22706,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 33.5,
+    "id": 35,
+    "six": 57,
+    "eight": 66,
+    "method": 75,
+    "depth4": 24.5,
+    "closure": 37,
+    "mutual": 28.5,
+    "sched": 73
+   }
+  },
+  "ng-clang-O3-gocflags": {
+   "v8_rounds": [
+    {
+     "Richards": 763,
+     "DeltaBlue": 745,
+     "Crypto": 887,
+     "RayTrace": 1630,
+     "EarleyBoyer": 1885,
+     "RegExp": 443,
+     "Splay": 3113,
+     "NavierStokes": 1606,
+     "Score": 1167
+    },
+    {
+     "Richards": 759,
+     "DeltaBlue": 742,
+     "Crypto": 884,
+     "RayTrace": 1706,
+     "EarleyBoyer": 2220,
+     "RegExp": 439,
+     "Splay": 3064,
+     "NavierStokes": 1594,
+     "Score": 1191
+    },
+    {
+     "Richards": 769,
+     "DeltaBlue": 754,
+     "Crypto": 904,
+     "RayTrace": 1690,
+     "EarleyBoyer": 2220,
+     "RegExp": 441,
+     "Splay": 3064,
+     "NavierStokes": 1621,
+     "Score": 1200
+    },
+    {
+     "Richards": 777,
+     "DeltaBlue": 754,
+     "Crypto": 908,
+     "RayTrace": 1683,
+     "EarleyBoyer": 2238,
+     "RegExp": 442,
+     "Splay": 3085,
+     "NavierStokes": 1626,
+     "Score": 1205
+    },
+    {
+     "Richards": 779,
+     "DeltaBlue": 755,
+     "Crypto": 894,
+     "RayTrace": 1686,
+     "EarleyBoyer": 2244,
+     "RegExp": 442,
+     "Splay": 2993,
+     "NavierStokes": 1617,
+     "Score": 1198
+    }
+   ],
+   "v8": {
+    "Richards": 769,
+    "DeltaBlue": 754,
+    "Crypto": 894,
+    "RayTrace": 1686,
+    "EarleyBoyer": 2220,
+    "RegExp": 442,
+    "Splay": 3064,
+    "NavierStokes": 1617,
+    "Score": 1198
+   },
+   "v8_score_spread": [
+    1167,
+    1205
+   ],
+   "ss": {
+    "3d-cube": 28.1667,
+    "3d-morph": 20.0,
+    "3d-raytrace": 2.375,
+    "access-binary-trees": 13.0,
+    "access-fannkuch": 65.6667,
+    "access-nbody": 15.5714,
+    "access-nsieve": 36.0,
+    "bitops-3bit-bits-in-byte": 10.0,
+    "bitops-bits-in-byte": 24.6667,
+    "bitops-bitwise-and": 13.9091,
+    "bitops-nsieve-bits": 19.875,
+    "controlflow-recursive": 7.2105,
+    "crypto-aes": 21.8571,
+    "crypto-md5": 7.1905,
+    "crypto-sha1": 6.9048,
+    "date-format-tofte": 6.2,
+    "date-format-xparb": 3.0,
+    "math-cordic": 25.8333,
+    "math-partial-sums": 14.1,
+    "math-spectral-norm": 9.1176,
+    "regexp-dna": 39.5,
+    "string-base64": 14.6,
+    "string-fasta": 53.0,
+    "string-tagcloud": 29.5,
+    "string-unpack-code": 47.75,
+    "string-validate-input": 13.2727
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 17.26,
+    "empty_down_loop": 17.13,
+    "empty_down_loop2": 20.02,
+    "empty_do_loop": 18.05,
+    "date_now": 70.75,
+    "date_parse": 534.39,
+    "prop_read": 11.45,
+    "prop_write": 18.68,
+    "prop_update": 18.74,
+    "prop_create": 58.91,
+    "prop_clone": 46.8,
+    "prop_delete": 78.94,
+    "array_read": 11.12,
+    "array_write": 28.08,
+    "array_update": 13.39,
+    "array_prop_create": 32.24,
+    "array_slice": 18.1,
+    "array_length_read": 11.06,
+    "array_length_decr": 48.58,
+    "array_hole_length_decr": 66.6,
+    "array_push": 31.86,
+    "array_pop": 69.75,
+    "typed_array_read": 12.38,
+    "typed_array_write": 30.41,
+    "arguments_read": 143.37,
+    "arguments_strict_read": 121.13,
+    "global_read": 11.15,
+    "global_write": 12.19,
+    "global_write_strict": 11.97,
+    "local_destruct": 26.98,
+    "global_destruct": 40.39,
+    "global_destruct_strict": 39.66,
+    "global_func_call": 23.91,
+    "func_call": 23.03,
+    "func_closure_call": 26.95,
+    "int_arith": 18.03,
+    "float_arith": 24.49,
+    "map_set_string": 182.0,
+    "map_set_int": 3528.87,
+    "map_set_bigint": 3610.18,
+    "map_delete": 176.04,
+    "weak_map_set": 144.45,
+    "weak_map_delete": 262.78,
+    "array_for": 18.51,
+    "array_for_in": 53.95,
+    "array_for_of": 21.79,
+    "math_min": 30.87,
+    "regexp_ascii": 190.37,
+    "regexp_utf16": 191.05,
+    "regexp_replace": 1595.84,
+    "string_length": 12.93,
+    "string_build1": 43.15,
+    "string_build1x": 43.57,
+    "string_build2c": 60.49,
+    "string_build2": 46.68,
+    "string_build3": 42.4,
+    "string_build4": 45.29,
+    "string_build_large1": 55.78,
+    "string_build_large2": 51.85,
+    "int_to_string": 34.48,
+    "int_toString": 44.54,
+    "float_to_string": 213.66,
+    "float_toString": 228.36,
+    "float_toFixed": 91.86,
+    "float_toPrecision": 105.99,
+    "float_toExponential": 106.71,
+    "string_to_int": 85.99,
+    "string_to_float": 104.2,
+    "bigint32_arith": 38.57,
+    "bigint64_arith": 51.85,
+    "bigint256_arith": 94.92,
+    "sort_bench": 19.01
+   },
+   "microcall_scores": [
+    22526,
+    23255,
+    23003,
+    23089,
+    23211
+   ],
+   "microcall": 23089,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 32.5,
+    "id": 34,
+    "six": 59,
+    "eight": 64,
+    "method": 74,
+    "depth4": 25,
+    "closure": 34,
+    "mutual": 28,
+    "sched": 72
+   }
+  },
+  "goc-ng": {
+   "v8_rounds": [
+    {
+     "Richards": 758,
+     "DeltaBlue": 735,
+     "Crypto": 861,
+     "RayTrace": 1510,
+     "EarleyBoyer": 2103,
+     "RegExp": 346,
+     "Splay": 2771,
+     "NavierStokes": 1621,
+     "Score": 1114
+    },
+    {
+     "Richards": 755,
+     "DeltaBlue": 722,
+     "Crypto": 854,
+     "RayTrace": 1493,
+     "EarleyBoyer": 1983,
+     "RegExp": 345,
+     "Splay": 2657,
+     "NavierStokes": 1613,
+     "Score": 1093
+    },
+    {
+     "Richards": 766,
+     "DeltaBlue": 724,
+     "Crypto": 875,
+     "RayTrace": 1477,
+     "EarleyBoyer": 2078,
+     "RegExp": 347,
+     "Splay": 2719,
+     "NavierStokes": 1579,
+     "Score": 1105
+    },
+    {
+     "Richards": 774,
+     "DeltaBlue": 736,
+     "Crypto": 857,
+     "RayTrace": 1447,
+     "EarleyBoyer": 2050,
+     "RegExp": 356,
+     "Splay": 2871,
+     "NavierStokes": 1602,
+     "Score": 1114
+    },
+    {
+     "Richards": 744,
+     "DeltaBlue": 731,
+     "Crypto": 866,
+     "RayTrace": 1463,
+     "EarleyBoyer": 2103,
+     "RegExp": 340,
+     "Splay": 2909,
+     "NavierStokes": 1609,
+     "Score": 1110
+    }
+   ],
+   "v8": {
+    "Richards": 758,
+    "DeltaBlue": 731,
+    "Crypto": 861,
+    "RayTrace": 1477,
+    "EarleyBoyer": 2078,
+    "RegExp": 346,
+    "Splay": 2771,
+    "NavierStokes": 1609,
+    "Score": 1110
+   },
+   "v8_score_spread": [
+    1093,
+    1114
+   ],
+   "ss": {
+    "3d-cube": 28.0,
+    "3d-morph": 32.6,
+    "3d-raytrace": 2.5,
+    "access-binary-trees": 14.1818,
+    "access-fannkuch": 75.5,
+    "access-nbody": 18.25,
+    "access-nsieve": 34.0,
+    "bitops-3bit-bits-in-byte": 10.3571,
+    "bitops-bits-in-byte": 24.5714,
+    "bitops-bitwise-and": 12.25,
+    "bitops-nsieve-bits": 20.0,
+    "controlflow-recursive": 7.7619,
+    "crypto-aes": 23.1429,
+    "crypto-md5": 7.25,
+    "crypto-sha1": 7.15,
+    "date-format-tofte": 6.6,
+    "date-format-xparb": 1.8889,
+    "math-cordic": 26.5,
+    "math-partial-sums": 19.8571,
+    "math-spectral-norm": 9.4375,
+    "regexp-dna": 46.5,
+    "string-base64": 14.4545,
+    "string-fasta": 54.3333,
+    "string-tagcloud": 34.2,
+    "string-unpack-code": 51.3333,
+    "string-validate-input": 17.1111
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 16.71,
+    "empty_down_loop": 18.07,
+    "empty_down_loop2": 23.08,
+    "empty_do_loop": 18.2,
+    "date_now": 159.99,
+    "date_parse": 810.93,
+    "prop_read": 11.84,
+    "prop_write": 18.34,
+    "prop_update": 18.43,
+    "prop_create": 61.86,
+    "prop_clone": 53.01,
+    "prop_delete": 88.0,
+    "array_read": 11.41,
+    "array_write": 27.71,
+    "array_update": 12.99,
+    "array_prop_create": 31.93,
+    "array_slice": 18.14,
+    "array_length_read": 11.25,
+    "array_length_decr": 49.36,
+    "array_hole_length_decr": 68.19,
+    "array_push": 35.76,
+    "array_pop": 72.43,
+    "typed_array_read": 12.81,
+    "typed_array_write": 30.37,
+    "arguments_read": 165.64,
+    "arguments_strict_read": 131.89,
+    "global_read": 9.94,
+    "global_write": 11.39,
+    "global_write_strict": 11.75,
+    "local_destruct": 28.9,
+    "global_destruct": 41.76,
+    "global_destruct_strict": 42.47,
+    "global_func_call": 27.73,
+    "func_call": 24.56,
+    "func_closure_call": 28.99,
+    "int_arith": 18.4,
+    "float_arith": 26.63,
+    "map_set_string": 200.07,
+    "map_set_int": 3581.48,
+    "map_set_bigint": 3426.84,
+    "map_delete": 190.08,
+    "weak_map_set": 153.78,
+    "weak_map_delete": 284.05,
+    "array_for": 18.1,
+    "array_for_in": 60.82,
+    "array_for_of": 21.78,
+    "math_min": 33.73,
+    "regexp_ascii": 218.01,
+    "regexp_utf16": 234.91,
+    "regexp_replace": 2058.76,
+    "string_length": 14.6,
+    "string_build1": 52.04,
+    "string_build1x": 50.97,
+    "string_build2c": 56.49,
+    "string_build2": 54.18,
+    "string_build3": 51.44,
+    "string_build4": 52.0,
+    "string_build_large1": 67.6,
+    "string_build_large2": 61.9,
+    "int_to_string": 39.22,
+    "int_toString": 49.25,
+    "float_to_string": 219.56,
+    "float_toString": 240.59,
+    "float_toFixed": 102.51,
+    "float_toPrecision": 119.27,
+    "float_toExponential": 119.72,
+    "string_to_int": 84.52,
+    "string_to_float": 103.88,
+    "bigint32_arith": 42.59,
+    "bigint64_arith": 57.74,
+    "bigint256_arith": 100.16,
+    "sort_bench": 22.5
+   },
+   "microcall_scores": [
+    21301,
+    21896,
+    22104,
+    21649,
+    21735
+   ],
+   "microcall": 21735,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 33.5,
+    "id": 35.5,
+    "six": 61,
+    "eight": 69,
+    "method": 69,
+    "depth4": 26.5,
+    "closure": 38,
+    "mutual": 30,
+    "sched": 84
+   }
+  },
+  "bellard-gcc-O2": {
+   "v8_rounds": [
+    {
+     "Richards": 1037,
+     "DeltaBlue": 946,
+     "Crypto": 1373,
+     "RayTrace": 1943,
+     "EarleyBoyer": 2493,
+     "RegExp": 547,
+     "Splay": 3447,
+     "NavierStokes": 2801,
+     "Score": 1557
+    },
+    {
+     "Richards": 1043,
+     "DeltaBlue": 962,
+     "Crypto": 1357,
+     "RayTrace": 1900,
+     "EarleyBoyer": 2517,
+     "RegExp": 543,
+     "Splay": 3351,
+     "NavierStokes": 2811,
+     "Score": 1550
+    },
+    {
+     "Richards": 979,
+     "DeltaBlue": 904,
+     "Crypto": 1316,
+     "RayTrace": 1895,
+     "EarleyBoyer": 2449,
+     "RegExp": 539,
+     "Splay": 3447,
+     "NavierStokes": 2749,
+     "Score": 1514
+    },
+    {
+     "Richards": 1040,
+     "DeltaBlue": 962,
+     "Crypto": 1374,
+     "RayTrace": 1950,
+     "EarleyBoyer": 2519,
+     "RegExp": 547,
+     "Splay": 3569,
+     "NavierStokes": 2828,
+     "Score": 1572
+    },
+    {
+     "Richards": 1014,
+     "DeltaBlue": 950,
+     "Crypto": 1353,
+     "RayTrace": 1979,
+     "EarleyBoyer": 2353,
+     "RegExp": 533,
+     "Splay": 3509,
+     "NavierStokes": 2771,
+     "Score": 1539
+    }
+   ],
+   "v8": {
+    "Richards": 1037,
+    "DeltaBlue": 950,
+    "Crypto": 1357,
+    "RayTrace": 1943,
+    "EarleyBoyer": 2493,
+    "RegExp": 543,
+    "Splay": 3447,
+    "NavierStokes": 2801,
+    "Score": 1550
+   },
+   "v8_score_spread": [
+    1514,
+    1572
+   ],
+   "ss": {
+    "3d-cube": 17.7778,
+    "3d-morph": 13.25,
+    "3d-raytrace": 1.2727,
+    "access-binary-trees": 10.2667,
+    "access-fannkuch": 31.4,
+    "access-nbody": 12.5,
+    "access-nsieve": 17.2222,
+    "bitops-3bit-bits-in-byte": 7.7,
+    "bitops-bits-in-byte": 20.1429,
+    "bitops-bitwise-and": 7.6,
+    "bitops-nsieve-bits": 13.3333,
+    "controlflow-recursive": 5.3571,
+    "crypto-aes": 12.4615,
+    "crypto-md5": 5.5556,
+    "crypto-sha1": 5.1724,
+    "date-format-tofte": 4.1667,
+    "date-format-xparb": 2.5,
+    "math-cordic": 21.8571,
+    "math-partial-sums": 9.375,
+    "math-spectral-norm": 7.0,
+    "regexp-dna": 35.5,
+    "string-base64": 11.7692,
+    "string-fasta": 21.5714,
+    "string-tagcloud": 21.1429,
+    "string-unpack-code": 38.0,
+    "string-validate-input": 10.9286
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 9.74,
+    "empty_down_loop": 15.92,
+    "empty_down_loop2": 21.63,
+    "empty_do_loop": 14.53,
+    "date_now": 52.87,
+    "date_parse": 528.95,
+    "prop_read": 7.31,
+    "prop_write": 7.7,
+    "prop_update": 9.94,
+    "prop_create": 39.32,
+    "prop_clone": 45.49,
+    "prop_delete": 70.65,
+    "array_read": 6.18,
+    "array_write": 7.03,
+    "array_update": 8.7,
+    "array_prop_create": 13.38,
+    "array_slice": 13.34,
+    "array_length_read": 7.17,
+    "array_length_decr": 35.58,
+    "array_hole_length_decr": 49.25,
+    "array_push": 26.59,
+    "array_pop": 58.34,
+    "typed_array_read": 8.26,
+    "typed_array_write": 7.69,
+    "arguments_read": 99.1,
+    "arguments_strict_read": 80.28,
+    "global_read": 5.75,
+    "global_write": 7.76,
+    "global_write_strict": 7.82,
+    "local_destruct": 22.36,
+    "global_destruct": 30.77,
+    "global_destruct_strict": 29.84,
+    "global_func_call": 16.37,
+    "func_call": 15.86,
+    "func_closure_call": 19.99,
+    "int_arith": 12.16,
+    "float_arith": 17.09,
+    "map_set_string": 170.25,
+    "map_set_int": 85.89,
+    "map_set_bigint": 111.07,
+    "map_delete": 168.23,
+    "weak_map_set": 59.44,
+    "weak_map_delete": 144.23,
+    "array_for": 12.74,
+    "array_for_in": 40.34,
+    "array_for_of": 19.08,
+    "math_min": 21.5,
+    "regexp_ascii": 143.04,
+    "regexp_utf16": 147.53,
+    "regexp_replace": 612.48,
+    "string_length": 8.56,
+    "string_build1": 19.97,
+    "string_build1x": 20.03,
+    "string_build2c": 24.82,
+    "string_build2": 32.85,
+    "string_build3": 33.16,
+    "string_build4": 35.83,
+    "string_build_large1": 42.95,
+    "string_build_large2": 40.92,
+    "int_to_string": 28.08,
+    "int_toString": 37.39,
+    "float_to_string": 219.3,
+    "float_toString": 218.28,
+    "float_toFixed": 82.16,
+    "float_toPrecision": 93.74,
+    "float_toExponential": 92.22,
+    "string_to_int": 68.55,
+    "string_to_float": 94.18,
+    "bigint32_arith": 21.88,
+    "bigint64_arith": 27.43,
+    "bigint256_arith": 73.1,
+    "sort_bench": 14.4
+   },
+   "microcall_scores": [
+    31036,
+    31627,
+    30686,
+    31122,
+    31393
+   ],
+   "microcall": 31122,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 23.5,
+    "id": 24,
+    "six": 45,
+    "eight": 55,
+    "method": 54,
+    "depth4": 15,
+    "closure": 27,
+    "mutual": 22,
+    "sched": 50.5
+   }
+  },
+  "bellard-gcc-O2-NDEBUG": {
+   "v8_rounds": [
+    {
+     "Richards": 1010,
+     "DeltaBlue": 926,
+     "Crypto": 1360,
+     "RayTrace": 1899,
+     "EarleyBoyer": 2528,
+     "RegExp": 549,
+     "Splay": 3403,
+     "NavierStokes": 2667,
+     "Score": 1533
+    },
+    {
+     "Richards": 1008,
+     "DeltaBlue": 941,
+     "Crypto": 1351,
+     "RayTrace": 1938,
+     "EarleyBoyer": 2502,
+     "RegExp": 546,
+     "Splay": 3406,
+     "NavierStokes": 2672,
+     "Score": 1535
+    },
+    {
+     "Richards": 996,
+     "DeltaBlue": 928,
+     "Crypto": 1369,
+     "RayTrace": 1975,
+     "EarleyBoyer": 2531,
+     "RegExp": 547,
+     "Splay": 3481,
+     "NavierStokes": 2684,
+     "Score": 1544
+    },
+    {
+     "Richards": 1014,
+     "DeltaBlue": 936,
+     "Crypto": 1369,
+     "RayTrace": 1938,
+     "EarleyBoyer": 2546,
+     "RegExp": 552,
+     "Splay": 3439,
+     "NavierStokes": 2723,
+     "Score": 1549
+    },
+    {
+     "Richards": 1000,
+     "DeltaBlue": 932,
+     "Crypto": 1370,
+     "RayTrace": 1903,
+     "EarleyBoyer": 2562,
+     "RegExp": 547,
+     "Splay": 3504,
+     "NavierStokes": 2673,
+     "Score": 1541
+    }
+   ],
+   "v8": {
+    "Richards": 1008,
+    "DeltaBlue": 932,
+    "Crypto": 1369,
+    "RayTrace": 1938,
+    "EarleyBoyer": 2531,
+    "RegExp": 547,
+    "Splay": 3439,
+    "NavierStokes": 2673,
+    "Score": 1541
+   },
+   "v8_score_spread": [
+    1533,
+    1549
+   ],
+   "ss": {
+    "3d-cube": 19.0,
+    "3d-morph": 12.5833,
+    "3d-raytrace": 1.2727,
+    "access-binary-trees": 10.4,
+    "access-fannkuch": 30.8,
+    "access-nbody": 12.25,
+    "access-nsieve": 18.875,
+    "bitops-3bit-bits-in-byte": 7.7895,
+    "bitops-bits-in-byte": 20.375,
+    "bitops-bitwise-and": 8.2778,
+    "bitops-nsieve-bits": 13.7273,
+    "controlflow-recursive": 5.75,
+    "crypto-aes": 12.75,
+    "crypto-md5": 5.6538,
+    "crypto-sha1": 5.1034,
+    "date-format-tofte": 4.3333,
+    "date-format-xparb": 2.625,
+    "math-cordic": 22.8571,
+    "math-partial-sums": 9.5,
+    "math-spectral-norm": 6.8636,
+    "regexp-dna": 23.6667,
+    "string-base64": 11.8462,
+    "string-fasta": 21.4286,
+    "string-tagcloud": 21.1429,
+    "string-unpack-code": 38.5,
+    "string-validate-input": 11.3077
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 11.72,
+    "empty_down_loop": 16.02,
+    "empty_down_loop2": 21.12,
+    "empty_do_loop": 14.53,
+    "date_now": 55.26,
+    "date_parse": 523.03,
+    "prop_read": 8.82,
+    "prop_write": 7.83,
+    "prop_update": 9.86,
+    "prop_create": 41.97,
+    "prop_clone": 46.47,
+    "prop_delete": 74.77,
+    "array_read": 6.87,
+    "array_write": 7.31,
+    "array_update": 8.98,
+    "array_prop_create": 12.34,
+    "array_slice": 13.71,
+    "array_length_read": 7.47,
+    "array_length_decr": 36.44,
+    "array_hole_length_decr": 47.75,
+    "array_push": 27.68,
+    "array_pop": 58.33,
+    "typed_array_read": 8.94,
+    "typed_array_write": 8.67,
+    "arguments_read": 100.87,
+    "arguments_strict_read": 81.2,
+    "global_read": 6.04,
+    "global_write": 7.76,
+    "global_write_strict": 7.77,
+    "local_destruct": 23.41,
+    "global_destruct": 31.78,
+    "global_destruct_strict": 32.18,
+    "global_func_call": 16.37,
+    "func_call": 15.63,
+    "func_closure_call": 20.47,
+    "int_arith": 11.64,
+    "float_arith": 17.99,
+    "map_set_string": 174.24,
+    "map_set_int": 83.16,
+    "map_set_bigint": 108.51,
+    "map_delete": 167.19,
+    "weak_map_set": 57.39,
+    "weak_map_delete": 143.27,
+    "array_for": 12.02,
+    "array_for_in": 40.52,
+    "array_for_of": 18.9,
+    "math_min": 22.61,
+    "regexp_ascii": 150.69,
+    "regexp_utf16": 148.26,
+    "regexp_replace": 608.89,
+    "string_length": 9.14,
+    "string_build1": 19.4,
+    "string_build1x": 19.14,
+    "string_build2c": 24.57,
+    "string_build2": 34.07,
+    "string_build3": 32.67,
+    "string_build4": 35.95,
+    "string_build_large1": 43.16,
+    "string_build_large2": 40.51,
+    "int_to_string": 27.91,
+    "int_toString": 38.11,
+    "float_to_string": 212.24,
+    "float_toString": 216.66,
+    "float_toFixed": 83.61,
+    "float_toPrecision": 92.26,
+    "float_toExponential": 93.12,
+    "string_to_int": 76.15,
+    "string_to_float": 95.08,
+    "bigint32_arith": 22.24,
+    "bigint64_arith": 30.01,
+    "bigint256_arith": 74.49,
+    "sort_bench": 14.55
+   },
+   "microcall_scores": [
+    31498,
+    31600,
+    30966,
+    31335,
+    31870
+   ],
+   "microcall": 31498,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 23,
+    "id": 23,
+    "six": 46,
+    "eight": 55,
+    "method": 53,
+    "depth4": 15.5,
+    "closure": 26,
+    "mutual": 22.5,
+    "sched": 50
+   }
+  },
+  "bellard-clang-O2": {
+   "v8_rounds": [
+    {
+     "Richards": 886,
+     "DeltaBlue": 865,
+     "Crypto": 965,
+     "RayTrace": 1917,
+     "EarleyBoyer": 2442,
+     "RegExp": 431,
+     "Splay": 3672,
+     "NavierStokes": 1915,
+     "Score": 1342
+    },
+    {
+     "Richards": 884,
+     "DeltaBlue": 872,
+     "Crypto": 1001,
+     "RayTrace": 1886,
+     "EarleyBoyer": 2400,
+     "RegExp": 426,
+     "Splay": 3492,
+     "NavierStokes": 1899,
+     "Score": 1332
+    },
+    {
+     "Richards": 878,
+     "DeltaBlue": 875,
+     "Crypto": 999,
+     "RayTrace": 1907,
+     "EarleyBoyer": 2367,
+     "RegExp": 435,
+     "Splay": 3553,
+     "NavierStokes": 1935,
+     "Score": 1340
+    },
+    {
+     "Richards": 894,
+     "DeltaBlue": 862,
+     "Crypto": 1006,
+     "RayTrace": 1888,
+     "EarleyBoyer": 2427,
+     "RegExp": 435,
+     "Splay": 3403,
+     "NavierStokes": 1926,
+     "Score": 1336
+    },
+    {
+     "Richards": 883,
+     "DeltaBlue": 879,
+     "Crypto": 1005,
+     "RayTrace": 1896,
+     "EarleyBoyer": 2461,
+     "RegExp": 441,
+     "Splay": 3522,
+     "NavierStokes": 1924,
+     "Score": 1348
+    }
+   ],
+   "v8": {
+    "Richards": 884,
+    "DeltaBlue": 872,
+    "Crypto": 1001,
+    "RayTrace": 1896,
+    "EarleyBoyer": 2427,
+    "RegExp": 435,
+    "Splay": 3522,
+    "NavierStokes": 1924,
+    "Score": 1340
+   },
+   "v8_score_spread": [
+    1332,
+    1348
+   ],
+   "ss": {
+    "3d-cube": 24.8333,
+    "3d-morph": 15.4,
+    "3d-raytrace": 1.7778,
+    "access-binary-trees": 11.7692,
+    "access-fannkuch": 42.25,
+    "access-nbody": 15.3,
+    "access-nsieve": 22.5714,
+    "bitops-3bit-bits-in-byte": 11.0,
+    "bitops-bits-in-byte": 26.8333,
+    "bitops-bitwise-and": 13.1667,
+    "bitops-nsieve-bits": 21.5714,
+    "controlflow-recursive": 7.45,
+    "crypto-aes": 14.9,
+    "crypto-md5": 7.6842,
+    "crypto-sha1": 7.6842,
+    "date-format-tofte": 5.8,
+    "date-format-xparb": 2.375,
+    "math-cordic": 29.8,
+    "math-partial-sums": 12.0,
+    "math-spectral-norm": 9.3333,
+    "regexp-dna": 42.5,
+    "string-base64": 13.0,
+    "string-fasta": 23.8571,
+    "string-tagcloud": 24.6667,
+    "string-unpack-code": 39.0,
+    "string-validate-input": 11.5
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 17.61,
+    "empty_down_loop": 17.18,
+    "empty_down_loop2": 21.68,
+    "empty_do_loop": 18.35,
+    "date_now": 60.72,
+    "date_parse": 486.47,
+    "prop_read": 12.26,
+    "prop_write": 16.86,
+    "prop_update": 16.81,
+    "prop_create": 42.29,
+    "prop_clone": 44.54,
+    "prop_delete": 75.58,
+    "array_read": 10.62,
+    "array_write": 7.97,
+    "array_update": 11.15,
+    "array_prop_create": 17.5,
+    "array_slice": 22.17,
+    "array_length_read": 12.14,
+    "array_length_decr": 48.44,
+    "array_hole_length_decr": 54.02,
+    "array_push": 34.29,
+    "array_pop": 69.26,
+    "typed_array_read": 12.47,
+    "typed_array_write": 9.53,
+    "arguments_read": 107.57,
+    "arguments_strict_read": 88.35,
+    "global_read": 9.17,
+    "global_write": 11.64,
+    "global_write_strict": 11.56,
+    "local_destruct": 23.52,
+    "global_destruct": 31.78,
+    "global_destruct_strict": 31.12,
+    "global_func_call": 21.64,
+    "func_call": 21.76,
+    "func_closure_call": 25.68,
+    "int_arith": 21.25,
+    "float_arith": 26.25,
+    "map_set_string": 181.08,
+    "map_set_int": 109.65,
+    "map_set_bigint": 132.72,
+    "map_delete": 180.84,
+    "weak_map_set": 68.78,
+    "weak_map_delete": 156.87,
+    "array_for": 19.48,
+    "array_for_in": 50.67,
+    "array_for_of": 20.26,
+    "math_min": 34.35,
+    "regexp_ascii": 161.65,
+    "regexp_utf16": 163.09,
+    "regexp_replace": 825.58,
+    "string_length": 14.97,
+    "string_build1": 22.86,
+    "string_build1x": 23.06,
+    "string_build2c": 28.56,
+    "string_build2": 40.49,
+    "string_build3": 37.1,
+    "string_build4": 43.69,
+    "string_build_large1": 46.34,
+    "string_build_large2": 42.98,
+    "int_to_string": 32.57,
+    "int_toString": 40.73,
+    "float_to_string": 209.07,
+    "float_toString": 220.7,
+    "float_toFixed": 84.5,
+    "float_toPrecision": 102.65,
+    "float_toExponential": 104.17,
+    "string_to_int": 89.1,
+    "string_to_float": 109.31,
+    "bigint32_arith": 34.61,
+    "bigint64_arith": 42.13,
+    "bigint256_arith": 92.89,
+    "sort_bench": 16.7
+   },
+   "microcall_scores": [
+    24771,
+    25127,
+    24685,
+    24444,
+    25133
+   ],
+   "microcall": 24771,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 29,
+    "id": 32.5,
+    "six": 57,
+    "eight": 65,
+    "method": 60,
+    "depth4": 20.5,
+    "closure": 38,
+    "mutual": 27,
+    "sched": 63.5
+   }
+  },
+  "bellard-clang-O2-NDEBUG": {
+   "v8_rounds": [
+    {
+     "Richards": 839,
+     "DeltaBlue": 878,
+     "Crypto": 1021,
+     "RayTrace": 1913,
+     "EarleyBoyer": 2449,
+     "RegExp": 455,
+     "Splay": 3476,
+     "NavierStokes": 1729,
+     "Score": 1327
+    },
+    {
+     "Richards": 824,
+     "DeltaBlue": 853,
+     "Crypto": 1015,
+     "RayTrace": 1880,
+     "EarleyBoyer": 2406,
+     "RegExp": 448,
+     "Splay": 3472,
+     "NavierStokes": 1550,
+     "Score": 1292
+    },
+    {
+     "Richards": 820,
+     "DeltaBlue": 846,
+     "Crypto": 985,
+     "RayTrace": 1756,
+     "EarleyBoyer": 2210,
+     "RegExp": 444,
+     "Splay": 3444,
+     "NavierStokes": 1731,
+     "Score": 1276
+    },
+    {
+     "Richards": 794,
+     "DeltaBlue": 878,
+     "Crypto": 1029,
+     "RayTrace": 1869,
+     "EarleyBoyer": 2436,
+     "RegExp": 460,
+     "Splay": 3574,
+     "NavierStokes": 1741,
+     "Score": 1322
+    },
+    {
+     "Richards": 830,
+     "DeltaBlue": 882,
+     "Crypto": 1023,
+     "RayTrace": 1907,
+     "EarleyBoyer": 2429,
+     "RegExp": 435,
+     "Splay": 3606,
+     "NavierStokes": 1793,
+     "Score": 1329
+    }
+   ],
+   "v8": {
+    "Richards": 824,
+    "DeltaBlue": 878,
+    "Crypto": 1021,
+    "RayTrace": 1880,
+    "EarleyBoyer": 2429,
+    "RegExp": 448,
+    "Splay": 3476,
+    "NavierStokes": 1731,
+    "Score": 1322
+   },
+   "v8_score_spread": [
+    1276,
+    1329
+   ],
+   "ss": {
+    "3d-cube": 25.1667,
+    "3d-morph": 15.2,
+    "3d-raytrace": 1.7778,
+    "access-binary-trees": 11.5385,
+    "access-fannkuch": 40.25,
+    "access-nbody": 15.0,
+    "access-nsieve": 21.5714,
+    "bitops-3bit-bits-in-byte": 11.2143,
+    "bitops-bits-in-byte": 25.1667,
+    "bitops-bitwise-and": 13.0833,
+    "bitops-nsieve-bits": 19.375,
+    "controlflow-recursive": 7.2857,
+    "crypto-aes": 14.7,
+    "crypto-md5": 8.0,
+    "crypto-sha1": 7.5263,
+    "date-format-tofte": 4.6667,
+    "date-format-xparb": 2.375,
+    "math-cordic": 28.1667,
+    "math-partial-sums": 11.8462,
+    "math-spectral-norm": 9.375,
+    "regexp-dna": 42.5,
+    "string-base64": 12.8333,
+    "string-fasta": 23.2857,
+    "string-tagcloud": 24.7143,
+    "string-unpack-code": 39.75,
+    "string-validate-input": 10.9286
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 16.33,
+    "empty_down_loop": 18.28,
+    "empty_down_loop2": 21.07,
+    "empty_do_loop": 19.22,
+    "date_now": 58.48,
+    "date_parse": 480.47,
+    "prop_read": 11.92,
+    "prop_write": 16.27,
+    "prop_update": 16.96,
+    "prop_create": 41.68,
+    "prop_clone": 40.04,
+    "prop_delete": 68.78,
+    "array_read": 10.34,
+    "array_write": 7.64,
+    "array_update": 10.53,
+    "array_prop_create": 17.0,
+    "array_slice": 21.25,
+    "array_length_read": 12.04,
+    "array_length_decr": 48.09,
+    "array_hole_length_decr": 54.49,
+    "array_push": 32.3,
+    "array_pop": 68.22,
+    "typed_array_read": 12.81,
+    "typed_array_write": 10.21,
+    "arguments_read": 105.61,
+    "arguments_strict_read": 91.8,
+    "global_read": 9.42,
+    "global_write": 11.24,
+    "global_write_strict": 11.19,
+    "local_destruct": 23.63,
+    "global_destruct": 30.48,
+    "global_destruct_strict": 30.36,
+    "global_func_call": 20.94,
+    "func_call": 21.12,
+    "func_closure_call": 24.61,
+    "int_arith": 18.57,
+    "float_arith": 23.18,
+    "map_set_string": 178.42,
+    "map_set_int": 99.51,
+    "map_set_bigint": 121.19,
+    "map_delete": 183.96,
+    "weak_map_set": 65.39,
+    "weak_map_delete": 154.24,
+    "array_for": 18.19,
+    "array_for_in": 48.03,
+    "array_for_of": 18.86,
+    "math_min": 28.52,
+    "regexp_ascii": 145.35,
+    "regexp_utf16": 145.62,
+    "regexp_replace": 752.14,
+    "string_length": 13.89,
+    "string_build1": 22.32,
+    "string_build1x": 22.49,
+    "string_build2c": 28.02,
+    "string_build2": 40.65,
+    "string_build3": 35.58,
+    "string_build4": 42.49,
+    "string_build_large1": 46.56,
+    "string_build_large2": 42.52,
+    "int_to_string": 32.01,
+    "int_toString": 38.38,
+    "float_to_string": 208.26,
+    "float_toString": 222.13,
+    "float_toFixed": 83.52,
+    "float_toPrecision": 103.74,
+    "float_toExponential": 101.61,
+    "string_to_int": 88.16,
+    "string_to_float": 108.29,
+    "bigint32_arith": 32.52,
+    "bigint64_arith": 40.83,
+    "bigint256_arith": 88.15,
+    "sort_bench": 18.35
+   },
+   "microcall_scores": [
+    24043,
+    24307,
+    24301,
+    24180,
+    24404
+   ],
+   "microcall": 24301,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 28.5,
+    "id": 33,
+    "six": 62,
+    "eight": 72,
+    "method": 63,
+    "depth4": 20,
+    "closure": 38,
+    "mutual": 26.5,
+    "sched": 64
+   }
+  },
+  "bellard-clang-O3": {
+   "v8_rounds": [
+    {
+     "Richards": 834,
+     "DeltaBlue": 840,
+     "Crypto": 961,
+     "RayTrace": 1889,
+     "EarleyBoyer": 2385,
+     "RegExp": 437,
+     "Splay": 3489,
+     "NavierStokes": 1777,
+     "Score": 1301
+    },
+    {
+     "Richards": 844,
+     "DeltaBlue": 849,
+     "Crypto": 937,
+     "RayTrace": 1955,
+     "EarleyBoyer": 2373,
+     "RegExp": 449,
+     "Splay": 3663,
+     "NavierStokes": 1783,
+     "Score": 1319
+    },
+    {
+     "Richards": 857,
+     "DeltaBlue": 828,
+     "Crypto": 943,
+     "RayTrace": 1736,
+     "EarleyBoyer": 2425,
+     "RegExp": 448,
+     "Splay": 3558,
+     "NavierStokes": 1774,
+     "Score": 1296
+    },
+    {
+     "Richards": 861,
+     "DeltaBlue": 864,
+     "Crypto": 959,
+     "RayTrace": 1786,
+     "EarleyBoyer": 2454,
+     "RegExp": 445,
+     "Splay": 3569,
+     "NavierStokes": 1774,
+     "Score": 1313
+    },
+    {
+     "Richards": 855,
+     "DeltaBlue": 869,
+     "Crypto": 960,
+     "RayTrace": 1940,
+     "EarleyBoyer": 2445,
+     "RegExp": 443,
+     "Splay": 3635,
+     "NavierStokes": 1765,
+     "Score": 1327
+    }
+   ],
+   "v8": {
+    "Richards": 855,
+    "DeltaBlue": 849,
+    "Crypto": 959,
+    "RayTrace": 1889,
+    "EarleyBoyer": 2425,
+    "RegExp": 445,
+    "Splay": 3569,
+    "NavierStokes": 1774,
+    "Score": 1313
+   },
+   "v8_score_spread": [
+    1296,
+    1327
+   ],
+   "ss": {
+    "3d-cube": 26.6667,
+    "3d-morph": 16.7778,
+    "3d-raytrace": 2.125,
+    "access-binary-trees": 11.7692,
+    "access-fannkuch": 44.75,
+    "access-nbody": 16.4444,
+    "access-nsieve": 23.3333,
+    "bitops-3bit-bits-in-byte": 12.3333,
+    "bitops-bits-in-byte": 27.0,
+    "bitops-bitwise-and": 13.7273,
+    "bitops-nsieve-bits": 22.0,
+    "controlflow-recursive": 8.0,
+    "crypto-aes": 16.2,
+    "crypto-md5": 8.2222,
+    "crypto-sha1": 8.2222,
+    "date-format-tofte": 5.8,
+    "date-format-xparb": 2.375,
+    "math-cordic": 31.4,
+    "math-partial-sums": 12.2308,
+    "math-spectral-norm": 9.9333,
+    "regexp-dna": 43.5,
+    "string-base64": 13.7273,
+    "string-fasta": 24.3333,
+    "string-tagcloud": 24.5,
+    "string-unpack-code": 38.5,
+    "string-validate-input": 11.7692
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 18.72,
+    "empty_down_loop": 19.26,
+    "empty_down_loop2": 23.48,
+    "empty_do_loop": 20.4,
+    "date_now": 62.89,
+    "date_parse": 479.34,
+    "prop_read": 12.82,
+    "prop_write": 17.18,
+    "prop_update": 17.19,
+    "prop_create": 42.87,
+    "prop_clone": 39.92,
+    "prop_delete": 71.45,
+    "array_read": 11.23,
+    "array_write": 9.1,
+    "array_update": 12.48,
+    "array_prop_create": 20.16,
+    "array_slice": 21.08,
+    "array_length_read": 12.2,
+    "array_length_decr": 49.22,
+    "array_hole_length_decr": 56.49,
+    "array_push": 35.11,
+    "array_pop": 71.95,
+    "typed_array_read": 13.34,
+    "typed_array_write": 12.29,
+    "arguments_read": 108.45,
+    "arguments_strict_read": 92.17,
+    "global_read": 9.72,
+    "global_write": 11.92,
+    "global_write_strict": 11.76,
+    "local_destruct": 24.29,
+    "global_destruct": 32.03,
+    "global_destruct_strict": 32.85,
+    "global_func_call": 23.81,
+    "func_call": 23.77,
+    "func_closure_call": 26.48,
+    "int_arith": 20.1,
+    "float_arith": 26.91,
+    "map_set_string": 189.65,
+    "map_set_int": 104.47,
+    "map_set_bigint": 126.1,
+    "map_delete": 184.13,
+    "weak_map_set": 68.16,
+    "weak_map_delete": 159.76,
+    "array_for": 20.89,
+    "array_for_in": 50.06,
+    "array_for_of": 20.37,
+    "math_min": 30.54,
+    "regexp_ascii": 150.27,
+    "regexp_utf16": 157.49,
+    "regexp_replace": 795.66,
+    "string_length": 14.8,
+    "string_build1": 22.61,
+    "string_build1x": 22.42,
+    "string_build2c": 28.58,
+    "string_build2": 40.13,
+    "string_build3": 37.62,
+    "string_build4": 44.18,
+    "string_build_large1": 44.88,
+    "string_build_large2": 43.81,
+    "int_to_string": 32.45,
+    "int_toString": 40.32,
+    "float_to_string": 206.43,
+    "float_toString": 216.31,
+    "float_toFixed": 85.89,
+    "float_toPrecision": 108.34,
+    "float_toExponential": 100.82,
+    "string_to_int": 92.75,
+    "string_to_float": 110.31,
+    "bigint32_arith": 34.09,
+    "bigint64_arith": 42.96,
+    "bigint256_arith": 94.44,
+    "sort_bench": 14.89
+   },
+   "microcall_scores": [
+    22812,
+    22942,
+    22773,
+    22752,
+    22974
+   ],
+   "microcall": 22812,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 30.5,
+    "id": 36.5,
+    "six": 63,
+    "eight": 73,
+    "method": 63,
+    "depth4": 21,
+    "closure": 44,
+    "mutual": 30.5,
+    "sched": 62.5
+   }
+  },
+  "bellard-clang-O3-gocflags": {
+   "v8_rounds": [
+    {
+     "Richards": 868,
+     "DeltaBlue": 859,
+     "Crypto": 1121,
+     "RayTrace": 1946,
+     "EarleyBoyer": 2490,
+     "RegExp": 536,
+     "Splay": 3440,
+     "NavierStokes": 1966,
+     "Score": 1399
+    },
+    {
+     "Richards": 879,
+     "DeltaBlue": 864,
+     "Crypto": 1138,
+     "RayTrace": 1944,
+     "EarleyBoyer": 2503,
+     "RegExp": 541,
+     "Splay": 3505,
+     "NavierStokes": 1977,
+     "Score": 1412
+    },
+    {
+     "Richards": 879,
+     "DeltaBlue": 853,
+     "Crypto": 1131,
+     "RayTrace": 1931,
+     "EarleyBoyer": 2304,
+     "RegExp": 526,
+     "Splay": 3504,
+     "NavierStokes": 2007,
+     "Score": 1390
+    },
+    {
+     "Richards": 870,
+     "DeltaBlue": 835,
+     "Crypto": 1145,
+     "RayTrace": 1933,
+     "EarleyBoyer": 2472,
+     "RegExp": 538,
+     "Splay": 3667,
+     "NavierStokes": 1993,
+     "Score": 1410
+    },
+    {
+     "Richards": 867,
+     "DeltaBlue": 851,
+     "Crypto": 1131,
+     "RayTrace": 1937,
+     "EarleyBoyer": 2533,
+     "RegExp": 542,
+     "Splay": 3370,
+     "NavierStokes": 1997,
+     "Score": 1402
+    }
+   ],
+   "v8": {
+    "Richards": 870,
+    "DeltaBlue": 853,
+    "Crypto": 1131,
+    "RayTrace": 1937,
+    "EarleyBoyer": 2490,
+    "RegExp": 538,
+    "Splay": 3504,
+    "NavierStokes": 1993,
+    "Score": 1402
+   },
+   "v8_score_spread": [
+    1390,
+    1412
+   ],
+   "ss": {
+    "3d-cube": 23.2857,
+    "3d-morph": 14.9,
+    "3d-raytrace": 1.6,
+    "access-binary-trees": 11.3571,
+    "access-fannkuch": 37.75,
+    "access-nbody": 15.0,
+    "access-nsieve": 21.1429,
+    "bitops-3bit-bits-in-byte": 9.6667,
+    "bitops-bits-in-byte": 23.7143,
+    "bitops-bitwise-and": 11.1538,
+    "bitops-nsieve-bits": 17.8889,
+    "controlflow-recursive": 6.9091,
+    "crypto-aes": 14.0,
+    "crypto-md5": 6.9091,
+    "crypto-sha1": 6.7727,
+    "date-format-tofte": 4.6667,
+    "date-format-xparb": 2.375,
+    "math-cordic": 26.0,
+    "math-partial-sums": 12.1538,
+    "math-spectral-norm": 8.7059,
+    "regexp-dna": 38.0,
+    "string-base64": 12.0833,
+    "string-fasta": 22.8571,
+    "string-tagcloud": 22.4286,
+    "string-unpack-code": 39.0,
+    "string-validate-input": 10.6429
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 15.58,
+    "empty_down_loop": 17.28,
+    "empty_down_loop2": 20.57,
+    "empty_do_loop": 17.95,
+    "date_now": 56.54,
+    "date_parse": 487.17,
+    "prop_read": 11.03,
+    "prop_write": 16.64,
+    "prop_update": 16.66,
+    "prop_create": 39.96,
+    "prop_clone": 40.41,
+    "prop_delete": 66.89,
+    "array_read": 8.39,
+    "array_write": 7.14,
+    "array_update": 9.85,
+    "array_prop_create": 17.23,
+    "array_slice": 22.34,
+    "array_length_read": 10.73,
+    "array_length_decr": 50.0,
+    "array_hole_length_decr": 56.98,
+    "array_push": 33.51,
+    "array_pop": 72.13,
+    "typed_array_read": 10.7,
+    "typed_array_write": 10.31,
+    "arguments_read": 108.99,
+    "arguments_strict_read": 88.33,
+    "global_read": 9.2,
+    "global_write": 11.16,
+    "global_write_strict": 11.03,
+    "local_destruct": 24.03,
+    "global_destruct": 32.99,
+    "global_destruct_strict": 33.35,
+    "global_func_call": 21.49,
+    "func_call": 21.21,
+    "func_closure_call": 26.07,
+    "int_arith": 17.82,
+    "float_arith": 24.13,
+    "map_set_string": 182.25,
+    "map_set_int": 104.02,
+    "map_set_bigint": 120.24,
+    "map_delete": 181.33,
+    "weak_map_set": 63.29,
+    "weak_map_delete": 155.96,
+    "array_for": 17.63,
+    "array_for_in": 48.59,
+    "array_for_of": 18.11,
+    "math_min": 26.85,
+    "regexp_ascii": 150.11,
+    "regexp_utf16": 151.74,
+    "regexp_replace": 630.55,
+    "string_length": 12.91,
+    "string_build1": 20.86,
+    "string_build1x": 21.05,
+    "string_build2c": 26.67,
+    "string_build2": 36.96,
+    "string_build3": 35.22,
+    "string_build4": 40.95,
+    "string_build_large1": 43.98,
+    "string_build_large2": 41.87,
+    "int_to_string": 31.65,
+    "int_toString": 39.91,
+    "float_to_string": 205.86,
+    "float_toString": 217.96,
+    "float_toFixed": 82.29,
+    "float_toPrecision": 96.93,
+    "float_toExponential": 93.89,
+    "string_to_int": 80.83,
+    "string_to_float": 101.44,
+    "bigint32_arith": 30.56,
+    "bigint64_arith": 38.52,
+    "bigint256_arith": 82.72,
+    "sort_bench": 15.06
+   },
+   "microcall_scores": [
+    24602,
+    24796,
+    24389,
+    24126,
+    24949
+   ],
+   "microcall": 24602,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 30,
+    "id": 33,
+    "six": 58,
+    "eight": 67,
+    "method": 65,
+    "depth4": 21.5,
+    "closure": 36,
+    "mutual": 24.5,
+    "sched": 65
+   }
+  },
+  "goc-bellard": {
+   "v8_rounds": [
+    {
+     "Richards": 803,
+     "DeltaBlue": 811,
+     "Crypto": 923,
+     "RayTrace": 1542,
+     "EarleyBoyer": 2292,
+     "RegExp": 416,
+     "Splay": 3227,
+     "NavierStokes": 1718,
+     "Score": 1220
+    },
+    {
+     "Richards": 820,
+     "DeltaBlue": 820,
+     "Crypto": 941,
+     "RayTrace": 1685,
+     "EarleyBoyer": 2330,
+     "RegExp": 433,
+     "Splay": 3194,
+     "NavierStokes": 1726,
+     "Score": 1249
+    },
+    {
+     "Richards": 819,
+     "DeltaBlue": 822,
+     "Crypto": 932,
+     "RayTrace": 1648,
+     "EarleyBoyer": 2295,
+     "RegExp": 433,
+     "Splay": 3164,
+     "NavierStokes": 1693,
+     "Score": 1238
+    },
+    {
+     "Richards": 817,
+     "DeltaBlue": 817,
+     "Crypto": 922,
+     "RayTrace": 1659,
+     "EarleyBoyer": 2245,
+     "RegExp": 438,
+     "Splay": 3261,
+     "NavierStokes": 1763,
+     "Score": 1245
+    },
+    {
+     "Richards": 813,
+     "DeltaBlue": 833,
+     "Crypto": 937,
+     "RayTrace": 1652,
+     "EarleyBoyer": 2300,
+     "RegExp": 439,
+     "Splay": 3289,
+     "NavierStokes": 1731,
+     "Score": 1252
+    }
+   ],
+   "v8": {
+    "Richards": 817,
+    "DeltaBlue": 820,
+    "Crypto": 932,
+    "RayTrace": 1652,
+    "EarleyBoyer": 2295,
+    "RegExp": 433,
+    "Splay": 3227,
+    "NavierStokes": 1726,
+    "Score": 1245
+   },
+   "v8_score_spread": [
+    1220,
+    1252
+   ],
+   "ss": {
+    "3d-cube": 25.8333,
+    "3d-morph": 26.8333,
+    "3d-raytrace": 2.25,
+    "access-binary-trees": 13.0833,
+    "access-fannkuch": 44.75,
+    "access-nbody": 20.875,
+    "access-nsieve": 22.8571,
+    "bitops-3bit-bits-in-byte": 12.5,
+    "bitops-bits-in-byte": 27.8333,
+    "bitops-bitwise-and": 14.8,
+    "bitops-nsieve-bits": 21.7143,
+    "controlflow-recursive": 8.8824,
+    "crypto-aes": 16.6667,
+    "crypto-md5": 8.2778,
+    "crypto-sha1": 8.1667,
+    "date-format-tofte": 6.4,
+    "date-format-xparb": 1.5,
+    "math-cordic": 31.8,
+    "math-partial-sums": 19.75,
+    "math-spectral-norm": 10.5,
+    "regexp-dna": 47.5,
+    "string-base64": 14.0909,
+    "string-fasta": 26.0,
+    "string-tagcloud": 27.3333,
+    "string-unpack-code": 43.0,
+    "string-validate-input": 15.6
+   },
+   "ss_fail": [],
+   "micro": {
+    "empty_loop": 17.95,
+    "empty_down_loop": 20.44,
+    "empty_down_loop2": 23.66,
+    "empty_do_loop": 20.5,
+    "date_now": 155.28,
+    "date_parse": 815.2,
+    "prop_read": 12.68,
+    "prop_write": 16.78,
+    "prop_update": 16.38,
+    "prop_create": 47.91,
+    "prop_clone": 46.41,
+    "prop_delete": 82.24,
+    "array_read": 10.16,
+    "array_write": 8.58,
+    "array_update": 11.59,
+    "array_prop_create": 21.04,
+    "array_slice": 22.98,
+    "array_length_read": 12.5,
+    "array_length_decr": 53.56,
+    "array_hole_length_decr": 61.01,
+    "array_push": 40.23,
+    "array_pop": 75.9,
+    "typed_array_read": 13.13,
+    "typed_array_write": 11.99,
+    "arguments_read": 127.18,
+    "arguments_strict_read": 111.29,
+    "global_read": 11.02,
+    "global_write": 12.33,
+    "global_write_strict": 12.45,
+    "local_destruct": 26.61,
+    "global_destruct": 35.66,
+    "global_destruct_strict": 34.84,
+    "global_func_call": 26.35,
+    "func_call": 26.45,
+    "func_closure_call": 28.41,
+    "int_arith": 20.61,
+    "float_arith": 27.61,
+    "map_set_string": 195.82,
+    "map_set_int": 111.69,
+    "map_set_bigint": 139.16,
+    "map_delete": 202.54,
+    "weak_map_set": 71.74,
+    "weak_map_delete": 173.34,
+    "array_for": 21.77,
+    "array_for_in": 57.58,
+    "array_for_of": 19.53,
+    "math_min": 33.84,
+    "regexp_ascii": 157.73,
+    "regexp_utf16": 159.62,
+    "regexp_replace": 850.31,
+    "string_length": 15.16,
+    "string_build1": 42.24,
+    "string_build1x": 41.75,
+    "string_build2c": 51.7,
+    "string_build2": 47.92,
+    "string_build3": 43.37,
+    "string_build4": 49.71,
+    "string_build_large1": 59.56,
+    "string_build_large2": 52.64,
+    "int_to_string": 36.84,
+    "int_toString": 44.81,
+    "float_to_string": 213.34,
+    "float_toString": 229.7,
+    "float_toFixed": 93.1,
+    "float_toPrecision": 114.16,
+    "float_toExponential": 113.94,
+    "string_to_int": 94.16,
+    "string_to_float": 115.94,
+    "bigint32_arith": 37.72,
+    "bigint64_arith": 45.45,
+    "bigint256_arith": 95.34,
+    "sort_bench": 19.88
+   },
+   "microcall_scores": [
+    20959,
+    21206,
+    21180,
+    21178,
+    21185
+   ],
+   "microcall": 21180,
+   "microcall_case_ns": {
+    "arith": 0,
+    "propget": 0,
+    "empty": 35,
+    "id": 41,
+    "six": 70,
+    "eight": 81,
+    "method": 69,
+    "depth4": 23.5,
+    "closure": 45,
+    "mutual": 30.5,
+    "sched": 66
+   }
+  }
+ },
+ "suites": {
+  "V8": {
+   "items": 8,
+   "time": {
+    "ng-gcc-O2": 9.803921568627452,
+    "ng-clang-O2": 8.361204013377927,
+    "ng-clang-O3": 8.488964346349745,
+    "ng-clang-O3-gocflags": 8.347245409015025,
+    "goc-ng": 9.00900900900901,
+    "bellard-gcc-O2": 6.451612903225806,
+    "bellard-gcc-O2-NDEBUG": 6.489292667099286,
+    "bellard-clang-O2": 7.462686567164179,
+    "bellard-clang-O2-NDEBUG": 7.564296520423601,
+    "bellard-clang-O3": 7.616146230007616,
+    "bellard-clang-O3-gocflags": 7.132667617689016,
+    "goc-bellard": 8.032128514056225
+   }
+  },
+  "SunSpider": {
+   "items": 26,
+   "time": {
+    "ng-gcc-O2": 23.083284722977062,
+    "ng-clang-O2": 15.914349186644921,
+    "ng-clang-O3": 15.586897930761717,
+    "ng-clang-O3-gocflags": 15.683206786638257,
+    "goc-ng": 16.67926060400502,
+    "bellard-gcc-O2": 10.801156398654541,
+    "bellard-gcc-O2-NDEBUG": 10.835738614598881,
+    "bellard-clang-O2": 13.795985942908366,
+    "bellard-clang-O2-NDEBUG": 13.45155112554034,
+    "bellard-clang-O3": 14.450363619775551,
+    "bellard-clang-O3-gocflags": 12.665244780614414,
+    "goc-bellard": 15.561535643590645
+   }
+  },
+  "microbench": {
+   "items": 72,
+   "time": {
+    "ng-gcc-O2": 60.0593173369917,
+    "ng-clang-O2": 52.35422187137522,
+    "ng-clang-O3": 50.89569250059421,
+    "ng-clang-O3-gocflags": 51.21552579271224,
+    "goc-ng": 55.55438783017399,
+    "bellard-gcc-O2": 32.05871349214667,
+    "bellard-gcc-O2-NDEBUG": 32.6751105694554,
+    "bellard-clang-O2": 40.15217717454781,
+    "bellard-clang-O2-NDEBUG": 38.90148693862125,
+    "bellard-clang-O3": 40.860220148584204,
+    "bellard-clang-O3-gocflags": 37.896130324214816,
+    "goc-bellard": 45.55500039081731
+   }
+  },
+  "microcall": {
+   "items": 1,
+   "time": {
+    "ng-gcc-O2": 73.53481873667181,
+    "ng-clang-O2": 42.99226139294927,
+    "ng-clang-O3": 44.04122258433894,
+    "ng-clang-O3-gocflags": 43.3106674173849,
+    "goc-ng": 46.008741660915575,
+    "bellard-gcc-O2": 32.1316110789795,
+    "bellard-gcc-O2-NDEBUG": 31.748047495079053,
+    "bellard-clang-O2": 40.36978725122118,
+    "bellard-clang-O2-NDEBUG": 41.150569935393605,
+    "bellard-clang-O3": 43.836577240049095,
+    "bellard-clang-O3-gocflags": 40.64710186163727,
+    "goc-bellard": 47.214353163361665
+   }
+  }
+ },
+ "layers": {
+  "ng": {
+   "chain": [
+    [
+     "gcc-O2",
+     "ng-gcc-O2"
+    ],
+    [
+     "clang-O2",
+     "ng-clang-O2"
+    ],
+    [
+     "clang-O3",
+     "ng-clang-O3"
+    ],
+    [
+     "clang-O3-gocflags",
+     "ng-clang-O3-gocflags"
+    ],
+    [
+     "goc",
+     "goc-ng"
+    ]
+   ],
+   "suite": {
+    "V8": {
+     "time": {
+      "gcc-O2": 9.803921568627452,
+      "clang-O2": 8.361204013377927,
+      "clang-O3": 8.488964346349745,
+      "clang-O3-gocflags": 8.347245409015025,
+      "goc": 9.00900900900901
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 0.8528428093645485,
+      "opt level (clang-O3/clang-O2)": 1.0152801358234294,
+      "goc flags (gocflags/clang-O3)": 0.9833055091819701,
+      "goc runtime (goc/gocflags)": 1.0792792792792794
+     },
+     "goc/gcc": 0.9189189189189189,
+     "goc/clang-O2": 1.0774774774774774,
+     "goc/clang-O3": 1.0612612612612613
+    },
+    "SunSpider": {
+     "time": {
+      "gcc-O2": 23.083284722977062,
+      "clang-O2": 15.914349186644921,
+      "clang-O3": 15.586897930761717,
+      "clang-O3-gocflags": 15.683206786638257,
+      "goc": 16.67926060400502
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 0.6894317415235018,
+      "opt level (clang-O3/clang-O2)": 0.9794241503662622,
+      "goc flags (gocflags/clang-O3)": 1.0061788340633493,
+      "goc runtime (goc/gocflags)": 1.0635108515061715
+     },
+     "goc/gcc": 0.7225687680143075,
+     "goc/clang-O2": 1.048064260020259,
+     "goc/clang-O3": 1.0700821085821994
+    },
+    "microbench": {
+     "time": {
+      "gcc-O2": 60.0593173369917,
+      "clang-O2": 52.35422187137522,
+      "clang-O3": 50.89569250059421,
+      "clang-O3-gocflags": 51.21552579271224,
+      "goc": 55.55438783017399
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 0.8717085740022097,
+      "opt level (clang-O3/clang-O2)": 0.9721411317244987,
+      "goc flags (gocflags/clang-O3)": 1.0062840935333437,
+      "goc runtime (goc/gocflags)": 1.0847177095286045
+     },
+     "goc/gcc": 0.9249919961370751,
+     "goc/clang-O2": 1.0611252702152845,
+     "goc/clang-O3": 1.0915341770725566
+    },
+    "microcall": {
+     "time": {
+      "gcc-O2": 73.53481873667181,
+      "clang-O2": 42.99226139294927,
+      "clang-O3": 44.04122258433894,
+      "clang-O3-gocflags": 43.3106674173849,
+      "goc": 46.008741660915575
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 0.5846517626827171,
+      "opt level (clang-O3/clang-O2)": 1.0243988373117239,
+      "goc flags (gocflags/clang-O3)": 0.9834120143791415,
+      "goc runtime (goc/gocflags)": 1.06229583620888
+     },
+     "goc/gcc": 0.6256728778467909,
+     "goc/clang-O2": 1.0701633310328964,
+     "goc/clang-O3": 1.044674488152749
+    }
+   },
+   "item": {
+    "v8/Crypto": {
+     "time": [
+      22.831050228310502,
+      11.764705882352942,
+      11.82033096926714,
+      11.185682326621924,
+      11.614401858304298
+     ],
+     "layers": [
+      0.5152941176470589,
+      1.0047281323877069,
+      0.9463087248322147,
+      1.0383275261324043
+     ]
+    },
+    "v8/DeltaBlue": {
+     "time": [
+      12.853470437017995,
+      12.820512820512821,
+      12.970168612191959,
+      13.26259946949602,
+      13.679890560875513
+     ],
+     "layers": [
+      0.9974358974358974,
+      1.0116731517509727,
+      1.0225464190981433,
+      1.0314637482900137
+     ]
+    },
+    "v8/EarleyBoyer": {
+     "time": [
+      4.849660523763337,
+      4.434589800443459,
+      4.4543429844097995,
+      4.504504504504505,
+      4.8123195380173245
+     ],
+     "layers": [
+      0.9144124168514411,
+      1.0044543429844097,
+      1.0112612612612613,
+      1.068334937439846
+     ]
+    },
+    "v8/NavierStokes": {
+     "time": [
+      7.479431563201197,
+      6.353240152477763,
+      6.587615283267457,
+      6.184291898577613,
+      6.215040397762586
+     ],
+     "layers": [
+      0.849428208386277,
+      1.0368906455862978,
+      0.9387755102040817,
+      1.00497203231821
+     ]
+    },
+    "v8/RayTrace": {
+     "time": [
+      6.447453255963894,
+      5.662514156285391,
+      5.717552887364208,
+      5.931198102016608,
+      6.7704807041299935
+     ],
+     "layers": [
+      0.8782559456398641,
+      1.0097198399085192,
+      1.0373665480427046,
+      1.1415030467163167
+     ]
+    },
+    "v8/RegExp": {
+     "time": [
+      24.50980392156863,
+      24.691358024691358,
+      26.52519893899204,
+      22.624434389140273,
+      28.90173410404624
+     ],
+     "layers": [
+      1.0074074074074073,
+      1.0742705570291777,
+      0.8529411764705883,
+      1.2774566473988438
+     ]
+    },
+    "v8/Richards": {
+     "time": [
+      14.084507042253522,
+      12.755102040816327,
+      12.468827930174564,
+      13.003901170351105,
+      13.192612137203167
+     ],
+     "layers": [
+      0.9056122448979592,
+      0.9775561097256857,
+      1.0429128738621585,
+      1.0145118733509235
+     ]
+    },
+    "v8/Score": {
+     "time": [
+      9.803921568627452,
+      8.361204013377927,
+      8.488964346349745,
+      8.347245409015025,
+      9.00900900900901
+     ],
+     "layers": [
+      0.8528428093645485,
+      1.0152801358234294,
+      0.9833055091819701,
+      1.0792792792792794
+     ]
+    },
+    "v8/Splay": {
+     "time": [
+      3.5460992907801416,
+      3.157562361856647,
+      3.1259768677711786,
+      3.2637075718015667,
+      3.608805485384338
+     ],
+     "layers": [
+      0.8904325860435744,
+      0.9899968740231322,
+      1.044060052219321,
+      1.105738000721761
+     ]
+    },
+    "ss/3d-cube": {
+     "time": [
+      27.5,
+      26.5,
+      26.1667,
+      28.1667,
+      28.0
+     ],
+     "layers": [
+      0.9636363636363636,
+      0.9874226415094339,
+      1.0764330236521993,
+      0.9940816638086819
+     ]
+    },
+    "ss/3d-morph": {
+     "time": [
+      36.0,
+      21.1429,
+      20.625,
+      20.0,
+      32.6
+     ],
+     "layers": [
+      0.5873027777777778,
+      0.9755047793822039,
+      0.9696969696969697,
+      1.6300000000000001
+     ]
+    },
+    "ss/3d-raytrace": {
+     "time": [
+      3.1429,
+      2.375,
+      2.25,
+      2.375,
+      2.5
+     ],
+     "layers": [
+      0.7556715135702695,
+      0.9473684210526315,
+      1.0555555555555556,
+      1.0526315789473684
+     ]
+    },
+    "ss/access-binary-trees": {
+     "time": [
+      14.4545,
+      13.1667,
+      12.6667,
+      13.0,
+      14.1818
+     ],
+     "layers": [
+      0.910906638071189,
+      0.9620254125938922,
+      1.0263130886497667,
+      1.0909076923076924
+     ]
+    },
+    "ss/access-fannkuch": {
+     "time": [
+      92.0,
+      66.3333,
+      69.0,
+      65.6667,
+      75.5
+     ],
+     "layers": [
+      0.7210141304347826,
+      1.0402015277394612,
+      0.9516913043478261,
+      1.1497456092661882
+     ]
+    },
+    "ss/access-nbody": {
+     "time": [
+      18.875,
+      16.7778,
+      14.9,
+      15.5714,
+      18.25
+     ],
+     "layers": [
+      0.8888900662251655,
+      0.8880782939360345,
+      1.0450604026845638,
+      1.172020499120182
+     ]
+    },
+    "ss/access-nsieve": {
+     "time": [
+      39.5,
+      35.4,
+      36.0,
+      36.0,
+      34.0
+     ],
+     "layers": [
+      0.8962025316455696,
+      1.0169491525423728,
+      1.0,
+      0.9444444444444444
+     ]
+    },
+    "ss/bitops-3bit-bits-in-byte": {
+     "time": [
+      36.0,
+      11.6429,
+      10.7857,
+      10.0,
+      10.3571
+     ],
+     "layers": [
+      0.3234138888888889,
+      0.9263757311322781,
+      0.9271535458987362,
+      1.0357100000000001
+     ]
+    },
+    "ss/bitops-bits-in-byte": {
+     "time": [
+      55.6667,
+      25.1667,
+      23.4286,
+      24.6667,
+      24.5714
+     ],
+     "layers": [
+      0.45209613646937935,
+      0.9309365153158737,
+      1.0528456672613813,
+      0.9961364917074437
+     ]
+    },
+    "ss/bitops-bitwise-and": {
+     "time": [
+      28.6,
+      15.1,
+      14.4545,
+      13.9091,
+      12.25
+     ],
+     "layers": [
+      0.5279720279720279,
+      0.957251655629139,
+      0.9622678058736035,
+      0.8807183786154388
+     ]
+    },
+    "ss/bitops-nsieve-bits": {
+     "time": [
+      54.6667,
+      21.0,
+      21.5714,
+      19.875,
+      20.0
+     ],
+     "layers": [
+      0.3841461072279834,
+      1.0272095238095238,
+      0.9213588362368692,
+      1.0062893081761006
+     ]
+    },
+    "ss/controlflow-recursive": {
+     "time": [
+      15.9,
+      7.3333,
+      7.2381,
+      7.2105,
+      7.7619
+     ],
+     "layers": [
+      0.4612138364779874,
+      0.9870181228096491,
+      0.9961868446139179,
+      1.0764718119409196
+     ]
+    },
+    "ss/crypto-aes": {
+     "time": [
+      29.1667,
+      21.8571,
+      22.4286,
+      21.8571,
+      23.1429
+     ],
+     "layers": [
+      0.7493854292737951,
+      1.0261471100923727,
+      0.974519140739948,
+      1.0588275663285616
+     ]
+    },
+    "ss/crypto-md5": {
+     "time": [
+      17.2222,
+      7.9444,
+      7.7368,
+      7.1905,
+      7.25
+     ],
+     "layers": [
+      0.46128833714624146,
+      0.9738683852776798,
+      0.9293894116430567,
+      1.0082748070370628
+     ]
+    },
+    "ss/crypto-sha1": {
+     "time": [
+      18.2222,
+      7.9412,
+      7.6316,
+      6.9048,
+      7.15
+     ],
+     "layers": [
+      0.4357980924366981,
+      0.9610134488490404,
+      0.9047644006499292,
+      1.0355115282122582
+     ]
+    },
+    "ss/date-format-tofte": {
+     "time": [
+      6.6,
+      4.8333,
+      4.6667,
+      6.2,
+      6.6
+     ],
+     "layers": [
+      0.7323181818181819,
+      0.9655307967641155,
+      1.328561938843294,
+      1.064516129032258
+     ]
+    },
+    "ss/date-format-xparb": {
+     "time": [
+      3.0,
+      3.0,
+      2.625,
+      3.0,
+      1.8889
+     ],
+     "layers": [
+      1.0,
+      0.875,
+      1.1428571428571428,
+      0.6296333333333334
+     ]
+    },
+    "ss/math-cordic": {
+     "time": [
+      33.2,
+      26.6667,
+      26.5,
+      25.8333,
+      26.5
+     ],
+     "layers": [
+      0.8032138554216867,
+      0.9937487578140528,
+      0.9748415094339623,
+      1.025807775235839
+     ]
+    },
+    "ss/math-partial-sums": {
+     "time": [
+      15.9,
+      13.3333,
+      13.5455,
+      14.1,
+      19.8571
+     ],
+     "layers": [
+      0.8385723270440251,
+      1.0159150397875996,
+      1.0409361042412608,
+      1.408304964539007
+     ]
+    },
+    "ss/math-spectral-norm": {
+     "time": [
+      19.875,
+      9.3125,
+      9.2353,
+      9.1176,
+      9.4375
+     ],
+     "layers": [
+      0.46855345911949686,
+      0.991710067114094,
+      0.9872554221303043,
+      1.035085987540581
+     ]
+    },
+    "ss/regexp-dna": {
+     "time": [
+      38.5,
+      43.0,
+      45.0,
+      39.5,
+      46.5
+     ],
+     "layers": [
+      1.1168831168831168,
+      1.0465116279069768,
+      0.8777777777777778,
+      1.1772151898734178
+     ]
+    },
+    "ss/string-base64": {
+     "time": [
+      19.875,
+      14.1818,
+      14.2727,
+      14.6,
+      14.4545
+     ],
+     "layers": [
+      0.7135496855345912,
+      1.0064096236020814,
+      1.022931890952658,
+      0.9900342465753424
+     ]
+    },
+    "ss/string-fasta": {
+     "time": [
+      55.3333,
+      51.0,
+      48.6667,
+      53.0,
+      54.3333
+     ],
+     "layers": [
+      0.9216873022212664,
+      0.9542490196078431,
+      1.089040349972363,
+      1.0251566037735849
+     ]
+    },
+    "ss/string-tagcloud": {
+     "time": [
+      30.2,
+      29.5,
+      29.6,
+      29.5,
+      34.2
+     ],
+     "layers": [
+      0.9768211920529801,
+      1.0033898305084745,
+      0.9966216216216216,
+      1.1593220338983052
+     ]
+    },
+    "ss/string-unpack-code": {
+     "time": [
+      52.6667,
+      47.5,
+      48.25,
+      47.75,
+      51.3333
+     ],
+     "layers": [
+      0.9018981633555928,
+      1.0157894736842106,
+      0.9896373056994818,
+      1.0750429319371728
+     ]
+    },
+    "ss/string-validate-input": {
+     "time": [
+      14.1818,
+      13.0,
+      13.1818,
+      13.2727,
+      17.1111
+     ],
+     "layers": [
+      0.9166678418818485,
+      1.0139846153846155,
+      1.0068958715805125,
+      1.2891951147844825
+     ]
+    },
+    "micro/arguments_read": {
+     "time": [
+      184.9,
+      140.7,
+      140.6,
+      143.37,
+      165.64
+     ],
+     "layers": [
+      0.760951865873445,
+      0.9992892679459844,
+      1.019701280227596,
+      1.155332356838948
+     ]
+    },
+    "micro/arguments_strict_read": {
+     "time": [
+      151.36,
+      114.42,
+      116.22,
+      121.13,
+      131.89
+     ],
+     "layers": [
+      0.755946088794926,
+      1.0157315154693236,
+      1.0422474617105488,
+      1.0888301824486089
+     ]
+    },
+    "micro/array_for": {
+     "time": [
+      30.76,
+      19.34,
+      18.85,
+      18.51,
+      18.1
+     ],
+     "layers": [
+      0.6287386215864759,
+      0.9746639089968977,
+      0.9819628647214854,
+      0.97784981091302
+     ]
+    },
+    "micro/array_for_in": {
+     "time": [
+      50.36,
+      57.56,
+      55.42,
+      53.95,
+      60.82
+     ],
+     "layers": [
+      1.1429706115965053,
+      0.9628214037526059,
+      0.9734752796824251,
+      1.1273401297497683
+     ]
+    },
+    "micro/array_for_of": {
+     "time": [
+      29.52,
+      20.63,
+      22.51,
+      21.79,
+      21.78
+     ],
+     "layers": [
+      0.6988482384823848,
+      1.0911294231701407,
+      0.9680142159040426,
+      0.9995410738871042
+     ]
+    },
+    "micro/array_hole_length_decr": {
+     "time": [
+      80.36,
+      64.76,
+      62.35,
+      66.6,
+      68.19
+     ],
+     "layers": [
+      0.8058735689397711,
+      0.9627856701667695,
+      1.0681635926222934,
+      1.023873873873874
+     ]
+    },
+    "micro/array_length_decr": {
+     "time": [
+      59.16,
+      45.74,
+      45.48,
+      48.58,
+      49.36
+     ],
+     "layers": [
+      0.7731575388776201,
+      0.994315697420201,
+      1.0681618293755497,
+      1.0160559901193906
+     ]
+    },
+    "micro/array_length_read": {
+     "time": [
+      16.04,
+      12.44,
+      11.64,
+      11.06,
+      11.25
+     ],
+     "layers": [
+      0.7755610972568578,
+      0.9356913183279744,
+      0.9501718213058419,
+      1.0171790235081375
+     ]
+    },
+    "micro/array_pop": {
+     "time": [
+      87.85,
+      65.0,
+      66.85,
+      69.75,
+      72.43
+     ],
+     "layers": [
+      0.7398975526465567,
+      1.0284615384615383,
+      1.043380703066567,
+      1.0384229390681003
+     ]
+    },
+    "micro/array_prop_create": {
+     "time": [
+      47.42,
+      34.06,
+      34.23,
+      32.24,
+      31.93
+     ],
+     "layers": [
+      0.7182623365668495,
+      1.0049911920140926,
+      0.941863862109261,
+      0.9903846153846153
+     ]
+    },
+    "micro/array_push": {
+     "time": [
+      43.65,
+      34.91,
+      33.51,
+      31.86,
+      35.76
+     ],
+     "layers": [
+      0.799770904925544,
+      0.9598968776854769,
+      0.9507609668755596,
+      1.1224105461393596
+     ]
+    },
+    "micro/array_read": {
+     "time": [
+      22.22,
+      11.95,
+      11.36,
+      11.12,
+      11.41
+     ],
+     "layers": [
+      0.5378037803780378,
+      0.9506276150627615,
+      0.9788732394366197,
+      1.0260791366906477
+     ]
+    },
+    "micro/array_slice": {
+     "time": [
+      14.53,
+      16.31,
+      16.45,
+      18.1,
+      18.14
+     ],
+     "layers": [
+      1.1225051617343427,
+      1.0085836909871244,
+      1.1003039513677813,
+      1.0022099447513813
+     ]
+    },
+    "micro/array_update": {
+     "time": [
+      22.8,
+      14.18,
+      14.26,
+      13.39,
+      12.99
+     ],
+     "layers": [
+      0.6219298245614034,
+      1.005641748942172,
+      0.9389901823281908,
+      0.9701269604182226
+     ]
+    },
+    "micro/array_write": {
+     "time": [
+      24.74,
+      28.5,
+      28.24,
+      28.08,
+      27.71
+     ],
+     "layers": [
+      1.1519805982215037,
+      0.9908771929824561,
+      0.9943342776203966,
+      0.9868233618233619
+     ]
+    },
+    "micro/bigint256_arith": {
+     "time": [
+      102.9,
+      100.36,
+      93.69,
+      94.92,
+      100.16
+     ],
+     "layers": [
+      0.975315840621963,
+      0.9335392586687923,
+      1.0131284021773936,
+      1.0552043826380109
+     ]
+    },
+    "micro/bigint32_arith": {
+     "time": [
+      51.48,
+      40.55,
+      40.17,
+      38.57,
+      42.59
+     ],
+     "layers": [
+      0.7876845376845377,
+      0.990628853267571,
+      0.9601692805576301,
+      1.104226082447498
+     ]
+    },
+    "micro/bigint64_arith": {
+     "time": [
+      63.36,
+      53.94,
+      51.27,
+      51.85,
+      57.74
+     ],
+     "layers": [
+      0.8513257575757576,
+      0.9505005561735262,
+      1.0113126584747416,
+      1.1135969141755062
+     ]
+    },
+    "micro/date_now": {
+     "time": [
+      65.8,
+      70.95,
+      68.57,
+      70.75,
+      159.99
+     ],
+     "layers": [
+      1.0782674772036476,
+      0.9664552501761803,
+      1.0317923290068545,
+      2.261342756183746
+     ]
+    },
+    "micro/date_parse": {
+     "time": [
+      564.33,
+      534.52,
+      490.67,
+      534.39,
+      810.93
+     ],
+     "layers": [
+      0.9471762975563942,
+      0.9179637805881913,
+      1.0891026555526118,
+      1.5174872284286756
+     ]
+    },
+    "micro/empty_do_loop": {
+     "time": [
+      17.11,
+      18.09,
+      18.91,
+      18.05,
+      18.2
+     ],
+     "layers": [
+      1.0572764465225015,
+      1.0453289110005528,
+      0.9545214172395559,
+      1.0083102493074791
+     ]
+    },
+    "micro/empty_down_loop": {
+     "time": [
+      17.37,
+      18.11,
+      16.36,
+      17.13,
+      18.07
+     ],
+     "layers": [
+      1.0426021876799079,
+      0.9033683048039757,
+      1.0470660146699267,
+      1.0548744892002335
+     ]
+    },
+    "micro/empty_down_loop2": {
+     "time": [
+      20.17,
+      21.58,
+      20.76,
+      20.02,
+      23.08
+     ],
+     "layers": [
+      1.0699058006941,
+      0.9620018535681187,
+      0.9643545279383429,
+      1.152847152847153
+     ]
+    },
+    "micro/empty_loop": {
+     "time": [
+      14.57,
+      16.71,
+      15.29,
+      17.26,
+      16.71
+     ],
+     "layers": [
+      1.1468771448181194,
+      0.9150209455415917,
+      1.128842380640942,
+      0.9681344148319814
+     ]
+    },
+    "micro/float_arith": {
+     "time": [
+      38.55,
+      25.43,
+      25.31,
+      24.49,
+      26.63
+     ],
+     "layers": [
+      0.659662775616083,
+      0.9952811639795517,
+      0.967601738443303,
+      1.087382605144957
+     ]
+    },
+    "micro/float_toExponential": {
+     "time": [
+      117.18,
+      105.96,
+      103.52,
+      106.71,
+      119.72
+     ],
+     "layers": [
+      0.9042498719918074,
+      0.9769724424311061,
+      1.0308153013910355,
+      1.1219192203167463
+     ]
+    },
+    "micro/float_toFixed": {
+     "time": [
+      106.72,
+      90.06,
+      88.68,
+      91.86,
+      102.51
+     ],
+     "layers": [
+      0.8438905547226387,
+      0.9846768820786143,
+      1.0358592692828146,
+      1.1159372958850424
+     ]
+    },
+    "micro/float_toPrecision": {
+     "time": [
+      133.2,
+      109.67,
+      106.73,
+      105.99,
+      119.27
+     ],
+     "layers": [
+      0.8233483483483485,
+      0.9731923041852831,
+      0.9930666166963364,
+      1.1252948391357676
+     ]
+    },
+    "micro/float_toString": {
+     "time": [
+      233.45,
+      223.73,
+      224.1,
+      228.36,
+      240.59
+     ],
+     "layers": [
+      0.9583636753052045,
+      1.0016537791087472,
+      1.0190093708166,
+      1.053555789104922
+     ]
+    },
+    "micro/float_to_string": {
+     "time": [
+      222.01,
+      218.49,
+      207.41,
+      213.66,
+      219.56
+     ],
+     "layers": [
+      0.9841448583397145,
+      0.9492882969472286,
+      1.0301335519020298,
+      1.0276139661143873
+     ]
+    },
+    "micro/func_call": {
+     "time": [
+      42.12,
+      21.87,
+      22.98,
+      23.03,
+      24.56
+     ],
+     "layers": [
+      0.5192307692307693,
+      1.0507544581618655,
+      1.0021758050478677,
+      1.0664350846721666
+     ]
+    },
+    "micro/func_closure_call": {
+     "time": [
+      31.56,
+      27.73,
+      28.09,
+      26.95,
+      28.99
+     ],
+     "layers": [
+      0.8786438529784538,
+      1.0129823296069238,
+      0.9594161623353507,
+      1.0756957328385899
+     ]
+    },
+    "micro/global_destruct": {
+     "time": [
+      45.14,
+      40.64,
+      37.38,
+      40.39,
+      41.76
+     ],
+     "layers": [
+      0.9003101462117855,
+      0.9197834645669292,
+      1.0805243445692883,
+      1.0339192869522158
+     ]
+    },
+    "micro/global_destruct_strict": {
+     "time": [
+      46.28,
+      39.06,
+      37.16,
+      39.66,
+      42.47
+     ],
+     "layers": [
+      0.8439930855661193,
+      0.9513568868407577,
+      1.0672766415500539,
+      1.0708522440746344
+     ]
+    },
+    "micro/global_func_call": {
+     "time": [
+      44.95,
+      23.74,
+      23.54,
+      23.91,
+      27.73
+     ],
+     "layers": [
+      0.5281423804226918,
+      0.991575400168492,
+      1.0157179269328802,
+      1.1597657883730657
+     ]
+    },
+    "micro/global_read": {
+     "time": [
+      16.57,
+      10.49,
+      9.47,
+      11.15,
+      9.94
+     ],
+     "layers": [
+      0.6330718165359083,
+      0.9027645376549095,
+      1.1774023231256598,
+      0.8914798206278026
+     ]
+    },
+    "micro/global_write": {
+     "time": [
+      9.27,
+      12.22,
+      12.93,
+      12.19,
+      11.39
+     ],
+     "layers": [
+      1.3182308522114348,
+      1.05810147299509,
+      0.94276875483372,
+      0.9343724364232979
+     ]
+    },
+    "micro/global_write_strict": {
+     "time": [
+      9.33,
+      12.06,
+      12.7,
+      11.97,
+      11.75
+     ],
+     "layers": [
+      1.292604501607717,
+      1.0530679933665008,
+      0.9425196850393702,
+      0.9816207184628237
+     ]
+    },
+    "micro/int_arith": {
+     "time": [
+      46.41,
+      19.52,
+      17.48,
+      18.03,
+      18.4
+     ],
+     "layers": [
+      0.42059900883430296,
+      0.8954918032786886,
+      1.0314645308924486,
+      1.0205213533000552
+     ]
+    },
+    "micro/int_toString": {
+     "time": [
+      53.77,
+      41.77,
+      45.6,
+      44.54,
+      49.25
+     ],
+     "layers": [
+      0.7768272270782964,
+      1.0916926023461815,
+      0.9767543859649123,
+      1.1057476425684778
+     ]
+    },
+    "micro/int_to_string": {
+     "time": [
+      39.24,
+      35.67,
+      32.95,
+      34.48,
+      39.22
+     ],
+     "layers": [
+      0.9090214067278287,
+      0.9237454443509953,
+      1.0464339908952958,
+      1.1374709976798145
+     ]
+    },
+    "micro/local_destruct": {
+     "time": [
+      32.52,
+      28.14,
+      26.49,
+      26.98,
+      28.9
+     ],
+     "layers": [
+      0.8653136531365313,
+      0.9413646055437099,
+      1.0184975462438657,
+      1.0711638250555966
+     ]
+    },
+    "micro/map_delete": {
+     "time": [
+      204.36,
+      181.9,
+      165.77,
+      176.04,
+      190.08
+     ],
+     "layers": [
+      0.8900959091798786,
+      0.911324903793293,
+      1.061953308801351,
+      1.079754601226994
+     ]
+    },
+    "micro/map_set_bigint": {
+     "time": [
+      4839.85,
+      4417.56,
+      4367.44,
+      3610.18,
+      3426.84
+     ],
+     "layers": [
+      0.9127472958872692,
+      0.988654370285859,
+      0.8266123862033594,
+      0.9492158285736446
+     ]
+    },
+    "micro/map_set_int": {
+     "time": [
+      2816.15,
+      4190.56,
+      4115.39,
+      3528.87,
+      3581.48
+     ],
+     "layers": [
+      1.4880457362001316,
+      0.9820620633041884,
+      0.857481307968382,
+      1.0149084551145269
+     ]
+    },
+    "micro/map_set_string": {
+     "time": [
+      213.6,
+      180.7,
+      169.16,
+      182.0,
+      200.07
+     ],
+     "layers": [
+      0.8459737827715356,
+      0.9361372440509131,
+      1.075904469141641,
+      1.0992857142857142
+     ]
+    },
+    "micro/math_min": {
+     "time": [
+      54.15,
+      30.35,
+      30.38,
+      30.87,
+      33.73
+     ],
+     "layers": [
+      0.5604801477377656,
+      1.000988467874794,
+      1.0161290322580645,
+      1.0926465824425007
+     ]
+    },
+    "micro/prop_clone": {
+     "time": [
+      55.49,
+      47.05,
+      43.43,
+      46.8,
+      53.01
+     ],
+     "layers": [
+      0.8479005226166876,
+      0.9230605738575983,
+      1.0775961317061937,
+      1.1326923076923077
+     ]
+    },
+    "micro/prop_create": {
+     "time": [
+      76.41,
+      58.71,
+      56.31,
+      58.91,
+      61.86
+     ],
+     "layers": [
+      0.7683549273655281,
+      0.9591211037301993,
+      1.046172971053099,
+      1.0500763877100663
+     ]
+    },
+    "micro/prop_delete": {
+     "time": [
+      98.08,
+      82.51,
+      77.19,
+      78.94,
+      88.0
+     ],
+     "layers": [
+      0.841252039151713,
+      0.9355229669131013,
+      1.0226713304832231,
+      1.1147707119331138
+     ]
+    },
+    "micro/prop_read": {
+     "time": [
+      16.83,
+      12.27,
+      11.04,
+      11.45,
+      11.84
+     ],
+     "layers": [
+      0.7290552584670232,
+      0.8997555012224938,
+      1.0371376811594204,
+      1.034061135371179
+     ]
+    },
+    "micro/prop_update": {
+     "time": [
+      17.03,
+      17.97,
+      17.29,
+      18.74,
+      18.43
+     ],
+     "layers": [
+      1.0551967116852612,
+      0.9621591541457986,
+      1.0838635049161365,
+      0.9834578441835646
+     ]
+    },
+    "micro/prop_write": {
+     "time": [
+      9.16,
+      17.99,
+      17.46,
+      18.68,
+      18.34
+     ],
+     "layers": [
+      1.9639737991266373,
+      0.9705391884380212,
+      1.0698739977090492,
+      0.9817987152034261
+     ]
+    },
+    "micro/regexp_ascii": {
+     "time": [
+      236.61,
+      206.08,
+      200.28,
+      190.37,
+      218.01
+     ],
+     "layers": [
+      0.8709691052787287,
+      0.9718555900621118,
+      0.9505192730177752,
+      1.1451909439512526
+     ]
+    },
+    "micro/regexp_replace": {
+     "time": [
+      1815.01,
+      1726.48,
+      1700.22,
+      1595.84,
+      2058.76
+     ],
+     "layers": [
+      0.9512234092374147,
+      0.9847898614522034,
+      0.9386079448541953,
+      1.2900792059354322
+     ]
+    },
+    "micro/regexp_utf16": {
+     "time": [
+      232.55,
+      233.54,
+      216.32,
+      191.05,
+      234.91
+     ],
+     "layers": [
+      1.004257149000215,
+      0.9262653078701721,
+      0.8831823224852072,
+      1.2295734101020674
+     ]
+    },
+    "micro/sort_bench": {
+     "time": [
+      15.2,
+      19.3,
+      18.81,
+      19.01,
+      22.5
+     ],
+     "layers": [
+      1.2697368421052633,
+      0.9746113989637305,
+      1.0106326422115897,
+      1.1835875854813256
+     ]
+    },
+    "micro/string_build1": {
+     "time": [
+      49.79,
+      44.47,
+      42.08,
+      43.15,
+      52.04
+     ],
+     "layers": [
+      0.8931512351877887,
+      0.9462559028558579,
+      1.0254277566539924,
+      1.2060254924681344
+     ]
+    },
+    "micro/string_build1x": {
+     "time": [
+      47.89,
+      43.73,
+      41.51,
+      43.57,
+      50.97
+     ],
+     "layers": [
+      0.9131342660263102,
+      0.9492339355133775,
+      1.0496265960009636,
+      1.1698416341519393
+     ]
+    },
+    "micro/string_build2": {
+     "time": [
+      49.08,
+      47.87,
+      46.33,
+      46.68,
+      54.18
+     ],
+     "layers": [
+      0.9753463732681337,
+      0.9678295383329852,
+      1.0075545003237643,
+      1.160668380462725
+     ]
+    },
+    "micro/string_build2c": {
+     "time": [
+      61.47,
+      62.28,
+      57.89,
+      60.49,
+      56.49
+     ],
+     "layers": [
+      1.013177159590044,
+      0.9295118818240206,
+      1.044912765589912,
+      0.9338733674987602
+     ]
+    },
+    "micro/string_build3": {
+     "time": [
+      51.79,
+      43.75,
+      43.41,
+      42.4,
+      51.44
+     ],
+     "layers": [
+      0.8447576752268778,
+      0.9922285714285713,
+      0.9767334715503341,
+      1.2132075471698114
+     ]
+    },
+    "micro/string_build4": {
+     "time": [
+      50.75,
+      45.88,
+      46.09,
+      45.29,
+      52.0
+     ],
+     "layers": [
+      0.9040394088669951,
+      1.0045771578029643,
+      0.9826426556736818,
+      1.1481563258997571
+     ]
+    },
+    "micro/string_build_large1": {
+     "time": [
+      68.57,
+      57.36,
+      55.07,
+      55.78,
+      67.6
+     ],
+     "layers": [
+      0.8365174274464052,
+      0.9600767085076709,
+      1.0128926820410387,
+      1.211903908210828
+     ]
+    },
+    "micro/string_build_large2": {
+     "time": [
+      55.67,
+      54.23,
+      51.53,
+      51.85,
+      61.9
+     ],
+     "layers": [
+      0.9741332854320099,
+      0.9502120597455284,
+      1.0062099747719775,
+      1.193828351012536
+     ]
+    },
+    "micro/string_length": {
+     "time": [
+      16.68,
+      14.78,
+      13.63,
+      12.93,
+      14.6
+     ],
+     "layers": [
+      0.8860911270983213,
+      0.9221921515561571,
+      0.9486426999266323,
+      1.1291569992266048
+     ]
+    },
+    "micro/string_to_float": {
+     "time": [
+      99.69,
+      101.11,
+      105.86,
+      104.2,
+      103.88
+     ],
+     "layers": [
+      1.0142441568863476,
+      1.0469785382256949,
+      0.9843189117702627,
+      0.9969289827255278
+     ]
+    },
+    "micro/string_to_int": {
+     "time": [
+      83.25,
+      84.06,
+      85.58,
+      85.99,
+      84.52
+     ],
+     "layers": [
+      1.0097297297297299,
+      1.0180823221508446,
+      1.0047908389810702,
+      0.9829049889522038
+     ]
+    },
+    "micro/typed_array_read": {
+     "time": [
+      23.43,
+      12.7,
+      12.11,
+      12.38,
+      12.81
+     ],
+     "layers": [
+      0.5420401195049083,
+      0.9535433070866142,
+      1.022295623451693,
+      1.0347334410339257
+     ]
+    },
+    "micro/typed_array_write": {
+     "time": [
+      27.13,
+      31.2,
+      30.14,
+      30.41,
+      30.37
+     ],
+     "layers": [
+      1.1500184297825287,
+      0.966025641025641,
+      1.0089581950895818,
+      0.9986846432094706
+     ]
+    },
+    "micro/weak_map_delete": {
+     "time": [
+      300.06,
+      265.89,
+      258.83,
+      262.78,
+      284.05
+     ],
+     "layers": [
+      0.8861227754449109,
+      0.9734476663281808,
+      1.0152609821118108,
+      1.0809422330466552
+     ]
+    },
+    "micro/weak_map_set": {
+     "time": [
+      168.32,
+      147.73,
+      149.49,
+      144.45,
+      153.78
+     ],
+     "layers": [
+      0.8776734790874524,
+      1.0119136262099777,
+      0.9662853702588801,
+      1.0645898234683282
+     ]
+    },
+    "microcall/closure": {
+     "time": [
+      63,
+      38,
+      37,
+      34,
+      38
+     ],
+     "layers": [
+      0.6031746031746031,
+      0.9736842105263158,
+      0.918918918918919,
+      1.1176470588235294
+     ]
+    },
+    "microcall/depth4": {
+     "time": [
+      28.5,
+      23,
+      24.5,
+      25,
+      26.5
+     ],
+     "layers": [
+      0.8070175438596491,
+      1.065217391304348,
+      1.0204081632653061,
+      1.06
+     ]
+    },
+    "microcall/eight": {
+     "time": [
+      182,
+      70,
+      66,
+      64,
+      69
+     ],
+     "layers": [
+      0.38461538461538464,
+      0.9428571428571428,
+      0.9696969696969697,
+      1.078125
+     ]
+    },
+    "microcall/empty": {
+     "time": [
+      64,
+      31.5,
+      33.5,
+      32.5,
+      33.5
+     ],
+     "layers": [
+      0.4921875,
+      1.0634920634920635,
+      0.9701492537313433,
+      1.0307692307692307
+     ]
+    },
+    "microcall/id": {
+     "time": [
+      55.5,
+      35,
+      35,
+      34,
+      35.5
+     ],
+     "layers": [
+      0.6306306306306306,
+      1.0,
+      0.9714285714285714,
+      1.0441176470588236
+     ]
+    },
+    "microcall/method": {
+     "time": [
+      73,
+      69,
+      75,
+      74,
+      69
+     ],
+     "layers": [
+      0.9452054794520548,
+      1.0869565217391304,
+      0.9866666666666667,
+      0.9324324324324325
+     ]
+    },
+    "microcall/mutual": {
+     "time": [
+      62,
+      26,
+      28.5,
+      28,
+      30
+     ],
+     "layers": [
+      0.41935483870967744,
+      1.0961538461538463,
+      0.9824561403508771,
+      1.0714285714285714
+     ]
+    },
+    "microcall/sched": {
+     "time": [
+      85.5,
+      67.5,
+      73,
+      72,
+      84
+     ],
+     "layers": [
+      0.7894736842105263,
+      1.0814814814814815,
+      0.9863013698630136,
+      1.1666666666666667
+     ]
+    },
+    "microcall/score": {
+     "time": [
+      73.53481873667181,
+      42.99226139294927,
+      44.04122258433894,
+      43.3106674173849,
+      46.008741660915575
+     ],
+     "layers": [
+      0.5846517626827171,
+      1.0243988373117239,
+      0.9834120143791415,
+      1.06229583620888
+     ]
+    },
+    "microcall/six": {
+     "time": [
+      137,
+      61,
+      57,
+      59,
+      61
+     ],
+     "layers": [
+      0.44525547445255476,
+      0.9344262295081968,
+      1.0350877192982457,
+      1.0338983050847457
+     ]
+    }
+   }
+  },
+  "bellard": {
+   "chain": [
+    [
+     "gcc-O2",
+     "bellard-gcc-O2-NDEBUG"
+    ],
+    [
+     "clang-O2",
+     "bellard-clang-O2-NDEBUG"
+    ],
+    [
+     "clang-O3",
+     "bellard-clang-O3"
+    ],
+    [
+     "clang-O3-gocflags",
+     "bellard-clang-O3-gocflags"
+    ],
+    [
+     "goc",
+     "goc-bellard"
+    ]
+   ],
+   "suite": {
+    "V8": {
+     "time": {
+      "gcc-O2": 6.489292667099286,
+      "clang-O2": 7.564296520423601,
+      "clang-O3": 7.616146230007616,
+      "clang-O3-gocflags": 7.132667617689016,
+      "goc": 8.032128514056225
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 1.165658093797277,
+      "opt level (clang-O3/clang-O2)": 1.0068545316070068,
+      "goc flags (gocflags/clang-O3)": 0.9365192582025678,
+      "goc runtime (goc/gocflags)": 1.1261044176706827
+     },
+     "goc/gcc": 1.2377510040160644,
+     "goc/clang-O2": 1.061847389558233,
+     "goc/clang-O3": 1.0546184738955824
+    },
+    "SunSpider": {
+     "time": {
+      "gcc-O2": 10.835738614598881,
+      "clang-O2": 13.45155112554034,
+      "clang-O3": 14.450363619775551,
+      "clang-O3-gocflags": 12.665244780614414,
+      "goc": 15.561535643590645
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 1.241406017990984,
+      "opt level (clang-O3/clang-O2)": 1.074252588784261,
+      "goc flags (gocflags/clang-O3)": 0.8764654726945297,
+      "goc runtime (goc/gocflags)": 1.228680212119495
+     },
+     "goc/gcc": 1.4361305857474953,
+     "goc/clang-O2": 1.1568580826373323,
+     "goc/clang-O3": 1.0768957829057282
+    },
+    "microbench": {
+     "time": {
+      "gcc-O2": 32.6751105694554,
+      "clang-O2": 38.90148693862125,
+      "clang-O3": 40.860220148584204,
+      "clang-O3-gocflags": 37.896130324214816,
+      "goc": 45.55500039081731
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 1.1905541025157615,
+      "opt level (clang-O3/clang-O2)": 1.0503511141631539,
+      "goc flags (gocflags/clang-O3)": 0.9274578107119648,
+      "goc runtime (goc/gocflags)": 1.2021016394306794
+     },
+     "goc/gcc": 1.3941804510189477,
+     "goc/clang-O2": 1.1710349391706794,
+     "goc/clang-O3": 1.1148985547596415
+    },
+    "microcall": {
+     "time": {
+      "gcc-O2": 31.748047495079053,
+      "clang-O2": 41.150569935393605,
+      "clang-O3": 43.836577240049095,
+      "clang-O3-gocflags": 40.64710186163727,
+      "goc": 47.214353163361665
+     },
+     "layers": {
+      "compiler (clang-O2/gcc-O2)": 1.2961606518250277,
+      "opt level (clang-O3/clang-O2)": 1.065272663510433,
+      "goc flags (gocflags/clang-O3)": 0.9272416876676693,
+      "goc runtime (goc/gocflags)": 1.1615675165250237
+     },
+     "goc/gcc": 1.4871576959395656,
+     "goc/clang-O2": 1.147355996222852,
+     "goc/clang-O3": 1.0770538243626064
+    }
+   },
+   "item": {
+    "v8/Crypto": {
+     "time": [
+      7.304601899196494,
+      9.79431929480901,
+      10.427528675703858,
+      8.841732979664014,
+      10.729613733905579
+     ],
+     "layers": [
+      1.3408423114593535,
+      1.0646506777893638,
+      0.847922192749779,
+      1.2135193133047208
+     ]
+    },
+    "v8/DeltaBlue": {
+     "time": [
+      10.729613733905579,
+      11.389521640091116,
+      11.778563015312132,
+      11.723329425556859,
+      12.195121951219512
+     ],
+     "layers": [
+      1.061503416856492,
+      1.0341578327444052,
+      0.9953106682297773,
+      1.0402439024390244
+     ]
+    },
+    "v8/EarleyBoyer": {
+     "time": [
+      3.951007506914263,
+      4.116920543433512,
+      4.123711340206185,
+      4.016064257028113,
+      4.357298474945534
+     ],
+     "layers": [
+      1.0419925895430218,
+      1.0016494845360824,
+      0.9738955823293174,
+      1.0849673202614378
+     ]
+    },
+    "v8/NavierStokes": {
+     "time": [
+      3.741114852225963,
+      5.7770075101097635,
+      5.636978579481398,
+      5.017561465127947,
+      5.793742757821553
+     ],
+     "layers": [
+      1.5441941074523398,
+      0.97576099210823,
+      0.8901154039136978,
+      1.1546929316338357
+     ]
+    },
+    "v8/RayTrace": {
+     "time": [
+      5.159958720330238,
+      5.319148936170213,
+      5.293806246691371,
+      5.162622612287042,
+      6.053268765133172
+     ],
+     "layers": [
+      1.0308510638297872,
+      0.9952355743779778,
+      0.9752194114610222,
+      1.1725181598062953
+     ]
+    },
+    "v8/RegExp": {
+     "time": [
+      18.281535648994517,
+      22.321428571428573,
+      22.471910112359552,
+      18.587360594795538,
+      23.094688221709006
+     ],
+     "layers": [
+      1.2209821428571428,
+      1.006741573033708,
+      0.8271375464684013,
+      1.2424942263279446
+     ]
+    },
+    "v8/Richards": {
+     "time": [
+      9.920634920634921,
+      12.135922330097088,
+      11.695906432748538,
+      11.494252873563218,
+      12.239902080783354
+     ],
+     "layers": [
+      1.2233009708737865,
+      0.9637426900584795,
+      0.9827586206896551,
+      1.0648714810281519
+     ]
+    },
+    "v8/Score": {
+     "time": [
+      6.489292667099286,
+      7.564296520423601,
+      7.616146230007616,
+      7.132667617689016,
+      8.032128514056225
+     ],
+     "layers": [
+      1.165658093797277,
+      1.0068545316070068,
+      0.9365192582025678,
+      1.1261044176706827
+     ]
+    },
+    "v8/Splay": {
+     "time": [
+      2.907822041291073,
+      2.8768699654775602,
+      2.8019052956010086,
+      2.853881278538813,
+      3.0988534242330337
+     ],
+     "layers": [
+      0.9893555811277329,
+      0.9739422807509107,
+      1.0185502283105023,
+      1.085838239851255
+     ]
+    },
+    "ss/3d-cube": {
+     "time": [
+      19.0,
+      25.1667,
+      26.6667,
+      23.2857,
+      25.8333
+     ],
+     "layers": [
+      1.3245631578947368,
+      1.059602570062821,
+      0.8732126584841768,
+      1.1094062020896946
+     ]
+    },
+    "ss/3d-morph": {
+     "time": [
+      12.5833,
+      15.2,
+      16.7778,
+      14.9,
+      26.8333
+     ],
+     "layers": [
+      1.2079502197356815,
+      1.1038026315789473,
+      0.8880782939360345,
+      1.8008926174496644
+     ]
+    },
+    "ss/3d-raytrace": {
+     "time": [
+      1.2727,
+      1.7778,
+      2.125,
+      1.6,
+      2.25
+     ],
+     "layers": [
+      1.3968727901312172,
+      1.1952975587805152,
+      0.7529411764705882,
+      1.40625
+     ]
+    },
+    "ss/access-binary-trees": {
+     "time": [
+      10.4,
+      11.5385,
+      11.7692,
+      11.3571,
+      13.0833
+     ],
+     "layers": [
+      1.109471153846154,
+      1.0199939333535555,
+      0.9649848757774531,
+      1.1519930263887788
+     ]
+    },
+    "ss/access-fannkuch": {
+     "time": [
+      30.8,
+      40.25,
+      44.75,
+      37.75,
+      44.75
+     ],
+     "layers": [
+      1.3068181818181819,
+      1.1118012422360248,
+      0.8435754189944135,
+      1.185430463576159
+     ]
+    },
+    "ss/access-nbody": {
+     "time": [
+      12.25,
+      15.0,
+      16.4444,
+      15.0,
+      20.875
+     ],
+     "layers": [
+      1.2244897959183674,
+      1.0962933333333333,
+      0.912164627471966,
+      1.3916666666666666
+     ]
+    },
+    "ss/access-nsieve": {
+     "time": [
+      18.875,
+      21.5714,
+      23.3333,
+      21.1429,
+      22.8571
+     ],
+     "layers": [
+      1.1428556291390728,
+      1.0816775916259491,
+      0.9061255801794003,
+      1.081076862682035
+     ]
+    },
+    "ss/bitops-3bit-bits-in-byte": {
+     "time": [
+      7.7895,
+      11.2143,
+      12.3333,
+      9.6667,
+      12.5
+     ],
+     "layers": [
+      1.4396687849027536,
+      1.099783312377946,
+      0.7837886048340672,
+      1.2930989893138298
+     ]
+    },
+    "ss/bitops-bits-in-byte": {
+     "time": [
+      20.375,
+      25.1667,
+      27.0,
+      23.7143,
+      27.8333
+     ],
+     "layers": [
+      1.2351754601226994,
+      1.07284626113078,
+      0.8783074074074074,
+      1.173692666450201
+     ]
+    },
+    "ss/bitops-bitwise-and": {
+     "time": [
+      8.2778,
+      13.0833,
+      13.7273,
+      11.1538,
+      14.8
+     ],
+     "layers": [
+      1.5805286428761267,
+      1.0492230553453639,
+      0.8125268625294122,
+      1.3269020423532787
+     ]
+    },
+    "ss/bitops-nsieve-bits": {
+     "time": [
+      13.7273,
+      19.375,
+      22.0,
+      17.8889,
+      21.7143
+     ],
+     "layers": [
+      1.4114210369118472,
+      1.135483870967742,
+      0.8131318181818181,
+      1.2138421032036628
+     ]
+    },
+    "ss/controlflow-recursive": {
+     "time": [
+      5.75,
+      7.2857,
+      8.0,
+      6.9091,
+      8.8824
+     ],
+     "layers": [
+      1.2670782608695652,
+      1.098041368708566,
+      0.8636375,
+      1.2856088347252177
+     ]
+    },
+    "ss/crypto-aes": {
+     "time": [
+      12.75,
+      14.7,
+      16.2,
+      14.0,
+      16.6667
+     ],
+     "layers": [
+      1.1529411764705881,
+      1.1020408163265307,
+      0.8641975308641976,
+      1.1904785714285713
+     ]
+    },
+    "ss/crypto-md5": {
+     "time": [
+      5.6538,
+      8.0,
+      8.2222,
+      6.9091,
+      8.2778
+     ],
+     "layers": [
+      1.4149775372315962,
+      1.027775,
+      0.8402982170222081,
+      1.1981010551301905
+     ]
+    },
+    "ss/crypto-sha1": {
+     "time": [
+      5.1034,
+      7.5263,
+      8.2222,
+      6.7727,
+      8.1667
+     ],
+     "layers": [
+      1.4747619234236,
+      1.0924624317393674,
+      0.8237089829972513,
+      1.2058263321865725
+     ]
+    },
+    "ss/date-format-tofte": {
+     "time": [
+      4.3333,
+      4.6667,
+      5.8,
+      4.6667,
+      6.4
+     ],
+     "layers": [
+      1.0769390533773335,
+      1.2428482653695332,
+      0.804603448275862,
+      1.3714187755801746
+     ]
+    },
+    "ss/date-format-xparb": {
+     "time": [
+      2.625,
+      2.375,
+      2.375,
+      2.375,
+      1.5
+     ],
+     "layers": [
+      0.9047619047619048,
+      1.0,
+      1.0,
+      0.631578947368421
+     ]
+    },
+    "ss/math-cordic": {
+     "time": [
+      22.8571,
+      28.1667,
+      31.4,
+      26.0,
+      31.8
+     ],
+     "layers": [
+      1.2322954355539417,
+      1.1147915801283075,
+      0.8280254777070064,
+      1.2230769230769232
+     ]
+    },
+    "ss/math-partial-sums": {
+     "time": [
+      9.5,
+      11.8462,
+      12.2308,
+      12.1538,
+      19.75
+     ],
+     "layers": [
+      1.2469684210526315,
+      1.0324661072749068,
+      0.9937044183536645,
+      1.6250061709095098
+     ]
+    },
+    "ss/math-spectral-norm": {
+     "time": [
+      6.8636,
+      9.375,
+      9.9333,
+      8.7059,
+      10.5
+     ],
+     "layers": [
+      1.3659012762981526,
+      1.0595519999999998,
+      0.8764358269658623,
+      1.2060786363270886
+     ]
+    },
+    "ss/regexp-dna": {
+     "time": [
+      23.6667,
+      42.5,
+      43.5,
+      38.0,
+      47.5
+     ],
+     "layers": [
+      1.7957721186308189,
+      1.0235294117647058,
+      0.8735632183908046,
+      1.25
+     ]
+    },
+    "ss/string-base64": {
+     "time": [
+      11.8462,
+      12.8333,
+      13.7273,
+      12.0833,
+      14.0909
+     ],
+     "layers": [
+      1.0833262987287062,
+      1.0696625186039443,
+      0.8802386485324863,
+      1.16614666523218
+     ]
+    },
+    "ss/string-fasta": {
+     "time": [
+      21.4286,
+      23.2857,
+      24.3333,
+      22.8571,
+      26.0
+     ],
+     "layers": [
+      1.086664551113932,
+      1.044988984655819,
+      0.9393341634714567,
+      1.1375021328164991
+     ]
+    },
+    "ss/string-tagcloud": {
+     "time": [
+      21.1429,
+      24.7143,
+      24.5,
+      22.4286,
+      27.3333
+     ],
+     "layers": [
+      1.1689172251677868,
+      0.9913289067462966,
+      0.9154530612244898,
+      1.2186806131457157
+     ]
+    },
+    "ss/string-unpack-code": {
+     "time": [
+      38.5,
+      39.75,
+      38.5,
+      39.0,
+      43.0
+     ],
+     "layers": [
+      1.0324675324675325,
+      0.9685534591194969,
+      1.0129870129870129,
+      1.1025641025641026
+     ]
+    },
+    "ss/string-validate-input": {
+     "time": [
+      11.3077,
+      10.9286,
+      11.7692,
+      10.6429,
+      15.6
+     ],
+     "layers": [
+      0.9664741724665492,
+      1.0769174459674615,
+      0.9043010569962274,
+      1.465765909667478
+     ]
+    },
+    "micro/arguments_read": {
+     "time": [
+      100.87,
+      105.61,
+      108.45,
+      108.99,
+      127.18
+     ],
+     "layers": [
+      1.0469911767621691,
+      1.0268913928605246,
+      1.0049792531120332,
+      1.1668960455087625
+     ]
+    },
+    "micro/arguments_strict_read": {
+     "time": [
+      81.2,
+      91.8,
+      92.17,
+      88.33,
+      111.29
+     ],
+     "layers": [
+      1.1305418719211822,
+      1.0040305010893247,
+      0.9583378539654985,
+      1.259934337144798
+     ]
+    },
+    "micro/array_for": {
+     "time": [
+      12.02,
+      18.19,
+      20.89,
+      17.63,
+      21.77
+     ],
+     "layers": [
+      1.5133111480865227,
+      1.148433205057724,
+      0.8439444710387745,
+      1.2348269994327852
+     ]
+    },
+    "micro/array_for_in": {
+     "time": [
+      40.52,
+      48.03,
+      50.06,
+      48.59,
+      57.58
+     ],
+     "layers": [
+      1.185340572556762,
+      1.0422652508848635,
+      0.9706352377147424,
+      1.1850174933113808
+     ]
+    },
+    "micro/array_for_of": {
+     "time": [
+      18.9,
+      18.86,
+      20.37,
+      18.11,
+      19.53
+     ],
+     "layers": [
+      0.9978835978835979,
+      1.0800636267232238,
+      0.8890525282277859,
+      1.0784097183876313
+     ]
+    },
+    "micro/array_hole_length_decr": {
+     "time": [
+      47.75,
+      54.49,
+      56.49,
+      56.98,
+      61.01
+     ],
+     "layers": [
+      1.141151832460733,
+      1.0367039823820885,
+      1.0086741016109044,
+      1.0707265707265707
+     ]
+    },
+    "micro/array_length_decr": {
+     "time": [
+      36.44,
+      48.09,
+      49.22,
+      50.0,
+      53.56
+     ],
+     "layers": [
+      1.319703622392975,
+      1.023497608650447,
+      1.0158472165786265,
+      1.0712000000000002
+     ]
+    },
+    "micro/array_length_read": {
+     "time": [
+      7.47,
+      12.04,
+      12.2,
+      10.73,
+      12.5
+     ],
+     "layers": [
+      1.611780455153949,
+      1.0132890365448506,
+      0.8795081967213115,
+      1.1649580615097856
+     ]
+    },
+    "micro/array_pop": {
+     "time": [
+      58.33,
+      68.22,
+      71.95,
+      72.13,
+      75.9
+     ],
+     "layers": [
+      1.1695525458597635,
+      1.0546760480797421,
+      1.0025017373175815,
+      1.052266740607237
+     ]
+    },
+    "micro/array_prop_create": {
+     "time": [
+      12.34,
+      17.0,
+      20.16,
+      17.23,
+      21.04
+     ],
+     "layers": [
+      1.3776337115072934,
+      1.1858823529411764,
+      0.8546626984126984,
+      1.2211259431224608
+     ]
+    },
+    "micro/array_push": {
+     "time": [
+      27.68,
+      32.3,
+      35.11,
+      33.51,
+      40.23
+     ],
+     "layers": [
+      1.166907514450867,
+      1.0869969040247678,
+      0.9544289376246083,
+      1.2005371530886302
+     ]
+    },
+    "micro/array_read": {
+     "time": [
+      6.87,
+      10.34,
+      11.23,
+      8.39,
+      10.16
+     ],
+     "layers": [
+      1.50509461426492,
+      1.086073500967118,
+      0.7471059661620659,
+      1.2109654350417163
+     ]
+    },
+    "micro/array_slice": {
+     "time": [
+      13.71,
+      21.25,
+      21.08,
+      22.34,
+      22.98
+     ],
+     "layers": [
+      1.549963530269876,
+      0.9919999999999999,
+      1.0597722960151803,
+      1.0286481647269472
+     ]
+    },
+    "micro/array_update": {
+     "time": [
+      8.98,
+      10.53,
+      12.48,
+      9.85,
+      11.59
+     ],
+     "layers": [
+      1.1726057906458796,
+      1.1851851851851853,
+      0.7892628205128205,
+      1.1766497461928935
+     ]
+    },
+    "micro/array_write": {
+     "time": [
+      7.31,
+      7.64,
+      9.1,
+      7.14,
+      8.58
+     ],
+     "layers": [
+      1.0451436388508892,
+      1.1910994764397906,
+      0.7846153846153846,
+      1.2016806722689077
+     ]
+    },
+    "micro/bigint256_arith": {
+     "time": [
+      74.49,
+      88.15,
+      94.44,
+      82.72,
+      95.34
+     ],
+     "layers": [
+      1.1833803195059742,
+      1.071355643788996,
+      0.8759000423549343,
+      1.1525628626692457
+     ]
+    },
+    "micro/bigint32_arith": {
+     "time": [
+      22.24,
+      32.52,
+      34.09,
+      30.56,
+      37.72
+     ],
+     "layers": [
+      1.4622302158273384,
+      1.0482779827798279,
+      0.8964505720152536,
+      1.2342931937172774
+     ]
+    },
+    "micro/bigint64_arith": {
+     "time": [
+      30.01,
+      40.83,
+      42.96,
+      38.52,
+      45.45
+     ],
+     "layers": [
+      1.360546484505165,
+      1.0521675238795005,
+      0.8966480446927375,
+      1.1799065420560748
+     ]
+    },
+    "micro/date_now": {
+     "time": [
+      55.26,
+      58.48,
+      62.89,
+      56.54,
+      155.28
+     ],
+     "layers": [
+      1.0582699963807456,
+      1.0754103967168263,
+      0.8990300524725712,
+      2.7463742483197735
+     ]
+    },
+    "micro/date_parse": {
+     "time": [
+      523.03,
+      480.47,
+      479.34,
+      487.17,
+      815.2
+     ],
+     "layers": [
+      0.9186279945701012,
+      0.9976481361999707,
+      1.016334960570785,
+      1.6733378492107478
+     ]
+    },
+    "micro/empty_do_loop": {
+     "time": [
+      14.53,
+      19.22,
+      20.4,
+      17.95,
+      20.5
+     ],
+     "layers": [
+      1.3227804542326222,
+      1.0613943808532778,
+      0.8799019607843137,
+      1.1420612813370474
+     ]
+    },
+    "micro/empty_down_loop": {
+     "time": [
+      16.02,
+      18.28,
+      19.26,
+      17.28,
+      20.44
+     ],
+     "layers": [
+      1.1410736579275906,
+      1.0536105032822758,
+      0.897196261682243,
+      1.1828703703703705
+     ]
+    },
+    "micro/empty_down_loop2": {
+     "time": [
+      21.12,
+      21.07,
+      23.48,
+      20.57,
+      23.66
+     ],
+     "layers": [
+      0.9976325757575757,
+      1.1143806359753203,
+      0.8760647359454855,
+      1.1502187651920273
+     ]
+    },
+    "micro/empty_loop": {
+     "time": [
+      11.72,
+      16.33,
+      18.72,
+      15.58,
+      17.95
+     ],
+     "layers": [
+      1.3933447098976106,
+      1.1463563992651562,
+      0.8322649572649573,
+      1.1521181001283696
+     ]
+    },
+    "micro/float_arith": {
+     "time": [
+      17.99,
+      23.18,
+      26.91,
+      24.13,
+      27.61
+     ],
+     "layers": [
+      1.2884936075597555,
+      1.1609145815358068,
+      0.8966926793013749,
+      1.144218814753419
+     ]
+    },
+    "micro/float_toExponential": {
+     "time": [
+      93.12,
+      101.61,
+      100.82,
+      93.89,
+      113.94
+     ],
+     "layers": [
+      1.0911726804123711,
+      0.9922251746875307,
+      0.9312636381670304,
+      1.2135477686654597
+     ]
+    },
+    "micro/float_toFixed": {
+     "time": [
+      83.61,
+      83.52,
+      85.89,
+      82.29,
+      93.1
+     ],
+     "layers": [
+      0.9989235737351991,
+      1.0283764367816093,
+      0.958085923856095,
+      1.1313646858670554
+     ]
+    },
+    "micro/float_toPrecision": {
+     "time": [
+      92.26,
+      103.74,
+      108.34,
+      96.93,
+      114.16
+     ],
+     "layers": [
+      1.12443095599393,
+      1.0443416232889917,
+      0.8946834040982093,
+      1.1777571443309605
+     ]
+    },
+    "micro/float_toString": {
+     "time": [
+      216.66,
+      222.13,
+      216.31,
+      217.96,
+      229.7
+     ],
+     "layers": [
+      1.02524693067479,
+      0.9737991266375546,
+      1.0076279413804263,
+      1.0538630941457148
+     ]
+    },
+    "micro/float_to_string": {
+     "time": [
+      212.24,
+      208.26,
+      206.43,
+      205.86,
+      213.34
+     ],
+     "layers": [
+      0.981247644176404,
+      0.991212906943244,
+      0.997238773434094,
+      1.036335373554843
+     ]
+    },
+    "micro/func_call": {
+     "time": [
+      15.63,
+      21.12,
+      23.77,
+      21.21,
+      26.45
+     ],
+     "layers": [
+      1.3512476007677543,
+      1.1254734848484849,
+      0.8923012200252419,
+      1.247053276756247
+     ]
+    },
+    "micro/func_closure_call": {
+     "time": [
+      20.47,
+      24.61,
+      26.48,
+      26.07,
+      28.41
+     ],
+     "layers": [
+      1.202247191011236,
+      1.0759853718000814,
+      0.9845166163141994,
+      1.0897583429228999
+     ]
+    },
+    "micro/global_destruct": {
+     "time": [
+      31.78,
+      30.48,
+      32.03,
+      32.99,
+      35.66
+     ],
+     "layers": [
+      0.9590937696664569,
+      1.0508530183727034,
+      1.0299719013424915,
+      1.0809336162473475
+     ]
+    },
+    "micro/global_destruct_strict": {
+     "time": [
+      32.18,
+      30.36,
+      32.85,
+      33.35,
+      34.84
+     ],
+     "layers": [
+      0.9434431323803605,
+      1.08201581027668,
+      1.0152207001522071,
+      1.0446776611694153
+     ]
+    },
+    "micro/global_func_call": {
+     "time": [
+      16.37,
+      20.94,
+      23.81,
+      21.49,
+      26.35
+     ],
+     "layers": [
+      1.2791692119731215,
+      1.1370582617000953,
+      0.9025619487610248,
+      1.2261516984644023
+     ]
+    },
+    "micro/global_read": {
+     "time": [
+      6.04,
+      9.42,
+      9.72,
+      9.2,
+      11.02
+     ],
+     "layers": [
+      1.5596026490066226,
+      1.0318471337579618,
+      0.9465020576131686,
+      1.1978260869565218
+     ]
+    },
+    "micro/global_write": {
+     "time": [
+      7.76,
+      11.24,
+      11.92,
+      11.16,
+      12.33
+     ],
+     "layers": [
+      1.4484536082474226,
+      1.0604982206405693,
+      0.9362416107382551,
+      1.1048387096774193
+     ]
+    },
+    "micro/global_write_strict": {
+     "time": [
+      7.77,
+      11.19,
+      11.76,
+      11.03,
+      12.45
+     ],
+     "layers": [
+      1.4401544401544402,
+      1.0509383378016086,
+      0.9379251700680272,
+      1.128739800543971
+     ]
+    },
+    "micro/int_arith": {
+     "time": [
+      11.64,
+      18.57,
+      20.1,
+      17.82,
+      20.61
+     ],
+     "layers": [
+      1.595360824742268,
+      1.0823909531502425,
+      0.8865671641791044,
+      1.1565656565656566
+     ]
+    },
+    "micro/int_toString": {
+     "time": [
+      38.11,
+      38.38,
+      40.32,
+      39.91,
+      44.81
+     ],
+     "layers": [
+      1.0070847546575703,
+      1.0505471599791558,
+      0.9898313492063491,
+      1.1227762465547484
+     ]
+    },
+    "micro/int_to_string": {
+     "time": [
+      27.91,
+      32.01,
+      32.45,
+      31.65,
+      36.84
+     ],
+     "layers": [
+      1.146900752418488,
+      1.0137457044673541,
+      0.9753466872110939,
+      1.1639810426540287
+     ]
+    },
+    "micro/local_destruct": {
+     "time": [
+      23.41,
+      23.63,
+      24.29,
+      24.03,
+      26.61
+     ],
+     "layers": [
+      1.0093976932934643,
+      1.0279305966991112,
+      0.989296006587073,
+      1.107365792759051
+     ]
+    },
+    "micro/map_delete": {
+     "time": [
+      167.19,
+      183.96,
+      184.13,
+      181.33,
+      202.54
+     ],
+     "layers": [
+      1.1003050421675937,
+      1.0009241139378124,
+      0.9847933525226743,
+      1.1169690619312853
+     ]
+    },
+    "micro/map_set_bigint": {
+     "time": [
+      108.51,
+      121.19,
+      126.1,
+      120.24,
+      139.16
+     ],
+     "layers": [
+      1.116855589346604,
+      1.0405148939681492,
+      0.9535289452815227,
+      1.1573519627411843
+     ]
+    },
+    "micro/map_set_int": {
+     "time": [
+      83.16,
+      99.51,
+      104.47,
+      104.02,
+      111.69
+     ],
+     "layers": [
+      1.1966089466089467,
+      1.0498442367601246,
+      0.99569254331387,
+      1.0737358200346088
+     ]
+    },
+    "micro/map_set_string": {
+     "time": [
+      174.24,
+      178.42,
+      189.65,
+      182.25,
+      195.82
+     ],
+     "layers": [
+      1.0239898989898988,
+      1.0629413742853941,
+      0.9609807540205642,
+      1.0744581618655693
+     ]
+    },
+    "micro/math_min": {
+     "time": [
+      22.61,
+      28.52,
+      30.54,
+      26.85,
+      33.84
+     ],
+     "layers": [
+      1.261388766032729,
+      1.0708274894810659,
+      0.8791748526522594,
+      1.2603351955307263
+     ]
+    },
+    "micro/prop_clone": {
+     "time": [
+      46.47,
+      40.04,
+      39.92,
+      40.41,
+      46.41
+     ],
+     "layers": [
+      0.8616311598880999,
+      0.9970029970029971,
+      1.0122745490981964,
+      1.1484780994803268
+     ]
+    },
+    "micro/prop_create": {
+     "time": [
+      41.97,
+      41.68,
+      42.87,
+      39.96,
+      47.91
+     ],
+     "layers": [
+      0.9930903025970932,
+      1.0285508637236085,
+      0.9321203638908329,
+      1.1989489489489489
+     ]
+    },
+    "micro/prop_delete": {
+     "time": [
+      74.77,
+      68.78,
+      71.45,
+      66.89,
+      82.24
+     ],
+     "layers": [
+      0.9198876554767955,
+      1.0388194242512359,
+      0.9361791462561231,
+      1.2294812378531916
+     ]
+    },
+    "micro/prop_read": {
+     "time": [
+      8.82,
+      11.92,
+      12.82,
+      11.03,
+      12.68
+     ],
+     "layers": [
+      1.3514739229024944,
+      1.075503355704698,
+      0.860374414976599,
+      1.1495920217588396
+     ]
+    },
+    "micro/prop_update": {
+     "time": [
+      9.86,
+      16.96,
+      17.19,
+      16.66,
+      16.38
+     ],
+     "layers": [
+      1.7200811359026371,
+      1.013561320754717,
+      0.9691681210005817,
+      0.9831932773109243
+     ]
+    },
+    "micro/prop_write": {
+     "time": [
+      7.83,
+      16.27,
+      17.18,
+      16.64,
+      16.78
+     ],
+     "layers": [
+      2.077905491698595,
+      1.0559311616472034,
+      0.9685681024447031,
+      1.0084134615384617
+     ]
+    },
+    "micro/regexp_ascii": {
+     "time": [
+      150.69,
+      145.35,
+      150.27,
+      150.11,
+      157.73
+     ],
+     "layers": [
+      0.9645630101532948,
+      1.0338493292053665,
+      0.998935249883543,
+      1.0507627739657583
+     ]
+    },
+    "micro/regexp_replace": {
+     "time": [
+      608.89,
+      752.14,
+      795.66,
+      630.55,
+      850.31
+     ],
+     "layers": [
+      1.2352641692259685,
+      1.0578615683250459,
+      0.7924867405675791,
+      1.3485211323447783
+     ]
+    },
+    "micro/regexp_utf16": {
+     "time": [
+      148.26,
+      145.62,
+      157.49,
+      151.74,
+      159.62
+     ],
+     "layers": [
+      0.982193443949818,
+      1.0815135283614887,
+      0.9634897453806591,
+      1.051930934493212
+     ]
+    },
+    "micro/sort_bench": {
+     "time": [
+      14.55,
+      18.35,
+      14.89,
+      15.06,
+      19.88
+     ],
+     "layers": [
+      1.261168384879725,
+      0.8114441416893733,
+      1.0114170584284754,
+      1.3200531208499335
+     ]
+    },
+    "micro/string_build1": {
+     "time": [
+      19.4,
+      22.32,
+      22.61,
+      20.86,
+      42.24
+     ],
+     "layers": [
+      1.150515463917526,
+      1.0129928315412187,
+      0.9226006191950464,
+      2.024928092042186
+     ]
+    },
+    "micro/string_build1x": {
+     "time": [
+      19.14,
+      22.49,
+      22.42,
+      21.05,
+      41.75
+     ],
+     "layers": [
+      1.1750261233019852,
+      0.996887505558026,
+      0.9388938447814451,
+      1.9833729216152018
+     ]
+    },
+    "micro/string_build2": {
+     "time": [
+      34.07,
+      40.65,
+      40.13,
+      36.96,
+      47.92
+     ],
+     "layers": [
+      1.193131787496331,
+      0.9872078720787208,
+      0.9210067281335659,
+      1.2965367965367967
+     ]
+    },
+    "micro/string_build2c": {
+     "time": [
+      24.57,
+      28.02,
+      28.58,
+      26.67,
+      51.7
+     ],
+     "layers": [
+      1.1404151404151404,
+      1.0199857244825123,
+      0.9331700489853045,
+      1.9385076865391826
+     ]
+    },
+    "micro/string_build3": {
+     "time": [
+      32.67,
+      35.58,
+      37.62,
+      35.22,
+      43.37
+     ],
+     "layers": [
+      1.089072543617998,
+      1.057335581787521,
+      0.9362041467304626,
+      1.2314026121521862
+     ]
+    },
+    "micro/string_build4": {
+     "time": [
+      35.95,
+      42.49,
+      44.18,
+      40.95,
+      49.71
+     ],
+     "layers": [
+      1.1819193324061197,
+      1.0397740644857614,
+      0.9268899954730648,
+      1.2139194139194138
+     ]
+    },
+    "micro/string_build_large1": {
+     "time": [
+      43.16,
+      46.56,
+      44.88,
+      43.98,
+      59.56
+     ],
+     "layers": [
+      1.0787766450417053,
+      0.9639175257731959,
+      0.979946524064171,
+      1.3542519326966804
+     ]
+    },
+    "micro/string_build_large2": {
+     "time": [
+      40.51,
+      42.52,
+      43.81,
+      41.87,
+      52.64
+     ],
+     "layers": [
+      1.0496173784250804,
+      1.0303386641580432,
+      0.9557178726318191,
+      1.2572247432529258
+     ]
+    },
+    "micro/string_length": {
+     "time": [
+      9.14,
+      13.89,
+      14.8,
+      12.91,
+      15.16
+     ],
+     "layers": [
+      1.5196936542669583,
+      1.0655147588192944,
+      0.8722972972972972,
+      1.17428350116189
+     ]
+    },
+    "micro/string_to_float": {
+     "time": [
+      95.08,
+      108.29,
+      110.31,
+      101.44,
+      115.94
+     ],
+     "layers": [
+      1.1389356331510307,
+      1.0186536152922707,
+      0.91959024567129,
+      1.1429416403785488
+     ]
+    },
+    "micro/string_to_int": {
+     "time": [
+      76.15,
+      88.16,
+      92.75,
+      80.83,
+      94.16
+     ],
+     "layers": [
+      1.157715036112935,
+      1.0520644283121598,
+      0.8714824797843665,
+      1.164914017072869
+     ]
+    },
+    "micro/typed_array_read": {
+     "time": [
+      8.94,
+      12.81,
+      13.34,
+      10.7,
+      13.13
+     ],
+     "layers": [
+      1.4328859060402686,
+      1.0413739266198283,
+      0.8020989505247376,
+      1.2271028037383178
+     ]
+    },
+    "micro/typed_array_write": {
+     "time": [
+      8.67,
+      10.21,
+      12.29,
+      10.31,
+      11.99
+     ],
+     "layers": [
+      1.17762399077278,
+      1.2037218413320272,
+      0.8388934092758341,
+      1.162948593598448
+     ]
+    },
+    "micro/weak_map_delete": {
+     "time": [
+      143.27,
+      154.24,
+      159.76,
+      155.96,
+      173.34
+     ],
+     "layers": [
+      1.0765687164095763,
+      1.0357883817427385,
+      0.9762143214822234,
+      1.111438830469351
+     ]
+    },
+    "micro/weak_map_set": {
+     "time": [
+      57.39,
+      65.39,
+      68.16,
+      63.29,
+      71.74
+     ],
+     "layers": [
+      1.139397107510019,
+      1.0423612173115155,
+      0.9285504694835681,
+      1.133512403223258
+     ]
+    },
+    "microcall/closure": {
+     "time": [
+      26,
+      38,
+      44,
+      36,
+      45
+     ],
+     "layers": [
+      1.4615384615384615,
+      1.1578947368421053,
+      0.8181818181818182,
+      1.25
+     ]
+    },
+    "microcall/depth4": {
+     "time": [
+      15.5,
+      20,
+      21,
+      21.5,
+      23.5
+     ],
+     "layers": [
+      1.2903225806451613,
+      1.05,
+      1.0238095238095237,
+      1.0930232558139534
+     ]
+    },
+    "microcall/eight": {
+     "time": [
+      55,
+      72,
+      73,
+      67,
+      81
+     ],
+     "layers": [
+      1.309090909090909,
+      1.0138888888888888,
+      0.9178082191780822,
+      1.208955223880597
+     ]
+    },
+    "microcall/empty": {
+     "time": [
+      23,
+      28.5,
+      30.5,
+      30,
+      35
+     ],
+     "layers": [
+      1.2391304347826086,
+      1.0701754385964912,
+      0.9836065573770492,
+      1.1666666666666667
+     ]
+    },
+    "microcall/id": {
+     "time": [
+      23,
+      33,
+      36.5,
+      33,
+      41
+     ],
+     "layers": [
+      1.434782608695652,
+      1.106060606060606,
+      0.9041095890410958,
+      1.2424242424242424
+     ]
+    },
+    "microcall/method": {
+     "time": [
+      53,
+      63,
+      63,
+      65,
+      69
+     ],
+     "layers": [
+      1.1886792452830188,
+      1.0,
+      1.0317460317460319,
+      1.0615384615384615
+     ]
+    },
+    "microcall/mutual": {
+     "time": [
+      22.5,
+      26.5,
+      30.5,
+      24.5,
+      30.5
+     ],
+     "layers": [
+      1.1777777777777778,
+      1.150943396226415,
+      0.8032786885245902,
+      1.2448979591836735
+     ]
+    },
+    "microcall/sched": {
+     "time": [
+      50,
+      64,
+      62.5,
+      65,
+      66
+     ],
+     "layers": [
+      1.28,
+      0.9765625,
+      1.04,
+      1.0153846153846153
+     ]
+    },
+    "microcall/score": {
+     "time": [
+      31.748047495079053,
+      41.150569935393605,
+      43.836577240049095,
+      40.64710186163727,
+      47.214353163361665
+     ],
+     "layers": [
+      1.2961606518250277,
+      1.065272663510433,
+      0.9272416876676693,
+      1.1615675165250237
+     ]
+    },
+    "microcall/six": {
+     "time": [
+      46,
+      62,
+      63,
+      58,
+      70
+     ],
+     "layers": [
+      1.3478260869565217,
+      1.0161290322580645,
+      0.9206349206349206,
+      1.206896551724138
+     ]
+    }
+   }
+  }
+ },
+ "per_item": {},
+ "source": {
+  "gcc-O2": {
+   "V8": 1.5107843137254904,
+   "SunSpider": 2.130291763579198,
+   "microbench": 1.8380754124558336,
+   "microcall": 2.3161997205676887
+  },
+  "clang-O2": {
+   "V8": 1.105351170568562,
+   "SunSpider": 1.1830865480211044,
+   "microbench": 1.3458154428384626,
+   "microcall": 1.04475494411006
+  },
+  "clang-O3": {
+   "V8": 1.1146010186757214,
+   "SunSpider": 1.0786509143223775,
+   "microbench": 1.2456049506223164,
+   "microcall": 1.00466836959394
+  },
+  "clang-O3-gocflags": {
+   "V8": 1.1702838063439065,
+   "SunSpider": 1.2382869070673765,
+   "microbench": 1.351471122632978,
+   "microcall": 1.0655290398025032
+  },
+  "goc": {
+   "V8": 1.1216216216216217,
+   "SunSpider": 1.0718261350302363,
+   "microbench": 1.2195014236323503,
+   "microcall": 0.9744651483781919
+  }
+ }
+}

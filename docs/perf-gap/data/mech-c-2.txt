@@ -1,0 +1,42 @@
+== mech-clang-O3
+leafcalls ns/op=0.9782 result=6568533360337417728
+fib ns/op=0.8353 result=2178309
+localaddr ns/op=1.0690 result=20000000600000000
+interp ns/op=1.5727 result=-4527076301013514642
+chase ns/op=2.7329 result=409499954944
+indirect ns/op=1.7963 result=8280711789583278592
+== mech-clang-O3-gocflags
+leafcalls ns/op=1.3013 result=6568533360337417728
+fib ns/op=1.3049 result=2178309
+localaddr ns/op=1.4266 result=20000000600000000
+interp ns/op=1.2512 result=-4527076301013514642
+chase ns/op=2.7245 result=409499954944
+indirect ns/op=1.4945 result=8280711789583278592
+== mech-clang-O3-taildup
+leafcalls ns/op=0.9722 result=6568533360337417728
+fib ns/op=0.7736 result=2178309
+localaddr ns/op=0.9612 result=20000000600000000
+interp ns/op=0.6415 result=-4527076301013514642
+chase ns/op=2.7233 result=409499954944
+indirect ns/op=1.8011 result=8280711789583278592
+== mech-gcc-O2
+leafcalls ns/op=1.0028 result=6568533360337417728
+fib ns/op=0.7559 result=2178309
+localaddr ns/op=0.9341 result=20000000600000000
+interp ns/op=0.7386 result=-4527076301013514642
+chase ns/op=2.7914 result=409499954944
+indirect ns/op=1.5275 result=8280711789583278592
+== mech-goc
+leafcalls ns/op=1.3321 result=6568533360337417728
+fib ns/op=1.5698 result=2178309
+localaddr ns/op=0.9370 result=20000000600000000
+interp ns/op=1.2560 result=-4527076301013514642
+chase ns/op=2.7563 result=409499954944
+indirect ns/op=1.5046 result=8280711789583278592
+== mech-goc-taildup
+leafcalls ns/op=1.3502 result=6568533360337417728
+fib ns/op=1.5342 result=2178309
+localaddr ns/op=0.9451 result=20000000600000000
+interp ns/op=0.6632 result=-4527076301013514642
+chase ns/op=2.7331 result=409499954944
+indirect ns/op=1.5068 result=8280711789583278592
