@@ -2,7 +2,7 @@
 
 同一台机器，四个引擎，2026-09-27 重测。每节先看图，表是全部数字。原始输出在 [`docs/benchmark/data/raw/`](benchmark/data/raw/)，汇总在 [`docs/benchmark/data/all.json`](benchmark/data/all.json)。
 
-浏览器打开 [`docs/benchmark/report.html`](benchmark/report.html) 时图会直接嵌在页里（用的是同名的 SVG）。
+浏览器打开 [`docs/benchmark/report.html`](benchmark/report.html) 时图会直接嵌在页里（用的是同名的 SVG）。图里的标题、坐标轴和图例都用英文，正文仍是中文。每张性能图都包含全部四个引擎；Goja 的数字比另外三家大几倍的图用对数轴。
 
 | 引擎 | 二进制 |
 |------|--------|
@@ -17,17 +17,18 @@ native ng 不加 `-C` 时会把这些文件当成模块，松散赋值直接 Ref
 
 ## 怎么测的
 
-整套流程在 `scripts/bench-all.sh` 里，可以直接重跑。`scripts/bench-summarize.py` 把原始输出汇总成 `all.json`，`scripts/bench-charts.py` 画图，`scripts/bench-tables.py` 生成本页的表，`scripts/bench-report-html.py` 生成 `report.html`。
+整套流程在 `scripts/bench-all.sh` 里，可以直接重跑。`scripts/bench-summarize.py` 把原始输出汇总成 `all.json`，`scripts/bench-charts.py` 画图，`scripts/bench-tables.py` 生成本页的表，`scripts/bench-report-html.py` 生成 `report.html`。内存部分由 `scripts/bench-mem.sh` 单独测量，结果同样汇总进 `all.json`。
 
 - 计时的套件都用 `taskset -c 3` 固定在同一个核上。每一轮四个引擎各跑一次，下一轮换一个起始引擎，这样四家交替运行、处在同一时段。
 - V8-v7：每个引擎 5 轮，总分和每个子项都取中位数。
 - SunSpider：每个引擎 3 轮，每项取中位数。
 - microbench：每个引擎 3 轮，每项取中位数。
-- 微调用（`scripts/microcall-bench.sh`，只比 goc 和 native ng）：5 轮，取中位数。
+- 微调用（`scripts/microcall-bench.sh`）：四个引擎，5 轮，取中位数。
+- 内存：峰值 RSS 每个引擎 3 轮取中位数，多实例每个点 3 次取中位数，细节见“内存占用”一节。
 - test262 抽样和 QuickJS 官方测试只看对错，不计时，8 个进程并行跑。
 - 几何平均只算四家都跑出结果的项，四列覆盖的是同一批测试。
 
-V8-v7 和 SunSpider 是同一时段跑的（北京时间 07:49–08:14）。microbench 和微调用在同一天稍后另一个时段重跑（09:49–10:04），因为第一次跑 microbench 时 goc 缺 `console` 全局而没有出分，同时虚拟机被挂起了一段时间；那次的结果全部丢弃，没有用。这台机器由多个任务共用，同一时段内的波动约 ±5%，每轮的数字都列在各节里。
+V8-v7 和 SunSpider 是同一时段跑的（北京时间 07:49–08:14）。microbench 和微调用在同一天稍后另一个时段重跑（09:49–10:04），因为第一次跑 microbench 时 goc 缺 `console` 全局而没有出分，同时虚拟机被挂起了一段时间；那次的结果全部丢弃，没有用。微调用后来又在 11:13–11:16 加上 Bellard 和 Goja 四家重跑了一次，本页的微调用数字都来自这一次。内存在 11:16–12:05 测量。这台机器由多个任务共用，同一时段内的波动约 ±5%，每轮的数字都列在各节里。
 
 ## 总览
 
@@ -37,6 +38,8 @@ V8-v7 和 SunSpider 是同一时段跑的（北京时间 07:49–08:14）。micr
 
 goc 和 native ng 在这批语法测试上是同一台引擎：test262 失败的文件相同，官方测试逐函数相同。速度上，goc 的 V8 总分是 native ng 的 0.94 倍，SunSpider 和 microbench 的几何平均分别慢 6.5% 和 5.8%。Bellard 比 native ng 快三到六成。Goja 比 goc 慢 3.5 到 6 倍。
 
+内存上，goc 比 native ng 多一个约 6 到 9 MiB 的固定开销：空载时是 2.9 倍，大负载（整套 V8）时只有 1.06 倍。一个进程里每多一个存活的 runtime，goc 要 225 KiB，native ng 要 211 KiB，多出的部分主要是 goroutine 栈。Goja 空闲 runtime 最省（105 KiB），但跑负载时峰值最高，整套 V8 达到 native ng 的 8.8 倍。
+
 这里是优化后的当前默认构建。和上一版报告相比，goc 与 native ng 的差距从“慢一成多”缩小到五六个百分点，优化的过程见下一节。
 
 | 套件 | goc | native ng | Bellard | Goja | goc/ng | 怎么读 |
@@ -44,6 +47,10 @@ goc 和 native ng 在这批语法测试上是同一台引擎：test262 失败的
 | V8-v7 总分（5 轮中位数） | 1128 | 1204 | 1567 | 262 | goc/ng 分数比 0.937 | 越高越快 |
 | SunSpider 几何平均 ms（25 项） | 16.27 | 15.28 | 10.24 | 92.82 | 1.065 | 越低越快 |
 | microbench 几何平均 ns（72 项） | 53.2 | 50.3 | 31.0 | 188.2 | 1.058 | 越低越快 |
+| 微调用 score（calls/ms，5 轮中位数） | 22240 | 23800 | 31904 | 5193 | goc/ng 分数比 0.934 | 越高越快 |
+| 空载峰值 RSS（MiB） | 8.5 | 2.9 | 2.9 | 5.9 | 2.89 | 越低越好 |
+| V8-v7 整套峰值 RSS（MiB） | 164.5 | 155.5 | 147.0 | 1374.2 | 1.06 | 越低越好 |
+| 每多一个存活 runtime 的 RSS（KiB） | 225 | 211 | 190 | 105 | 1.06 | 越低越好 |
 | test262 通过 | 1502/1526 | 1502/1526 | 1501/1526 | 1453/1526 | | 抽样，不是全量 |
 | QuickJS 官方测试 | 69/77 | 69/77 | 73/77 | 58/77 | | 按函数计 |
 
@@ -51,7 +58,7 @@ goc 和 native ng 在这批语法测试上是同一台引擎：test262 失败的
 
 ## 性能优化前后（2026-09-26）
 
-这一节是 2026-09-26 的优化记录，只比 goc 和 native ng。所有构建在同一时段交替运行，并用 `taskset -c 3` 固定在同一个核上。第 3 行就是上面总览里测的当前默认构建。不同时段的绝对分数不要直接比（比如这里 native ng 的 V8 是 1203，总览里是 1204），看同一张表里的比值。
+这一节是 2026-09-26 的优化记录，只比 goc 和 native ng。它比较的是 goc 自身几种构建的前后差别，Bellard 和 Goja 不在这组构建里，那一时段也没有测它们，所以这张表没有这两列。所有构建在同一时段交替运行，并用 `taskset -c 3` 固定在同一个核上。第 3 行就是上面总览里测的当前默认构建。不同时段的绝对分数不要直接比（比如这里 native ng 的 V8 是 1203，总览里是 1204），看同一张表里的比值。
 
 native ng 用 clang-19 `-O2 -DNDEBUG` 编译（完整参数见本页开头）。各列含义如下：
 
@@ -113,24 +120,26 @@ goc 在 Crypto 和 NavierStokes 上与 native ng 持平或略快，差距主要�
 
 ### 微调用
 
-`scripts/microcall-bench.sh`，只比 goc 和 native ng。每个用例的 ms 取 5 轮中位数，越低越快；score 是调用类用例的 calls/ms 几何平均，越高越快，括号里是最小到最大。`arith` 和 `propget` 是对照组，不计入 score。
+![微调用各用例耗时](benchmark/charts/microcall.png)
 
-| 用例 | goc ms | native ng ms | goc/ng |
-|---|---:|---:|---:|
-| arith | 72 | 75 | 0.96 |
-| propget | 75 | 77 | 0.97 |
-| empty | 66 | 60 | 1.10 |
-| id | 71 | 67 | 1.06 |
-| six | 61 | 59 | 1.03 |
-| eight | 69 | 69 | 1.00 |
-| method | 69 | 68 | 1.01 |
-| depth4 | 55 | 43 | 1.28 |
-| closure | 36 | 37 | 0.97 |
-| mutual | 62 | 52 | 1.19 |
-| sched | 167 | 132 | 1.27 |
-| **score（calls/ms，越高越快）** | **21832**（21569–22309） | **23802**（23303–24281） | **0.92** |
+`scripts/microcall-bench.sh`，四个引擎都跑（Bellard 用 `--stack-size 16M`，Goja 用 `gojacli`）。每个用例的 ms 取 5 轮中位数，越低越快；score 是调用类用例的 calls/ms 几何平均，越高越快，括号里是最小到最大。`arith` 和 `propget` 是对照组，不计入 score。
 
-goc 的调用速度是 native ng 的 0.92 倍（上一版是 19556 对 23356，0.84 倍）。差距最大的仍是深调用链（`depth4`）、互相递归（`mutual`）和调度（`sched`），都在两到三成。
+| 用例 | goc ms | native ng ms | Bellard ms | Goja ms | goc/ng |
+|---|---:|---:|---:|---:|---:|
+| arith | 74 | 75 | 51 | 548 | 0.99 |
+| propget | 75 | 78 | 48 | 412 | 0.96 |
+| empty | 66 | 59 | 46 | 307 | 1.12 |
+| id | 70 | 66 | 47 | 347 | 1.06 |
+| six | 61 | 60 | 45 | 341 | 1.02 |
+| eight | 68 | 69 | 54 | 419 | 0.99 |
+| method | 69 | 68 | 53 | 267 | 1.01 |
+| depth4 | 53 | 44 | 30 | 152 | 1.20 |
+| closure | 36 | 37 | 26 | 177 | 0.97 |
+| mutual | 59 | 52 | 43 | 256 | 1.13 |
+| sched | 164 | 131 | 99 | 435 | 1.25 |
+| **score（calls/ms，越高越快）** | **22240**（21788–22318） | **23800**（23398–24207） | **31904**（31312–31914） | **5193**（5096–5203） | **0.93** |
+
+goc 的调用速度是 native ng 的 0.93 倍（上一版是 19556 对 23356，0.84 倍）。差距最大的仍是深调用链（`depth4`）、互相递归（`mutual`）和调度（`sched`），都在两到三成。Bellard 的 score 是 native ng 的 1.34 倍，Goja 是 0.22 倍；Goja 在对照组 `arith` 上也慢 7 倍多，所以它的差距不只在调用上。
 
 ## test262
 
@@ -419,9 +428,11 @@ Bellard 2026-06-04 的 `tests/test_language.js`、`test_closure.js`、`test_loop
 
 ## SunSpider 1.0.2
 
-![SunSpider，goc / native ng / Bellard](benchmark/charts/sunspider.png)
+![SunSpider 各项相对 native ng 的耗时](benchmark/charts/sunspider.png)
 
-![SunSpider 四引擎对数轴](benchmark/charts/sunspider-log.png)
+![SunSpider 四引擎绝对耗时，对数轴](benchmark/charts/sunspider-log.png)
+
+第一张图是每项耗时除以 native ng 的耗时（对数轴，虚线是 native ng），第二张是四家的绝对耗时（对数轴）。两张图都包含 Goja。
 
 WebKit `sunspider-1.0.2`，由 `scripts/sunspider-wrap.py` 包装：每个文件包进一个函数，`document.write` 打了桩。先连续调用 150 ms 定下次数 n，再跑 5 批、每批 n 次，取最快一批的平均单次耗时，用 `Date.now` 计时。ms/次，越低越快，每项取 3 轮中位数。
 
@@ -473,7 +484,9 @@ goc 在 bitops、crypto-md5/sha1 和 date-format-xparb 上比 native ng 快。�
 
 ![microbench 分组](benchmark/charts/micro-groups.png)
 
-![microbench goc 相对 native ng](benchmark/charts/micro-ratio.png)
+![microbench 各项相对 native ng 的耗时](benchmark/charts/micro-ratio.png)
+
+第二张图是每项耗时除以 native ng 的耗时，goc、Bellard、Goja 三家并排（对数轴，虚线是 native ng），按 goc 的比值从慢到快排。
 
 Bellard 树的 `tests/microbench.js`，前面加了一行 `console` 兜底（goc 的 qjscli 没有 `console` 全局）。TIME 列，ns/op，越低越快，每项取 3 轮中位数。没有参考文件，所以 SCORE 列是空的。
 
@@ -505,18 +518,18 @@ TIME 总和被 `map_set_int` 和 `map_set_bigint` 这两项主导：native ng �
 | regexp | 3 | 444.3 | 418.7 | 231.4 | 1379.8 | 1.06 |
 | date | 2 | 349.7 | 184.8 | 157.8 | 367.6 | 1.89 |
 
-最慢的几项，goc / native ng：
+最慢的几项（按 goc / native ng 排），同时列出 Bellard 和 Goja 相对 native ng 的比值：
 
-| 测试 | goc/ng |
-|---|---:|
-| date_now | 2.28 |
-| date_parse | 1.57 |
-| string_build1x | 1.20 |
-| string_build1 | 1.20 |
-| regexp_replace | 1.19 |
-| int_toString | 1.15 |
-| func_call | 1.15 |
-| sort_bench | 1.15 |
+| 测试 | goc/ng | Bellard/ng | Goja/ng |
+|---|---:|---:|---:|
+| date_now | 2.28 | 0.75 | 2.50 |
+| date_parse | 1.57 | 0.97 | 1.58 |
+| string_build1x | 1.20 | 0.46 | 3.84 |
+| string_build1 | 1.20 | 0.47 | 3.84 |
+| regexp_replace | 1.19 | 0.37 | 0.84 |
+| int_toString | 1.15 | 0.87 | 3.71 |
+| func_call | 1.15 | 0.74 | 3.52 |
+| sort_bench | 1.15 | 0.74 | 3.19 |
 
 `date_now` 和 `date_parse` 是 goc 最明显的短板，这两项都要经过桥接取时间或时区。`date_now` 在上一版是 4.53 倍，现在是 2.28 倍。`map_set_int` 在上一版是 2.08 倍，现在 goc 反而比 native ng 快；这和 2026-09-26 加入的 shim `malloc` 分档缓存对得上，但没有单独验证。
 
@@ -597,17 +610,176 @@ TIME 总和被 `map_set_int` 和 `map_set_bigint` 这两项主导：native ng �
 | weak_map_delete | map | 285.15 | 264.83 | 141.47 | 807.35 | 1.08 |
 | weak_map_set | map | 150.05 | 144.79 | 57.93 | 256.02 | 1.04 |
 
+## 内存占用
+
+![各负载的峰值 RSS](benchmark/charts/mem-peak.png)
+
+![多实例：总 RSS 和每个 runtime 的内存](benchmark/charts/mem-scaling.png)
+
+这一节在 2026-09-27 北京时间 11:16–12:05 测量，由 `scripts/bench-mem.sh` 一次跑完。单位 MiB 和 KiB 都按 1024 进位，越低越好。
+
+测量分两部分：
+
+- 峰值 RSS：每个负载都在一个新进程里运行，用 `/usr/bin/time -v` 读 `Maximum resident set size`。命令行和计时套件完全相同（goc 用 `qjscli --stack-size 16384`，native ng 加 `-C`），也用 `taskset -c 3` 固定在同一个核上。每个引擎跑 3 轮，轮与轮之间轮换引擎顺序，表里是中位数。
+- 多实例：一个进程里建 N 个 JS runtime，每个都跑完一小段脚本（[`tests/qjscli/instance.js`](../tests/qjscli/instance.js)）后保持存活，然后读进程的 `VmRSS`。N 取 0、1、10、100、1000，每个点跑 3 次取中位数。这部分没有绑核，理由见本节末尾的注意事项。
+
+### 空载与各负载的峰值
+
+空脚本是一个空文件，它的峰值就是引擎进程本身的空载占用。V8-v7 的 8 个子项各跑一个进程：文件还是 `bench-v8.js`，只是在 `Run()` 前把 `BenchmarkSuite.suites` 过滤成一个，所以其他子项的代码仍会被解析，但不会运行。SunSpider 每个文件本来就是一个进程，这里取 26 个文件里的最大值，每个文件的数字列在后面。
+
+| 负载 | goc | native ng | Bellard | Goja | goc/ng | Bellard/ng | Goja/ng |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 空脚本（空载） | 8.5 | 2.9 | 2.9 | 5.9 | 2.89 | 0.98 | 2.01 |
+| V8 Richards | 12.6 | 6.7 | 6.6 | 21.8 | 1.88 | 0.99 | 3.25 |
+| V8 DeltaBlue | 12.7 | 7.0 | 6.9 | 24.3 | 1.82 | 0.99 | 3.47 |
+| V8 Crypto | 12.0 | 5.9 | 5.6 | 26.3 | 2.05 | 0.96 | 4.49 |
+| V8 RayTrace | 12.1 | 5.9 | 5.6 | 24.9 | 2.06 | 0.96 | 4.24 |
+| V8 EarleyBoyer | 24.6 | 18.8 | 18.3 | 124.1 | 1.31 | 0.98 | 6.61 |
+| V8 RegExp | 14.5 | 8.6 | 8.2 | 40.1 | 1.68 | 0.95 | 4.65 |
+| V8 Splay | 164.2 | 154.8 | 146.5 | 1002.6 | 1.06 | 0.95 | 6.48 |
+| V8 NavierStokes | 14.5 | 8.1 | 8.0 | 31.0 | 1.80 | 0.99 | 3.84 |
+| V8-v7 整套 | 164.5 | 155.5 | 147.0 | 1374.2 | 1.06 | 0.95 | 8.84 |
+| SunSpider（26 个文件中的最大值） | 14.7 | 8.1 | 7.5 | 23.7 | 1.82 | 0.93 | 2.92 |
+| microbench | 11.0 | 4.5 | 4.4 | 368.2 | 2.45 | 0.98 | 81.75 |
+| alloc.js | 8.7 | 3.0 | 2.8 | 18.2 | 2.87 | 0.94 | 6.03 |
+| mapset.js | 18.4 | 12.5 | 10.4 | 36.5 | 1.47 | 0.83 | 2.92 |
+
+Goja 的 SunSpider `3d-cube` 失败（与计时部分相同），它的 SunSpider 最大值只统计另外 25 个文件。
+
+goc 比 native ng 多出的部分基本是一个常数，而不是一个比例。空载时 goc 是 8.5 MiB，native ng 是 2.9 MiB，差 5.6 MiB；小负载上的差距也在 6 MiB 左右，所以比值接近 2 倍。到了 Splay 和整套 V8 这种一百多 MiB 的负载，差距仍然只有 9 MiB 左右，比值降到 1.06。这说明 QuickJS 对象本身在 goc 的 shim 堆里并没有明显变大，多出来的是进程级的固定开销。这部分固定开销的来源有几项推测，都没有逐项验证：Go 运行时本身；qjscli 二进制比 native qjs 大（4.7 MB 对 1.3 MB），载入的代码页更多；qjscli 启动时 `forceGrow(40)` 把主 goroutine 的栈预先撑到 1 MiB 以上。一个旁证是，下面的多实例探针（同一套 goc 目标文件，但不调用 `forceGrow`，也不装 CLI 的宿主对象）在 N=0 时只有 4.8 MiB。
+
+Bellard 比 native ng 略低，多数负载低 1% 到 7%，`mapset.js` 低 17%。
+
+Goja 的峰值高得多：Splay 约 1 GiB，是 native ng 的 6.5 倍；整套 V8 是 1.34 GiB，达 8.8 倍；microbench 是 368 MiB，达 82 倍。可能的原因是 Go 的垃圾回收在默认 `GOGC=100` 下允许堆长到上次存活量的两倍左右，再加上 Goja 的对象和字符串表示比 QuickJS 占空间，microbench 里 `string_build_large*` 这类构造大字符串的测试尤其明显（Goja 在这两项上也慢 160 多倍）。这些都是推测，没有做堆剖析。
+
+SunSpider 各文件的峰值（MiB）：
+
+| 测试 | goc | native ng | Bellard | Goja |
+|---|---:|---:|---:|---:|
+| 3d-cube | 9.3 | 3.6 | 3.3 | 失败 |
+| 3d-morph | 11.3 | 4.1 | 3.8 | 15.3 |
+| 3d-raytrace | 9.3 | 3.5 | 3.3 | 16.9 |
+| access-binary-trees | 9.0 | 3.2 | 3.1 | 12.3 |
+| access-fannkuch | 8.7 | 3.2 | 2.8 | 7.6 |
+| access-nbody | 8.9 | 3.2 | 3.0 | 12.5 |
+| access-nsieve | 13.8 | 6.4 | 6.1 | 17.8 |
+| bitops-3bit-bits-in-byte | 8.7 | 3.2 | 2.9 | 12.5 |
+| bitops-bits-in-byte | 8.6 | 3.1 | 2.8 | 12.3 |
+| bitops-bitwise-and | 8.6 | 3.1 | 2.8 | 12.5 |
+| bitops-nsieve-bits | 8.9 | 3.2 | 3.0 | 13.0 |
+| controlflow-recursive | 8.7 | 3.5 | 3.1 | 7.8 |
+| crypto-aes | 9.0 | 3.4 | 3.4 | 13.5 |
+| crypto-md5 | 9.2 | 3.4 | 3.2 | 13.4 |
+| crypto-sha1 | 8.9 | 3.4 | 3.1 | 13.3 |
+| date-format-tofte | 9.0 | 3.4 | 3.0 | 13.3 |
+| date-format-xparb | 9.0 | 3.4 | 3.1 | 13.2 |
+| math-cordic | 8.9 | 3.0 | 2.9 | 12.5 |
+| math-partial-sums | 9.0 | 3.3 | 3.1 | 14.3 |
+| math-spectral-norm | 8.8 | 3.1 | 2.9 | 12.4 |
+| regexp-dna | 11.4 | 5.1 | 5.8 | 13.6 |
+| string-base64 | 9.0 | 3.3 | 3.0 | 15.0 |
+| string-fasta | 8.8 | 3.2 | 2.9 | 17.3 |
+| string-tagcloud | 14.7 | 7.0 | 6.4 | 22.6 |
+| string-unpack-code | 14.5 | 8.1 | 7.5 | 16.7 |
+| string-validate-input | 9.7 | 3.8 | 3.6 | 14.4 |
+
+### 多实例
+
+这是 goc 使用场景里最关心的一项：一个 Go 进程里同时存活很多个 JS runtime 时，每多一个要多少内存。
+
+- goc：`build/qjs/qjsmem`，它就是 qjscli 这个包加上构建标签 `qjsmem` 编出来的（代码在 [`tests/qjscli/mem_instances.go`](../tests/qjscli/mem_instances.go)），和 qjscli 走同一条 `scripts/qjs-cli-build.sh` 流程、链接同一批 goc 目标文件。`qjsmem --mem-instances N` 启动 N 个 goroutine，每个 goroutine 各自 `JS_NewRuntime` + `JS_NewContext`，求值脚本后阻塞在一个 channel 上。默认的 qjscli 二进制里没有这段代码。
+- native ng 和 Bellard：[`tests/qjsmem/threads.c`](../tests/qjsmem/threads.c)，分别链接 ng 的 `libqjs.a`（和 native qjs 同一次 CMake Release 构建）和 Bellard 上游 Makefile 编出的 `.obj/*.o`。每个 runtime 一个 pthread，线程栈设为 1 MiB（`QJSMEM_STACK_KB`），`JS_SetMaxStackSize` 设为线程栈的一半。线程栈只是预留，RSS 只算实际碰过的页。
+- Goja：[`scripts/gojamem`](../scripts/gojamem/main.go)，每个 runtime 一个 goroutine，各持有一个 `goja.Runtime`。
+- 四家都是一个接一个地建 runtime：上一个求值完、进入阻塞之后才建下一个。goc 这样做是必须的，因为 goc 的 libc shim 堆没有锁，注释里写明同一时刻只能有一个 goroutine 在 QuickJS 里；另外三家为了可比也用同样的顺序。
+- native ng 另跑了一组 `MALLOC_ARENA_MAX=1`，用来看 glibc 每线程 malloc arena 的影响。
+
+进程 RSS（MiB）和每个 runtime 的边际内存：
+
+| 引擎 | N=0 | N=1 | N=10 | N=100 | N=1000 | 每个 runtime（N=1→1000 斜率） | 最小二乘斜率 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| goc（goroutine） | 4.8 | 6.5 | 8.5 | 27.7 | 225.8 | **225 KiB** | 225 KiB |
+| native ng（pthread） | 2.0 | 3.1 | 4.9 | 23.9 | 208.9 | **211 KiB** | 211 KiB |
+| native ng，`MALLOC_ARENA_MAX=1` | 2.1 | 3.1 | 4.9 | 23.4 | 208.4 | **210 KiB** | 210 KiB |
+| Bellard（pthread） | 2.1 | 3.0 | 4.7 | 21.9 | 188.1 | **190 KiB** | 190 KiB |
+| Goja（goroutine） | 5.8 | 8.0 | 10.0 | 19.0 | 110.8 | **105 KiB** | 105 KiB |
+
+斜率一列是 (RSS(1000) − RSS(1)) / 999；最小二乘斜率用 N=1、10、100、1000 四个点拟合，两者一致，说明在这个范围内是线性增长。
+
+按 (RSS(N) − RSS(0)) / N 计算的每个 runtime 平均占用（KiB）。N 小的时候，第一个 runtime 要摊掉代码页、原子表等一次性开销，所以数字偏大：
+
+| 引擎 | N=1 | N=10 | N=100 | N=1000 |
+|---|---:|---:|---:|---:|
+| goc（goroutine） | 1760 | 378 | 234 | 226 |
+| native ng（pthread） | 1048 | 293 | 224 | 212 |
+| native ng，`MALLOC_ARENA_MAX=1` | 1024 | 291 | 218 | 211 |
+| Bellard（pthread） | 984 | 268 | 203 | 191 |
+| Goja（goroutine） | 2248 | 435 | 136 | 108 |
+
+每多一个 runtime，goc 要 225 KiB，native ng 要 211 KiB，goc 是 native ng 的 1.06 倍。Bellard 要 190 KiB。Goja 只要 105 KiB，是四家里最少的；可能是因为 Goja 的内建对象是按需创建的，一段不碰多少内建对象的小脚本用不到它们，这一点没有验证。注意这只是“空闲 runtime 的常驻成本”，Goja 在真正运行负载时峰值反而最高（见上一小节）。
+
+`MALLOC_ARENA_MAX=1` 对 native ng 几乎没有影响（210 对 211 KiB）。推测是因为每个线程分到的 arena 只碰到了自己真正用过的页，所以在这个规模下 arena 的额外开销可以忽略；这一点没有单独验证。
+
+主动回收之后再读一次 RSS：goc 和 Goja 调 `runtime.GC()` 加 `debug.FreeOSMemory()`，C 探针调 `malloc_trim(0)`：
+
+| 引擎 | 回收方式 | N=0 | N=1 | N=10 | N=100 | N=1000 | 斜率 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| goc（goroutine） | `runtime.GC()` + `debug.FreeOSMemory()` | 5.1 | 6.8 | 8.6 | 26.9 | 214.2 | 213 KiB |
+| native ng（pthread） | `malloc_trim(0)` | 2.0 | 3.1 | 4.9 | 23.9 | 208.9 | 211 KiB |
+| native ng，`MALLOC_ARENA_MAX=1` | `malloc_trim(0)` | 2.1 | 3.1 | 4.9 | 23.4 | 208.4 | 210 KiB |
+| Bellard（pthread） | `malloc_trim(0)` | 2.1 | 3.0 | 4.7 | 21.9 | 188.1 | 190 KiB |
+| Goja（goroutine） | `runtime.GC()` + `debug.FreeOSMemory()` | 6.2 | 8.3 | 9.4 | 17.3 | 91.6 | 85 KiB |
+
+goc 的斜率从 225 降到 213 KiB，下降的部分来自 goroutine 栈被 GC 收缩（见下表）。回收后 goc 与 native ng 基本持平。Goja 从 105 降到 85 KiB，是 Go 堆里的垃圾被回收了。
+
+#### goc 的内存去了哪里
+
+goc 探针在所有 runtime 都进入阻塞后读 `runtime.MemStats`。“平均每个 goroutine 栈”是 (StackInuse(N) − StackInuse(0)) / N：
+
+| N | RSS MiB | HeapSys MiB | HeapInuse MiB | StackSys MiB | StackInuse MiB | 平均每个 goroutine 栈 KiB | GC 后每个 goroutine 栈 KiB |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 4.8 | 3.7 | 0.4 | 0.31 | 0.31 | — | — |
+| 1 | 6.5 | 3.7 | 0.4 | 0.34 | 0.34 | 32.0 | 0.0 |
+| 10 | 8.5 | 3.4 | 0.5 | 0.62 | 0.62 | 32.0 | 3.2 |
+| 100 | 27.7 | 4.6 | 0.6 | 3.44 | 3.44 | 32.0 | 9.3 |
+| 1000 | 225.8 | 4.4 | 1.5 | 31.56 | 31.56 | 32.0 | 8.1 |
+
+N=1000 时，进程 RSS 是 225.8 MiB，Go 运行时自己申请的全部内存（`Sys`）是 38.6 MiB，其中 goroutine 栈 31.6 MiB，Go 堆 4.4 MiB。剩下约 187 MiB 不归 Go 运行时管，它们是 QuickJS 的 runtime、context 和对象，放在 goc 的 libc shim 堆里（64 MiB 的静态 arena，用满后改用 mmap 分配的 slab）。折合每个 runtime 约 187 KiB，和 native ng 每个 runtime 的 211 KiB（其中含 glibc malloc 的开销和线程栈碰过的页）处在同一量级。
+
+每个 goroutine 的栈在求值后是 32 KiB。goroutine 的初始栈很小（Go 的最小栈是 2 KiB，Go 1.19 起初始大小还会按平均栈用量自适应），QuickJS 的解析器和解释器的 C 帧直接跑在 goroutine 栈上，栈就按倍数长到了 32 KiB；求值结束后栈不会立即缩回去，要等下一次 GC 扫描时才收缩。GC 之后平均降到 8 KiB 左右（N=1 和 N=10 的 GC 后数字受栈缓存复用影响，不可靠）。所以 goc 比 native ng 多出的那 14 KiB 左右，主要就是这 32 KiB 的 goroutine 栈，减去 native 线程栈实际碰过的页。这个解释和上面的数字对得上，但没有逐页核对。
+
+Goja 的同一组数字作对照。它的内存主要在 Go 堆上（N=1000 时 HeapInuse 77.9 MiB），每个 goroutine 的栈只有 6 KiB 左右：
+
+| N | RSS MiB | HeapSys MiB | HeapInuse MiB | StackSys MiB | StackInuse MiB | 平均每个 goroutine 栈 KiB | GC 后每个 goroutine 栈 KiB |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 5.8 | 3.7 | 0.9 | 0.28 | 0.28 | — | — |
+| 1 | 8.0 | 3.7 | 1.1 | 0.31 | 0.31 | 32.0 | 64.0 |
+| 10 | 10.0 | 3.6 | 3.0 | 0.41 | 0.41 | 12.8 | 16.0 |
+| 100 | 19.0 | 10.8 | 10.1 | 1.22 | 1.22 | 9.6 | 6.1 |
+| 1000 | 110.8 | 98.0 | 77.9 | 6.03 | 6.03 | 5.9 | 4.2 |
+
+### 注意事项
+
+- RSS 包括进程映射的可执行文件和共享库里被碰过的页。goc 和 Goja 的二进制比 native qjs 大，这部分算在它们头上。
+- goc 和 Goja 的 RSS 里含 Go 运行时本身，以及 GC 留出的余量。这里 `GOGC` 和 `GOMEMLIMIT` 都保持默认（`GOGC=100`，没有内存上限），没有测别的取值。调低 `GOGC` 通常能压低 Goja 的峰值，但会多花 GC 时间。
+- 峰值 RSS 那部分绑了核，所以 goc 和 Goja 进程里的 `GOMAXPROCS` 是 1。多实例那部分没有绑核（8 个 vCPU，`GOMAXPROCS=8`），因为它测的是常驻内存而不是速度，而且 glibc 的 arena 上限和 Go 的每个 P 的缓存都跟 CPU 数有关，绑到一个核上反而不像真实部署。
+- C 探针的 native 数字里含 glibc malloc 的 arena 开销和每个线程的栈、TLS。线程栈预留 1 MiB，但只有碰过的页算进 RSS。
+- 多实例探针里的 runtime 是依次建立的，没有测多个 runtime 同时运行时的内存，也没有测每个 runtime 跑较大负载后的占用。
+- goc 的 shim 堆目前没有锁，所以本节的 goc 探针只能依次在各自的 goroutine 上建 runtime 和求值。要让多个 goroutine 真正并行地运行各自的 runtime，shim 堆需要改成线程安全的（或者加锁），这可能会改变上面的数字。
+- 本节原始数据：`data/raw/mem-rss-*.txt`、`data/raw/mem-inst-r*.txt` 和 `data/raw/env-mem.txt`，重跑用 `scripts/bench-mem.sh`。
+
 ## 原始文件
 
 | 文件 | 内容 |
 |------|------|
 | [data/all.json](benchmark/data/all.json) | 汇总后的全部数字（`scripts/bench-summarize.py` 生成） |
-| [data/raw/env-*.txt](benchmark/data/raw/) | 每个时段的时间、二进制和 sha256、轮数 |
+| [data/raw/env-*.txt](benchmark/data/raw/) | 每个时段的时间、二进制和 sha256、轮数（`env-microcall.txt` 是微调用重跑，`env-mem.txt` 是内存测量，含探针二进制的 sha256） |
 | [data/raw/v8-\<引擎\>-r\<轮\>.txt](benchmark/data/raw/) | V8-v7 每轮原文，末行是墙钟 |
 | [data/raw/ss-\<引擎\>-r\<轮\>.txt](benchmark/data/raw/) | SunSpider 每轮每项的 ms/次 和 n |
 | [data/raw/micro-\<引擎\>-r\<轮\>.txt](benchmark/data/raw/) | microbench 每轮原文 |
-| [data/raw/microcall-r\<轮\>.txt](benchmark/data/raw/) | 微调用每轮原文 |
+| [data/raw/microcall-r\<轮\>.txt](benchmark/data/raw/) | 微调用每轮原文，四个引擎 |
+| [data/raw/mem-rss-\<引擎\>-r\<轮\>.txt](benchmark/data/raw/) | 峰值 RSS，每行是 `负载 最大RSS(KiB) 墙钟(s) 退出码` |
+| [data/raw/mem-inst-r\<轮\>.txt](benchmark/data/raw/) | 多实例，每行一个 `MEMINST` JSON（引擎、N、RSS，goc 和 Goja 另有 `runtime.MemStats`） |
 | [data/raw/test262-results.json](benchmark/data/raw/test262-results.json) | test262 抽样逐文件结果 |
 | [data/raw/qjs-tests-results.json](benchmark/data/raw/qjs-tests-results.json) | 官方测试逐函数结果 |
 
-图都在 [`docs/benchmark/charts/`](benchmark/charts/)，每张图有同名的 `.png` 和 `.svg`，本页嵌 PNG，`report.html` 嵌 SVG。
+图都在 [`docs/benchmark/charts/`](benchmark/charts/)，每张图有同名的 `.png` 和 `.svg`，本页嵌 PNG，`report.html` 嵌 SVG。图由 `scripts/bench-charts.py` 从 `all.json` 生成，图中文字是英文。

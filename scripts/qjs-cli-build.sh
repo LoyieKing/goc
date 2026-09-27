@@ -5,6 +5,10 @@ ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
 OUT="$ROOT/build/qjs"
 export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
+# QJSCLI_TAGS / QJSCLI_OUT build a variant of the same CLI package, e.g.
+# scripts/bench-mem.sh uses QJSCLI_TAGS=qjsmem QJSCLI_OUT=build/qjs/qjsmem.
+TAGS="${QJSCLI_TAGS:-}"
+BIN="${QJSCLI_OUT:-$OUT/qjscli}"
 
 # This checks the engine object and its moving-stack smoke before installing a
 # command that will run arbitrary input. The upstream QuickJS tree is untouched.
@@ -23,11 +27,11 @@ export GOC_SPTR_MAPS=1 GOC_CRESERVE=8192 GOC_INLINE_DYNALLOC=1
 BINOBJ="$OUT/quickjs.o $OUT/libregexp.o $OUT/libunicode.o $OUT/dtoa.o $OUT/shim.o $OUT/uptr.o $OUT/cli_host.o $OUT/cli_std_os.o $OUT/cli_worker.o"
 ( cd "$ROOT/tests/qjscli" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
-  go build -a -ldflags="-extldflags=-lm" \
+  go build -a -tags "$TAGS" -ldflags="-extldflags=-lm" \
     -toolexec "$ROOT/backend/tools/toolexec_pack_goobj.sh" \
-    -o "$OUT/qjscli" . )
-echo "CLI ready: $OUT/qjscli"
-"$OUT/qjscli" -e '
+    -o "$BIN" . )
+echo "CLI ready: $BIN"
+"$BIN" -e '
   const close = (a, b) => Math.abs(a - b) < 1e-12;
   if (!close(Math.log(Math.E), 1) ||
       !close(Math.atan2(1, 1), Math.PI / 4) ||

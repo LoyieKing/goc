@@ -1,41 +1,48 @@
 #!/usr/bin/env bash
 # Microcall score: geometric mean of calls/ms on the call-shaped cases.
 # Higher is faster. Controls (arith, propget) are printed but not scored.
+# goc and native ng always run; Bellard QuickJS and Goja run too when
+# BELLARD_QJS / GOJA_CLI point at their binaries (scripts/bench-all.sh sets both).
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 JS="$ROOT/tests/bench/microcall.js"
 GOC="${GOC_QJS:-$ROOT/build/qjs/qjscli}"
 NATIVE="${NATIVE_QJS:-/tmp/goc-bench-v8/quickjs-native-build/qjs}"
-STACK=(--stack-size 16384)
+BELLARD="${BELLARD_QJS:-}"
+GOJA="${GOJA_CLI:-}"
 
-run_one() {
-  local name="$1" bin="$2"
+run_one() {  # run_one NAME BIN [ARGS...]
+  local name="$1" bin="$2"; shift 2
   if [[ ! -x "$bin" ]]; then
     echo "FAIL: missing $name binary $bin" >&2
     exit 1
   fi
   echo "=== $name ==="
-  "$bin" "${STACK[@]}" "$JS" | tee "/tmp/microcall-$name.txt"
+  "$bin" "$@" "$JS" | tee "/tmp/microcall-$name.txt"
+  echo
 }
 
-run_one goc "$GOC"
-echo
-run_one native "$NATIVE"
-python3 - /tmp/microcall-goc.txt /tmp/microcall-native.txt << 'PY'
+names=(goc native)
+run_one goc "$GOC" --stack-size 16384
+run_one native "$NATIVE" --stack-size 16384
+if [[ -n "$BELLARD" ]]; then run_one bellard "$BELLARD" --stack-size 16M; names+=(bellard); fi
+if [[ -n "$GOJA" ]]; then run_one goja "$GOJA"; names+=(goja); fi
+python3 - "${names[@]}" << 'PY'
 import json, sys
-def load(path):
-    for line in open(path):
+def load(name):
+    for line in open("/tmp/microcall-%s.txt" % name):
         if line.startswith("MICROCALL "):
             return json.loads(line.split(" ", 1)[1])
-    raise SystemExit("no MICROCALL line in " + path)
-goc, nat = load(sys.argv[1]), load(sys.argv[2])
-gm = {c["name"]: c for c in goc["cases"]}
-print()
-print(f"{'case':<10} {'goc ms':>8} {'native ms':>10} {'goc ns':>8} {'native ns':>10} {'ratio':>7}")
-for c in nat["cases"]:
-    g = gm[c["name"]]
-    ratio = g["ms"] / c["ms"] if c["ms"] else 0
-    print(f"{c['name']:<10} {g['ms']:8} {c['ms']:10} {g['ns']:8.0f} {c['ns']:10.0f} {ratio:7.2f}")
-print(f"{'score':<10} {goc['score']:8} {nat['score']:10} {'':8} {'':10} {nat['score']/goc['score']:7.2f}")
-print("score is calls/ms, geometric mean of the call cases; ratio > 1 means goc is slower")
+    raise SystemExit("no MICROCALL line for " + name)
+names = sys.argv[1:]
+res = {n: load(n) for n in names}
+cm = {n: {c["name"]: c for c in res[n]["cases"]} for n in names}
+print("%-10s" % "case" + "".join("%11s" % (n + " ms") for n in names) + "%10s" % "goc/nat")
+for c in res["native"]["cases"]:
+    k = c["name"]
+    g = cm["goc"][k]["ms"]
+    print("%-10s" % k + "".join("%11s" % cm[n][k]["ms"] for n in names) + "%10.2f" % (g / c["ms"] if c["ms"] else 0))
+print("%-10s" % "score" + "".join("%11s" % res[n]["score"] for n in names) +
+      "%10.2f" % (res["native"]["score"] / res["goc"]["score"]))
+print("score is calls/ms, geometric mean of the call cases; goc/nat > 1 means goc is slower")
 PY

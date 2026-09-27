@@ -133,18 +133,27 @@ mb["group_geomean"] = {n: {e: gmean([mb["ns"][e][k] for k in ks if k in mcommon]
                        for n, ks in mb["groups"].items() if any(k in mcommon for k in ks)}
 out["micro"] = mb
 
-# ---- microcall (goc vs ng)
+# ---- microcall (goc and native ng always; Bellard and Goja when the round ran them)
+MC_NAME = {"goc": "goc", "native": "ng", "bellard": "bellard", "goja": "goja"}
 mc = {"rounds": []}
 for f in sorted(glob.glob(os.path.join(RAW, "microcall-r*.txt")), key=lambda f: int(re.search(r"r(\d+)", os.path.basename(f)).group(1))):
-    js = [json.loads(l.split(" ", 1)[1]) for l in open(f) if l.startswith("MICROCALL ")]
-    mc["rounds"].append({"goc": js[0], "ng": js[1]})
+    cur, rd = None, {}
+    for l in open(f):
+        m = re.match(r"^=== (\w+) ===", l)
+        if m:
+            cur = MC_NAME[m.group(1)]
+        elif l.startswith("MICROCALL ") and cur:
+            rd[cur] = json.loads(l.split(" ", 1)[1])
+    mc["rounds"].append(rd)
 if mc["rounds"]:
-    mc["score_median"] = {e: med([r[e]["score"] for r in mc["rounds"]]) for e in ("goc", "ng")}
-    mc["score_min"] = {e: min(r[e]["score"] for r in mc["rounds"]) for e in ("goc", "ng")}
-    mc["score_max"] = {e: max(r[e]["score"] for r in mc["rounds"]) for e in ("goc", "ng")}
+    mce = [e for e in ENG if all(e in r for r in mc["rounds"])]
+    mc["engines"] = mce
+    mc["score_median"] = {e: med([r[e]["score"] for r in mc["rounds"]]) for e in mce}
+    mc["score_min"] = {e: min(r[e]["score"] for r in mc["rounds"]) for e in mce}
+    mc["score_max"] = {e: max(r[e]["score"] for r in mc["rounds"]) for e in mce}
     names = [c["name"] for c in mc["rounds"][0]["ng"]["cases"]]
     mc["case_ms_median"] = {n: {e: med([next(c["ms"] for c in r[e]["cases"] if c["name"] == n) for r in mc["rounds"]])
-                                for e in ("goc", "ng")} for n in names}
+                                for e in mce} for n in names}
 out["microcall"] = mc
 
 # ---- test262 sample
@@ -194,9 +203,75 @@ for k in qr["goc"]:
         q["files"][f][e] += qr[e][k] == "pass"
 out["qjs_tests"] = q
 
+# ---- memory (scripts/bench-mem.sh)
+def lsq(xs, ys):
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+
+mem = {"rss_kb": {}, "rss_rounds": {}, "rss_fail": {}}
+for e in ENG:
+    per, fails = {}, {}
+    fs = rounds("mem-rss", e)
+    for f in fs:
+        for line in open(f):
+            p = line.split()
+            if len(p) != 4:
+                continue
+            if p[3] != "0":
+                fails[p[0]] = "exit %s" % p[3]
+            per.setdefault(p[0], []).append(int(p[1]))
+    mem["rss_rounds"][e] = len(fs)
+    mem["rss_kb"][e] = {w: med(v) for w, v in per.items() if w not in fails and len(v) == len(fs)}
+    mem["rss_fail"][e] = fails
+    # SunSpider as a whole: largest peak over the files, per round, then median
+    ssmax = []
+    for f in fs:
+        vals = [int(l.split()[1]) for l in open(f) if l.startswith("ss-") and l.split()[3] == "0"]
+        if vals:
+            ssmax.append(max(vals))
+    if ssmax:
+        mem["rss_kb"][e]["ss-max"] = med(ssmax)
+if any(mem["rss_rounds"].values()):
+    mem["workloads"] = [w for w in mem["rss_kb"]["ng"]]
+inst = {}
+for f in sorted(glob.glob(os.path.join(RAW, "mem-inst-r*.txt"))):
+    for l in open(f):
+        if l.startswith("MEMINST "):
+            j = json.loads(l.split(" ", 1)[1])
+            if "error" not in j["data"]:
+                inst.setdefault(j["tag"], {}).setdefault(j["n"], []).append(j["data"])
+if inst:
+    mi = {}
+    for tag, byn in inst.items():
+        d = {"n": sorted(byn), "rounds": {str(n): len(v) for n, v in byn.items()}}
+        d["live_rss_kb"] = {str(n): med([x["live"]["VmRSSKB"] for x in v]) for n, v in sorted(byn.items())}
+        after = "after_gc" if "after_gc" in byn[min(byn)][0] else "after_trim"
+        d["after_kind"] = after
+        d["after_rss_kb"] = {str(n): med([x[after]["VmRSSKB"] for x in v]) for n, v in sorted(byn.items())}
+        if "HeapSys" in byn[min(byn)][0]["live"]:
+            for k in ("HeapSys", "HeapInuse", "StackSys", "StackInuse", "Sys"):
+                d["live_" + k] = {str(n): med([x["live"][k] for x in v]) for n, v in sorted(byn.items())}
+                d["after_" + k] = {str(n): med([x[after][k] for x in v]) for n, v in sorted(byn.items())}
+        ns = [n for n in sorted(byn) if n >= 1]
+        L = d["live_rss_kb"]
+        if 0 in byn:
+            d["per_instance_kb"] = {str(n): (L[str(n)] - L["0"]) / n for n in ns}
+        if 1 in byn and 1000 in byn:
+            d["slope_1_1000_kb"] = (L["1000"] - L["1"]) / 999
+            d["slope_1_1000_after_kb"] = (d["after_rss_kb"]["1000"] - d["after_rss_kb"]["1"]) / 999
+        if len(ns) >= 2:
+            d["slope_lsq_kb"] = lsq(ns, [L[str(n)] for n in ns])
+        if "live_StackInuse" in d and 0 in byn:
+            d["stack_per_goroutine_b"] = {str(n): (d["live_StackInuse"][str(n)] - d["live_StackInuse"]["0"]) / n for n in ns}
+            d["stack_per_goroutine_after_gc_b"] = {str(n): (d["after_StackInuse"][str(n)] - d["after_StackInuse"]["0"]) / n for n in ns}
+        mi[tag] = d
+    mem["instances"] = mi
+out["memory"] = mem
+
 json.dump(out, open(OUT, "w"), indent=1, ensure_ascii=False)
 print("V8 median score", {e: v8["median"][e]["Score"] for e in ENG})
 print("SunSpider geomean4 (%d items)" % len(common), {e: round(ss["geomean4"][e], 2) for e in ENG})
 print("microbench geomean (%d items)" % len(mcommon), {e: round(mb["geomean"][e], 1) for e in ENG})
 print("microcall", mc.get("score_median"))
+print("memory idle", {e: mem["rss_kb"][e].get("empty") for e in ENG})
 print("test262", t262["pass"], "official", q["pass"])

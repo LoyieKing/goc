@@ -104,7 +104,7 @@ fi
 
 if ! skip microcall; then
   for ((r = 1; r <= ROUNDS_MICROCALL; r++)); do
-    GOC_QJS="$GOC" NATIVE_QJS="$NG" pin "$ROOT/scripts/microcall-bench.sh" > "$OUT/microcall-r$r.txt" 2>&1
+    GOC_QJS="$GOC" NATIVE_QJS="$NG" BELLARD_QJS="$BELLARD" GOJA_CLI="$GOJA" pin "$ROOT/scripts/microcall-bench.sh" > "$OUT/microcall-r$r.txt" 2>&1
     echo "microcall r$r $(grep '^score' "$OUT/microcall-r$r.txt")"
   done
 fi

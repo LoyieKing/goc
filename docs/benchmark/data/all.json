@@ -10,6 +10,22 @@
    "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
    "rounds: v8=5 ss=3 micro=3 microcall=5"
   ],
+  "env-mem": [
+   "date: 2026-09-27 12:15:59 KST",
+   "host: Linux 6.12.94+ x86_64, 8 vCPU; RSS runs pinned to CPU 3, instance runs not pinned",
+   "goc commit: 7d9bc1a7af43eac21144e2eb8a3479646662e4de",
+   "go: go version go1.24.4 linux/amd64",
+   "GOGC=<unset, default 100> GOMEMLIMIT=<unset>",
+   "goc: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=45e946dc0900c7f7",
+   "ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f",
+   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
+   "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
+   "harness: build/qjs/qjsmem  sha256=d57a97ab90d0c0fc",
+   "harness: build/qjsmem/threads-ng  sha256=61868481f6c03cde",
+   "harness: build/qjsmem/threads-bellard  sha256=0adaa7148bae0150",
+   "harness: build/qjsmem/gojamem  sha256=235bfe07ca960f5a",
+   "rounds: 3; N: 0 1 10 100 1000; C harness thread stack: 1024 KiB"
+  ],
   "env-micro": [
    "date: 2026-09-27 10:49:27 KST",
    "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
@@ -19,6 +35,17 @@
    "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
    "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
    "rounds: v8=5 ss=3 micro=3 microcall=5"
+  ],
+  "env-microcall": [
+   "date: 2026-09-27 12:13:33 KST",
+   "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
+   "goc commit: 7d9bc1a7af43eac21144e2eb8a3479646662e4de",
+   "end: 2026-09-27 12:15:58 KST",
+   "goc: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=45e946dc0900c7f7",
+   "ng: /workspace/perf-study/native/b-O2/qjs --stack-size 16384  sha256=a214d30f8d7d6e0f",
+   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
+   "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
+   "rounds: microcall=5 (scripts/microcall-bench.sh with BELLARD_QJS and GOJA_CLI set)"
   ],
   "env-v8-ss": [
    "date: 2026-09-27 08:49:44 KST",
@@ -1241,13 +1268,439 @@
   "rounds": [
    {
     "goc": {
-     "score": 22309,
+     "score": 22318,
      "calls": 14000000,
-     "ms": 645,
+     "ms": 644,
      "cases": [
       {
        "name": "arith",
-       "ms": 71,
+       "ms": 73,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 74,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 66,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 70,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 35,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 53,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 35,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 35,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 59,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 164,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 82,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 23398,
+     "calls": 14000000,
+     "ms": 598,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 74,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 78,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 61,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 65,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 32.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 61,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 61,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 67,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 67,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 67,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 67,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 43,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 38,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 38,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 66,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 33,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 130,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 65,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31312,
+     "calls": 14000000,
+     "ms": 454,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 50,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 46,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 57,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 57,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 55,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 55,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 29,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 14.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 27,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 27,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 45,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 103,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 51.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 5193,
+     "calls": 14000000,
+     "ms": 2682,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 572,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 412,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 307,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 153.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 320,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 160,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 341,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 341,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 411,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 411,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 267,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 267,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 150,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 75,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 180,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 180,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 268,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 134,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 438,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 219,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 21788,
+     "calls": 14000000,
+     "ms": 654,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 75,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1278,6 +1731,964 @@
        "n": 2000000,
        "calls": 2000000,
        "ns": 35.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 61,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 61,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 53,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 39,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 39,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 64,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 32,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 163,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 81.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 23543,
+     "calls": 14000000,
+     "ms": 598,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 76,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 78,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 60,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 71,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 35.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 72,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 72,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 36,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 36,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 52,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 131,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 65.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31908,
+     "calls": 14000000,
+     "ms": 443,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 51,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 45,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 22.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 49,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 24.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 45,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 45,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 54,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 54,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 30,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 26,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 26,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 43,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 98,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 49,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 5146,
+     "calls": 14000000,
+     "ms": 2721,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 545,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 415,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 307,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 153.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 361,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 180.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 340,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 340,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 419,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 419,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 266,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 266,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 152,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 76,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 174,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 174,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 254,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 127,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 448,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 224,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 22240,
+     "calls": 14000000,
+     "ms": 646,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 74,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 75,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 66,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 69,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 34.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 61,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 61,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 67,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 67,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 54,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 27,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 36,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 36,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 58,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 29,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 166,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 83,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 23800,
+     "calls": 14000000,
+     "ms": 592,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 75,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 77,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 59,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 68,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 34,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 60,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 60,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 37,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 37,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 53,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 134,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 67,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31914,
+     "calls": 14000000,
+     "ms": 443,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 53,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 49,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 46,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 45,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 45,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 52,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 52,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 30,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 26,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 26,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 45,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 99,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 49.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 5203,
+     "calls": 14000000,
+     "ms": 2680,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 546,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 407,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 305,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 152.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 314,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 157,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 341,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 341,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 426,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 426,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 274,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 274,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 152,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 76,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 178,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 178,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 256,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 128,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 434,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 217,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 22257,
+     "calls": 14000000,
+     "ms": 648,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 73,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 73,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 67,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 69,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 34.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 60,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 60,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 67,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 67,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 70,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 70,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 52,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 36,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 36,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 58,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 29,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 169,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 84.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 24029,
+     "calls": 14000000,
+     "ms": 585,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 75,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 78,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 59,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 66,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33,
        "control": false,
        "sink": 1999999000000
       },
@@ -1310,116 +2721,10 @@
       },
       {
        "name": "depth4",
-       "ms": 51,
+       "ms": 44,
        "n": 500000,
        "calls": 2000000,
-       "ns": 25.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 36,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 36,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 59,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 29.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 166,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 83,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "ng": {
-     "score": 24281,
-     "calls": 14000000,
-     "ms": 580,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 74,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 77,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 59,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 29.5,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 66,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 33,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 58,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 58,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 67,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 67,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 66,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 66,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 43,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 21.5,
+       "ns": 22,
        "control": false,
        "sink": 500000
       },
@@ -1443,239 +2748,23 @@
       },
       {
        "name": "sched",
-       "ms": 132,
+       "ms": 131,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 66,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    }
-   },
-   {
-    "goc": {
-     "score": 21832,
-     "calls": 14000000,
-     "ms": 657,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 70,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 74,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 66,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 33,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 70,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 61,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 61,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 55,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 27.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 36,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 36,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 64,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 32,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 167,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 83.5,
+       "ns": 65.5,
        "control": false,
        "sink": 1500000
       }
      ]
     },
-    "ng": {
-     "score": 24128,
+    "bellard": {
+     "score": 31904,
      "calls": 14000000,
-     "ms": 584,
+     "ms": 444,
      "cases": [
       {
        "name": "arith",
-       "ms": 77,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 76,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 60,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 30,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 67,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 33.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 58,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 58,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 67,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 67,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 43,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 21.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 37,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 37,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
        "ms": 51,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 25.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 132,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 66,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    }
-   },
-   {
-    "goc": {
-     "score": 22291,
-     "calls": 14000000,
-     "ms": 645,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 74,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1684,7 +2773,7 @@
       },
       {
        "name": "propget",
-       "ms": 72,
+       "ms": 48,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1693,203 +2782,95 @@
       },
       {
        "name": "empty",
-       "ms": 66,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 33,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 70,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 59,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 59,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 67,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 67,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 53,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 26.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 36,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 36,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 59,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 29.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 166,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 83,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "ng": {
-     "score": 23762,
-     "calls": 14000000,
-     "ms": 594,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 76,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 78,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 60,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 30,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 67,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 33.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 59,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 59,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
        "ms": 44,
-       "n": 500000,
+       "n": 2000000,
        "calls": 2000000,
        "ns": 22,
        "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 48,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 24,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 46,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 46,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 55,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 55,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
        "sink": 500000
       },
       {
        "name": "closure",
-       "ms": 37,
+       "ms": 25,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 37,
+       "ns": 25,
        "control": false,
        "sink": 4500064500000
       },
       {
        "name": "mutual",
-       "ms": 53,
+       "ms": 43,
        "n": 400000,
        "calls": 2000000,
-       "ns": 26.5,
+       "ns": 21.5,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 136,
+       "ms": 99,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 68,
+       "ns": 49.5,
        "control": false,
        "sink": 1500000
       }
      ]
-    }
-   },
-   {
-    "goc": {
-     "score": 21569,
+    },
+    "goja": {
+     "score": 5096,
      "calls": 14000000,
-     "ms": 665,
+     "ms": 2742,
      "cases": [
       {
        "name": "arith",
-       "ms": 72,
+       "ms": 558,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1898,7 +2879,7 @@
       },
       {
        "name": "propget",
-       "ms": 76,
+       "ms": 417,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1907,10 +2888,118 @@
       },
       {
        "name": "empty",
-       "ms": 67,
+       "ms": 333,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 33.5,
+       "ns": 166.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 347,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 173.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 345,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 345,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 423,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 423,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 272,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 272,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 153,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 76.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 174,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 174,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 260,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 130,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 435,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 217.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 21975,
+     "calls": 14000000,
+     "ms": 652,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 74,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 77,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 68,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 34,
        "control": false,
        "sink": 2000000
       },
@@ -1943,19 +3032,19 @@
       },
       {
        "name": "method",
-       "ms": 72,
+       "ms": 68,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 72,
+       "ns": 68,
        "control": false,
        "sink": 4500065500000
       },
       {
        "name": "depth4",
-       "ms": 55,
+       "ms": 53,
        "n": 500000,
        "calls": 2000000,
-       "ns": 27.5,
+       "ns": 26.5,
        "control": false,
        "sink": 500000
       },
@@ -1970,32 +3059,32 @@
       },
       {
        "name": "mutual",
-       "ms": 64,
+       "ms": 60,
        "n": 400000,
        "calls": 2000000,
-       "ns": 32,
+       "ns": 30,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 168,
+       "ms": 164,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 84,
+       "ns": 82,
        "control": false,
        "sink": 1500000
       }
      ]
     },
     "ng": {
-     "score": 23303,
+     "score": 24207,
      "calls": 14000000,
-     "ms": 604,
+     "ms": 583,
      "cases": [
       {
        "name": "arith",
-       "ms": 75,
+       "ms": 74,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -2013,136 +3102,28 @@
       },
       {
        "name": "empty",
-       "ms": 63,
+       "ms": 58,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 31.5,
+       "ns": 29,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 70,
+       "ms": 66,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 35,
+       "ns": 33,
        "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 64,
+       "ms": 59,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 64,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 70,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 70,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 44,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 22,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 37,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 37,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 52,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 26,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 133,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 66.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    }
-   },
-   {
-    "goc": {
-     "score": 21599,
-     "calls": 14000000,
-     "ms": 663,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 72,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 77,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 67,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 33.5,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 71,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 64,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 64,
+       "ns": 59,
        "control": false,
        "sink": 500014500000
       },
@@ -2152,112 +3133,6 @@
        "n": 1000000,
        "calls": 1000000,
        "ns": 69,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 56,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 28,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 37,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 37,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 62,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 31,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 168,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 84,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "ng": {
-     "score": 23802,
-     "calls": 14000000,
-     "ms": 591,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 75,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 83,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 64,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 32,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 68,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 34,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 61,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 61,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 68,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 68,
        "control": false,
        "sink": 500027500000
       },
@@ -2290,19 +3165,231 @@
       },
       {
        "name": "mutual",
-       "ms": 51,
+       "ms": 50,
        "n": 400000,
        "calls": 2000000,
-       "ns": 25.5,
+       "ns": 25,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 131,
+       "ms": 133,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 65.5,
+       "ns": 66.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31898,
+     "calls": 14000000,
+     "ms": 443,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 51,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 49,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 46,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 46,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 46,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 54,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 54,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 52,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 52,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 26,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 26,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 42,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 99,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 49.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 5200,
+     "calls": 14000000,
+     "ms": 2686,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 548,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 410,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 306,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 153,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 355,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 177.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 334,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 334,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 409,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 409,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 266,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 266,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 148,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 74,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 177,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 177,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 256,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 128,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 435,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 217.5,
        "control": false,
        "sink": 1500000
       }
@@ -2310,62 +3397,96 @@
     }
    }
   ],
+  "engines": [
+   "goc",
+   "ng",
+   "bellard",
+   "goja"
+  ],
   "score_median": {
-   "goc": 21832,
-   "ng": 23802
+   "goc": 22240,
+   "ng": 23800,
+   "bellard": 31904,
+   "goja": 5193
   },
   "score_min": {
-   "goc": 21569,
-   "ng": 23303
+   "goc": 21788,
+   "ng": 23398,
+   "bellard": 31312,
+   "goja": 5096
   },
   "score_max": {
-   "goc": 22309,
-   "ng": 24281
+   "goc": 22318,
+   "ng": 24207,
+   "bellard": 31914,
+   "goja": 5203
   },
   "case_ms_median": {
    "arith": {
-    "goc": 72,
-    "ng": 75
+    "goc": 74,
+    "ng": 75,
+    "bellard": 51,
+    "goja": 548
    },
    "propget": {
     "goc": 75,
-    "ng": 77
+    "ng": 78,
+    "bellard": 48,
+    "goja": 412
    },
    "empty": {
     "goc": 66,
-    "ng": 60
+    "ng": 59,
+    "bellard": 46,
+    "goja": 307
    },
    "id": {
-    "goc": 71,
-    "ng": 67
+    "goc": 70,
+    "ng": 66,
+    "bellard": 47,
+    "goja": 347
    },
    "six": {
     "goc": 61,
-    "ng": 59
+    "ng": 60,
+    "bellard": 45,
+    "goja": 341
    },
    "eight": {
-    "goc": 69,
-    "ng": 69
+    "goc": 68,
+    "ng": 69,
+    "bellard": 54,
+    "goja": 419
    },
    "method": {
     "goc": 69,
-    "ng": 68
+    "ng": 68,
+    "bellard": 53,
+    "goja": 267
    },
    "depth4": {
-    "goc": 55,
-    "ng": 43
+    "goc": 53,
+    "ng": 44,
+    "bellard": 30,
+    "goja": 152
    },
    "closure": {
     "goc": 36,
-    "ng": 37
+    "ng": 37,
+    "bellard": 26,
+    "goja": 177
    },
    "mutual": {
-    "goc": 62,
-    "ng": 52
+    "goc": 59,
+    "ng": 52,
+    "bellard": 43,
+    "goja": 256
    },
    "sched": {
-    "goc": 167,
-    "ng": 132
+    "goc": 164,
+    "ng": 131,
+    "bellard": 99,
+    "goja": 435
    }
   }
  },
@@ -3122,6 +4243,599 @@
     "test_builtin.js:test_generator": "pass",
     "test_builtin.js:test_rope": "pass",
     "test_builtin.js:test_line_column_numbers": "FAIL Error: unexpected line or column number. error=SyntaxError: <eval>: Line 2:6 Unexpected identifier.got |SyntaxError: Syn"
+   }
+  }
+ },
+ "memory": {
+  "rss_kb": {
+   "goc": {
+    "empty": 8712,
+    "v8-Richards": 12872,
+    "v8-DeltaBlue": 13008,
+    "v8-Crypto": 12320,
+    "v8-RayTrace": 12376,
+    "v8-EarleyBoyer": 25240,
+    "v8-RegExp": 14864,
+    "v8-Splay": 168104,
+    "v8-NavierStokes": 14856,
+    "v8-all": 168472,
+    "ss-3d-cube": 9528,
+    "ss-3d-morph": 11556,
+    "ss-3d-raytrace": 9544,
+    "ss-access-binary-trees": 9200,
+    "ss-access-fannkuch": 8896,
+    "ss-access-nbody": 9104,
+    "ss-access-nsieve": 14136,
+    "ss-bitops-3bit-bits-in-byte": 8872,
+    "ss-bitops-bits-in-byte": 8856,
+    "ss-bitops-bitwise-and": 8836,
+    "ss-bitops-nsieve-bits": 9116,
+    "ss-controlflow-recursive": 8952,
+    "ss-crypto-aes": 9256,
+    "ss-crypto-md5": 9376,
+    "ss-crypto-sha1": 9144,
+    "ss-date-format-tofte": 9256,
+    "ss-date-format-xparb": 9224,
+    "ss-math-cordic": 9072,
+    "ss-math-partial-sums": 9176,
+    "ss-math-spectral-norm": 9000,
+    "ss-regexp-dna": 11652,
+    "ss-string-base64": 9224,
+    "ss-string-fasta": 9024,
+    "ss-string-tagcloud": 15092,
+    "ss-string-unpack-code": 14876,
+    "ss-string-validate-input": 9884,
+    "micro": 11292,
+    "alloc": 8888,
+    "mapset": 18800,
+    "ss-max": 15092
+   },
+   "ng": {
+    "empty": 3016,
+    "v8-Richards": 6856,
+    "v8-DeltaBlue": 7160,
+    "v8-Crypto": 5996,
+    "v8-RayTrace": 6008,
+    "v8-EarleyBoyer": 19236,
+    "v8-RegExp": 8836,
+    "v8-Splay": 158548,
+    "v8-NavierStokes": 8272,
+    "v8-all": 159248,
+    "ss-3d-cube": 3644,
+    "ss-3d-morph": 4148,
+    "ss-3d-raytrace": 3564,
+    "ss-access-binary-trees": 3304,
+    "ss-access-fannkuch": 3240,
+    "ss-access-nbody": 3256,
+    "ss-access-nsieve": 6508,
+    "ss-bitops-3bit-bits-in-byte": 3264,
+    "ss-bitops-bits-in-byte": 3208,
+    "ss-bitops-bitwise-and": 3196,
+    "ss-bitops-nsieve-bits": 3244,
+    "ss-controlflow-recursive": 3548,
+    "ss-crypto-aes": 3520,
+    "ss-crypto-md5": 3500,
+    "ss-crypto-sha1": 3436,
+    "ss-date-format-tofte": 3448,
+    "ss-date-format-xparb": 3440,
+    "ss-math-cordic": 3120,
+    "ss-math-partial-sums": 3364,
+    "ss-math-spectral-norm": 3172,
+    "ss-regexp-dna": 5252,
+    "ss-string-base64": 3348,
+    "ss-string-fasta": 3280,
+    "ss-string-tagcloud": 7124,
+    "ss-string-unpack-code": 8308,
+    "ss-string-validate-input": 3840,
+    "micro": 4612,
+    "alloc": 3096,
+    "mapset": 12816,
+    "ss-max": 8308
+   },
+   "bellard": {
+    "empty": 2964,
+    "v8-Richards": 6796,
+    "v8-DeltaBlue": 7100,
+    "v8-Crypto": 5760,
+    "v8-RayTrace": 5744,
+    "v8-EarleyBoyer": 18760,
+    "v8-RegExp": 8360,
+    "v8-Splay": 149984,
+    "v8-NavierStokes": 8156,
+    "v8-all": 150512,
+    "ss-3d-cube": 3392,
+    "ss-3d-morph": 3864,
+    "ss-3d-raytrace": 3424,
+    "ss-access-binary-trees": 3224,
+    "ss-access-fannkuch": 2916,
+    "ss-access-nbody": 3104,
+    "ss-access-nsieve": 6264,
+    "ss-bitops-3bit-bits-in-byte": 3008,
+    "ss-bitops-bits-in-byte": 2880,
+    "ss-bitops-bitwise-and": 2880,
+    "ss-bitops-nsieve-bits": 3120,
+    "ss-controlflow-recursive": 3184,
+    "ss-crypto-aes": 3448,
+    "ss-crypto-md5": 3280,
+    "ss-crypto-sha1": 3188,
+    "ss-date-format-tofte": 3120,
+    "ss-date-format-xparb": 3196,
+    "ss-math-cordic": 2960,
+    "ss-math-partial-sums": 3136,
+    "ss-math-spectral-norm": 2928,
+    "ss-regexp-dna": 5936,
+    "ss-string-base64": 3040,
+    "ss-string-fasta": 2952,
+    "ss-string-tagcloud": 6596,
+    "ss-string-unpack-code": 7708,
+    "ss-string-validate-input": 3680,
+    "micro": 4520,
+    "alloc": 2904,
+    "mapset": 10696,
+    "ss-max": 7708
+   },
+   "goja": {
+    "empty": 6064,
+    "v8-Richards": 22292,
+    "v8-DeltaBlue": 24852,
+    "v8-Crypto": 26932,
+    "v8-RayTrace": 25448,
+    "v8-EarleyBoyer": 127112,
+    "v8-RegExp": 41048,
+    "v8-Splay": 1026672,
+    "v8-NavierStokes": 31760,
+    "v8-all": 1407192,
+    "ss-3d-morph": 15620,
+    "ss-3d-raytrace": 17284,
+    "ss-access-binary-trees": 12608,
+    "ss-access-fannkuch": 7832,
+    "ss-access-nbody": 12824,
+    "ss-access-nsieve": 18260,
+    "ss-bitops-3bit-bits-in-byte": 12824,
+    "ss-bitops-bits-in-byte": 12568,
+    "ss-bitops-bitwise-and": 12804,
+    "ss-bitops-nsieve-bits": 13276,
+    "ss-controlflow-recursive": 7960,
+    "ss-crypto-aes": 13828,
+    "ss-crypto-md5": 13708,
+    "ss-crypto-sha1": 13604,
+    "ss-date-format-tofte": 13612,
+    "ss-date-format-xparb": 13564,
+    "ss-math-cordic": 12824,
+    "ss-math-partial-sums": 14688,
+    "ss-math-spectral-norm": 12696,
+    "ss-regexp-dna": 13964,
+    "ss-string-base64": 15376,
+    "ss-string-fasta": 17680,
+    "ss-string-tagcloud": 23192,
+    "ss-string-unpack-code": 17104,
+    "ss-string-validate-input": 14784,
+    "micro": 377008,
+    "alloc": 18664,
+    "mapset": 37388,
+    "ss-max": 24284
+   }
+  },
+  "rss_rounds": {
+   "goc": 3,
+   "ng": 3,
+   "bellard": 3,
+   "goja": 3
+  },
+  "rss_fail": {
+   "goc": {},
+   "ng": {},
+   "bellard": {},
+   "goja": {
+    "ss-3d-cube": "exit 1"
+   }
+  },
+  "workloads": [
+   "empty",
+   "v8-Richards",
+   "v8-DeltaBlue",
+   "v8-Crypto",
+   "v8-RayTrace",
+   "v8-EarleyBoyer",
+   "v8-RegExp",
+   "v8-Splay",
+   "v8-NavierStokes",
+   "v8-all",
+   "ss-3d-cube",
+   "ss-3d-morph",
+   "ss-3d-raytrace",
+   "ss-access-binary-trees",
+   "ss-access-fannkuch",
+   "ss-access-nbody",
+   "ss-access-nsieve",
+   "ss-bitops-3bit-bits-in-byte",
+   "ss-bitops-bits-in-byte",
+   "ss-bitops-bitwise-and",
+   "ss-bitops-nsieve-bits",
+   "ss-controlflow-recursive",
+   "ss-crypto-aes",
+   "ss-crypto-md5",
+   "ss-crypto-sha1",
+   "ss-date-format-tofte",
+   "ss-date-format-xparb",
+   "ss-math-cordic",
+   "ss-math-partial-sums",
+   "ss-math-spectral-norm",
+   "ss-regexp-dna",
+   "ss-string-base64",
+   "ss-string-fasta",
+   "ss-string-tagcloud",
+   "ss-string-unpack-code",
+   "ss-string-validate-input",
+   "micro",
+   "alloc",
+   "mapset",
+   "ss-max"
+  ],
+  "instances": {
+   "goc": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 4940,
+     "1": 6700,
+     "10": 8720,
+     "100": 28388,
+     "1000": 231180
+    },
+    "after_kind": "after_gc",
+    "after_rss_kb": {
+     "0": 5272,
+     "1": 6972,
+     "10": 8780,
+     "100": 27580,
+     "1000": 219324
+    },
+    "live_HeapSys": {
+     "0": 3866624,
+     "1": 3833856,
+     "10": 3538944,
+     "100": 4784128,
+     "1000": 4653056
+    },
+    "after_HeapSys": {
+     "0": 3702784,
+     "1": 3702784,
+     "10": 3670016,
+     "100": 6946816,
+     "1000": 45711360
+    },
+    "live_HeapInuse": {
+     "0": 417792,
+     "1": 466944,
+     "10": 548864,
+     "100": 622592,
+     "1000": 1581056
+    },
+    "after_HeapInuse": {
+     "0": 417792,
+     "1": 393216,
+     "10": 425984,
+     "100": 532480,
+     "1000": 1073152
+    },
+    "live_StackSys": {
+     "0": 327680,
+     "1": 360448,
+     "10": 655360,
+     "100": 3604480,
+     "1000": 33095680
+    },
+    "after_StackSys": {
+     "0": 491520,
+     "1": 491520,
+     "10": 524288,
+     "100": 1441792,
+     "1000": 8814592
+    },
+    "live_StackInuse": {
+     "0": 327680,
+     "1": 360448,
+     "10": 655360,
+     "100": 3604480,
+     "1000": 33095680
+    },
+    "after_StackInuse": {
+     "0": 491520,
+     "1": 491520,
+     "10": 524288,
+     "100": 1441792,
+     "1000": 8814592
+    },
+    "live_Sys": {
+     "0": 6380560,
+     "1": 6380560,
+     "10": 6642704,
+     "100": 10837008,
+     "1000": 40459280
+    },
+    "after_Sys": {
+     "0": 7298064,
+     "1": 7035920,
+     "10": 7035920,
+     "100": 11754512,
+     "1000": 58416144
+    },
+    "per_instance_kb": {
+     "1": 1760.0,
+     "10": 378.0,
+     "100": 234.48,
+     "1000": 226.24
+    },
+    "slope_1_1000_kb": 224.7047047047047,
+    "slope_1_1000_after_kb": 212.56456456456456,
+    "slope_lsq_kb": 224.84692434258002,
+    "stack_per_goroutine_b": {
+     "1": 32768.0,
+     "10": 32768.0,
+     "100": 32768.0,
+     "1000": 32768.0
+    },
+    "stack_per_goroutine_after_gc_b": {
+     "1": 0.0,
+     "10": 3276.8,
+     "100": 9502.72,
+     "1000": 8323.072
+    }
+   },
+   "ng": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 2088,
+     "1": 3136,
+     "10": 5020,
+     "100": 24448,
+     "1000": 213964
+    },
+    "after_kind": "after_trim",
+    "after_rss_kb": {
+     "0": 2088,
+     "1": 3136,
+     "10": 5020,
+     "100": 24448,
+     "1000": 213964
+    },
+    "per_instance_kb": {
+     "1": 1048.0,
+     "10": 293.2,
+     "100": 223.6,
+     "1000": 211.876
+    },
+    "slope_1_1000_kb": 211.03903903903904,
+    "slope_1_1000_after_kb": 211.03903903903904,
+    "slope_lsq_kb": 210.9386985345765
+   },
+   "ng-arena1": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 2108,
+     "1": 3132,
+     "10": 5020,
+     "100": 23956,
+     "1000": 213360
+    },
+    "after_kind": "after_trim",
+    "after_rss_kb": {
+     "0": 2108,
+     "1": 3132,
+     "10": 5020,
+     "100": 23956,
+     "1000": 213360
+    },
+    "per_instance_kb": {
+     "1": 1024.0,
+     "10": 291.2,
+     "100": 218.48,
+     "1000": 211.252
+    },
+    "slope_1_1000_kb": 210.43843843843842,
+    "slope_1_1000_after_kb": 210.43843843843842,
+    "slope_lsq_kb": 210.44309095632596
+   },
+   "bellard": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 2104,
+     "1": 3088,
+     "10": 4788,
+     "100": 22380,
+     "1000": 192620
+    },
+    "after_kind": "after_trim",
+    "after_rss_kb": {
+     "0": 2104,
+     "1": 3088,
+     "10": 4788,
+     "100": 22380,
+     "1000": 192620
+    },
+    "per_instance_kb": {
+     "1": 984.0,
+     "10": 268.4,
+     "100": 202.76,
+     "1000": 190.516
+    },
+    "slope_1_1000_kb": 189.72172172172174,
+    "slope_1_1000_after_kb": 189.72172172172174,
+    "slope_lsq_kb": 189.5954738330976
+   },
+   "goja": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 5900,
+     "1": 8148,
+     "10": 10252,
+     "100": 19464,
+     "1000": 113508
+    },
+    "after_kind": "after_gc",
+    "after_rss_kb": {
+     "0": 6312,
+     "1": 8492,
+     "10": 9652,
+     "100": 17700,
+     "1000": 93760
+    },
+    "live_HeapSys": {
+     "0": 3899392,
+     "1": 3866624,
+     "10": 3768320,
+     "100": 11304960,
+     "1000": 102727680
+    },
+    "after_HeapSys": {
+     "0": 3735552,
+     "1": 3670016,
+     "10": 7766016,
+     "100": 15695872,
+     "1000": 104267776
+    },
+    "live_HeapInuse": {
+     "0": 991232,
+     "1": 1204224,
+     "10": 3129344,
+     "100": 10575872,
+     "1000": 81657856
+    },
+    "after_HeapInuse": {
+     "0": 892928,
+     "1": 983040,
+     "10": 1908736,
+     "100": 8994816,
+     "1000": 80470016
+    },
+    "live_StackSys": {
+     "0": 294912,
+     "1": 327680,
+     "10": 425984,
+     "100": 1277952,
+     "1000": 6324224
+    },
+    "after_StackSys": {
+     "0": 458752,
+     "1": 524288,
+     "10": 622592,
+     "100": 1081344,
+     "1000": 4784128
+    },
+    "live_StackInuse": {
+     "0": 294912,
+     "1": 327680,
+     "10": 425984,
+     "100": 1277952,
+     "1000": 6324224
+    },
+    "after_StackInuse": {
+     "0": 458752,
+     "1": 524288,
+     "10": 622592,
+     "100": 1081344,
+     "1000": 4784128
+    },
+    "live_Sys": {
+     "0": 6642704,
+     "1": 6904848,
+     "10": 6904848,
+     "100": 17259536,
+     "1000": 116238368
+    },
+    "after_Sys": {
+     "0": 7625744,
+     "1": 7560208,
+     "10": 12016656,
+     "100": 21191696,
+     "1000": 116238368
+    },
+    "per_instance_kb": {
+     "1": 2248.0,
+     "10": 435.2,
+     "100": 135.64,
+     "1000": 107.608
+    },
+    "slope_1_1000_kb": 105.46546546546547,
+    "slope_1_1000_after_kb": 85.35335335335336,
+    "slope_lsq_kb": 104.80302257631011,
+    "stack_per_goroutine_b": {
+     "1": 32768.0,
+     "10": 13107.2,
+     "100": 9830.4,
+     "1000": 6029.312
+    },
+    "stack_per_goroutine_after_gc_b": {
+     "1": 65536.0,
+     "10": 16384.0,
+     "100": 6225.92,
+     "1000": 4325.376
+    }
    }
   }
  }
