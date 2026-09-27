@@ -238,7 +238,12 @@ cmd_build() {
     # and would make those offsets lie.
     PIPELINE="${PIPELINE//,argpromotion/}"
     PIPELINE="${PIPELINE//,globalopt/}"
-    if ! "$OPT" "-passes=$PIPELINE" -S "$BODY_LL" -o "$TMP/a.opt.ll"; then
+    # GOC_OPT_EXTRA: extra opt flags for experiments (default empty). The
+    # textual pipeline above does not carry default<O3>'s inliner threshold
+    # (250; a textual "inline" uses 225), see docs/perf-gap.md.
+    local -a OPT_EXTRA=()
+    read -r -a OPT_EXTRA <<<"${GOC_OPT_EXTRA:-}"
+    if ! "$OPT" "-passes=$PIPELINE" "${OPT_EXTRA[@]}" -S "$BODY_LL" -o "$TMP/a.opt.ll"; then
       cleanup_build_tmp
       exit 1
     fi

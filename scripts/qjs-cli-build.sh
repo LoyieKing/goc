@@ -9,9 +9,9 @@ export GOC_ROOT="$ROOT"
 QJS_FLAVOR="${QJS_FLAVOR:-ng}"
 export QJS_FLAVOR
 case "$QJS_FLAVOR" in
-  ng)      OUT="$ROOT/build/qjs"; HOST_DEFS=(-DJS_NAN_BOXING=0)
+  ng)      OUT="${QJS_OUT_DIR:-$ROOT/build/qjs}"; HOST_DEFS=(-DJS_NAN_BOXING=0)
            ENGINE_TUS="quickjs libregexp libunicode dtoa"; EXTRA_OBJS="" ;;
-  bellard) OUT="$ROOT/build/qjs-bellard"; HOST_DEFS=(-DGOC_QJS_BELLARD=1)
+  bellard) OUT="${QJS_OUT_DIR:-$ROOT/build/qjs-bellard}"; HOST_DEFS=(-DGOC_QJS_BELLARD=1)
            ENGINE_TUS="quickjs libregexp libunicode dtoa cutils"
            EXTRA_OBJS=" $OUT/bellard_api.o" ;;
   *) echo "FAIL: QJS_FLAVOR must be ng or bellard" >&2; exit 1 ;;

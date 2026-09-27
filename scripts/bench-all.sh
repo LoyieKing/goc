@@ -21,6 +21,10 @@
 #   QJSTESTS Bellard 2026-06-04 tests/ directory
 #   ROUNDS_V8 / ROUNDS_SS / ROUNDS_MICRO / ROUNDS_MICROCALL  (default 5/3/3/5)
 #   SKIP     space-separated subset of: v8 ss micro microcall t262 qjs
+#   ENGINE_MAP  optional file of "NAME COMMAND..." lines; a NAME listed there overrides
+#            the built-in command table (used by scripts/perfgap-bench.sh for extra builds)
+#   MICROCALL_PER_ENGINE=1  run tests/bench/microcall.js once per engine per round
+#            (microcall-<engine>-r<round>.txt) instead of scripts/microcall-bench.sh
 set -uo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 PS=/workspace/perf-study
@@ -46,6 +50,11 @@ read -r -a ENGINES <<< "${ENGINES:-goc-ng goc-bellard ng bellard goja}"
 mkdir -p "$OUT"
 
 cmd() {  # cmd ENGINE [micro] -> command prefix (file appended by caller)
+  if [[ -n "${ENGINE_MAP:-}" ]]; then
+    local line
+    line=$(awk -v n="$1" '$1 == n { $1 = ""; sub(/^ /, ""); print; exit }' "$ENGINE_MAP")
+    if [[ -n "$line" ]]; then echo "$line"; return; fi
+  fi
   case "$1" in
     goc-ng)  echo "$GOC --stack-size 16384" ;;
     goc-bellard) echo "$GOCB --stack-size 16384" ;;
@@ -110,7 +119,14 @@ if ! skip micro; then
   done
 fi
 
-if ! skip microcall; then
+if ! skip microcall && [[ "${MICROCALL_PER_ENGINE:-0}" == 1 ]]; then
+  for ((r = 1; r <= ROUNDS_MICROCALL; r++)); do
+    for e in $(order $r); do
+      pin $(cmd $e) "$ROOT/tests/bench/microcall.js" > "$OUT/microcall-$e-r$r.txt" 2>&1
+      echo "microcall r$r $e $(grep -o '"score":[0-9.]*' "$OUT/microcall-$e-r$r.txt")"
+    done
+  done
+elif ! skip microcall; then
   for ((r = 1; r <= ROUNDS_MICROCALL; r++)); do
     GOC_QJS="$GOC" GOC_BELLARD_QJS="$GOCB" NATIVE_QJS="$NG" BELLARD_QJS="$BELLARD" GOJA_CLI="$GOJA" pin "$ROOT/scripts/microcall-bench.sh" > "$OUT/microcall-r$r.txt" 2>&1
     echo "microcall r$r $(grep '^score' "$OUT/microcall-r$r.txt")"

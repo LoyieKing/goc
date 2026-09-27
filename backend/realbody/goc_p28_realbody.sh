@@ -170,7 +170,11 @@ if [[ "$IN" != *.ll && "$OPT_LEVEL" != 0 ]]; then
   PIPELINE="$("$OPT" "-passes=default<O$OPT_LEVEL>" -print-pipeline-passes -disable-output /dev/null)"
   PIPELINE="${PIPELINE//,argpromotion/}"
   PIPELINE="${PIPELINE//,globalopt/}"
-  "$OPT" "-passes=$PIPELINE" -S "$LL" -o "$TMP/body.opt.ll"
+  # GOC_OPT_EXTRA: extra opt flags for experiments (default empty), e.g.
+  # "-inline-threshold=250": the textual pipeline above does not carry
+  # default<O3>'s inliner threshold (docs/perf-gap.md).
+  read -r -a _goc_opt_extra <<<"${GOC_OPT_EXTRA:-}"
+  "$OPT" "-passes=$PIPELINE" "${_goc_opt_extra[@]}" -S "$LL" -o "$TMP/body.opt.ll"
   cp "$TMP/body.opt.ll" "$LL"
   echo "realbody: O$OPT_LEVEL inlined before stack maps" >&2
 fi
@@ -207,6 +211,12 @@ fi
 LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
           -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
           -no-stack-slot-sharing -no-x86-call-frame-opt -enable-tail-merge=false)
+# GOC_LLC_EXTRA: extra llc flags for experiments (default empty), e.g.
+# "-tail-dup-pred-size=1000 -tail-dup-succ-size=1000" (docs/perf-gap.md).
+if [[ -n "${GOC_LLC_EXTRA:-}" ]]; then
+  read -r -a _goc_llc_extra <<<"$GOC_LLC_EXTRA"
+  LLC_ARGS+=("${_goc_llc_extra[@]}")
+fi
 if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-reserve-goc-r14)
   echo "realbody: GOC_FIXED_G=1 llc=$LLC" >&2
