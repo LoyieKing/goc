@@ -601,7 +601,7 @@ goc-ng 除了 `date` 组（1.90）以外，各组都在 native ng 的 0.97 到 1
 | empty_loop | 0.99 | 1.84 | 0.62 | 2.87 |
 | array_for | 0.97 | 1.78 | 0.64 | 4.32 |
 
-`date_now` 和 `date_parse` 是两个 goc 构建共同的短板，这两项都要经过桥接取时间或时区。goc-bellard 最慢的其余几项（`string_build1`、`prop_write`、`global_read`、`empty_loop`、`array_for`）都是很短的字节码循环，每次操作只有几纳秒，解释器分发和取操作数的开销占主导。
+`date_now` 和 `date_parse` 是两个 goc 构建共同的短板，这两项都要经过桥接取时间或时区。goc-bellard 最慢的其余几项里，`string_build1/1x/2c` 有一个具体原因：goc shim 的 `malloc_usable_size` 返回申请的尺寸而不是块的容量，Bellard 的 `s += "x"` 超过 512 字节后就无法原地追加，每次都整串重建（callgrind 显示重建次数是原生的 8.6 倍，见 [perf-gap.md](perf-gap.md) 5.5 节）。其余几项（`prop_write`、`global_read`、`empty_loop`、`array_for`）都是很短的字节码循环，每次操作只有几纳秒，解释器分发和取操作数的开销占主导。
 
 全部 TIME。
 
