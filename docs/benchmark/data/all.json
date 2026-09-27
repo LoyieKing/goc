@@ -1,731 +1,3128 @@
 {
-  "engines": {
-    "goc": "build/qjs/qjscli --stack-size 16384",
-    "ng": "QuickJS-ng 0.17.0 -C",
-    "bellard": "QuickJS 2026-06-04",
-    "goja": "cfe4039cb6d77b297d8b637182f774fa4a54b7d5"
-  },
-  "v8": {
-    "Richards": {
-      "goc": 837.5,
-      "ng": 914,
-      "bellard": 1170,
-      "goja": 334
+ "env": {
+  "env-correctness": [
+   "date: 2026-09-27 08:49:30 KST",
+   "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
+   "goc commit: a1f4dac119eac8664dfcd048907994aaecc572b5",
+   "goc: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=45e946dc0900c7f7",
+   "ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f",
+   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
+   "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
+   "rounds: v8=5 ss=3 micro=3 microcall=5"
+  ],
+  "env-micro": [
+   "date: 2026-09-27 10:49:27 KST",
+   "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
+   "goc commit: a1f4dac119eac8664dfcd048907994aaecc572b5",
+   "goc: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=45e946dc0900c7f7",
+   "ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f",
+   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
+   "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
+   "rounds: v8=5 ss=3 micro=3 microcall=5"
+  ],
+  "env-v8-ss": [
+   "date: 2026-09-27 08:49:44 KST",
+   "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
+   "goc commit: a1f4dac119eac8664dfcd048907994aaecc572b5",
+   "goc: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=45e946dc0900c7f7",
+   "ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f",
+   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
+   "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
+   "rounds: v8=5 ss=3 micro=3 microcall=5"
+  ]
+ },
+ "v8": {
+  "rounds": {
+   "goc": [
+    {
+     "Richards": 773,
+     "DeltaBlue": 741,
+     "Crypto": 886,
+     "RayTrace": 1477,
+     "EarleyBoyer": 2002,
+     "RegExp": 354,
+     "Splay": 2665,
+     "NavierStokes": 1625,
+     "Score": 1110,
+     "wall_s": 38.64
     },
-    "DeltaBlue": {
-      "goc": 846.5,
-      "ng": 948,
-      "bellard": 1106,
-      "goja": 400
+    {
+     "Richards": 704,
+     "DeltaBlue": 694,
+     "Crypto": 708,
+     "RayTrace": 1514,
+     "EarleyBoyer": 2118,
+     "RegExp": 363,
+     "Splay": 2866,
+     "NavierStokes": 1573,
+     "Score": 1078,
+     "wall_s": 38.94
     },
-    "Crypto": {
-      "goc": 804,
-      "ng": 994,
-      "bellard": 1274,
-      "goja": 166
+    {
+     "Richards": 774,
+     "DeltaBlue": 757,
+     "Crypto": 895,
+     "RayTrace": 1537,
+     "EarleyBoyer": 2180,
+     "RegExp": 358,
+     "Splay": 2776,
+     "NavierStokes": 1649,
+     "Score": 1141,
+     "wall_s": 38.49
     },
-    "RayTrace": {
-      "goc": 1776,
-      "ng": 1915,
-      "bellard": 2576,
-      "goja": 348
+    {
+     "Richards": 775,
+     "DeltaBlue": 743,
+     "Crypto": 868,
+     "RayTrace": 1487,
+     "EarleyBoyer": 2115,
+     "RegExp": 372,
+     "Splay": 2931,
+     "NavierStokes": 1645,
+     "Score": 1138,
+     "wall_s": 38.68
     },
-    "EarleyBoyer": {
-      "goc": 2262,
-      "ng": 2626,
-      "bellard": 3132,
-      "goja": 711
-    },
-    "RegExp": {
-      "goc": 362,
-      "ng": 454,
-      "bellard": 584,
-      "goja": 289
-    },
-    "Splay": {
-      "goc": 3449,
-      "ng": 4081,
-      "bellard": 5038,
-      "goja": 1568
-    },
-    "NavierStokes": {
-      "goc": 1511,
-      "ng": 1733,
-      "bellard": 2447,
-      "goja": 274
-    },
-    "Overall": {
-      "goc": 1200.5,
-      "ng": 1389,
-      "bellard": 1768,
-      "goja": 402
+    {
+     "Richards": 759,
+     "DeltaBlue": 744,
+     "Crypto": 893,
+     "RayTrace": 1491,
+     "EarleyBoyer": 2137,
+     "RegExp": 362,
+     "Splay": 2763,
+     "NavierStokes": 1626,
+     "Score": 1128,
+     "wall_s": 37.75
     }
-  },
-  "v8_wall_s": {
-    "goc": "37.95 s, 39.73 s",
-    "ng": "36.3 s",
-    "goja": "87.7 s",
-    "bellard": "30.6 s"
-  },
-  "microcall": {
-    "goc": 19556,
-    "ng": 23356,
-    "ratio": 1.19,
-    "depth4_ms": {
-      "goc": 60,
-      "ng": 45
+   ],
+   "ng": [
+    {
+     "Richards": 779,
+     "DeltaBlue": 793,
+     "Crypto": 857,
+     "RayTrace": 1757,
+     "EarleyBoyer": 2245,
+     "RegExp": 404,
+     "Splay": 3203,
+     "NavierStokes": 1586,
+     "Score": 1199,
+     "wall_s": 37.63
+    },
+    {
+     "Richards": 796,
+     "DeltaBlue": 794,
+     "Crypto": 855,
+     "RayTrace": 1723,
+     "EarleyBoyer": 2225,
+     "RegExp": 412,
+     "Splay": 3232,
+     "NavierStokes": 1601,
+     "Score": 1204,
+     "wall_s": 37.32
+    },
+    {
+     "Richards": 801,
+     "DeltaBlue": 810,
+     "Crypto": 859,
+     "RayTrace": 1789,
+     "EarleyBoyer": 2245,
+     "RegExp": 406,
+     "Splay": 3131,
+     "NavierStokes": 1585,
+     "Score": 1207,
+     "wall_s": 38.57
+    },
+    {
+     "Richards": 817,
+     "DeltaBlue": 787,
+     "Crypto": 865,
+     "RayTrace": 1799,
+     "EarleyBoyer": 2332,
+     "RegExp": 414,
+     "Splay": 3224,
+     "NavierStokes": 1616,
+     "Score": 1224,
+     "wall_s": 37.34
+    },
+    {
+     "Richards": 793,
+     "DeltaBlue": 784,
+     "Crypto": 851,
+     "RayTrace": 1682,
+     "EarleyBoyer": 2285,
+     "RegExp": 412,
+     "Splay": 3131,
+     "NavierStokes": 1600,
+     "Score": 1196,
+     "wall_s": 37.29
     }
-  },
-  "sunspider_ms": {
-    "3d-cube": {
-      "goc": null,
-      "ng": 23.4,
-      "bellard": 17.333333333333332,
-      "goja": null
+   ],
+   "bellard": [
+    {
+     "Richards": 1040,
+     "DeltaBlue": 948,
+     "Crypto": 1387,
+     "RayTrace": 1955,
+     "EarleyBoyer": 2548,
+     "RegExp": 549,
+     "Splay": 3423,
+     "NavierStokes": 2815,
+     "Score": 1565,
+     "wall_s": 32.07
     },
-    "3d-morph": {
-      "goc": 23.2,
-      "ng": 18.166666666666668,
-      "bellard": 13.375,
-      "goja": 105.5
+    {
+     "Richards": 1045,
+     "DeltaBlue": 932,
+     "Crypto": 1355,
+     "RayTrace": 1912,
+     "EarleyBoyer": 2479,
+     "RegExp": 538,
+     "Splay": 3472,
+     "NavierStokes": 2804,
+     "Score": 1547,
+     "wall_s": 33.42
     },
-    "3d-raytrace": {
-      "goc": 3.1666666666666665,
-      "ng": 2.8333333333333335,
-      "bellard": 1.75,
-      "goja": 40.5
+    {
+     "Richards": 1048,
+     "DeltaBlue": 970,
+     "Crypto": 1395,
+     "RayTrace": 1994,
+     "EarleyBoyer": 2546,
+     "RegExp": 556,
+     "Splay": 3414,
+     "NavierStokes": 2781,
+     "Score": 1576,
+     "wall_s": 32.35
     },
-    "access-binary-trees": {
-      "goc": 13.142857142857142,
-      "ng": 12.75,
-      "bellard": 10.666666666666666,
-      "goja": 39.25
+    {
+     "Richards": 1056,
+     "DeltaBlue": 960,
+     "Crypto": 1387,
+     "RayTrace": 1938,
+     "EarleyBoyer": 2485,
+     "RegExp": 549,
+     "Splay": 3468,
+     "NavierStokes": 2815,
+     "Score": 1567,
+     "wall_s": 33.11
     },
-    "access-fannkuch": {
-      "goc": 70.0,
-      "ng": 59.333333333333336,
-      "bellard": 34.75,
-      "goja": 150.0
-    },
-    "access-nbody": {
-      "goc": 19.166666666666668,
-      "ng": 18.833333333333332,
-      "bellard": 13.714285714285714,
-      "goja": 127.5
-    },
-    "access-nsieve": {
-      "goc": 34.5,
-      "ng": 29.5,
-      "bellard": 16.166666666666668,
-      "goja": 80.66666666666667
-    },
-    "bitops-3bit-bits-in-byte": {
-      "goc": 11.222222222222221,
-      "ng": 10.666666666666666,
-      "bellard": 8.818181818181818,
-      "goja": 64.33333333333333
-    },
-    "bitops-bits-in-byte": {
-      "goc": 19.666666666666668,
-      "ng": 17.166666666666668,
-      "bellard": 14.285714285714286,
-      "goja": 88.5
-    },
-    "bitops-bitwise-and": {
-      "goc": 12.25,
-      "ng": 14.285714285714286,
-      "bellard": 7.166666666666667,
-      "goja": 109.5
-    },
-    "bitops-nsieve-bits": {
-      "goc": 22.2,
-      "ng": 18.333333333333332,
-      "bellard": 13.714285714285714,
-      "goja": 178.0
-    },
-    "controlflow-recursive": {
-      "goc": 8.727272727272727,
-      "ng": 7.5,
-      "bellard": 6.214285714285714,
-      "goja": 22.6
-    },
-    "crypto-aes": {
-      "goc": 22.6,
-      "ng": 19.5,
-      "bellard": 13.714285714285714,
-      "goja": 69.0
-    },
-    "crypto-md5": {
-      "goc": 9.1,
-      "ng": 7.75,
-      "bellard": 6.571428571428571,
-      "goja": 52.666666666666664
-    },
-    "crypto-sha1": {
-      "goc": 8.727272727272727,
-      "ng": 7.583333333333333,
-      "bellard": 6.133333333333334,
-      "goja": 49.0
-    },
-    "date-format-tofte": {
-      "goc": 8.0,
-      "ng": 6.75,
-      "bellard": 4.8,
-      "goja": 17.666666666666668
-    },
-    "date-format-xparb": {
-      "goc": 3.0,
-      "ng": 3.1666666666666665,
-      "bellard": 3.0,
-      "goja": 8.25
-    },
-    "math-cordic": {
-      "goc": 24.6,
-      "ng": 23.6,
-      "bellard": 22.4,
-      "goja": 121.5
-    },
-    "math-partial-sums": {
-      "goc": 16.0,
-      "ng": 14.428571428571429,
-      "bellard": 9.4,
-      "goja": 84.0
-    },
-    "math-spectral-norm": {
-      "goc": 10.11111111111111,
-      "ng": 9.1,
-      "bellard": 8.0,
-      "goja": 46.0
-    },
-    "regexp-dna": {
-      "goc": 40.5,
-      "ng": 22.333333333333332,
-      "bellard": 20.0,
-      "goja": 69.5
-    },
-    "string-base64": {
-      "goc": 15.428571428571429,
-      "ng": 15.0,
-      "bellard": 13.0,
-      "goja": 137.5
-    },
-    "string-fasta": {
-      "goc": 49.333333333333336,
-      "ng": 44.0,
-      "bellard": 21.4,
-      "goja": 108.5
-    },
-    "string-tagcloud": {
-      "goc": null,
-      "ng": 26.25,
-      "bellard": 19.6,
-      "goja": 158.0
-    },
-    "string-unpack-code": {
-      "goc": 52.0,
-      "ng": 41.666666666666664,
-      "bellard": 33.75,
-      "goja": 60.666666666666664
-    },
-    "string-validate-input": {
-      "goc": 14.0,
-      "ng": 11.75,
-      "bellard": 9.2,
-      "goja": 698.5
+    {
+     "Richards": 1051,
+     "DeltaBlue": 961,
+     "Crypto": 1374,
+     "RayTrace": 1974,
+     "EarleyBoyer": 2498,
+     "RegExp": 544,
+     "Splay": 3488,
+     "NavierStokes": 2852,
+     "Score": 1571,
+     "wall_s": 32.58
     }
-  },
-  "sunspider_geomean_24": {
-    "goc": 16.085712496280525,
-    "ng": 14.165619644406178,
-    "bellard": 10.526765035267555,
-    "goja": 71.75740457647662
-  },
-  "sunspider_wall_s": {
-    "goc": 5.43,
-    "ng": 5.48,
-    "bellard": 5.1,
-    "goja": 12.38
-  },
-  "micro_ns": {
-    "arguments_read": {
-      "goc": 198.69,
-      "ng": 158.79,
-      "bellard": 125.31,
-      "goja": 1250.0
-    },
-    "arguments_strict_read": {
-      "goc": 157.27,
-      "ng": 124.76,
-      "bellard": 97.4,
-      "goja": 1000.0
-    },
-    "array_for": {
-      "goc": 20.22,
-      "ng": 15.13,
-      "bellard": 18.23,
-      "goja": 100.0
-    },
-    "array_for_in": {
-      "goc": 72.09,
-      "ng": 49.01,
-      "bellard": 46.86,
-      "goja": 400.0
-    },
-    "array_for_of": {
-      "goc": 23.26,
-      "ng": 20.09,
-      "bellard": 21.0,
-      "goja": 400.0
-    },
-    "array_hole_length_decr": {
-      "goc": 61.31,
-      "ng": 47.26,
-      "bellard": 41.17,
-      "goja": 200.0
-    },
-    "array_length_decr": {
-      "goc": 45.2,
-      "ng": 38.88,
-      "bellard": 40.17,
-      "goja": 200.0
-    },
-    "array_length_read": {
-      "goc": 12.38,
-      "ng": 14.69,
-      "bellard": 9.06,
-      "goja": 50.0
-    },
-    "array_pop": {
-      "goc": 81.0,
-      "ng": 72.22,
-      "bellard": 69.82,
-      "goja": 200.0
-    },
-    "array_prop_create": {
-      "goc": 38.53,
-      "ng": 29.94,
-      "bellard": 15.01,
-      "goja": 200.0
-    },
-    "array_push": {
-      "goc": 43.28,
-      "ng": 40.32,
-      "bellard": 34.51,
-      "goja": 200.0
-    },
-    "array_read": {
-      "goc": 13.82,
-      "ng": 13.0,
-      "bellard": 7.7,
-      "goja": 50.0
-    },
-    "array_slice": {
-      "goc": 16.32,
-      "ng": 14.33,
-      "bellard": 16.33,
-      "goja": 100.0
-    },
-    "array_update": {
-      "goc": 19.51,
-      "ng": 19.38,
-      "bellard": 11.13,
-      "goja": 100.0
-    },
-    "array_write": {
-      "goc": 31.52,
-      "ng": 26.46,
-      "bellard": 7.68,
-      "goja": 40.0
-    },
-    "bigint256_arith": {
-      "goc": 128.23,
-      "ng": 102.82,
-      "bellard": 84.78,
-      "goja": 200.0
-    },
-    "bigint32_arith": {
-      "goc": 50.35,
-      "ng": 39.96,
-      "bellard": 24.62,
-      "goja": 200.0
-    },
-    "bigint64_arith": {
-      "goc": 70.14,
-      "ng": 56.31,
-      "bellard": 34.02,
-      "goja": 200.0
-    },
-    "date_now": {
-      "goc": 258.92,
-      "ng": 57.12,
-      "bellard": 46.93,
-      "goja": 200.0
-    },
-    "date_parse": {
-      "goc": null,
-      "ng": 521.12,
-      "bellard": 486.98,
-      "goja": 666.67
-    },
-    "empty_do_loop": {
-      "goc": 15.89,
-      "ng": 13.25,
-      "bellard": 15.0,
-      "goja": 50.0
-    },
-    "empty_down_loop": {
-      "goc": 16.68,
-      "ng": 15.24,
-      "bellard": 15.32,
-      "goja": 50.0
-    },
-    "empty_down_loop2": {
-      "goc": 21.71,
-      "ng": 18.7,
-      "bellard": 19.15,
-      "goja": 100.0
-    },
-    "empty_loop": {
-      "goc": 14.9,
-      "ng": 13.01,
-      "bellard": 11.15,
-      "goja": 50.0
-    },
-    "float_arith": {
-      "goc": 27.96,
-      "ng": 25.93,
-      "bellard": 20.16,
-      "goja": 200.0
-    },
-    "float_toExponential": {
-      "goc": 166.08,
-      "ng": 108.33,
-      "bellard": 93.33,
-      "goja": 333.33
-    },
-    "float_toFixed": {
-      "goc": 149.31,
-      "ng": 92.89,
-      "bellard": 82.06,
-      "goja": 666.67
-    },
-    "float_toPrecision": {
-      "goc": 156.41,
-      "ng": 105.71,
-      "bellard": 93.23,
-      "goja": 333.33
-    },
-    "float_toString": {
-      "goc": 239.65,
-      "ng": 198.18,
-      "bellard": 190.43,
-      "goja": 333.33
-    },
-    "float_to_string": {
-      "goc": 224.21,
-      "ng": 178.75,
-      "bellard": 175.29,
-      "goja": 333.33
-    },
-    "func_call": {
-      "goc": 29.3,
-      "ng": 26.67,
-      "bellard": 23.38,
-      "goja": 100.0
-    },
-    "func_closure_call": {
-      "goc": 29.88,
-      "ng": 25.37,
-      "bellard": 24.37,
-      "goja": 100.0
-    },
-    "global_destruct": {
-      "goc": 47.7,
-      "ng": 40.84,
-      "bellard": 33.2,
-      "goja": 500.0
-    },
-    "global_destruct_strict": {
-      "goc": 46.66,
-      "ng": 39.65,
-      "bellard": 33.36,
-      "goja": 500.0
-    },
-    "global_func_call": {
-      "goc": 36.34,
-      "ng": 33.16,
-      "bellard": 26.41,
-      "goja": 100.0
-    },
-    "global_read": {
-      "goc": 11.08,
-      "ng": 12.13,
-      "bellard": 7.84,
-      "goja": 50.0
-    },
-    "global_write": {
-      "goc": 11.07,
-      "ng": 14.24,
-      "bellard": 7.53,
-      "goja": 100.0
-    },
-    "global_write_strict": {
-      "goc": 10.84,
-      "ng": 14.43,
-      "bellard": 7.53,
-      "goja": 100.0
-    },
-    "int_arith": {
-      "goc": 19.23,
-      "ng": 16.61,
-      "bellard": 15.67,
-      "goja": 100.0
-    },
-    "int_toString": {
-      "goc": 67.28,
-      "ng": 48.79,
-      "bellard": 38.96,
-      "goja": 133.33
-    },
-    "int_to_string": {
-      "goc": 48.62,
-      "ng": 36.24,
-      "bellard": 28.82,
-      "goja": 133.33
-    },
-    "local_destruct": {
-      "goc": 33.43,
-      "ng": 28.19,
-      "bellard": 24.46,
-      "goja": 333.33
-    },
-    "map_delete": {
-      "goc": 249.77,
-      "ng": 197.4,
-      "bellard": 178.02,
-      "goja": 500.0
-    },
-    "map_set_bigint": {
-      "goc": 3627.8,
-      "ng": 2543.23,
-      "bellard": 131.75,
-      "goja": 500.0
-    },
-    "map_set_int": {
-      "goc": 3366.72,
-      "ng": 1617.81,
-      "bellard": 98.87,
-      "goja": 400.0
-    },
-    "map_set_string": {
-      "goc": 234.5,
-      "ng": 194.02,
-      "bellard": 181.88,
-      "goja": 500.0
-    },
-    "math_min": {
-      "goc": 37.25,
-      "ng": 41.57,
-      "bellard": 30.22,
-      "goja": 200.0
-    },
-    "prop_clone": {
-      "goc": 55.86,
-      "ng": 50.0,
-      "bellard": 44.75,
-      "goja": 250.0
-    },
-    "prop_create": {
-      "goc": 66.09,
-      "ng": 61.28,
-      "bellard": 41.83,
-      "goja": 200.0
-    },
-    "prop_delete": {
-      "goc": 93.41,
-      "ng": 82.35,
-      "bellard": 72.9,
-      "goja": 500.0
-    },
-    "prop_read": {
-      "goc": 12.72,
-      "ng": 13.06,
-      "bellard": 10.03,
-      "goja": 100.0
-    },
-    "prop_update": {
-      "goc": 18.4,
-      "ng": 15.95,
-      "bellard": 11.38,
-      "goja": 100.0
-    },
-    "prop_write": {
-      "goc": 16.79,
-      "ng": 12.48,
-      "bellard": 7.63,
-      "goja": 50.0
-    },
-    "regexp_ascii": {
-      "goc": 275.79,
-      "ng": 197.08,
-      "bellard": 150.6,
-      "goja": 1000.0
-    },
-    "regexp_replace": {
-      "goc": 1904.63,
-      "ng": 1345.93,
-      "bellard": 538.25,
-      "goja": 1000.0
-    },
-    "regexp_utf16": {
-      "goc": 282.52,
-      "ng": 228.84,
-      "bellard": 154.83,
-      "goja": 2000.0
-    },
-    "sort_bench": {
-      "goc": 16.93,
-      "ng": 12.96,
-      "bellard": 13.58,
-      "goja": 58.0
-    },
-    "string_build1": {
-      "goc": 54.44,
-      "ng": 42.78,
-      "bellard": 20.85,
-      "goja": 200.0
-    },
-    "string_build1x": {
-      "goc": 53.05,
-      "ng": 43.26,
-      "bellard": 20.73,
-      "goja": 200.0
-    },
-    "string_build2": {
-      "goc": 61.55,
-      "ng": 45.64,
-      "bellard": 39.13,
-      "goja": 200.0
-    },
-    "string_build2c": {
-      "goc": 59.23,
-      "ng": 57.04,
-      "bellard": 24.77,
-      "goja": 400.0
-    },
-    "string_build3": {
-      "goc": 61.62,
-      "ng": 44.92,
-      "bellard": 36.81,
-      "goja": 200.0
-    },
-    "string_build4": {
-      "goc": 58.32,
-      "ng": 49.4,
-      "bellard": 40.85,
-      "goja": 200.0
-    },
-    "string_build_large1": {
-      "goc": 71.89,
-      "ng": 58.24,
-      "bellard": 44.35,
-      "goja": 11150.0
-    },
-    "string_build_large2": {
-      "goc": 72.49,
-      "ng": 56.47,
-      "bellard": 44.88,
-      "goja": 11750.0
-    },
-    "string_length": {
-      "goc": 13.78,
-      "ng": 14.08,
-      "bellard": 12.26,
-      "goja": 100.0
-    },
-    "string_to_float": {
-      "goc": 108.7,
-      "ng": 90.77,
-      "bellard": 92.91,
-      "goja": 200.0
-    },
-    "string_to_int": {
-      "goc": 81.55,
-      "ng": 71.59,
-      "bellard": 67.94,
-      "goja": 200.0
-    },
-    "typed_array_read": {
-      "goc": 15.74,
-      "ng": 13.75,
-      "bellard": 12.05,
-      "goja": 50.0
-    },
-    "typed_array_write": {
-      "goc": 36.09,
-      "ng": 29.84,
-      "bellard": 11.98,
-      "goja": 50.0
-    },
-    "weak_map_delete": {
-      "goc": 291.96,
-      "ng": 261.29,
-      "bellard": 165.23,
-      "goja": 1000.0
-    },
-    "weak_map_set": {
-      "goc": 135.73,
-      "ng": 126.65,
-      "bellard": 66.31,
-      "goja": 400.0
+   ],
+   "goja": [
+    {
+     "Richards": 265,
+     "DeltaBlue": 277,
+     "Crypto": 119,
+     "RayTrace": 245,
+     "EarleyBoyer": 425,
+     "RegExp": 190,
+     "Splay": 495,
+     "NavierStokes": 187,
+     "Score": 252,
+     "wall_s": 125.89
+    },
+    {
+     "Richards": 263,
+     "DeltaBlue": 278,
+     "Crypto": 119,
+     "RayTrace": 246,
+     "EarleyBoyer": 416,
+     "RegExp": 198,
+     "Splay": 664,
+     "NavierStokes": 188,
+     "Score": 262,
+     "wall_s": 124.13
+    },
+    {
+     "Richards": 266,
+     "DeltaBlue": 268,
+     "Crypto": 121,
+     "RayTrace": 245,
+     "EarleyBoyer": 425,
+     "RegExp": 198,
+     "Splay": 527,
+     "NavierStokes": 189,
+     "Score": 255,
+     "wall_s": 122.67
+    },
+    {
+     "Richards": 264,
+     "DeltaBlue": 279,
+     "Crypto": 122,
+     "RayTrace": 246,
+     "EarleyBoyer": 438,
+     "RegExp": 200,
+     "Splay": 735,
+     "NavierStokes": 188,
+     "Score": 268,
+     "wall_s": 123.96
+    },
+    {
+     "Richards": 266,
+     "DeltaBlue": 268,
+     "Crypto": 120,
+     "RayTrace": 247,
+     "EarleyBoyer": 427,
+     "RegExp": 198,
+     "Splay": 716,
+     "NavierStokes": 190,
+     "Score": 265,
+     "wall_s": 123.18
     }
+   ]
   },
-  "micro_total": {
-    "goc": 14201.59,
-    "ng": 10187.58,
-    "bellard": 4592.93,
-    "goja": 44314.65
+  "median": {
+   "goc": {
+    "Richards": 773,
+    "DeltaBlue": 743,
+    "Crypto": 886,
+    "RayTrace": 1491,
+    "EarleyBoyer": 2118,
+    "RegExp": 362,
+    "Splay": 2776,
+    "NavierStokes": 1626,
+    "Score": 1128
+   },
+   "ng": {
+    "Richards": 796,
+    "DeltaBlue": 793,
+    "Crypto": 857,
+    "RayTrace": 1757,
+    "EarleyBoyer": 2245,
+    "RegExp": 412,
+    "Splay": 3203,
+    "NavierStokes": 1600,
+    "Score": 1204
+   },
+   "bellard": {
+    "Richards": 1048,
+    "DeltaBlue": 960,
+    "Crypto": 1387,
+    "RayTrace": 1955,
+    "EarleyBoyer": 2498,
+    "RegExp": 549,
+    "Splay": 3468,
+    "NavierStokes": 2815,
+    "Score": 1567
+   },
+   "goja": {
+    "Richards": 265,
+    "DeltaBlue": 277,
+    "Crypto": 120,
+    "RayTrace": 246,
+    "EarleyBoyer": 425,
+    "RegExp": 198,
+    "Splay": 664,
+    "NavierStokes": 188,
+    "Score": 262
+   }
   },
-  "micro_geomean_71": {
-    "goc": 58.73059190397051,
-    "ng": 48.46954989802866,
-    "bellard": 34.40749877755273,
-    "goja": 219.0689547164824
+  "score_min": {
+   "goc": 1078,
+   "ng": 1196,
+   "bellard": 1547,
+   "goja": 252
   },
-  "test262_pct": {
-    "goc": {
-      "pass": 1502,
-      "ran": 1526
-    },
-    "ng": {
-      "pass": 1502,
-      "ran": 1526
-    },
-    "bellard": {
-      "pass": 1501,
-      "ran": 1526
-    },
-    "goja": {
-      "pass": 1453,
-      "ran": 1526
-    }
+  "score_max": {
+   "goc": 1141,
+   "ng": 1224,
+   "bellard": 1576,
+   "goja": 268
   },
-  "qjs_pct": {
-    "goc": {
-      "pass": 69,
-      "total": 77
-    },
-    "ng": {
-      "pass": 69,
-      "total": 77
-    },
-    "bellard": {
-      "pass": 73,
-      "total": 77
-    },
-    "goja": {
-      "pass": 58,
-      "total": 77
-    }
+  "wall_s_median": {
+   "goc": 38.64,
+   "ng": 37.34,
+   "bellard": 32.58,
+   "goja": 123.96
   }
+ },
+ "sunspider": {
+  "rounds": {
+   "goc": 3,
+   "ng": 3,
+   "bellard": 3,
+   "goja": 3
+  },
+  "ms": {
+   "goc": {
+    "3d-cube": 27.8333,
+    "3d-morph": 32.2,
+    "3d-raytrace": 2.375,
+    "access-binary-trees": 13.6364,
+    "access-fannkuch": 74.0,
+    "access-nbody": 18.2222,
+    "access-nsieve": 34.0,
+    "bitops-3bit-bits-in-byte": 10.3333,
+    "bitops-bits-in-byte": 24.5,
+    "bitops-bitwise-and": 12.25,
+    "bitops-nsieve-bits": 20.125,
+    "controlflow-recursive": 7.65,
+    "crypto-aes": 23.4286,
+    "crypto-md5": 7.3,
+    "crypto-sha1": 7.2381,
+    "date-format-tofte": 6.8,
+    "date-format-xparb": 2.0,
+    "math-cordic": 26.1667,
+    "math-partial-sums": 19.875,
+    "math-spectral-norm": 9.4375,
+    "regexp-dna": 47.0,
+    "string-base64": 14.2727,
+    "string-fasta": 53.6667,
+    "string-tagcloud": 33.6,
+    "string-unpack-code": 50.6667,
+    "string-validate-input": 16.7778
+   },
+   "ng": {
+    "3d-cube": 26.3333,
+    "3d-morph": 21.0,
+    "3d-raytrace": 2.25,
+    "access-binary-trees": 12.5833,
+    "access-fannkuch": 64.6667,
+    "access-nbody": 16.3333,
+    "access-nsieve": 34.8,
+    "bitops-3bit-bits-in-byte": 11.3571,
+    "bitops-bits-in-byte": 25.1667,
+    "bitops-bitwise-and": 15.0,
+    "bitops-nsieve-bits": 20.75,
+    "controlflow-recursive": 7.1905,
+    "crypto-aes": 21.7143,
+    "crypto-md5": 8.0526,
+    "crypto-sha1": 7.8947,
+    "date-format-tofte": 4.8333,
+    "date-format-xparb": 2.625,
+    "math-cordic": 26.6667,
+    "math-partial-sums": 12.8333,
+    "math-spectral-norm": 9.25,
+    "regexp-dna": 42.0,
+    "string-base64": 13.8182,
+    "string-fasta": 49.5,
+    "string-tagcloud": 29.2,
+    "string-unpack-code": 47.75,
+    "string-validate-input": 12.8333
+   },
+   "bellard": {
+    "3d-cube": 18.0,
+    "3d-morph": 12.75,
+    "3d-raytrace": 1.1818,
+    "access-binary-trees": 10.2,
+    "access-fannkuch": 30.2,
+    "access-nbody": 12.4167,
+    "access-nsieve": 17.1111,
+    "bitops-3bit-bits-in-byte": 7.7222,
+    "bitops-bits-in-byte": 20.25,
+    "bitops-bitwise-and": 7.45,
+    "bitops-nsieve-bits": 13.1667,
+    "controlflow-recursive": 5.5517,
+    "crypto-aes": 12.3333,
+    "crypto-md5": 5.5185,
+    "crypto-sha1": 5.1379,
+    "date-format-tofte": 4.1667,
+    "date-format-xparb": 2.1111,
+    "math-cordic": 21.4286,
+    "math-partial-sums": 9.0625,
+    "math-spectral-norm": 7.0,
+    "regexp-dna": 24.0,
+    "string-base64": 11.3846,
+    "string-fasta": 22.0,
+    "string-tagcloud": 21.1429,
+    "string-unpack-code": 38.25,
+    "string-validate-input": 10.7143
+   },
+   "goja": {
+    "3d-cube": null,
+    "3d-morph": 138.5,
+    "3d-raytrace": 57.0,
+    "access-binary-trees": 56.0,
+    "access-fannkuch": 154.0,
+    "access-nbody": 152.0,
+    "access-nsieve": 102.5,
+    "bitops-3bit-bits-in-byte": 76.5,
+    "bitops-bits-in-byte": 96.0,
+    "bitops-bitwise-and": 132.5,
+    "bitops-nsieve-bits": 207.0,
+    "controlflow-recursive": 22.8571,
+    "crypto-aes": 92.0,
+    "crypto-md5": 70.3333,
+    "crypto-sha1": 67.0,
+    "date-format-tofte": 23.6667,
+    "date-format-xparb": 10.5,
+    "math-cordic": 146.5,
+    "math-partial-sums": 111.5,
+    "math-spectral-norm": 59.3333,
+    "regexp-dna": 179.0,
+    "string-base64": 150.0,
+    "string-fasta": 137.5,
+    "string-tagcloud": 266.0,
+    "string-unpack-code": 75.0,
+    "string-validate-input": 413.0
+   }
+  },
+  "fail": {
+   "goc": {},
+   "ng": {},
+   "bellard": {},
+   "goja": {
+    "3d-cube": "Error: bad vector sum for CubeSize = 20; expected 2889.0000000000045 but got 2889.0000000000086 at Init (/workspace/perf-study/ss/w/3d-cube.js:343:5(507))"
+   }
+  },
+  "tests": [
+   "3d-cube",
+   "3d-morph",
+   "3d-raytrace",
+   "access-binary-trees",
+   "access-fannkuch",
+   "access-nbody",
+   "access-nsieve",
+   "bitops-3bit-bits-in-byte",
+   "bitops-bits-in-byte",
+   "bitops-bitwise-and",
+   "bitops-nsieve-bits",
+   "controlflow-recursive",
+   "crypto-aes",
+   "crypto-md5",
+   "crypto-sha1",
+   "date-format-tofte",
+   "date-format-xparb",
+   "math-cordic",
+   "math-partial-sums",
+   "math-spectral-norm",
+   "regexp-dna",
+   "string-base64",
+   "string-fasta",
+   "string-tagcloud",
+   "string-unpack-code",
+   "string-validate-input"
+  ],
+  "common4": [
+   "3d-morph",
+   "3d-raytrace",
+   "access-binary-trees",
+   "access-fannkuch",
+   "access-nbody",
+   "access-nsieve",
+   "bitops-3bit-bits-in-byte",
+   "bitops-bits-in-byte",
+   "bitops-bitwise-and",
+   "bitops-nsieve-bits",
+   "controlflow-recursive",
+   "crypto-aes",
+   "crypto-md5",
+   "crypto-sha1",
+   "date-format-tofte",
+   "date-format-xparb",
+   "math-cordic",
+   "math-partial-sums",
+   "math-spectral-norm",
+   "regexp-dna",
+   "string-base64",
+   "string-fasta",
+   "string-tagcloud",
+   "string-unpack-code",
+   "string-validate-input"
+  ],
+  "common3": [
+   "3d-cube",
+   "3d-morph",
+   "3d-raytrace",
+   "access-binary-trees",
+   "access-fannkuch",
+   "access-nbody",
+   "access-nsieve",
+   "bitops-3bit-bits-in-byte",
+   "bitops-bits-in-byte",
+   "bitops-bitwise-and",
+   "bitops-nsieve-bits",
+   "controlflow-recursive",
+   "crypto-aes",
+   "crypto-md5",
+   "crypto-sha1",
+   "date-format-tofte",
+   "date-format-xparb",
+   "math-cordic",
+   "math-partial-sums",
+   "math-spectral-norm",
+   "regexp-dna",
+   "string-base64",
+   "string-fasta",
+   "string-tagcloud",
+   "string-unpack-code",
+   "string-validate-input"
+  ],
+  "geomean4": {
+   "goc": 16.274544024712352,
+   "ng": 15.276129047941385,
+   "bellard": 10.244443284378582,
+   "goja": 92.81660877441121
+  },
+  "geomean3": {
+   "goc": 16.613935375773956,
+   "ng": 15.599445582525814,
+   "bellard": 10.468950278336703
+  },
+  "geomean4_by_round": {
+   "goc": [
+    16.445649019176,
+    16.2958928872756,
+    16.199157911046004
+   ],
+   "ng": [
+    15.216893872889404,
+    15.322836375376541,
+    15.416475356697793
+   ],
+   "bellard": [
+    10.252440243687728,
+    10.57748588864667,
+    10.12378718956169
+   ],
+   "goja": [
+    92.89666096253808,
+    93.14013835075248,
+    92.62799135968442
+   ]
+  }
+ },
+ "micro": {
+  "rounds": {
+   "goc": 3,
+   "ng": 3,
+   "bellard": 3,
+   "goja": 3
+  },
+  "ns": {
+   "goc": {
+    "empty_loop": 15.8,
+    "empty_down_loop": 17.74,
+    "empty_down_loop2": 22.14,
+    "empty_do_loop": 17.4,
+    "date_now": 155.75,
+    "date_parse": 785.35,
+    "prop_read": 11.93,
+    "prop_write": 17.99,
+    "prop_update": 18.64,
+    "prop_create": 59.9,
+    "prop_clone": 50.34,
+    "prop_delete": 84.11,
+    "array_read": 10.97,
+    "array_write": 27.33,
+    "array_update": 12.81,
+    "array_prop_create": 31.52,
+    "array_slice": 17.7,
+    "array_length_read": 11.0,
+    "array_length_decr": 49.44,
+    "array_hole_length_decr": 65.9,
+    "array_push": 34.88,
+    "array_pop": 69.37,
+    "typed_array_read": 12.01,
+    "typed_array_write": 28.32,
+    "arguments_read": 150.9,
+    "arguments_strict_read": 126.55,
+    "global_read": 9.58,
+    "global_write": 11.04,
+    "global_write_strict": 11.2,
+    "local_destruct": 27.04,
+    "global_destruct": 37.82,
+    "global_destruct_strict": 39.16,
+    "global_func_call": 25.53,
+    "func_call": 23.77,
+    "func_closure_call": 28.42,
+    "int_arith": 17.8,
+    "float_arith": 24.06,
+    "map_set_string": 191.26,
+    "map_set_int": 3377.58,
+    "map_set_bigint": 3315.43,
+    "map_delete": 190.38,
+    "weak_map_set": 150.05,
+    "weak_map_delete": 285.15,
+    "array_for": 17.59,
+    "array_for_in": 58.45,
+    "array_for_of": 20.54,
+    "math_min": 32.27,
+    "regexp_ascii": 206.67,
+    "regexp_utf16": 218.7,
+    "regexp_replace": 1940.28,
+    "string_length": 13.74,
+    "string_build1": 48.91,
+    "string_build1x": 49.28,
+    "string_build2c": 55.92,
+    "string_build2": 50.91,
+    "string_build3": 48.63,
+    "string_build4": 48.78,
+    "string_build_large1": 62.64,
+    "string_build_large2": 59.81,
+    "int_to_string": 37.07,
+    "int_toString": 46.33,
+    "float_to_string": 210.46,
+    "float_toString": 220.55,
+    "float_toFixed": 97.04,
+    "float_toPrecision": 114.07,
+    "float_toExponential": 111.63,
+    "string_to_int": 81.93,
+    "string_to_float": 103.7,
+    "bigint32_arith": 40.57,
+    "bigint64_arith": 51.44,
+    "bigint256_arith": 95.87,
+    "sort_bench": 21.81
+   },
+   "ng": {
+    "empty_loop": 15.27,
+    "empty_down_loop": 16.9,
+    "empty_down_loop2": 20.49,
+    "empty_do_loop": 17.07,
+    "date_now": 68.32,
+    "date_parse": 499.94,
+    "prop_read": 11.76,
+    "prop_write": 16.76,
+    "prop_update": 17.13,
+    "prop_create": 56.56,
+    "prop_clone": 44.5,
+    "prop_delete": 76.92,
+    "array_read": 11.36,
+    "array_write": 26.87,
+    "array_update": 13.82,
+    "array_prop_create": 32.56,
+    "array_slice": 15.46,
+    "array_length_read": 11.65,
+    "array_length_decr": 45.16,
+    "array_hole_length_decr": 63.48,
+    "array_push": 33.53,
+    "array_pop": 63.77,
+    "typed_array_read": 12.19,
+    "typed_array_write": 30.62,
+    "arguments_read": 137.54,
+    "arguments_strict_read": 113.46,
+    "global_read": 9.96,
+    "global_write": 11.74,
+    "global_write_strict": 11.67,
+    "local_destruct": 26.76,
+    "global_destruct": 38.9,
+    "global_destruct_strict": 37.6,
+    "global_func_call": 22.44,
+    "func_call": 20.62,
+    "func_closure_call": 25.18,
+    "int_arith": 18.89,
+    "float_arith": 25.16,
+    "map_set_string": 173.85,
+    "map_set_int": 4110.1,
+    "map_set_bigint": 4246.68,
+    "map_delete": 171.02,
+    "weak_map_set": 144.79,
+    "weak_map_delete": 264.83,
+    "array_for": 17.76,
+    "array_for_in": 55.59,
+    "array_for_of": 20.27,
+    "math_min": 29.89,
+    "regexp_ascii": 202.57,
+    "regexp_utf16": 221.47,
+    "regexp_replace": 1636.18,
+    "string_length": 13.66,
+    "string_build1": 40.9,
+    "string_build1x": 40.94,
+    "string_build2c": 56.41,
+    "string_build2": 47.84,
+    "string_build3": 43.26,
+    "string_build4": 44.95,
+    "string_build_large1": 54.38,
+    "string_build_large2": 52.66,
+    "int_to_string": 34.86,
+    "int_toString": 40.15,
+    "float_to_string": 209.73,
+    "float_toString": 221.38,
+    "float_toFixed": 84.74,
+    "float_toPrecision": 102.28,
+    "float_toExponential": 105.55,
+    "string_to_int": 82.4,
+    "string_to_float": 100.23,
+    "bigint32_arith": 39.44,
+    "bigint64_arith": 54.26,
+    "bigint256_arith": 98.85,
+    "sort_bench": 18.93
+   },
+   "bellard": {
+    "empty_loop": 9.44,
+    "empty_down_loop": 14.79,
+    "empty_down_loop2": 20.04,
+    "empty_do_loop": 14.35,
+    "date_now": 51.26,
+    "date_parse": 486.08,
+    "prop_read": 7.0,
+    "prop_write": 7.67,
+    "prop_update": 9.88,
+    "prop_create": 39.55,
+    "prop_clone": 44.67,
+    "prop_delete": 67.42,
+    "array_read": 5.84,
+    "array_write": 6.72,
+    "array_update": 8.28,
+    "array_prop_create": 12.49,
+    "array_slice": 12.82,
+    "array_length_read": 7.18,
+    "array_length_decr": 34.13,
+    "array_hole_length_decr": 50.27,
+    "array_push": 25.45,
+    "array_pop": 56.6,
+    "typed_array_read": 8.11,
+    "typed_array_write": 7.61,
+    "arguments_read": 93.25,
+    "arguments_strict_read": 77.22,
+    "global_read": 5.38,
+    "global_write": 7.38,
+    "global_write_strict": 7.5,
+    "local_destruct": 21.25,
+    "global_destruct": 28.08,
+    "global_destruct_strict": 28.67,
+    "global_func_call": 15.42,
+    "func_call": 15.29,
+    "func_closure_call": 18.95,
+    "int_arith": 11.95,
+    "float_arith": 16.42,
+    "map_set_string": 163.61,
+    "map_set_int": 79.62,
+    "map_set_bigint": 107.64,
+    "map_delete": 165.63,
+    "weak_map_set": 57.93,
+    "weak_map_delete": 141.47,
+    "array_for": 11.9,
+    "array_for_in": 39.39,
+    "array_for_of": 19.0,
+    "math_min": 20.4,
+    "regexp_ascii": 139.49,
+    "regexp_utf16": 146.84,
+    "regexp_replace": 604.87,
+    "string_length": 8.59,
+    "string_build1": 19.07,
+    "string_build1x": 18.79,
+    "string_build2c": 24.18,
+    "string_build2": 32.82,
+    "string_build3": 31.2,
+    "string_build4": 35.89,
+    "string_build_large1": 41.45,
+    "string_build_large2": 40.7,
+    "int_to_string": 26.44,
+    "int_toString": 34.82,
+    "float_to_string": 203.72,
+    "float_toString": 211.08,
+    "float_toFixed": 79.09,
+    "float_toPrecision": 93.76,
+    "float_toExponential": 89.83,
+    "string_to_int": 69.68,
+    "string_to_float": 93.81,
+    "bigint32_arith": 21.21,
+    "bigint64_arith": 27.97,
+    "bigint256_arith": 70.51,
+    "sort_bench": 13.98
+   },
+   "goja": {
+    "empty_loop": 44.26,
+    "empty_down_loop": 43.74,
+    "empty_down_loop2": 51.64,
+    "empty_do_loop": 50.6,
+    "date_now": 170.83,
+    "date_parse": 791.19,
+    "prop_read": 50.93,
+    "prop_write": 40.32,
+    "prop_update": 72.95,
+    "prop_create": 134.86,
+    "prop_clone": 256.78,
+    "prop_delete": 354.51,
+    "array_read": 44.28,
+    "array_write": 27.67,
+    "array_update": 63.51,
+    "array_prop_create": 145.93,
+    "array_slice": 81.9,
+    "array_length_read": 52.76,
+    "array_length_decr": 167.41,
+    "array_hole_length_decr": 151.11,
+    "array_push": 221.99,
+    "array_pop": 203.35,
+    "typed_array_read": 46.93,
+    "typed_array_write": 43.07,
+    "arguments_read": 1030.43,
+    "arguments_strict_read": 1062.39,
+    "global_read": 52.93,
+    "global_write": 76.15,
+    "global_write_strict": 93.52,
+    "local_destruct": 220.33,
+    "global_destruct": 382.48,
+    "global_destruct_strict": 414.87,
+    "global_func_call": 85.28,
+    "func_call": 72.53,
+    "func_closure_call": 71.03,
+    "int_arith": 94.41,
+    "float_arith": 157.31,
+    "map_set_string": 519.91,
+    "map_set_int": 310.1,
+    "map_set_bigint": 566.22,
+    "map_delete": 555.52,
+    "weak_map_set": 256.02,
+    "weak_map_delete": 807.35,
+    "array_for": 79.56,
+    "array_for_in": 303.75,
+    "array_for_of": 390.42,
+    "math_min": 135.8,
+    "regexp_ascii": 1095.69,
+    "regexp_utf16": 1734.55,
+    "regexp_replace": 1382.14,
+    "string_length": 105.53,
+    "string_build1": 157.12,
+    "string_build1x": 157.02,
+    "string_build2c": 327.96,
+    "string_build2": 159.88,
+    "string_build3": 168.51,
+    "string_build4": 157.12,
+    "string_build_large1": 9503.05,
+    "string_build_large2": 8560.6,
+    "int_to_string": 93.57,
+    "int_toString": 148.93,
+    "float_to_string": 192.9,
+    "float_toString": 204.28,
+    "float_toFixed": 509.34,
+    "float_toPrecision": 266.5,
+    "float_toExponential": 245.14,
+    "string_to_int": 140.79,
+    "string_to_float": 225.05,
+    "bigint32_arith": 214.84,
+    "bigint64_arith": 228.73,
+    "bigint256_arith": 245.26,
+    "sort_bench": 60.38
+   }
+  },
+  "total_median": {
+   "goc": 13845.23,
+   "ng": 14587.4,
+   "bellard": 4377.95,
+   "goja": 37334.66
+  },
+  "missing": {
+   "goc": [],
+   "ng": [],
+   "bellard": [],
+   "goja": []
+  },
+  "tests": [
+   "arguments_read",
+   "arguments_strict_read",
+   "array_for",
+   "array_for_in",
+   "array_for_of",
+   "array_hole_length_decr",
+   "array_length_decr",
+   "array_length_read",
+   "array_pop",
+   "array_prop_create",
+   "array_push",
+   "array_read",
+   "array_slice",
+   "array_update",
+   "array_write",
+   "bigint256_arith",
+   "bigint32_arith",
+   "bigint64_arith",
+   "date_now",
+   "date_parse",
+   "empty_do_loop",
+   "empty_down_loop",
+   "empty_down_loop2",
+   "empty_loop",
+   "float_arith",
+   "float_toExponential",
+   "float_toFixed",
+   "float_toPrecision",
+   "float_toString",
+   "float_to_string",
+   "func_call",
+   "func_closure_call",
+   "global_destruct",
+   "global_destruct_strict",
+   "global_func_call",
+   "global_read",
+   "global_write",
+   "global_write_strict",
+   "int_arith",
+   "int_toString",
+   "int_to_string",
+   "local_destruct",
+   "map_delete",
+   "map_set_bigint",
+   "map_set_int",
+   "map_set_string",
+   "math_min",
+   "prop_clone",
+   "prop_create",
+   "prop_delete",
+   "prop_read",
+   "prop_update",
+   "prop_write",
+   "regexp_ascii",
+   "regexp_replace",
+   "regexp_utf16",
+   "sort_bench",
+   "string_build1",
+   "string_build1x",
+   "string_build2",
+   "string_build2c",
+   "string_build3",
+   "string_build4",
+   "string_build_large1",
+   "string_build_large2",
+   "string_length",
+   "string_to_float",
+   "string_to_int",
+   "typed_array_read",
+   "typed_array_write",
+   "weak_map_delete",
+   "weak_map_set"
+  ],
+  "common": [
+   "arguments_read",
+   "arguments_strict_read",
+   "array_for",
+   "array_for_in",
+   "array_for_of",
+   "array_hole_length_decr",
+   "array_length_decr",
+   "array_length_read",
+   "array_pop",
+   "array_prop_create",
+   "array_push",
+   "array_read",
+   "array_slice",
+   "array_update",
+   "array_write",
+   "bigint256_arith",
+   "bigint32_arith",
+   "bigint64_arith",
+   "date_now",
+   "date_parse",
+   "empty_do_loop",
+   "empty_down_loop",
+   "empty_down_loop2",
+   "empty_loop",
+   "float_arith",
+   "float_toExponential",
+   "float_toFixed",
+   "float_toPrecision",
+   "float_toString",
+   "float_to_string",
+   "func_call",
+   "func_closure_call",
+   "global_destruct",
+   "global_destruct_strict",
+   "global_func_call",
+   "global_read",
+   "global_write",
+   "global_write_strict",
+   "int_arith",
+   "int_toString",
+   "int_to_string",
+   "local_destruct",
+   "map_delete",
+   "map_set_bigint",
+   "map_set_int",
+   "map_set_string",
+   "math_min",
+   "prop_clone",
+   "prop_create",
+   "prop_delete",
+   "prop_read",
+   "prop_update",
+   "prop_write",
+   "regexp_ascii",
+   "regexp_replace",
+   "regexp_utf16",
+   "sort_bench",
+   "string_build1",
+   "string_build1x",
+   "string_build2",
+   "string_build2c",
+   "string_build3",
+   "string_build4",
+   "string_build_large1",
+   "string_build_large2",
+   "string_length",
+   "string_to_float",
+   "string_to_int",
+   "typed_array_read",
+   "typed_array_write",
+   "weak_map_delete",
+   "weak_map_set"
+  ],
+  "geomean": {
+   "goc": 53.18563472031319,
+   "ng": 50.267258938016646,
+   "bellard": 30.985383938341393,
+   "goja": 188.1711267904398
+  },
+  "groups": {
+   "loop": [
+    "empty_do_loop",
+    "empty_down_loop",
+    "empty_down_loop2",
+    "empty_loop"
+   ],
+   "prop": [
+    "prop_clone",
+    "prop_create",
+    "prop_delete",
+    "prop_read",
+    "prop_update",
+    "prop_write"
+   ],
+   "var": [
+    "arguments_read",
+    "arguments_strict_read",
+    "global_destruct",
+    "global_destruct_strict",
+    "global_read",
+    "global_write",
+    "global_write_strict",
+    "local_destruct"
+   ],
+   "call": [
+    "func_call",
+    "func_closure_call",
+    "global_func_call"
+   ],
+   "array": [
+    "array_for",
+    "array_for_in",
+    "array_for_of",
+    "array_hole_length_decr",
+    "array_length_decr",
+    "array_length_read",
+    "array_pop",
+    "array_prop_create",
+    "array_push",
+    "array_read",
+    "array_slice",
+    "array_update",
+    "array_write",
+    "sort_bench",
+    "typed_array_read",
+    "typed_array_write"
+   ],
+   "string": [
+    "string_build1",
+    "string_build1x",
+    "string_build2",
+    "string_build2c",
+    "string_build3",
+    "string_build4",
+    "string_build_large1",
+    "string_build_large2",
+    "string_length",
+    "string_to_float",
+    "string_to_int"
+   ],
+   "numconv": [
+    "float_toExponential",
+    "float_toFixed",
+    "float_toPrecision",
+    "float_toString",
+    "float_to_string",
+    "int_toString",
+    "int_to_string"
+   ],
+   "arith": [
+    "float_arith",
+    "int_arith",
+    "math_min"
+   ],
+   "bigint": [
+    "bigint256_arith",
+    "bigint32_arith",
+    "bigint64_arith"
+   ],
+   "map": [
+    "map_delete",
+    "map_set_bigint",
+    "map_set_int",
+    "map_set_string",
+    "weak_map_delete",
+    "weak_map_set"
+   ],
+   "regexp": [
+    "regexp_ascii",
+    "regexp_replace",
+    "regexp_utf16"
+   ],
+   "date": [
+    "date_now",
+    "date_parse"
+   ]
+  },
+  "group_geomean": {
+   "loop": {
+    "goc": 18.12735299273845,
+    "ng": 17.33306259122279,
+    "bellard": 14.155409796886767,
+    "goja": 47.424933947206405
+   },
+   "prop": {
+    "goc": 31.699386974596386,
+    "ng": 29.459445249534255,
+    "bellard": 19.957229711922675,
+    "goja": 110.6875367327325
+   },
+   "var": {
+    "goc": 31.234485830844452,
+    "ng": 30.910903957672442,
+    "bellard": 20.919812305393595,
+    "goja": 248.25422338196253
+   },
+   "call": {
+    "goc": 25.83656005117991,
+    "ng": 22.670220612676157,
+    "bellard": 16.470256313821736,
+    "goja": 76.02134714003829
+   },
+   "array": {
+    "goc": 25.351294743599997,
+    "ng": 24.871628533460225,
+    "bellard": 15.072437749066129,
+    "goja": 97.29860750293837
+   },
+   "string": {
+    "goc": 51.74355269104966,
+    "ng": 47.59455849676594,
+    "bellard": 31.487169119934368,
+    "goja": 348.86654695859363
+   },
+   "numconv": {
+    "goc": 99.78525723490588,
+    "ng": 92.84010280982889,
+    "bellard": 82.66173306646937,
+    "goja": 210.43294103892714
+   },
+   "arith": {
+    "goc": 23.997805563246985,
+    "ng": 24.218997920383494,
+    "bellard": 15.877802972936927,
+    "goja": 126.3449921833352
+   },
+   "bigint": {
+    "goc": 58.487478469967996,
+    "ng": 59.58420142639692,
+    "bellard": 34.71319728419535,
+    "goja": 229.2741009896787
+   },
+   "map": {
+    "goc": 509.2723052935397,
+    "ng": 520.5609007272008,
+    "bellard": 111.32313594755294,
+    "goja": 467.8160281884691
+   },
+   "regexp": {
+    "goc": 444.28693594600713,
+    "ng": 418.70393055667375,
+    "bellard": 231.39279488408255,
+    "goja": 1379.7768447818871
+   },
+   "date": {
+    "goc": 349.7402786354466,
+    "ng": 184.81315104721307,
+    "bellard": 157.84948780404704,
+    "goja": 367.63975261116707
+   }
+  }
+ },
+ "microcall": {
+  "rounds": [
+   {
+    "goc": {
+     "score": 22309,
+     "calls": 14000000,
+     "ms": 645,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 71,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 75,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 66,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 71,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 35.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 60,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 60,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 51,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 36,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 36,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 59,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 166,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 83,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 24281,
+     "calls": 14000000,
+     "ms": 580,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 74,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 77,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 59,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 66,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 58,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 58,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 67,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 67,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 66,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 66,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 43,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 37,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 37,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 52,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 132,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 66,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 21832,
+     "calls": 14000000,
+     "ms": 657,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 70,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 74,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 66,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 70,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 35,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 61,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 61,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 55,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 36,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 36,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 64,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 32,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 167,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 83.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 24128,
+     "calls": 14000000,
+     "ms": 584,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 77,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 76,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 60,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 67,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 58,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 58,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 67,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 67,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 43,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 37,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 37,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 51,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 132,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 66,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 22291,
+     "calls": 14000000,
+     "ms": 645,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 74,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 72,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 66,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 70,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 35,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 67,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 67,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 53,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 36,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 36,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 59,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 166,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 83,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 23762,
+     "calls": 14000000,
+     "ms": 594,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 76,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 78,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 60,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 67,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 37,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 37,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 53,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 136,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 68,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 21569,
+     "calls": 14000000,
+     "ms": 665,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 72,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 76,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 67,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 72,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 36,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 63,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 63,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 72,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 72,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 55,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 36,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 36,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 64,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 32,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 168,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 84,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 23303,
+     "calls": 14000000,
+     "ms": 604,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 75,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 77,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 63,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 31.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 70,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 35,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 71,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 71,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 70,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 70,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 37,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 37,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 52,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 133,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 66.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc": {
+     "score": 21599,
+     "calls": 14000000,
+     "ms": 663,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 72,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 77,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 67,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 33.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 71,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 35.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 69,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 69,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 56,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 28,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 37,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 37,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 62,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 31,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 168,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 84,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 23802,
+     "calls": 14000000,
+     "ms": 591,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 75,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 83,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 64,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 32,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 68,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 34,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 61,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 61,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 43,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 37,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 37,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 51,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 131,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 65.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   }
+  ],
+  "score_median": {
+   "goc": 21832,
+   "ng": 23802
+  },
+  "score_min": {
+   "goc": 21569,
+   "ng": 23303
+  },
+  "score_max": {
+   "goc": 22309,
+   "ng": 24281
+  },
+  "case_ms_median": {
+   "arith": {
+    "goc": 72,
+    "ng": 75
+   },
+   "propget": {
+    "goc": 75,
+    "ng": 77
+   },
+   "empty": {
+    "goc": 66,
+    "ng": 60
+   },
+   "id": {
+    "goc": 71,
+    "ng": 67
+   },
+   "six": {
+    "goc": 61,
+    "ng": 59
+   },
+   "eight": {
+    "goc": 69,
+    "ng": 69
+   },
+   "method": {
+    "goc": 69,
+    "ng": 68
+   },
+   "depth4": {
+    "goc": 55,
+    "ng": 43
+   },
+   "closure": {
+    "goc": 36,
+    "ng": 37
+   },
+   "mutual": {
+    "goc": 62,
+    "ng": 52
+   },
+   "sched": {
+    "goc": 167,
+    "ng": 132
+   }
+  }
+ },
+ "test262": {
+  "ran": 1526,
+  "pass": {
+   "goc": 1502,
+   "ng": 1502,
+   "bellard": 1501,
+   "goja": 1453
+  },
+  "dirs": {
+   "arguments-object": {
+    "eligible_pos": 200,
+    "eligible_neg": 1,
+    "ran": 81,
+    "goc": 81,
+    "ng": 81,
+    "bellard": 81,
+    "goja": 81
+   },
+   "asi": {
+    "eligible_pos": 67,
+    "eligible_neg": 35,
+    "ran": 102,
+    "goc": 102,
+    "ng": 102,
+    "bellard": 102,
+    "goja": 102
+   },
+   "block-scope": {
+    "eligible_pos": 43,
+    "eligible_neg": 102,
+    "ran": 83,
+    "goc": 83,
+    "ng": 83,
+    "bellard": 83,
+    "goja": 83
+   },
+   "comments": {
+    "eligible_pos": 21,
+    "eligible_neg": 8,
+    "ran": 29,
+    "goc": 29,
+    "ng": 29,
+    "bellard": 29,
+    "goja": 28
+   },
+   "computed-property-names": {
+    "eligible_pos": 48,
+    "eligible_neg": 0,
+    "ran": 48,
+    "goc": 48,
+    "ng": 48,
+    "bellard": 48,
+    "goja": 48
+   },
+   "destructuring": {
+    "eligible_pos": 19,
+    "eligible_neg": 0,
+    "ran": 19,
+    "goc": 18,
+    "ng": 18,
+    "bellard": 19,
+    "goja": 16
+   },
+   "directive-prologue": {
+    "eligible_pos": 51,
+    "eligible_neg": 6,
+    "ran": 57,
+    "goc": 57,
+    "ng": 57,
+    "bellard": 57,
+    "goja": 57
+   },
+   "eval-code": {
+    "eligible_pos": 292,
+    "eligible_neg": 3,
+    "ran": 83,
+    "goc": 81,
+    "ng": 81,
+    "bellard": 81,
+    "goja": 67
+   },
+   "expressions": {
+    "eligible_pos": 6903,
+    "eligible_neg": 2015,
+    "ran": 120,
+    "goc": 117,
+    "ng": 117,
+    "bellard": 117,
+    "goja": 112
+   },
+   "function-code": {
+    "eligible_pos": 217,
+    "eligible_neg": 0,
+    "ran": 80,
+    "goc": 80,
+    "ng": 80,
+    "bellard": 80,
+    "goja": 80
+   },
+   "future-reserved-words": {
+    "eligible_pos": 29,
+    "eligible_neg": 26,
+    "ran": 55,
+    "goc": 55,
+    "ng": 55,
+    "bellard": 55,
+    "goja": 55
+   },
+   "global-code": {
+    "eligible_pos": 27,
+    "eligible_neg": 15,
+    "ran": 42,
+    "goc": 30,
+    "ng": 30,
+    "bellard": 29,
+    "goja": 29
+   },
+   "identifier-resolution": {
+    "eligible_pos": 12,
+    "eligible_neg": 2,
+    "ran": 14,
+    "goc": 13,
+    "ng": 13,
+    "bellard": 13,
+    "goja": 14
+   },
+   "identifiers": {
+    "eligible_pos": 152,
+    "eligible_neg": 116,
+    "ran": 120,
+    "goc": 120,
+    "ng": 120,
+    "bellard": 120,
+    "goja": 107
+   },
+   "keywords": {
+    "eligible_pos": 0,
+    "eligible_neg": 25,
+    "ran": 25,
+    "goc": 25,
+    "ng": 25,
+    "bellard": 25,
+    "goja": 25
+   },
+   "line-terminators": {
+    "eligible_pos": 17,
+    "eligible_neg": 24,
+    "ran": 41,
+    "goc": 41,
+    "ng": 41,
+    "bellard": 41,
+    "goja": 41
+   },
+   "literals": {
+    "eligible_pos": 215,
+    "eligible_neg": 321,
+    "ran": 120,
+    "goc": 120,
+    "ng": 120,
+    "bellard": 120,
+    "goja": 111
+   },
+   "punctuators": {
+    "eligible_pos": 1,
+    "eligible_neg": 10,
+    "ran": 11,
+    "goc": 11,
+    "ng": 11,
+    "bellard": 11,
+    "goja": 11
+   },
+   "reserved-words": {
+    "eligible_pos": 14,
+    "eligible_neg": 12,
+    "ran": 26,
+    "goc": 26,
+    "ng": 26,
+    "bellard": 26,
+    "goja": 26
+   },
+   "rest-parameters": {
+    "eligible_pos": 10,
+    "eligible_neg": 1,
+    "ran": 11,
+    "goc": 11,
+    "ng": 11,
+    "bellard": 11,
+    "goja": 11
+   },
+   "source-text": {
+    "eligible_pos": 1,
+    "eligible_neg": 0,
+    "ran": 1,
+    "goc": 1,
+    "ng": 1,
+    "bellard": 1,
+    "goja": 1
+   },
+   "statementList": {
+    "eligible_pos": 80,
+    "eligible_neg": 0,
+    "ran": 80,
+    "goc": 80,
+    "ng": 80,
+    "bellard": 80,
+    "goja": 80
+   },
+   "statements": {
+    "eligible_pos": 5316,
+    "eligible_neg": 1513,
+    "ran": 120,
+    "goc": 119,
+    "ng": 119,
+    "bellard": 118,
+    "goja": 114
+   },
+   "types": {
+    "eligible_pos": 102,
+    "eligible_neg": 11,
+    "ran": 91,
+    "goc": 87,
+    "ng": 87,
+    "bellard": 87,
+    "goja": 87
+   },
+   "white-space": {
+    "eligible_pos": 61,
+    "eligible_neg": 6,
+    "ran": 67,
+    "goc": 67,
+    "ng": 67,
+    "bellard": 67,
+    "goja": 67
+   }
+  },
+  "fail": {
+   "goc": {
+    "test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js": "FAIL undefined: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKe",
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: x is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: unsupported keyword: export",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: meta expected",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifier-resolution/assign-to-global-undefined.js": "FAIL expected ReferenceError",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   },
+   "ng": {
+    "test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js": "FAIL undefined: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKe",
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: x is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: unsupported keyword: export",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: meta expected",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifier-resolution/assign-to-global-undefined.js": "FAIL expected ReferenceError",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   },
+   "bellard": {
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: 'x' is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: unsupported keyword: export",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: meta expected",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-lex-restricted-global.js": "FAIL expected SyntaxError",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: 'test262let' is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: 'test262let' is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifier-resolution/assign-to-global-undefined.js": "FAIL expected ReferenceError",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'",
+    "test/language/statements/using/static-init-await-binding-valid.js": "FAIL SyntaxError: SyntaxError: expecting ';'",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   },
+   "goja": {
+    "test/language/comments/hashbang/function-constructor.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:16:33",
+    "test/language/destructuring/binding/syntax/destructuring-array-parameters-function-arguments-length.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:34:19",
+    "test/language/destructuring/binding/syntax/destructuring-object-parameters-function-arguments-length.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:34:19",
+    "test/language/destructuring/binding/typedarray-backed-by-resizable-buffer.js": "FAIL TypeError: TypeError: Object has no member 'resize'",
+    "test/language/eval-code/direct/async-gen-func-decl-a-preceding-parameter-is-named-arguments-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1",
+    "test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1",
+    "test/language/eval-code/direct/async-gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1",
+    "test/language/eval-code/direct/async-gen-func-expr-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-meth-a-following-parameter-is-named-arguments-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 9 more errors)",
+    "test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 12 more errors)",
+    "test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 16 more errors)",
+    "test/language/eval-code/direct/async-gen-named-func-expr-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/var-env-global-lex-non-strict.js": "FAIL expected SyntaxError",
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: x is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/async-generator/dstr/dflt-ary-ptrn-elision-step-err.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:43:9",
+    "test/language/expressions/async-generator/named-dflt-params-ref-self.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:35:5",
+    "test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-unresolvable.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:62:3",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 6:1 Unexpected reserved word (and 2 more errors)",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-await-nested-imports.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 26:9 Unexpected reserved word (and 2 more errors)",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 28:3 Unexpected reserved word (and 1 more errors)",
+    "test/language/expressions/object/dstr/async-gen-meth-obj-init-undefined.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 32:10 Unexpected token * (and 4 more errors)",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-lex-restricted-global.js": "FAIL expected SyntaxError",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifiers/part-unicode-15.1.0-class-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:22 Unexpected token ILLEGAL (and 1 more errors)",
+    "test/language/identifiers/part-unicode-15.1.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:11 Unexpected token ILLEGAL (and 4 more errors)",
+    "test/language/identifiers/part-unicode-15.1.0.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:12 Unexpected token ILLEGAL (and 3 more errors)",
+    "test/language/identifiers/part-unicode-16.0.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 133 more errors)",
+    "test/language/identifiers/part-unicode-16.0.0.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:6 Unexpected token ILLEGAL (and 132 more errors)",
+    "test/language/identifiers/part-unicode-17.0.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 54 more errors)",
+    "test/language/identifiers/part-unicode-17.0.0.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:6 Unexpected token ILLEGAL (and 53 more errors)",
+    "test/language/identifiers/start-unicode-15.1.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:4 Unexpected token ILLEGAL (and 1865 more errors)",
+    "test/language/identifiers/start-unicode-15.1.0-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 1242 more errors)",
+    "test/language/identifiers/start-unicode-16.0.0-class-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:9 Unexpected token ILLEGAL (and 9 more errors)",
+    "test/language/identifiers/start-unicode-16.0.0-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 8602 more errors)",
+    "test/language/identifiers/start-unicode-17.0.0-class-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:9 Unexpected token ILLEGAL (and 9 more errors)",
+    "test/language/identifiers/start-unicode-17.0.0-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 9292 more errors)",
+    "test/language/literals/regexp/S7.8.5_A1.4_T2.js": "FAIL undefined: Test262Error: Code unit: d800 Expected SameValue(«\"\\\\\\\\\\\\ud800\"», «\"\\\\\\ud800\"») to be true",
+    "test/language/literals/regexp/S7.8.5_A2.1_T2.js": "FAIL undefined: Test262Error: Code unit: d800 Expected SameValue(«\"nnnn\\\\ud800\"», «\"nnnn\\ud800\"») to be true",
+    "test/language/literals/regexp/invalid-range-lookbehind.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/regexp/u-case-mapping.js": "FAIL undefined: Test262Error: Case mapping is not applied in the absence of the `u` flag Expected SameValue(«true», «false») to be true",
+    "test/language/literals/regexp/u-invalid-range-lookahead.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/S7.8.4_A4.3_T2.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/legacy-non-octal-escape-sequence-2-strict-explicit-pragma.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/legacy-non-octal-escape-sequence-9-strict-explicit-pragma.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/legacy-octal-escape-sequence.js": "FAIL undefined: Test262Error: \\400 Expected SameValue(«\"Ā\"», «\" 0\"») to be true",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 54:1 Unexpected token ILLEGAL (and 7 more errors)",
+    "test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-iter-val-err.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:74:3",
+    "test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-prop-id-init-throws.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:57:10",
+    "test/language/statements/for-await-of/let-block-with-newline.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 17:7 Unexpected token await (and 10 more errors)",
+    "test/language/statements/let/global-closure-set-before-initialization.js": "FAIL undefined: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all",
+    "test/language/statements/using/static-init-await-binding-valid.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 17:20 Unexpected token await (and 5 more errors)",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   }
+  }
+ },
+ "qjs_tests": {
+  "total": 77,
+  "pass": {
+   "goc": 69,
+   "ng": 69,
+   "bellard": 73,
+   "goja": 58
+  },
+  "files": {
+   "test_language.js": {
+    "n": 27,
+    "goc": 26,
+    "ng": 26,
+    "bellard": 27,
+    "goja": 23
+   },
+   "test_closure.js": {
+    "n": 7,
+    "goc": 7,
+    "ng": 7,
+    "bellard": 7,
+    "goja": 6
+   },
+   "test_loop.js": {
+    "n": 18,
+    "goc": 17,
+    "ng": 17,
+    "bellard": 18,
+    "goja": 17
+   },
+   "test_bigint.js": {
+    "n": 4,
+    "goc": 4,
+    "ng": 4,
+    "bellard": 4,
+    "goja": 3
+   },
+   "test_builtin.js": {
+    "n": 21,
+    "goc": 15,
+    "ng": 15,
+    "bellard": 17,
+    "goja": 9
+   }
+  },
+  "fn": {
+   "goc": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "pass",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "pass",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "pass",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "pass",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "FAIL qjscli:runtime: <t>: Error: assertion failed: got |number|, expected |undefined|",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "pass",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "pass",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "FAIL qjscli:runtime: <t>: Error: assertion failed: got |false|, expected |true|",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "pass",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "pass",
+    "test_builtin.js:test_math": "pass",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "pass",
+    "test_builtin.js:test_typed_array": "pass",
+    "test_builtin.js:test_json": "FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 ",
+    "test_builtin.js:test_date": "pass",
+    "test_builtin.js:test_regexp": "pass",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "FAIL qjscli:runtime: <t>: ReferenceError: std is not defined",
+    "test_builtin.js:test_weak_map_cycles": "FAIL qjscli:runtime: <t>: ReferenceError: std is not defined",
+    "test_builtin.js:test_weak_ref": "FAIL qjscli:runtime: <t>: ReferenceError: std is not defined",
+    "test_builtin.js:test_finalization_registry": "FAIL qjscli:runtime: <t>: ReferenceError: os is not defined",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2"
+   },
+   "ng": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "pass",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "pass",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "pass",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "pass",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "FAIL Error: assertion failed: got |number|, expected |undefined|",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "pass",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "pass",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "FAIL Error: assertion failed: got |false|, expected |true|",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "pass",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "pass",
+    "test_builtin.js:test_math": "pass",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "pass",
+    "test_builtin.js:test_typed_array": "pass",
+    "test_builtin.js:test_json": "FAIL Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 column 5).got |    at",
+    "test_builtin.js:test_date": "pass",
+    "test_builtin.js:test_regexp": "pass",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "FAIL ReferenceError: std is not defined",
+    "test_builtin.js:test_weak_map_cycles": "FAIL ReferenceError: std is not defined",
+    "test_builtin.js:test_weak_ref": "FAIL ReferenceError: std is not defined",
+    "test_builtin.js:test_finalization_registry": "FAIL ReferenceError: os is not defined",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "FAIL Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2:8|"
+   },
+   "bellard": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "pass",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "pass",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "pass",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "pass",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "pass",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "pass",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "pass",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "pass",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "pass",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "pass",
+    "test_builtin.js:test_math": "pass",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "pass",
+    "test_builtin.js:test_typed_array": "pass",
+    "test_builtin.js:test_json": "pass",
+    "test_builtin.js:test_date": "pass",
+    "test_builtin.js:test_regexp": "pass",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "FAIL ReferenceError: 'std' is not defined",
+    "test_builtin.js:test_weak_map_cycles": "FAIL ReferenceError: 'std' is not defined",
+    "test_builtin.js:test_weak_ref": "FAIL ReferenceError: 'std' is not defined",
+    "test_builtin.js:test_finalization_registry": "FAIL ReferenceError: 'os' is not defined",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "pass"
+   },
+   "goja": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "FAIL Error: assertion failed: got |Value is not a constructor|, expected |G is not a constructor| at Error (native)",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "FAIL SyntaxError: SyntaxError: <t>: Line 91:15 Unexpected token = (and 3 more errors)",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "FAIL Error: assertion failed: got |undefined|, expected |12| at Error (native)",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "FAIL Error: assertion failed: got |{\"b\":{\"c\":2}}|, expected |{\"b\":{}}| (optional chaining delete) at Error (native)",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "pass",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "FAIL Error: assertion failed: got |4|, expected |2| at Error (native)",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "FAIL SyntaxError: SyntaxError: <t>: Line 90:17 for-in loop variable declaration may not have an initializer",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "pass",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "FAIL Error: assertion failed: got |-1|, expected |18446744073709552000| at Error (native)",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "FAIL panic: unexpected unicode length while parsing '\\u{10ffff}'",
+    "test_builtin.js:test_math": "FAIL TypeError: Object has no member 'sumPrecise' at test_math (<t>:68:27(137))",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "FAIL TypeError: Cannot read property 'length' of undefined at <eval>:1:11(2)",
+    "test_builtin.js:test_typed_array": "FAIL ReferenceError: Float16Array is not defined at test_typed_array (<t>:139:13(155))",
+    "test_builtin.js:test_json": "FAIL Error: unexpected line or column number. error=invalid character 'x' in string escape code.got |SyntaxError: invalid cha",
+    "test_builtin.js:test_date": "FAIL Error: assertion failed: got number:|29256|, expected number:|29312| (order of operations / precision in MakeTime) at Er",
+    "test_builtin.js:test_regexp": "FAIL SyntaxError: SyntaxError: Invalid flags supplied to RegExp constructor 'gvi' at <t>:165:31",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "FAIL TypeError: Value is not an object: x1 at set (native)",
+    "test_builtin.js:test_weak_map_cycles": "FAIL ReferenceError: std is not defined at test_weak_map_cycles (<t>:24:5(15))",
+    "test_builtin.js:test_weak_ref": "FAIL ReferenceError: WeakRef is not defined at test_weak_ref (<t>:61:18(18))",
+    "test_builtin.js:test_finalization_registry": "FAIL ReferenceError: FinalizationRegistry is not defined at test_finalization_registry (<t>:57:26(6))",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "FAIL Error: unexpected line or column number. error=SyntaxError: <eval>: Line 2:6 Unexpected identifier.got |SyntaxError: Syn"
+   }
+  }
+ }
 }
