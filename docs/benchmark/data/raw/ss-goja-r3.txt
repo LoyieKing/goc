@@ -1,0 +1,26 @@
+3d-cube FAIL Error: bad vector sum for CubeSize = 20; expected 2889.0000000000045 but got 2889.0000000000086 at Init (/workspace/perf-study/ss/w/3d-cube.js:343:5(507))
+3d-morph 143.0000 1
+3d-raytrace 63.5000 2
+access-binary-trees 59.3333 3
+access-fannkuch 160.0000 1
+access-nbody 153.0000 1
+access-nsieve 107.0000 2
+bitops-3bit-bits-in-byte 79.0000 2
+bitops-bits-in-byte 98.5000 2
+bitops-bitwise-and 137.5000 2
+bitops-nsieve-bits 211.0000 1
+controlflow-recursive 23.8571 7
+crypto-aes 92.5000 2
+crypto-md5 71.0000 3
+crypto-sha1 68.6667 3
+date-format-tofte 37.0000 2
+date-format-xparb 10.7500 4
+math-cordic 149.0000 1
+math-partial-sums 119.5000 2
+math-spectral-norm 62.0000 3
+regexp-dna 185.0000 1
+string-base64 155.0000 1
+string-fasta 143.0000 2
+string-tagcloud 259.0000 1
+string-unpack-code 75.0000 2
+string-validate-input 414.0000 1

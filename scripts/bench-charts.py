@@ -4,7 +4,9 @@
 Every chart is written twice with the same name: .png (embedded in
 docs/benchmark.md) and .svg (embedded in docs/benchmark/report.html).
 All chart text is English; the doc prose stays Chinese. Every performance
-chart shows all four engines (log axes where Goja would dwarf the others).
+chart shows all five engines, Goja included (log axes where Goja would dwarf
+the others). goc builds are drawn dark, the native build of the same engine
+in the light shade of the same hue.
 Needs matplotlib.
 
 Usage: bench-charts.py [ALL_JSON] [OUT_DIR]
@@ -27,10 +29,11 @@ plt.rcParams.update({
     "axes.spines.top": False, "axes.spines.right": False,
     "axes.grid": True, "grid.alpha": 0.3, "axes.axisbelow": True,
 })
-ENG = ["goc", "ng", "bellard", "goja"]
-LABEL = {"goc": "goc", "ng": "native ng", "bellard": "Bellard", "goja": "Goja"}
-COLOR = {"goc": "#2563eb", "ng": "#f59e0b", "bellard": "#10b981", "goja": "#94a3b8"}
+ENG = ["goc-ng", "goc-bellard", "ng", "bellard", "goja"]
+LABEL = {"goc-ng": "goc-ng", "goc-bellard": "goc-bellard", "ng": "native ng", "bellard": "native Bellard", "goja": "Goja"}
+COLOR = {"goc-ng": "#1d4ed8", "ng": "#93c5fd", "goc-bellard": "#047857", "bellard": "#6ee7b7", "goja": "#94a3b8"}
 DATE = "2026-09-27"
+NE = len(ENG)
 LEG = dict(frameon=True, facecolor="white", edgecolor="none", framealpha=1)
 
 def save(fig, name):
@@ -40,7 +43,7 @@ def save(fig, name):
     print("wrote", name)
 
 def title(ax, t, sub):
-    ax.set_title(t, fontsize=13, fontweight="bold", loc="left", pad=24)
+    ax.set_title(t, fontsize=13, fontweight="bold", loc="left", pad=24 + 12 * sub.count("\n"))
     ax.annotate(sub, xy=(0, 1), xycoords="axes fraction", xytext=(0, 8), textcoords="offset points",
                 fontsize=9, color="#475569", va="bottom", ha="left")
 
@@ -93,25 +96,25 @@ def mark_fails(ax, fails, fs=6.5):
 
 # 1. overview: speed relative to native ng
 v8m = D["v8"]["median"]; ss = D["sunspider"]; mb = D["micro"]; mc = D["microcall"]
-cats = ["V8-v7 score", "SunSpider geomean\n(%d tests)" % len(ss["common4"]), "microbench geomean\n(%d tests)" % len(mb["common"])]
-rel = {e: [v8m[e]["Score"] / v8m["ng"]["Score"], ss["geomean4"]["ng"] / ss["geomean4"][e],
+cats = ["V8-v7 score", "SunSpider geomean\n(%d tests)" % len(ss["common_all"]), "microbench geomean\n(%d tests)" % len(mb["common"])]
+rel = {e: [v8m[e]["Score"] / v8m["ng"]["Score"], ss["geomean_all"]["ng"] / ss["geomean_all"][e],
            mb["geomean"]["ng"] / mb["geomean"][e]] for e in ENG}
 if all(e in mc.get("score_median", {}) for e in ENG):
     cats.append("microcall score\n(calls/ms)")
     for e in ENG:
         rel[e].append(mc["score_median"][e] / mc["score_median"]["ng"])
-fig, ax = plt.subplots(figsize=(10, 4.8))
-grouped(ax, cats, rel, ENG, lambda v: "%.2f" % v, fs=9)
+fig, ax = plt.subplots(figsize=(11, 5))
+grouped(ax, cats, rel, ENG, lambda v: "%.2f" % v, fs=8.5)
 ax.axhline(1, color="#334155", lw=1, ls="--")
 ax.set_ylabel("speed relative to native ng (native ng = 1, higher is better)")
-ax.set_ylim(0, max(max(v) for v in rel.values()) * 1.18)
+ax.set_ylim(0, max(max(v) for v in rel.values()) * 1.3)
 title(ax, "Speed relative to native ng", "V8 and microcall: ratio of scores. SunSpider and microbench: inverse ratio of times. Measured %s; engines interleaved." % DATE)
-ax.legend(ncol=4, loc="upper right", **LEG)
+ax.legend(ncol=NE, loc="upper right", fontsize=9, **LEG)
 save(fig, "overview-speed")
 
 # 2. overview: correctness
 t = D["test262"]; q = D["qjs_tests"]
-fig, ax = plt.subplots(figsize=(10, 4.8))
+fig, ax = plt.subplots(figsize=(11, 4.8))
 pct = {e: [100 * t["pass"][e] / t["ran"], 100 * q["pass"][e] / q["total"]] for e in ENG}
 cnt = {e: ["%d/%d" % (t["pass"][e], t["ran"]), "%d/%d" % (q["pass"][e], q["total"])] for e in ENG}
 n = len(ENG); w = 0.8 / n
@@ -120,31 +123,31 @@ for i, e in enumerate(ENG):
     bars = ax.bar(xs, pct[e], w, label=LABEL[e], color=COLOR[e])
     for b, v, c in zip(bars, pct[e], cnt[e]):
         ax.annotate("%.1f%%\n%s" % (v, c), (b.get_x() + w / 2, v), xytext=(0, 2), textcoords="offset points",
-                    ha="center", va="bottom", fontsize=8)
+                    ha="center", va="bottom", fontsize=7)
 ax.set_xticks([0, 1]); ax.set_xticklabels(["test262 language (sample)", "QuickJS official tests (per function)"])
 ax.set_ylim(0, 115); ax.set_yticks(range(0, 101, 20))
 ax.set_ylabel("pass rate, % (higher is better)")
 title(ax, "Correctness", "test262: stratified sample of %d tests from test/language. QuickJS: %d functions from Bellard's tests/test_*.js." % (t["ran"], q["total"]))
-ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.1), **LEG)
+ax.legend(ncol=NE, loc="upper center", bbox_to_anchor=(0.5, -0.1), **LEG)
 save(fig, "overview-correct")
 
 # 3. V8 per sub-benchmark
 subs = ["Richards", "DeltaBlue", "Crypto", "RayTrace", "EarleyBoyer", "RegExp", "Splay", "NavierStokes", "Score"]
-fig, ax = plt.subplots(figsize=(12, 5.2))
+fig, ax = plt.subplots(figsize=(13, 5.4))
 grouped(ax, subs[:-1] + ["Total"], {e: [v8m[e][s] for s in subs] for e in ENG}, ENG,
-        lambda v: "%g" % v, rot=90, fs=7.5)
+        lambda v: "%g" % v, rot=90, fs=7)
 ax.set_ylabel("score (higher is better)")
-ax.set_ylim(0, max(v8m[e][s] for e in ENG for s in subs) * 1.18)
-title(ax, "V8-v7 sub-benchmark scores", "bench-v8.js, %d rounds per engine, median taken per item." % len(D["v8"]["rounds"]["goc"]))
-ax.legend(ncol=4, loc="upper left", **LEG)
+ax.set_ylim(0, max(v8m[e][s] for e in ENG for s in subs) * 1.3)
+title(ax, "V8-v7 sub-benchmark scores", "bench-v8.js, %d rounds per engine, median taken per item." % len(D["v8"]["rounds"]["goc-ng"]))
+ax.legend(ncol=NE, loc="upper left", **LEG)
 save(fig, "v8")
 
 # 4. SunSpider: time relative to native ng, per test, all engines (log axis)
 tests = ss["tests"]
 get = lambda e, t: ss["ms"][e].get(t)
 ratio = lambda e, t: (get(e, t) / get("ng", t)) if get(e, t) and get("ng", t) else None
-fig, ax = plt.subplots(figsize=(10, 15))
-cmp = ["goc", "bellard", "goja"]
+fig, ax = plt.subplots(figsize=(10, 19))
+cmp = ["goc-ng", "goc-bellard", "bellard", "goja"]
 fl = hbars(ax, tests, cmp, ratio, lambda v: "%.2f" % v, log=True, fs=6)
 ax.axvline(1, color="#334155", ls="--", lw=1, zorder=0)
 lo = min(ratio(e, t) for e in cmp for t in tests if ratio(e, t)); hi = max(ratio(e, t) or 0 for e in cmp for t in tests)
@@ -152,39 +155,39 @@ ax.set_xlim(lo / 1.6, hi * 2.2)
 plain_log(ax.xaxis)
 ax.set_xlabel("time / native ng time (log axis; 1 = as fast as native ng, lower is better)")
 mark_fails(ax, fl, 6)
-title(ax, "SunSpider 1.0.2: time relative to native ng", "ms per iteration divided by native ng's, median of %d rounds. Dashed line = native ng." % ss["rounds"]["goc"])
-ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.035), **LEG)
+title(ax, "SunSpider 1.0.2: time relative to native ng", "ms per iteration divided by native ng's, median of %d rounds. Dashed line = native ng." % ss["rounds"]["goc-ng"])
+ax.legend(ncol=len(cmp), loc="upper center", bbox_to_anchor=(0.5, -0.03), **LEG)
 save(fig, "sunspider")
 
-fig, ax = plt.subplots(figsize=(10, 15))
+fig, ax = plt.subplots(figsize=(10, 22))
 fl = hbars(ax, tests, ENG, get, lambda v: "%.1f" % v, log=True, fs=6)
 ax.set_xlabel("ms per iteration (log axis, lower is better)")
 lo = min(get(e, t) for e in ENG for t in tests if get(e, t)); hi = max(get(e, t) or 0 for e in ENG for t in tests)
 ax.set_xlim(lo / 1.5, hi * 2.5)
 plain_log(ax.xaxis)
 mark_fails(ax, fl, 6)
-title(ax, "SunSpider 1.0.2: all four engines, absolute time", "Median of %d rounds; each round is the fastest of 5 batches. Log axis because Goja is several times slower." % ss["rounds"]["goc"])
-ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.035), **LEG)
+title(ax, "SunSpider 1.0.2: all five engines, absolute time", "Median of %d rounds; each round is the fastest of 5 batches. Log axis because Goja is several times slower." % ss["rounds"]["goc-ng"])
+ax.legend(ncol=NE, loc="upper center", bbox_to_anchor=(0.5, -0.025), **LEG)
 save(fig, "sunspider-log")
 
 # 5. microbench groups
 G = mb["group_geomean"]; gn = list(G)
-fig, ax = plt.subplots(figsize=(12, 5.2))
+fig, ax = plt.subplots(figsize=(14, 5.6))
 grouped(ax, gn, {e: [G[g][e] for g in gn] for e in ENG}, ENG, lambda v: "%.0f" % v if v >= 100 else "%.1f" % v,
-        rot=90, fs=7, log=True)
+        rot=90, fs=6.5, log=True)
 plain_log(ax.yaxis)
 ax.set_ylabel("ns/op, geometric mean within group\n(log axis, lower is better)")
-ax.set_ylim(min(G[g][e] for g in gn for e in ENG) * 0.6, max(G[g][e] for g in gn for e in ENG) * 6)
-title(ax, "microbench by group", "Bellard tests/microbench.js, median of %d rounds per test, geometric mean per group (groups: scripts/bench-summarize.py)." % mb["rounds"]["goc"])
-ax.legend(ncol=4, loc="upper left", **LEG)
+ax.set_ylim(min(G[g][e] for g in gn for e in ENG) * 0.6, max(G[g][e] for g in gn for e in ENG) * 10)
+title(ax, "microbench by group", "Bellard tests/microbench.js, median of %d rounds per test, geometric mean per group (groups: scripts/bench-summarize.py)." % mb["rounds"]["goc-ng"])
+ax.legend(ncol=NE, loc="upper left", **LEG)
 save(fig, "micro-groups")
 
-# 6. microbench: time relative to native ng per test, goc / Bellard / Goja
+# 6. microbench: time relative to native ng per test, goc-ng / goc-bellard / Bellard / Goja
 ns = mb["ns"]
 keys = [k for k in mb["tests"] if all(k in ns[e] for e in ENG)]
-keys.sort(key=lambda k: ns["goc"][k] / ns["ng"][k], reverse=True)
+keys.sort(key=lambda k: ns["goc-ng"][k] / ns["ng"][k], reverse=True)
 mr = lambda e, k: ns[e][k] / ns["ng"][k]
-fig, ax = plt.subplots(figsize=(10, 26))
+fig, ax = plt.subplots(figsize=(10, 34))
 hbars(ax, keys, cmp, mr, lambda v: "%.2f" % v, log=True, fs=5.5)
 ax.axvline(1, color="#334155", ls="--", lw=1, zorder=0)
 lo = min(mr(e, k) for e in cmp for k in keys); hi = max(mr(e, k) for e in cmp for k in keys)
@@ -192,42 +195,42 @@ ax.set_xlim(lo / 1.5, hi * 2.2)
 plain_log(ax.xaxis)
 ax.tick_params(axis="y", labelsize=7.5)
 ax.set_xlabel("time / native ng time (log axis; 1 = as fast as native ng, lower is better)")
-title(ax, "microbench: time relative to native ng", "%d tests every engine finished, sorted by goc / native ng (slowest first). Dashed line = native ng." % len(keys))
-ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.02), **LEG)
+title(ax, "microbench: time relative to native ng", "%d tests every engine finished, sorted by goc-ng / native ng (slowest first). Dashed line = native ng." % len(keys))
+ax.legend(ncol=len(cmp), loc="upper center", bbox_to_anchor=(0.5, -0.015), **LEG)
 save(fig, "micro-ratio")
 
-# 7. microcall per case (only when all four engines ran)
+# 7. microcall per case (only when all five engines ran)
 if all(e in mc.get("score_median", {}) for e in ENG):
     cm = mc["case_ms_median"]; cases = list(cm)
-    fig, ax = plt.subplots(figsize=(12, 5.2))
-    grouped(ax, cases, {e: [cm[c][e] for c in cases] for e in ENG}, ENG, lambda v: "%g" % v, rot=90, fs=7, log=True)
+    fig, ax = plt.subplots(figsize=(13, 5.6))
+    grouped(ax, cases, {e: [cm[c][e] for c in cases] for e in ENG}, ENG, lambda v: "%g" % v, rot=90, fs=6.5, log=True)
     plain_log(ax.yaxis)
-    ax.set_ylim(min(cm[c][e] for c in cases for e in ENG) * 0.6, max(cm[c][e] for c in cases for e in ENG) * 4)
+    ax.set_ylim(min(cm[c][e] for c in cases for e in ENG) * 0.6, max(cm[c][e] for c in cases for e in ENG) * 8)
     ax.set_ylabel("ms per case (log axis, lower is better)")
     sm = mc["score_median"]
-    title(ax, "microcall: time per case", "scripts/microcall-bench.sh, median of %d rounds. arith and propget are controls. Score (calls/ms, higher is better): %s." % (
+    title(ax, "microcall: time per case", "scripts/microcall-bench.sh, median of %d rounds; arith and propget are controls.\nScore (calls/ms, higher is better): %s." % (
         len(mc["rounds"]), ", ".join("%s %g" % (LABEL[e], sm[e]) for e in ENG)))
-    ax.legend(ncol=4, loc="upper left", **LEG)
+    ax.legend(ncol=NE, loc="upper left", **LEG)
     save(fig, "microcall")
 
 # 8. test262 per directory (only directories with a failure)
 dirs = [d for d, v in t["dirs"].items() if any(v[e] < v["ran"] for e in ENG)]
-fig, ax = plt.subplots(figsize=(10, 7))
+fig, ax = plt.subplots(figsize=(10, 8.5))
 mark_fails(ax, hbars(ax, dirs, ENG, lambda e, d: 100 * t["dirs"][d][e] / t["dirs"][d]["ran"], lambda v: "%.1f%%" % v, fs=6.5))
 ax.set_xlim(0, 112); ax.set_xlabel("pass rate, % (higher is better)")
 title(ax, "test262 language sample: directories with a failure", "Directories where every engine passes everything are only in the doc's table.")
-ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.07), **LEG)
+ax.legend(ncol=NE, loc="upper center", bbox_to_anchor=(0.5, -0.06), **LEG)
 save(fig, "test262")
 
 # 9. QuickJS official tests per file
 files = list(q["files"])
-fig, ax = plt.subplots(figsize=(10, 4.8))
+fig, ax = plt.subplots(figsize=(11, 4.8))
 grouped(ax, ["%s (%d)" % (f.replace(".js", ""), q["files"][f]["n"]) for f in files],
-        {e: [q["files"][f][e] for f in files] for e in ENG}, ENG, lambda v: "%d" % v, fs=8)
+        {e: [q["files"][f][e] for f in files] for e in ENG}, ENG, lambda v: "%d" % v, fs=7.5)
 ax.set_ylabel("functions passed (higher is better)")
-ax.set_ylim(0, max(q["files"][f]["n"] for f in files) * 1.3)
+ax.set_ylim(0, max(q["files"][f]["n"] for f in files) * 1.35)
 title(ax, "QuickJS official tests: functions passed per file", "Bellard 2026-06-04 tests/test_*.js, one process per function. Total functions in parentheses.")
-ax.legend(ncol=4, loc="upper right", **LEG)
+ax.legend(ncol=NE, loc="upper right", fontsize=8.5, **LEG)
 save(fig, "qjs-tests")
 
 # 10. memory: idle and peak RSS per workload
@@ -238,24 +241,24 @@ if M.get("rss_kb") and M["rss_kb"].get("ng"):
         ("v8-all", "V8-v7\nwhole"), ("ss-max", "SunSpider\n(max file)"), ("micro", "micro-\nbench"),
         ("alloc", "alloc.js"), ("mapset", "mapset.js")]
     W = [(k, l) for k, l in W if any(k in R[e] for e in ENG)]
-    fig, ax = plt.subplots(figsize=(14, 5.6))
+    fig, ax = plt.subplots(figsize=(15, 5.8))
     grouped(ax, [l for _, l in W], {e: [R[e].get(k, 0) / 1024 for k, _ in W] for e in ENG}, ENG,
-            lambda v: "%.0f" % v if v >= 10 else "%.1f" % v, rot=90, fs=6.5, log=True)
+            lambda v: "%.0f" % v if v >= 10 else "%.1f" % v, rot=90, fs=6, log=True)
     plain_log(ax.yaxis)
-    ax.set_ylim(1, max(R[e].get(k, 0) for e in ENG for k, _ in W) / 1024 * 5)
+    ax.set_ylim(1, max(R[e].get(k, 0) for e in ENG for k, _ in W) / 1024 * 8)
     ax.set_ylabel("peak RSS, MiB (log axis, lower is better)")
     ax.tick_params(axis="x", labelsize=8)
-    title(ax, "Peak memory (max RSS) per workload", "One fresh process per workload, /usr/bin/time -v, median of %d rounds. V8 suites run one at a time. SunSpider = largest file." % M["rss_rounds"]["goc"])
-    ax.legend(ncol=4, loc="upper left", **LEG)
+    title(ax, "Peak memory (max RSS) per workload", "One fresh process per workload, /usr/bin/time -v, median of %d rounds. V8 suites run one at a time. SunSpider = largest file." % M["rss_rounds"]["goc-ng"])
+    ax.legend(ncol=NE, loc="upper left", **LEG)
     save(fig, "mem-peak")
 
 # 11. memory: multi-instance scaling
 MI = M.get("instances")
 if MI:
-    tags = [x for x in ["goc", "ng", "ng-arena1", "bellard", "goja"] if x in MI]
-    TL = {"goc": "goc (goroutines)", "ng": "native ng (pthreads)", "ng-arena1": "native ng, MALLOC_ARENA_MAX=1",
-          "bellard": "Bellard (pthreads)", "goja": "Goja (goroutines)"}
-    TC = dict(COLOR, **{"ng-arena1": "#b45309"})
+    tags = [x for x in ["goc-ng", "goc-bellard", "ng", "ng-arena1", "bellard", "goja"] if x in MI]
+    TL = {"goc-ng": "goc-ng (goroutines)", "goc-bellard": "goc-bellard (goroutines)", "ng": "native ng (pthreads)",
+          "ng-arena1": "native ng, MALLOC_ARENA_MAX=1", "bellard": "native Bellard (pthreads)", "goja": "Goja (goroutines)"}
+    TC = dict(COLOR, **{"ng-arena1": "#3b82f6"})
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(14, 5.4), gridspec_kw={"width_ratios": [1.1, 1]})
     for tg in tags:
         d = MI[tg]; xs = [n for n in d["n"] if n >= 1]

@@ -13,7 +13,8 @@ C11 subset. The product frontend is patched **Clang 19.1.7**. The product
 lower path is Clang IR → llc → `elfpack` → a Go object file.
 
 QuickJS-ng's four translation units build this way and run on a goroutine
-stack. See [docs/benchmark.md](docs/benchmark.md) for the comparison.
+stack, and so does Fabrice Bellard's original QuickJS (`QJS_FLAVOR=bellard`).
+See [docs/benchmark.md](docs/benchmark.md) for the comparison.
 
 ## Quick start
 
@@ -39,6 +40,14 @@ QuickJS-ng (clone into `third_party/quickjs-ng`, then):
 ./scripts/qjs-build.sh          # engine smoke on a goroutine stack
 ./scripts/qjs-cli-build.sh      # CLI
 ./scripts/microcall-bench.sh    # call microbenchmark
+```
+
+Bellard QuickJS 2026-06-04 (unpack into `third_party/quickjs-bellard`, see
+[third_party/README.md](third_party/README.md), then):
+
+```bash
+QJS_FLAVOR=bellard ./scripts/qjs-build.sh       # -> build/qjs-bellard/
+QJS_FLAVOR=bellard ./scripts/qjs-cli-build.sh   # -> build/qjs-bellard/qjscli
 ```
 
 Without a patched clang, `./cmd/goc test --p27` uses the out-of-tree plugin
@@ -110,7 +119,8 @@ scripts/          Clang patches, QuickJS build, benches
 `goc` 把带指针色的 C 编到 goroutine 用户栈上，和 Go 共用 morestack 与
 stackmap，而不是走 cgo。`uptr` 用最高位区分绝对地址和相对 `g.stack.hi` 的
 偏移。第一次编译和链进 Go 见 [docs/guide.md](docs/guide.md)。语法合同见
-[docs/syntax-guide.md](docs/syntax-guide.md)。横向跑分见
+[docs/syntax-guide.md](docs/syntax-guide.md)。QuickJS-ng 和 Bellard 原版 QuickJS
+（`QJS_FLAVOR=bellard`）都能这样编译，横向跑分见
 [docs/benchmark.md](docs/benchmark.md)。下一版是 linux/arm64 后端，见
 [docs/todo.md](docs/todo.md)。
 

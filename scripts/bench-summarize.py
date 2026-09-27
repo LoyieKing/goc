@@ -4,7 +4,8 @@
 Rule: per engine, per item, take the median across rounds (V8 sub-scores and
 total, SunSpider ms/iter, microbench ns/op, microcall calls/ms). An item
 that failed in any round has no number. Geometric means only use items every
-engine finished, so the four columns cover the same items.
+engine finished, so all columns cover the same items (the SunSpider
+"nogoja" set also covers the four QuickJS builds without Goja).
 
 Usage: bench-summarize.py [RAW_DIR] [OUT_JSON] [--test262 DIR]
 """
@@ -14,7 +15,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else os.path.join(ROOT, "docs/benchmark/data/raw")
 OUT = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else os.path.join(ROOT, "docs/benchmark/data/all.json")
 T262 = sys.argv[sys.argv.index("--test262") + 1] if "--test262" in sys.argv else "/workspace/perf-study/t262/test262-head"
-ENG = ["goc", "ng", "bellard", "goja"]
+ENG = ["goc-ng", "goc-bellard", "ng", "bellard", "goja"]
+QJS = ENG[:4]  # the four QuickJS builds
+# goc build -> the native build of the same engine (correctness parity, ratios)
+PAIR = {"goc-ng": "ng", "goc-bellard": "bellard"}
 V8 = ["Richards", "DeltaBlue", "Crypto", "RayTrace", "EarleyBoyer", "RegExp", "Splay", "NavierStokes"]
 
 # microbench groups: every test belongs to exactly one group (first match wins).
@@ -80,15 +84,15 @@ for e in ENG:
     ss["rounds"][e] = len(fs)
     ss["ms"][e] = {t: (med(v) if t not in fails and len(v) == len(fs) else None) for t, v in per.items()}
     ss["fail"][e] = fails
-tests = sorted(ss["ms"]["goc"])
+tests = sorted(ss["ms"]["goc-ng"])
 common = [t for t in tests if all(ss["ms"][e].get(t) for e in ENG)]
-common3 = [t for t in tests if all(ss["ms"][e].get(t) for e in ENG[:3])]
+common_q = [t for t in tests if all(ss["ms"][e].get(t) for e in QJS)]
 ss["tests"] = tests
-ss["common4"], ss["common3"] = common, common3
-ss["geomean4"] = {e: gmean([ss["ms"][e][t] for t in common]) for e in ENG}
-ss["geomean3"] = {e: gmean([ss["ms"][e][t] for t in common3]) for e in ENG[:3]}
+ss["common_all"], ss["common_nogoja"] = common, common_q
+ss["geomean_all"] = {e: gmean([ss["ms"][e][t] for t in common]) for e in ENG}
+ss["geomean_nogoja"] = {e: gmean([ss["ms"][e][t] for t in common_q]) for e in QJS}
 # per-round geomean (same item set) to show the spread
-ss["geomean4_by_round"] = {}
+ss["geomean_all_by_round"] = {}
 for e in ENG:
     g = []
     for f in rounds("ss", e):
@@ -99,7 +103,7 @@ for e in ENG:
                 d[p[0]] = float(p[1])
         if all(t in d for t in common):
             g.append(gmean([d[t] for t in common]))
-    ss["geomean4_by_round"][e] = g
+    ss["geomean_all_by_round"][e] = g
 out["sunspider"] = ss
 
 # ---- microbench
@@ -133,13 +137,13 @@ mb["group_geomean"] = {n: {e: gmean([mb["ns"][e][k] for k in ks if k in mcommon]
                        for n, ks in mb["groups"].items() if any(k in mcommon for k in ks)}
 out["micro"] = mb
 
-# ---- microcall (goc and native ng always; Bellard and Goja when the round ran them)
-MC_NAME = {"goc": "goc", "native": "ng", "bellard": "bellard", "goja": "goja"}
+# ---- microcall (goc-ng and native ng always; the others when the round ran them)
+MC_NAME = {"goc": "goc-ng", "goc-bellard": "goc-bellard", "native": "ng", "bellard": "bellard", "goja": "goja"}
 mc = {"rounds": []}
 for f in sorted(glob.glob(os.path.join(RAW, "microcall-r*.txt")), key=lambda f: int(re.search(r"r(\d+)", os.path.basename(f)).group(1))):
     cur, rd = None, {}
     for l in open(f):
-        m = re.match(r"^=== (\w+) ===", l)
+        m = re.match(r"^=== ([\w-]+) ===", l)
         if m:
             cur = MC_NAME[m.group(1)]
         elif l.startswith("MICROCALL ") and cur:
@@ -194,14 +198,23 @@ out["test262"] = t262
 
 # ---- QuickJS official tests
 qr = json.load(open(os.path.join(RAW, "qjs-tests-results.json")))
-q = {"total": len(qr["goc"]), "pass": {e: sum(v == "pass" for v in qr[e].values()) for e in ENG}, "files": {}, "fn": qr}
-for k in qr["goc"]:
+q = {"total": len(qr["goc-ng"]), "pass": {e: sum(v == "pass" for v in qr[e].values()) for e in ENG}, "files": {}, "fn": qr}
+for k in qr["goc-ng"]:
     f = k.split(":")[0]
     q["files"].setdefault(f, {"n": 0, **{e: 0 for e in ENG}})
     q["files"][f]["n"] += 1
     for e in ENG:
         q["files"][f][e] += qr[e][k] == "pass"
 out["qjs_tests"] = q
+
+# ---- correctness parity: each goc build against the native build of its engine
+par = {}
+for g, n in PAIR.items():
+    rt, rq = tr["results"], qr
+    par[g] = {"native": n,
+              "test262_diff": sorted(k for k in rt[n] if (rt[n][k] == "PASS") != (rt[g][k] == "PASS")),
+              "qjs_diff": sorted(k for k in rq[n] if (rq[n][k] == "pass") != (rq[g][k] == "pass"))}
+out["parity"] = par
 
 # ---- memory (scripts/bench-mem.sh)
 def lsq(xs, ys):
@@ -268,10 +281,52 @@ if inst:
     mem["instances"] = mi
 out["memory"] = mem
 
+
+# ---- reference run: Bellard built with clang-19 -O2 (separate short session, raw/bellard-clang/)
+REF = os.path.join(RAW, "bellard-clang")
+if os.path.isdir(REF):
+    ref = {"engines": [e for e in ("bellard-clang", "bellard", "goc-bellard")
+                       if glob.glob(os.path.join(REF, "v8-%s-r*.txt" % e))],
+           "env": open(os.path.join(REF, "env.txt")).read().splitlines()}
+    def rrounds(prefix, e):
+        fs = glob.glob(os.path.join(REF, "%s-%s-r*.txt" % (prefix, e)))
+        return sorted(fs, key=lambda f: int(re.search(r"-r(\d+)\.txt$", f).group(1)))
+    ref["v8_median"], ref["v8_rounds"], ref["ss_geomean"], ref["micro_geomean"] = {}, {}, {}, {}
+    for e in ref["engines"]:
+        rs = []
+        for f in rrounds("v8", e):
+            t = open(f).read()
+            d = {m.group(1): int(m.group(2)) for m in re.finditer(r"^RESULT (\w+) (\d+)", t, re.M)}
+            d["Score"] = int(re.search(r"^SCORE (\d+)", t, re.M).group(1))
+            rs.append(d)
+        ref["v8_rounds"][e] = [r["Score"] for r in rs]
+        ref["v8_median"][e] = {k: med([r[k] for r in rs if k in r]) for k in V8 + ["Score"]}
+        per = {}
+        fs = rrounds("ss", e)
+        for f in fs:
+            for line in open(f):
+                p_ = line.split()
+                if len(p_) == 3 and p_[1] != "FAIL":
+                    per.setdefault(p_[0], []).append(float(p_[1]))
+        ref["ss_geomean"][e] = gmean([med(per[t]) for t in common])
+        per = {}
+        fs = rrounds("micro", e)
+        for f in fs:
+            for line in open(f):
+                m = re.match(r"^\s*([a-z_0-9A-Z]+)\s+(\d+)\s+([\d.]+)\s*$", line)
+                if m:
+                    per.setdefault(m.group(1), []).append(float(m.group(3)))
+        ref["micro_geomean"][e] = gmean([med(per[k]) for k in mcommon])
+    out["bellard_clang_ref"] = ref
+
 json.dump(out, open(OUT, "w"), indent=1, ensure_ascii=False)
 print("V8 median score", {e: v8["median"][e]["Score"] for e in ENG})
-print("SunSpider geomean4 (%d items)" % len(common), {e: round(ss["geomean4"][e], 2) for e in ENG})
+print("SunSpider geomean (%d items)" % len(common), {e: round(ss["geomean_all"][e], 2) for e in ENG})
 print("microbench geomean (%d items)" % len(mcommon), {e: round(mb["geomean"][e], 1) for e in ENG})
 print("microcall", mc.get("score_median"))
 print("memory idle", {e: mem["rss_kb"][e].get("empty") for e in ENG})
 print("test262", t262["pass"], "official", q["pass"])
+print("parity", {g: (len(v["test262_diff"]), len(v["qjs_diff"])) for g, v in par.items()})
+if "bellard_clang_ref" in out:
+    r = out["bellard_clang_ref"]
+    print("clang ref", {e: (r["v8_median"][e]["Score"], round(r["ss_geomean"][e], 2), round(r["micro_geomean"][e], 1)) for e in r["engines"]})

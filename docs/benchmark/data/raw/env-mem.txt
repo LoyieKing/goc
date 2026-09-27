@@ -1,0 +1,16 @@
+date: 2026-09-27 15:51:53 KST
+host: Linux 6.12.94+ x86_64, 8 vCPU; RSS runs pinned to CPU 3, instance runs not pinned
+goc commit: 208df3b6c481d671c974c9f6b0701d2cf4c0ca31
+go: go version go1.24.4 linux/amd64
+GOGC=<unset, default 100> GOMEMLIMIT=<unset>
+goc-ng: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=9b0c675097a6c00b
+goc-bellard: /workspace/goc/build/qjs-bellard/qjscli --stack-size 16384  sha256=ff920f74ab585712
+ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f
+bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6
+goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b
+harness: build/qjs/qjsmem  sha256=0d91369988198fb2
+harness: build/qjs-bellard/qjsmem  sha256=3e121e88f8b011c8
+harness: build/qjsmem/threads-ng  sha256=61868481f6c03cde
+harness: build/qjsmem/threads-bellard  sha256=0adaa7148bae0150
+harness: build/qjsmem/gojamem  sha256=f092eef2148e2a78
+rounds: 3; N: 0 1 10 100 1000; C harness thread stack: 1024 KiB

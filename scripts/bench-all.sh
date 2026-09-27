@@ -12,6 +12,7 @@
 #   GOCB     build/qjs-bellard/qjscli  (goc-bellard: QJS_FLAVOR=bellard scripts/qjs-cli-build.sh)
 #   NG       native QuickJS-ng 0.17.0 qjs (CMake Release, clang-19 -O2 -DNDEBUG)
 #   BELLARD  Bellard QuickJS 2026-06-04 qjs (upstream Makefile, gcc -O2)
+#   BELLARD_CLANG  same Bellard sources, upstream Makefile with CONFIG_CLANG=y CC=clang-19 (-O2), reference only
 #   GOJA     gojacli from scripts/gojacli (Goja cfe4039)
 #   V8JS     bench-v8 combined.js (QuickJS tests/bench-v8) with a console prelude
 #   SSDIR    SunSpider 1.0.2 wrapped by scripts/sunspider-wrap.py
@@ -38,7 +39,10 @@ CPU="${CPU:-3}"
 ROUNDS_V8="${ROUNDS_V8:-5}" ROUNDS_SS="${ROUNDS_SS:-3}"
 ROUNDS_MICRO="${ROUNDS_MICRO:-3}" ROUNDS_MICROCALL="${ROUNDS_MICROCALL:-5}"
 SKIP="${SKIP:-}"
-ENGINES=(goc-ng goc-bellard ng bellard goja)
+BELLARD_CLANG="${BELLARD_CLANG:-$PS/bellard/clang-O2/qjs}"
+# ENGINES may be overridden, e.g. the clang reference run:
+#   ENGINES="bellard-clang bellard" SKIP="microcall t262 qjs" OUT=docs/benchmark/data/raw/bellard-clang scripts/bench-all.sh
+read -r -a ENGINES <<< "${ENGINES:-goc-ng goc-bellard ng bellard goja}"
 mkdir -p "$OUT"
 
 cmd() {  # cmd ENGINE [micro] -> command prefix (file appended by caller)
@@ -47,6 +51,7 @@ cmd() {  # cmd ENGINE [micro] -> command prefix (file appended by caller)
     goc-bellard) echo "$GOCB --stack-size 16384" ;;
     ng)      echo "$NG -C --stack-size 16384" ;;
     bellard) echo "$BELLARD --stack-size 16M" ;;
+    bellard-clang) echo "$BELLARD_CLANG --stack-size 16M" ;;
     goja)    if [[ "${2:-}" == micro ]]; then echo "$GOJA --micro"; else echo "$GOJA"; fi ;;
   esac
 }
