@@ -1,0 +1,107 @@
+{
+ "goc-bellard|bellard-clang-O3-gocflags|Richards,DeltaBlue,Crypto,RayTrace,EarleyBoyer,RegExp,Splay,NavierStokes,Parse": {
+  "a": "goc-bellard",
+  "b": "bellard-clang-O3-gocflags",
+  "suites": [
+   "Richards",
+   "DeltaBlue",
+   "Crypto",
+   "RayTrace",
+   "EarleyBoyer",
+   "RegExp",
+   "Splay",
+   "NavierStokes",
+   "Parse"
+  ],
+  "ir_a": 19656200480,
+  "ir_b": 16221053811,
+  "framemem_delta": 8.616,
+  "kind": {
+   "lea": -0.056,
+   "load": 4.692,
+   "rmw": 0.291,
+   "store": 3.69
+  },
+  "position": {
+   "after call": 0.4,
+   "before call": 0.363,
+   "other": 7.853
+  },
+  "kind_position": {
+   "lea/after call": 0.013,
+   "lea/before call": 0.013,
+   "lea/other": -0.083,
+   "load/after call": 0.303,
+   "load/before call": 0.336,
+   "load/other": 4.053,
+   "rmw/after call": 0.003,
+   "rmw/before call": 0.003,
+   "rmw/other": 0.285,
+   "store/after call": 0.081,
+   "store/before call": 0.011,
+   "store/other": 3.598
+  },
+  "functions": [
+   [
+    "JS_CallInternal",
+    3.626
+   ],
+   [
+    "lre_exec",
+    2.393
+   ],
+   [
+    "next_token",
+    0.418
+   ],
+   [
+    "free_gc_object",
+    0.211
+   ],
+   [
+    "js_parse_expr_binary",
+    0.144
+   ],
+   [
+    "js_free_shape0",
+    0.125
+   ],
+   [
+    "free_property",
+    0.112
+   ],
+   [
+    "add_property",
+    0.103
+   ],
+   [
+    "js_call_c_function",
+    0.097
+   ],
+   [
+    "JS_NewObjectFromShape",
+    0.072
+   ],
+   [
+    "JS_NewAtomLen",
+    0.071
+   ],
+   [
+    "JS_GetPropertyInternal",
+    0.069
+   ],
+   [
+    "__JS_FreeValueRT",
+    0.064
+   ],
+   [
+    "js_realloc_rt",
+    0.059
+   ],
+   [
+    "parse_ident",
+    0.052
+   ]
+  ]
+ }
+}

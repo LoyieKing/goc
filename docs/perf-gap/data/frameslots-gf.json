@@ -1,0 +1,273 @@
+{
+ "bellard-clang-O3-gocflags": {
+  "total_ir": 16221053811,
+  "functions": {
+   "JS_CallInternal": {
+    "buckets_pct_of_total_ir": {
+     "local": 0.31
+    },
+    "matched": 12251,
+    "asm_ins": 12775,
+    "bin_ins": 12775,
+    "root_offsets": [],
+    "top": {
+     "local": [
+      [
+       7114065,
+       "0x35e93",
+       "lea    -0x28(%rbp),%rsp"
+      ],
+      [
+       7114065,
+       "0x299f7",
+       "mov    0x28(%rbp),%ecx"
+      ],
+      [
+       4515515,
+       "0x29abf",
+       "mov    0x20(%rbp),%rsi"
+      ],
+      [
+       2598550,
+       "0x29ccd",
+       "mov    %rcx,(%rsp)"
+      ],
+      [
+       2598550,
+       "0x29cc9",
+       "mov    0x20(%rbp),%rcx"
+      ],
+      [
+       2598550,
+       "0x29cc5",
+       "mov    %ecx,0x8(%rsp)"
+      ]
+     ]
+    }
+   },
+   "lre_exec": {
+    "buckets_pct_of_total_ir": {
+     "local": 0.974,
+     "spill": 0.107,
+     "reload": 1.063
+    },
+    "matched": 1738,
+    "asm_ins": 1769,
+    "bin_ins": 1769,
+    "root_offsets": [],
+    "top": {
+     "local": [
+      [
+       24421283,
+       "0xdf01d",
+       "sub    -0x198(%rbp),%r14"
+      ],
+      [
+       24054590,
+       "0xdfee0",
+       "mov    -0x198(%rbp),%rax"
+      ],
+      [
+       23063360,
+       "0xdff57",
+       "mov    %eax,-0x1a4(%rbp)"
+      ],
+      [
+       23063360,
+       "0xdff4f",
+       "mov    -0x1a4(%rbp),%eax"
+      ],
+      [
+       18365943,
+       "0xdf361",
+       "mov    %eax,-0x1a4(%rbp)"
+      ],
+      [
+       18365943,
+       "0xdf359",
+       "mov    -0x1a4(%rbp),%eax"
+      ]
+     ],
+     "spill": [
+      [
+       4723613,
+       "0xdfdf5",
+       "mov    %rcx,-0x78(%rbp)"
+      ],
+      [
+       2895950,
+       "0xdf978",
+       "mov    %r10,-0x58(%rbp)"
+      ],
+      [
+       2895950,
+       "0xdf96b",
+       "mov    %rsi,-0x1f8(%rbp)"
+      ],
+      [
+       1219050,
+       "0xdea6f",
+       "mov    %rax,-0x48(%rbp)"
+      ],
+      [
+       1219050,
+       "0xde9e3",
+       "mov    %edx,-0x2c(%rbp)"
+      ],
+      [
+       1219050,
+       "0xde9a6",
+       "mov    %rsi,-0x50(%rbp)"
+      ]
+     ],
+     "reload": [
+      [
+       26601480,
+       "0xdf0c7",
+       "mov    -0x48(%rbp),%rax"
+      ],
+      [
+       24421283,
+       "0xdf005",
+       "mov    -0x48(%rbp),%rax"
+      ],
+      [
+       19099140,
+       "0xdef5f",
+       "cmp    -0x50(%rbp),%r8"
+      ],
+      [
+       18963370,
+       "0xdef7c",
+       "mov    -0x2c(%rbp),%ecx"
+      ],
+      [
+       17533360,
+       "0xdf476",
+       "cmp    -0x50(%rbp),%r8"
+      ],
+      [
+       17378810,
+       "0xdf480",
+       "mov    -0x2c(%rbp),%eax"
+      ]
+     ]
+    }
+   },
+   "next_token": {
+    "buckets_pct_of_total_ir": {
+     "local": 0.088
+    },
+    "matched": 601,
+    "asm_ins": 631,
+    "bin_ins": 631,
+    "root_offsets": [],
+    "top": {
+     "local": [
+      [
+       2038824,
+       "0x943f7",
+       "mov    -0x30(%rbp),%rax"
+      ],
+      [
+       2038824,
+       "0x940a1",
+       "lea    -0x30(%rbp),%r15"
+      ],
+      [
+       2038824,
+       "0x94096",
+       "mov    %rcx,-0x30(%rbp)"
+      ],
+      [
+       1286604,
+       "0x940cf",
+       "mov    -0x30(%rbp),%rcx"
+      ],
+      [
+       1286604,
+       "0x940cb",
+       "mov    %rcx,-0x30(%rbp)"
+      ],
+      [
+       1226124,
+       "0x943f3",
+       "mov    %rcx,-0x30(%rbp)"
+      ]
+     ]
+    }
+   },
+   "free_gc_object": {
+    "buckets_pct_of_total_ir": {
+     "spill": 0.024,
+     "reload": 0.038
+    },
+    "matched": 1155,
+    "asm_ins": 1209,
+    "bin_ins": 1209,
+    "root_offsets": [],
+    "top": {
+     "spill": [
+      [
+       1909751,
+       "0x4b64b",
+       "mov    %rbx,-0x38(%rbp)"
+      ],
+      [
+       1909652,
+       "0x4b66e",
+       "mov    %rax,-0x40(%rbp)"
+      ],
+      [
+       7272,
+       "0x4be25",
+       "mov    %r14,-0x30(%rbp)"
+      ],
+      [
+       7272,
+       "0x4be21",
+       "mov    %rbx,-0x38(%rbp)"
+      ],
+      [
+       18,
+       "0x4b882",
+       "mov    %rbx,-0x38(%rbp)"
+      ]
+     ],
+     "reload": [
+      [
+       4160870,
+       "0x4b687",
+       "mov    -0x40(%rbp),%rax"
+      ],
+      [
+       1909751,
+       "0x4b6c0",
+       "mov    -0x38(%rbp),%r12"
+      ],
+      [
+       62036,
+       "0x4be92",
+       "mov    -0x30(%rbp),%rcx"
+      ],
+      [
+       22050,
+       "0x4bf09",
+       "mov    -0x30(%rbp),%rcx"
+      ],
+      [
+       8225,
+       "0x4bead",
+       "mov    -0x30(%rbp),%rdi"
+      ],
+      [
+       7272,
+       "0x4bf7e",
+       "mov    -0x30(%rbp),%r14"
+      ]
+     ]
+    }
+   }
+  }
+ }
+}

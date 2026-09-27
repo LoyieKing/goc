@@ -217,4 +217,5 @@ def main():
         print(e, s, r['total'], {k: round(v / r['total'] * 100, 1) for k, v in sorted(r['classes'].items())}, flush=True)
     json.dump(res, open(out, 'w'), indent=0)
     print('wrote', out)
-main()
+if __name__ == '__main__':
+    main()
