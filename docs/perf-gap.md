@@ -154,6 +154,10 @@ goc 的优化流水线和普通 `clang -O3` 并不完全一样：前端用 `-dis
 - goc runtime 列里最红的几项，两份源码是一样的：SunSpider 的 `3d-morph`（1.63 / 1.80）、`math-partial-sums`（1.41 / 1.63）、`string-validate-input`（1.29 / 1.47），V8 的 RegExp（1.28 / 1.24）和 RayTrace（1.14 / 1.17）。前三项是 libm 和字符串比较（第 5 节），后两项是 uptr 检查和 GC 根槽（第 4 节）。
 - `date-format-xparb` 上 goc 反而快 37%：goc 的 `localtime` 走 Go 的 `time` 包，比 glibc 的 `localtime_r` 便宜（探针 `date_local_fields` 同样快 14%～40%）。【实测】
 
+四个套件的总账如下图（主时段数据）：每一层是相邻两个构建的时间比取对数（×100，约等于百分比），各层相加等于黑线表示的总差距。ng 这边编译器一层是负的（clang 比 gcc 快），Bellard 这边是正的。
+
+![layered decomposition](perf-gap/charts/perf-gap-layers.png)
+
 ### 2.3 microbench 与 microcall
 
 microbench 72 项的逐项比值在 `data/tables.md` / `data/toggles/tables.md`。goc/clang-O3 超过 1.3 的只有这几项：
@@ -644,6 +648,8 @@ benchmark.md 的主表里，goc-bellard/Bellard 的 V8 是 0.80 倍，goc-ng/ng 
 ---
 
 ## 8. 优化清单（按预期收益 / 风险排序）
+
+![toggles](perf-gap/charts/perf-gap-toggles.png)
 
 “实测”一列是本次 A/B 计时的结果（开关时段，时间比，<1 表示变快）；“估计”是按 Ir 份额或探针推算的上限，未实测。
 
