@@ -81,7 +81,7 @@ goc-bellard 对 native Bellard 的差距（V8 0.80 倍）明显比 goc-ng 对 na
 | SunSpider 几何平均 ms（25 项） | 10.65 | 13.70 | 1.285 | 15.56 | 1.136 | 时间比，越低越快 |
 | microbench 几何平均 ns（72 项） | 32.7 | 40.4 | 1.236 | 46.1 | 1.141 | 时间比，越低越快 |
 
-同一份源码，clang 版比 gcc 版慢了一截：V8 总分低 14%，SunSpider 和 microbench 的几何平均慢 29% 和 24%。所以 goc-bellard 对 gcc 版的差距可以大致拆成两个相乘的因子：以 V8 为例，0.86（gcc 换成 clang）× 0.94（goc 相对同为 clang 的原生构建）≈ 0.80；SunSpider 是 1.29 × 1.14 ≈ 1.46，microbench 是 1.24 × 1.14 ≈ 1.40，和主时段的比值（0.80、1.46、1.40）对得上。扣掉编译器这一块后，goc-bellard 相对 clang 版在 V8 上是 0.94 倍，和 goc-ng 相对 native ng 的 0.93 倍同一水平；在 SunSpider 和 microbench 上慢 14%，比 goc-ng 相对 native ng 的 5.5% 和 6.2% 仍大一些。剩下这几个百分点的来源（比如 Bellard 的解释器循环在 goc 的寄存器约束下更吃亏，或者两份源码的编译参数不完全一样：goc-bellard 是 O3 加 `-DNDEBUG`，原生 Bellard 是 `-O2`、没有 `-DNDEBUG`，另有 `-fwrapv -funsigned-char` 而 goc 没有）这里没有拆开，属于推测。gcc 为什么在 Bellard 的解释器上比 clang 快这么多（比如 `JS_CallInternal` 里的寄存器分配、分发跳转的布局），这里也没有深究。
+同一份源码，clang 版比 gcc 版慢了一截：V8 总分低 14%，SunSpider 和 microbench 的几何平均慢 29% 和 24%。所以 goc-bellard 对 gcc 版的差距可以大致拆成两个相乘的因子：以 V8 为例，0.86（gcc 换成 clang）× 0.94（goc 相对同为 clang 的原生构建）≈ 0.80；SunSpider 是 1.29 × 1.14 ≈ 1.46，microbench 是 1.24 × 1.14 ≈ 1.40，和主时段的比值（0.80、1.46、1.40）对得上。扣掉编译器这一块后，goc-bellard 相对 clang 版在 V8 上是 0.94 倍，和 goc-ng 相对 native ng 的 0.93 倍同一水平；在 SunSpider 和 microbench 上慢 14%，比 goc-ng 相对 native ng 的 5.5% 和 6.2% 仍大一些。剩下这几个百分点从哪里来、gcc 为什么在 Bellard 的解释器上比 clang 快这么多，后来专门做了一次逐层拆解，见 [perf-gap.md](perf-gap.md)。简单说：gcc 给每个操作码复制了一份分发跳转，clang 和 goc 都共用一个分发块；换成同一个编译器（clang -O3）比，goc-bellard 和 goc-ng 的差距是一样的（V8 慢 5.5% 和 6.1%）。
 
 
 
@@ -871,7 +871,7 @@ goc-bellard 是用同一套 goc 流水线编译 Fabrice Bellard 的 QuickJS 2026
 限制：
 
 - CLI 宿主缺少 ng 独有的几项：`import ... with { type: "bytes" }` 得到的 Uint8Array 不是只读的（Bellard 没有 immutable ArrayBuffer）；`qjs:bjson` 没有 `WRITE_OBJ_STRIP_DEBUG` / `WRITE_OBJ_STRIP_SOURCE`；`qjs.getStringKind` 恒为 -1。ng 的 CLI 测试集（115 项）是针对 ng 的，没有在 goc-bellard 上跑。
-- 同样的 `--stack-size 16384`，goc-bellard 能递归的 JS 深度比 native Bellard 浅：简单递归函数 goc-bellard 约 9200 层，native Bellard（`--stack-size 16M`，`ulimit -s unlimited`）约 25000 层；goc-ng 约 10700 层，native ng 约 15400 层。goc 编译出的 C 帧比原生大；至于具体原因（没有 red zone、多出的溢出槽、stackmap 对寄存器分配的约束），以及为什么 Bellard 的差得更多（gcc 版 native Bellard 的 `JS_CallInternal` 帧本身就比 clang 编出的小？），都是推测，没有逐帧核对。这只影响栈溢出的阈值，test262 和官方测试不受影响。另外，qjscli 不加 `--stack-size` 时两个 goc 构建连 1000 层递归都会报栈溢出，所以本页所有 goc 命令都带 `--stack-size 16384`。
+- 同样的 `--stack-size 16384`，goc-bellard 能递归的 JS 深度比 native Bellard 浅：简单递归函数 goc-bellard 约 9200 层，native Bellard（`--stack-size 16M`，`ulimit -s unlimited`）约 25000 层；goc-ng 约 10700 层，native ng 约 15400 层。goc 编译出的 C 帧比原生大：`JS_CallInternal` 的栈帧 goc-bellard 1768 字节、gcc 版 native Bellard 520 字节，goc-ng 1512 字节、native ng 952 字节，主要来自 goc 要求的 `-no-stack-slot-sharing`（每个溢出槽只装一个值）；gcc 编出的帧本来就特别小，所以 Bellard 的差距更大（见 [perf-gap.md](perf-gap.md) 第 4 节）。这只影响栈溢出的阈值，test262 和官方测试不受影响。另外，qjscli 不加 `--stack-size` 时两个 goc 构建连 1000 层递归都会报栈溢出，所以本页所有 goc 命令都带 `--stack-size 16384`。
 - goc 的 shim 堆没有锁，goc-bellard 和 goc-ng 一样，同一时刻只能有一个 goroutine 在 QuickJS 里。
 
 ## 原始文件

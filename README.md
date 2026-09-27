@@ -109,6 +109,7 @@ scripts/          Clang patches, QuickJS build, benches
 | [docs/architecture.md](docs/architecture.md) | Pipeline |
 | [docs/glossary.md](docs/glossary.md) | Terms |
 | [docs/benchmark.md](docs/benchmark.md) | Latest comparison |
+| [docs/perf-gap.md](docs/perf-gap.md) | Where the gap to native QuickJS comes from (中文) |
 | [docs/todo.md](docs/todo.md) | Next version |
 | [clang/README.md](clang/README.md) | Build patched Clang |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Patches |
