@@ -697,6 +697,26 @@ static JSValue goc_qjs_cli_os_now(JSContext *ctx, JSValueConst this_val,
   return JS_NewInt64(ctx, (int64_t)ts.sec * 1000000 + ts.nsec / 1000);
 }
 
+#ifdef GOC_QJS_BELLARD
+/* ng provides globalThis.performance inside the engine; Bellard's qjs adds it
+   in js_std_add_helpers (quickjs-libc.c), which this host does not use. Same
+   semantics as Bellard: CLOCK_MONOTONIC in milliseconds, as a float. */
+static JSValue goc_qjs_cli_perf_now(JSContext *ctx, JSValueConst this_val,
+                                    int argc, JSValueConst *argv) {
+  (void)this_val;
+  (void)argc;
+  (void)argv;
+  struct { long sec, nsec; } ts;
+  long result;
+  __asm__ volatile("syscall" : "=a"(result)
+                   : "a"(228L), "D"(1L), "S"(&ts)
+                   : "rcx", "r11", "memory");
+  if (result < 0)
+    return JS_ThrowInternalError(ctx, "clock_gettime failed: %ld", -result);
+  return JS_NewFloat64(ctx, (double)((int64_t)ts.sec * 1000000000 + ts.nsec) / 1e6);
+}
+#endif
+
 static int goc_qjs_cli_os_init(JSContext *ctx, JSModuleDef *module) {
   JSValue platform = JS_NewStringLen(ctx, "linux", 5);
   if (JS_IsException(platform))
@@ -847,6 +867,21 @@ int goc_qjs_cli_install(JSContext *ctx) {
     JS_FreeValue(ctx, global);
     return -1;
   }
+#ifdef GOC_QJS_BELLARD
+  {
+    JSValue perf = JS_NewObject(ctx);
+    if (JS_IsException(perf)) {
+      JS_FreeValue(ctx, global);
+      return -1;
+    }
+    JSValue now = JS_NewCFunction(ctx, goc_qjs_cli_perf_now, "now", 0);
+    if (JS_IsException(now) || JS_SetPropertyStr(ctx, perf, "now", now) < 0 ||
+        JS_SetPropertyStr(ctx, global, "performance", perf) < 0) {
+      JS_FreeValue(ctx, global);
+      return -1;
+    }
+  }
+#endif
 
   JSValue gc = JS_NewCFunction(ctx, goc_qjs_cli_gc, "gc", 0);
   if (JS_IsException(gc)) {

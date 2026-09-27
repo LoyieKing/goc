@@ -1,8 +1,0 @@
-date: 2026-09-27 08:49:30 KST
-host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3
-goc commit: a1f4dac119eac8664dfcd048907994aaecc572b5
-goc: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=45e946dc0900c7f7
-ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f
-bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6
-goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b
-rounds: v8=5 ss=3 micro=3 microcall=5
