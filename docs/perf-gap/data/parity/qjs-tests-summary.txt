@@ -1,0 +1,19 @@
+goc-ng: 69/77 functions pass
+  test_builtin.js:test_finalization_registry FAIL qjscli:runtime: <t>: ReferenceError: os is not defined
+  test_builtin.js:test_json FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 
+  test_builtin.js:test_line_column_numbers FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2
+  test_builtin.js:test_weak_map FAIL qjscli:runtime: <t>: ReferenceError: std is not defined
+  test_builtin.js:test_weak_map_cycles FAIL qjscli:runtime: <t>: ReferenceError: std is not defined
+  test_builtin.js:test_weak_ref FAIL qjscli:runtime: <t>: ReferenceError: std is not defined
+  test_language.js:test_unicode_ident FAIL qjscli:runtime: <t>: Error: assertion failed: got |number|, expected |undefined|
+  test_loop.js:test_for_in_proxy FAIL qjscli:runtime: <t>: Error: assertion failed: got |false|, expected |true|
+goc-bellard: 73/77 functions pass
+  test_builtin.js:test_finalization_registry FAIL qjscli:runtime: <t>: ReferenceError: 'os' is not defined
+  test_builtin.js:test_weak_map FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined
+  test_builtin.js:test_weak_map_cycles FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined
+  test_builtin.js:test_weak_ref FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined
+goc-bellard vs goc-ng: 4 functions differ
+  DIFF test_language.js:test_unicode_ident: FAIL qjscli:runtime: <t>: Error: assertion failed: got |number|, expected |undefined| | pass
+  DIFF test_loop.js:test_for_in_proxy: FAIL qjscli:runtime: <t>: Error: assertion failed: got |false|, expected |true| | pass
+  DIFF test_builtin.js:test_json: FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2  | pass
+  DIFF test_builtin.js:test_line_column_numbers: FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2 | pass
