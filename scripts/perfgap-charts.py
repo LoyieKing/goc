@@ -148,20 +148,25 @@ if A:
 # ---------------------------------------------------------------- counters
 V8S = ["Richards", "DeltaBlue", "Crypto", "RayTrace", "EarleyBoyer", "RegExp", "Splay", "NavierStokes"]
 CG = load("callgrind.json")
+CGS = V8S + ["Parse"]
 if CG:
     def agg(e):
         t = {}
-        for s in V8S:
+        for s in CGS:
             for k, v in CG[e][s]["totals"].items():
                 t[k] = t.get(k, 0) + v
         return t
     MET = [("Ir", lambda a: a["Ir"]), ("D1 misses", lambda a: a["D1mr"] + a["D1mw"]),
-           ("LL misses", lambda a: a["ILmr"] + a["DLmr"] + a["DLmw"]),
+           ("LL data misses", lambda a: a["DLmr"] + a["DLmw"]),
            ("cond. branch\nmispredicts", lambda a: a["Bcm"]), ("indirect branch\nmispredicts", lambda a: a["Bim"])]
     FAMS = {"ng": ("ng-clang-O3", ["ng-gcc-O2", "ng-clang-O2", "ng-clang-O3-gocflags", "goc-ng", "ng-clang-O3-taildup", "goc-ng-taildup"]),
             "bellard": ("bellard-clang-O3", ["bellard-gcc-O2-NDEBUG", "bellard-clang-O2-NDEBUG", "bellard-clang-O3-gocflags",
                                              "bellard-gocpipe-sm", "goc-bellard", "bellard-clang-O3-taildup", "goc-bellard-taildup"])}
-    ECOL = ["#f59e0b", "#93c5fd", "#6366f1", "#a78bfa", "#047857", "#fca5a5", "#b91c1c"]
+    def role_col(e):
+        for key, c in (("gcc", "#f59e0b"), ("clang-O2", "#93c5fd"), ("gocflags", "#6366f1"), ("gocpipe-sm", "#a78bfa"),
+                       ("goc-", None), ("clang-O3-taildup", "#fca5a5")):
+            if key in e and c: return c
+        return "#b91c1c" if e.endswith("taildup") else "#047857"
     fig, axs = plt.subplots(1, 2, figsize=(14, 4.8), sharey=True)
     for ax, fam in zip(axs, ["ng", "bellard"]):
         ref, engs = FAMS[fam]
@@ -172,7 +177,7 @@ if CG:
             a = agg(e)
             vals = [f(a) / f(R) for _, f in MET]
             xs = [j + (i - (len(engs) - 1) / 2) * w for j in range(len(MET))]
-            bars = ax.bar(xs, vals, w, color=ECOL[i % len(ECOL)], label=e)
+            bars = ax.bar(xs, vals, w, color=role_col(e), label=e)
             for bb, v in zip(bars, vals):
                 ax.annotate("%.2f" % v, (bb.get_x() + w / 2, v), xytext=(0, 2), textcoords="offset points",
                             ha="center", va="bottom", fontsize=6, rotation=90)
@@ -183,7 +188,7 @@ if CG:
         ax.set_title(FAM[fam] + "  (1.0 = %s)" % ref, fontsize=10, loc="left")
         ax.legend(fontsize=7, loc="upper left", ncol=2, **LEG)
     axs[0].set_ylabel("count relative to clang -O3 (lower is better)")
-    fig.suptitle("Simulated counters (callgrind): V8 suites, fixed work", x=0.06, ha="left", fontsize=13, fontweight="bold")
+    fig.suptitle("Simulated counters (callgrind): V8 suites + Parse, fixed work", x=0.06, ha="left", fontsize=13, fontweight="bold")
     fig.text(0.06, 0.905, "no hardware PMU in this VM: Ir = instructions, cache and branch numbers from callgrind's simple models "
              "(indirect predictor = last target); %s" % DATE, fontsize=9, color="#475569")
     fig.subplots_adjust(top=0.8)
@@ -235,27 +240,27 @@ if DEC:
              ("bellard-gocpipe-sm|bellard-gocpipe", "stack maps +\nframe-move guards"),
              ("goc-bellard|bellard-gocpipe-sm", "goc runtime\n(morestack, uptr,\nshim, Go link)")]
     if all(k in DEC for k, _ in steps):
-        fig, ax = plt.subplots(figsize=(10, 4.6))
-        cum = 0.0
+        fig, ax = plt.subplots(figsize=(11, 4.8))
         for j, (k, lab) in enumerate(steps):
             P = DEC[k]["V8sum"]
-            base = cum
+            pos = neg = 0.0
             for c, clab, col in CATS:
                 v = P[c]
-                ax.bar(j, v, 0.55, bottom=base if v >= 0 else base + v, color=col,
+                ax.bar(j, v, 0.55, bottom=pos if v >= 0 else neg, color=col,
                        label=clab if j == 0 else None, edgecolor="white", lw=0.4)
-                if v >= 0: base += v
+                if v >= 0: pos += v
+                else: neg += v
             step = (P["ratio"] - 1) * 100
-            ax.annotate("%+.1f%%" % step, (j, cum + max(step, 0)), xytext=(0, 4), textcoords="offset points",
+            ax.plot([j - 0.33, j + 0.33], [step, step], color="black", lw=2)
+            ax.annotate("net %+.1f%%" % step, (j, max(pos, step)), xytext=(0, 4), textcoords="offset points",
                         ha="center", fontsize=9, fontweight="bold")
-            cum += step
         ax.set_xticks(range(len(steps)))
         ax.set_xticklabels([l for _, l in steps], fontsize=9)
         ax.axhline(0, color="#475569", lw=0.8)
-        ax.set_ylabel("Ir added by the step, % (V8 suites total)")
-        ax.legend(fontsize=7, loc="upper left", ncol=2, **LEG)
+        ax.set_ylabel("Ir change by the step, % (8 V8 suites, no Parse)")
+        ax.legend(fontsize=7.5, loc="upper left", bbox_to_anchor=(1.01, 1), **LEG)
         title(ax, "Bellard: from clang -O3 + goc flags to goc, one step at a time",
-              "each step is a real build; bars = extra Ir by instruction class (callgrind); %s" % DATE)
+              "each step is a real build, compared with the previous one; bars = Ir change by instruction class; black = net; %s" % DATE)
         save(fig, "perf-gap-steps")
 
 # ---------------------------------------------------------------- C mechanism microbenchmarks
@@ -319,7 +324,7 @@ if MJ and "bellard-clang-O3" in MJ:
     probes = [k for k in ref if k != "empty_loop"]
     engs = [e for e in ["bellard-gcc-O2-NDEBUG", "bellard-clang-O3-gocflags", "bellard-gocpipe-sm", "goc-bellard",
                         "goc-bellard-fast", "goc-bellard-best"] if e in MJ]
-    col = ["#f59e0b", "#6366f1", "#a78bfa", "#047857", "#6ee7b7", "#0f766e"]
+    col = ["#f59e0b", "#6366f1", "#a78bfa", "#047857", "#6ee7b7", "#dc2626"]
     fig, ax = plt.subplots(figsize=(8.5, 11))
     h = 0.8 / len(engs)
     for i, e in enumerate(engs):
@@ -333,6 +338,8 @@ if MJ and "bellard-clang-O3" in MJ:
     ax.set_xscale("log")
     ax.set_xticks([0.5, 0.75, 1, 1.5, 2, 3, 5, 8])
     ax.set_xticklabels(["0.5", "0.75", "1", "1.5", "2", "3", "5", "8"])
+    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+    ax.set_xlim(0.15, 10)
     ax.set_xlabel("time per op relative to Bellard clang -O3 (log scale, lower is better)")
     ax.legend(fontsize=8, loc="lower right", **LEG)
     title(ax, "JS mechanism probes (tests/bench/perfgap-mech.js)",
@@ -349,11 +356,11 @@ if TG:
     groups = [("Bellard", "bellard-clang-O3", ["bellard-gcc-O2-NDEBUG", "bellard-clang-O3-taildup", "bellard-clang-O3-gocflags",
                                                "bellard-clang-O3-gocflags-taildup", "bellard-gocpipe", "bellard-gocpipe-inl250",
                                                "bellard-gocpipe-sm", "goc-bellard", "goc-bellard-inl250", "goc-bellard-taildup",
-                                               "goc-bellard-fast", "goc-bellard-best"]),
+                                               "goc-bellard-fast", "goc-bellard-fast-taildup", "goc-bellard-best"]),
               ("quickjs-ng", "ng-clang-O3", ["ng-clang-O2", "ng-clang-O3-taildup", "ng-clang-O3-gocflags",
                                              "ng-clang-O3-gocflags-taildup", "goc-ng", "goc-ng-inl250", "goc-ng-taildup",
-                                             "goc-ng-fast", "goc-ng-best"])]
-    fig, axs = plt.subplots(1, 2, figsize=(15, 6.5))
+                                             "goc-ng-fast", "goc-ng-fast-taildup", "goc-ng-best"])]
+    fig, axs = plt.subplots(1, 2, figsize=(15, 7.5))
     scol = {"V8": "#3b82f6", "SunSpider": "#f59e0b", "microbench": "#10b981", "microcall": "#a855f7"}
     for ax, (fam, ref, engs) in zip(axs, groups):
         engs = [e for e in engs if e in TG["V8"]["time"]]

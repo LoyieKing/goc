@@ -21069,13 +21069,13 @@
 "alloca": 17
 },
 "classes": {
-"framemem": 130959207,
-"rest": 1420000915,
+"framemem": 130693511,
+"rest": 1410118670,
 "morestack": 10637,
 "pushpop": 74736296,
 "call": 9426684,
 "stackcheck": 29960693,
-"tls": 11913100,
+"tls": 22061041,
 "got": 725658,
 "guard": 7404728
 },
@@ -21089,9 +21089,9 @@
 {
 "stackcheck": 349852,
 "pushpop": 1049514,
-"rest": 1056601454,
-"framemem": 70918262,
-"tls": 11325064,
+"rest": 1046854824,
+"framemem": 70664771,
+"tls": 21325185,
 "got": 411843,
 "call": 2469446,
 "guard": 7393970,
@@ -21409,9 +21409,10 @@
 {
 "stackcheck": 12105,
 "pushpop": 48420,
-"rest": 1364402,
+"rest": 1360362,
 "framemem": 115545,
-"call": 17243
+"call": 17243,
+"tls": 4040
 }
 ],
 [
@@ -21519,13 +21520,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 833949540,
+"rest": 798951175,
 "pushpop": 36954473,
-"framemem": 158178235,
+"framemem": 154570155,
 "call": 4321481,
 "morestack": 10700,
 "stackcheck": 13031864,
-"tls": 26828848,
+"tls": 65435293,
 "got": 6038625,
 "guard": 3954795
 },
@@ -21539,9 +21540,9 @@
 {
 "morestack": 3055,
 "guard": 3944049,
-"framemem": 121693274,
-"rest": 646125696,
-"tls": 25674184,
+"framemem": 118191837,
+"rest": 612206032,
+"tls": 63095285,
 "got": 5683400,
 "pushpop": 14168484,
 "stackcheck": 4723088,
@@ -21675,9 +21676,9 @@
 {
 "stackcheck": 209624,
 "pushpop": 628872,
-"rest": 3874311,
-"framemem": 635119,
-"tls": 628872,
+"rest": 2931003,
+"framemem": 530307,
+"tls": 1676992,
 "call": 52406,
 "got": 41895
 }
@@ -21729,9 +21730,10 @@
 {
 "stackcheck": 80283,
 "pushpop": 321120,
-"rest": 3758663,
+"rest": 3754623,
 "framemem": 653101,
 "call": 80462,
+"tls": 4040,
 "morestack": 47
 }
 ],
@@ -21850,8 +21852,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2383341,
+"rest": 2274513,
 "framemem": 39617,
+"tls": 108828,
 "call": 5866
 }
 ],
@@ -21895,8 +21898,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2080852,
+"rest": 2078706,
 "framemem": 11762,
+"tls": 2146,
 "call": 5866
 }
 ],
@@ -21987,14 +21991,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 2213641908,
+"rest": 2124859515,
 "pushpop": 213720678,
 "call": 23628134,
-"framemem": 357994509,
+"framemem": 351273718,
 "morestack": 10467,
 "stackcheck": 73805071,
 "got": 8100834,
-"tls": 59371320,
+"tls": 154874504,
 "guard": 14929404
 },
 "calls": 23753334,
@@ -22007,9 +22011,9 @@
 {
 "stackcheck": 10244128,
 "pushpop": 30731718,
-"rest": 1241191119,
-"framemem": 218814853,
-"tls": 46800888,
+"rest": 1171176313,
+"framemem": 214103333,
+"tls": 121527214,
 "got": 7787408,
 "guard": 14918658,
 "call": 5973218,
@@ -22045,9 +22049,9 @@
 {
 "stackcheck": 4014892,
 "pushpop": 12044640,
-"rest": 66249535,
-"framemem": 11041053,
-"tls": 12044640,
+"rest": 48182575,
+"framemem": 9033613,
+"tls": 32119040,
 "call": 1003720,
 "got": 95,
 "morestack": 141
@@ -22072,9 +22076,10 @@
 "morestack": 188,
 "stackcheck": 1664154,
 "pushpop": 6656568,
-"rest": 62786055,
+"rest": 62782015,
 "framemem": 12373687,
-"call": 1171781
+"call": 1171781,
+"tls": 4040
 }
 ],
 [
@@ -22201,9 +22206,10 @@
 {
 "stackcheck": 3389046,
 "pushpop": 2259348,
-"rest": 16790679,
-"framemem": 4982251,
+"rest": 16790356,
+"framemem": 4982207,
 "call": 482701,
+"tls": 367,
 "morestack": 376
 }
 ],
@@ -22283,8 +22289,9 @@
 {
 "stackcheck": 27,
 "pushpop": 108,
-"rest": 13746479,
+"rest": 13075162,
 "framemem": 236603,
+"tls": 671317,
 "call": 16278
 }
 ],
@@ -22305,11 +22312,12 @@
 "gc_scan",
 13028256,
 {
-"rest": 12979218,
+"rest": 12974327,
 "framemem": 32625,
 "call": 16278,
 "pushpop": 108,
-"stackcheck": 27
+"stackcheck": 27,
+"tls": 4891
 }
 ],
 [
@@ -22462,13 +22470,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 842928499,
+"rest": 840388653,
 "pushpop": 25555072,
 "call": 3104488,
-"framemem": 84887465,
+"framemem": 84875073,
 "stackcheck": 9035989,
 "got": 326529,
-"tls": 1787194,
+"tls": 4339432,
 "morestack": 79747,
 "guard": 935892
 },
@@ -22482,9 +22490,9 @@
 {
 "stackcheck": 11164,
 "pushpop": 33354,
-"rest": 666442741,
-"framemem": 52132222,
-"tls": 1259290,
+"rest": 663977878,
+"framemem": 52122013,
+"tls": 3734362,
 "got": 13153,
 "call": 311234,
 "guard": 925146,
@@ -22817,9 +22825,10 @@
 {
 "stackcheck": 11748,
 "pushpop": 46992,
-"rest": 1323457,
+"rest": 1319417,
 "framemem": 106860,
-"call": 16623
+"call": 16623,
+"tls": 4040
 }
 ],
 [
@@ -22855,8 +22864,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1114925,
+"rest": 1069675,
 "framemem": 21229,
+"tls": 45250,
 "call": 2815
 }
 ],
@@ -22877,8 +22887,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1064433,
+"rest": 1062287,
 "framemem": 5654,
+"tls": 2146,
 "call": 2815
 }
 ],
@@ -22908,12 +22919,12 @@
 "alloca": 17
 },
 "classes": {
-"framemem": 31035608,
-"rest": 145759663,
+"framemem": 31022487,
+"rest": 145610219,
 "pushpop": 14870083,
 "call": 2210038,
 "stackcheck": 5865729,
-"tls": 598832,
+"tls": 761397,
 "morestack": 1822,
 "got": 324166,
 "guard": 43203
@@ -23138,9 +23149,9 @@
 {
 "stackcheck": 9204,
 "pushpop": 27612,
-"rest": 1477742,
-"framemem": 317694,
-"tls": 71216,
+"rest": 1373275,
+"framemem": 306708,
+"tls": 186669,
 "got": 10790,
 "call": 10966,
 "guard": 32463
@@ -23186,9 +23197,10 @@
 {
 "stackcheck": 11568,
 "pushpop": 46272,
-"rest": 1321186,
+"rest": 1317146,
 "framemem": 108548,
-"call": 14036
+"call": 14036,
+"tls": 4040
 }
 ],
 [
@@ -23270,10 +23282,10 @@
 {
 "stackcheck": 29016,
 "pushpop": 87048,
-"rest": 396886,
-"framemem": 165458,
+"rest": 395545,
+"framemem": 165160,
 "call": 47149,
-"tls": 634
+"tls": 2273
 }
 ],
 [
@@ -23356,13 +23368,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1174223632,
+"rest": 1145592199,
 "pushpop": 96908912,
-"framemem": 193763903,
+"framemem": 190736267,
 "call": 12311209,
 "morestack": 12538,
 "stackcheck": 33615541,
-"tls": 21078962,
+"tls": 52738031,
 "guard": 7398585,
 "got": 3548132
 },
@@ -23375,9 +23387,9 @@
 774609879,
 {
 "guard": 7387821,
-"framemem": 102445904,
-"rest": 627012038,
-"tls": 17770910,
+"framemem": 99883809,
+"rest": 602596240,
+"tls": 44748803,
 "got": 3234705,
 "pushpop": 10545372,
 "call": 2694537,
@@ -23391,9 +23403,10 @@
 {
 "stackcheck": 1210326,
 "pushpop": 4841292,
-"rest": 50055214,
+"rest": 50051174,
 "framemem": 9761199,
 "call": 1426812,
+"tls": 4040,
 "morestack": 47
 }
 ],
@@ -23476,9 +23489,10 @@
 {
 "stackcheck": 3578544,
 "pushpop": 2385676,
-"rest": 15552193,
-"framemem": 4819602,
+"rest": 15551870,
+"framemem": 4819558,
 "call": 51086,
+"tls": 367,
 "morestack": 470
 }
 ],
@@ -23486,9 +23500,9 @@
 "js_call_c_function",
 25419941,
 {
-"framemem": 2550543,
-"rest": 16145411,
-"tls": 2782260,
+"framemem": 2086833,
+"rest": 11972021,
+"tls": 7419360,
 "pushpop": 2782260,
 "stackcheck": 927428,
 "call": 231855,
@@ -23830,13 +23844,13 @@
 },
 "classes": {
 "pushpop": 177871324,
-"rest": 6130949697,
+"rest": 5402550887,
 "call": 28508761,
-"framemem": 946278197,
+"framemem": 917832683,
 "morestack": 163544,
 "stackcheck": 64935867,
+"tls": 1078183469,
 "got": 2507328,
-"tls": 321339145,
 "guard": 12138048
 },
 "calls": 29907277,
@@ -23849,10 +23863,10 @@
 {
 "stackcheck": 4876212,
 "pushpop": 14628600,
-"rest": 5149537188,
-"framemem": 761322642,
+"rest": 4450003773,
+"framemem": 735931952,
 "call": 5541970,
-"tls": 302003784,
+"tls": 1026927889,
 "got": 2010640,
 "guard": 8716590,
 "morestack": 141
@@ -23865,9 +23879,9 @@
 "morestack": 611,
 "stackcheck": 5330844,
 "pushpop": 15992376,
-"rest": 179191663,
-"framemem": 42356319,
-"tls": 4221466,
+"rest": 172636157,
+"framemem": 41903186,
+"tls": 11230105,
 "got": 176735,
 "call": 2430720,
 "guard": 3410712
@@ -23889,9 +23903,9 @@
 "js_call_c_function",
 138731721,
 {
-"rest": 81272193,
-"framemem": 13953131,
-"tls": 14560863,
+"rest": 60642245,
+"framemem": 11353271,
+"tls": 37790671,
 "pushpop": 14906962,
 "stackcheck": 5199720,
 "call": 1266843,
@@ -23909,9 +23923,10 @@
 {
 "stackcheck": 4536268,
 "pushpop": 13608768,
-"rest": 63570232,
+"rest": 63423282,
 "framemem": 4624099,
 "call": 156467,
+"tls": 146950,
 "morestack": 141
 }
 ],
@@ -24085,9 +24100,10 @@
 {
 "stackcheck": 336453,
 "pushpop": 1345812,
-"rest": 15383554,
+"rest": 15379514,
 "framemem": 2907979,
-"call": 459509
+"call": 459509,
+"tls": 4040
 }
 ],
 [
@@ -24141,7 +24157,8 @@
 14021040,
 {
 "pushpop": 447480,
-"rest": 13573560
+"rest": 12454860,
+"tls": 1118700
 }
 ],
 [
@@ -24254,9 +24271,10 @@
 "morestack": 47,
 "stackcheck": 1028247,
 "pushpop": 685496,
-"rest": 4176251,
-"framemem": 1372837,
-"call": 4689
+"rest": 4175928,
+"framemem": 1372793,
+"call": 4689,
+"tls": 367
 }
 ]
 ]
@@ -24274,12 +24292,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 525480484,
+"rest": 510918330,
 "pushpop": 24852579,
-"framemem": 85635427,
+"framemem": 84406429,
 "call": 3047459,
 "stackcheck": 8820203,
-"tls": 10841943,
+"tls": 26633095,
 "morestack": 9672,
 "got": 2348526,
 "guard": 2259222
@@ -24294,9 +24312,9 @@
 {
 "stackcheck": 1628772,
 "pushpop": 4886124,
-"rest": 361864098,
-"framemem": 52965537,
-"tls": 10313200,
+"rest": 347349914,
+"framemem": 51738860,
+"tls": 26054061,
 "got": 2035150,
 "call": 749675,
 "guard": 2248476,
@@ -24574,9 +24592,10 @@
 {
 "stackcheck": 12474,
 "pushpop": 49896,
-"rest": 1355406,
+"rest": 1351366,
 "framemem": 116438,
-"call": 15174
+"call": 15174,
+"tls": 4040
 }
 ],
 [
@@ -24668,12 +24687,12 @@
 "js_parse_statement_or_decl",
 728996,
 {
-"rest": 392672,
+"rest": 391338,
 "pushpop": 87042,
-"framemem": 163686,
+"framemem": 163390,
 "call": 46207,
 "stackcheck": 29020,
-"tls": 633,
+"tls": 2263,
 "morestack": 24
 }
 ],
@@ -24726,14 +24745,14 @@
 "alloca": 17
 },
 "classes": {
-"framemem": 229247918,
-"rest": 1748115780,
+"framemem": 227707041,
+"rest": 1716474084,
 "pushpop": 156796920,
 "call": 20901827,
 "stackcheck": 54819291,
 "morestack": 4752,
 "got": 3537759,
-"tls": 17384809,
+"tls": 50567382,
 "guard": 14091873
 },
 "calls": 21199063,
@@ -24746,9 +24765,9 @@
 {
 "stackcheck": 2644740,
 "pushpop": 7934202,
-"rest": 592990296,
-"framemem": 97532314,
-"tls": 16663225,
+"rest": 568984733,
+"framemem": 96025900,
+"tls": 42175202,
 "got": 3224383,
 "call": 4696847,
 "guard": 14032167,
@@ -24761,8 +24780,9 @@
 {
 "stackcheck": 39,
 "pushpop": 156,
-"rest": 139863162,
+"rest": 132552223,
 "framemem": 3054367,
+"tls": 7310939,
 "call": 605594
 }
 ],
@@ -24770,7 +24790,8 @@
 "gc_scan",
 141128812,
 {
-"rest": 139311757,
+"rest": 139304670,
+"tls": 7087,
 "framemem": 1211266,
 "call": 605594,
 "pushpop": 156,
@@ -24783,9 +24804,10 @@
 {
 "stackcheck": 2412057,
 "pushpop": 9648228,
-"rest": 89310089,
+"rest": 89306049,
 "framemem": 18090633,
-"call": 1688744
+"call": 1688744,
+"tls": 4040
 }
 ],
 [
@@ -24822,11 +24844,12 @@
 79376826,
 {
 "morestack": 306,
-"rest": 43304754,
+"rest": 43304750,
 "pushpop": 12367284,
 "stackcheck": 4122456,
 "framemem": 18551420,
-"call": 1030606
+"call": 1030606,
+"tls": 4
 }
 ],
 [
@@ -24857,12 +24880,12 @@
 "JS_CreateProperty",
 57720573,
 {
-"rest": 35045924,
+"rest": 35045163,
 "pushpop": 12367140,
 "stackcheck": 4122380,
 "framemem": 5154127,
 "call": 1030598,
-"tls": 404
+"tls": 1165
 }
 ],
 [
@@ -24900,9 +24923,10 @@
 {
 "stackcheck": 4192911,
 "pushpop": 2795274,
-"rest": 20793461,
-"framemem": 6636697,
-"call": 1048989
+"rest": 20793138,
+"framemem": 6636653,
+"call": 1048989,
+"tls": 367
 }
 ],
 [
@@ -25187,12 +25211,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1326404285,
+"rest": 1311121490,
 "pushpop": 74788057,
-"framemem": 123156495,
+"framemem": 122589118,
 "call": 9418318,
 "stackcheck": 29960769,
-"tls": 11922138,
+"tls": 27772310,
 "morestack": 12060,
 "got": 725660,
 "guard": 7410802
@@ -25207,9 +25231,9 @@
 {
 "stackcheck": 349852,
 "pushpop": 1049520,
-"rest": 962804058,
-"framemem": 63059576,
-"tls": 11334102,
+"rest": 947656878,
+"framemem": 62504404,
+"tls": 27036454,
 "got": 411845,
 "call": 2472603,
 "guard": 7400044,
@@ -25526,9 +25550,10 @@
 {
 "stackcheck": 12105,
 "pushpop": 48420,
-"rest": 1364402,
+"rest": 1360362,
 "framemem": 115545,
-"call": 17243
+"call": 17243,
+"tls": 4040
 }
 ],
 [
@@ -25636,12 +25661,12 @@
 "alloca": 17
 },
 "classes": {
-"framemem": 153781346,
-"rest": 792208995,
+"framemem": 146635606,
+"rest": 748117192,
 "pushpop": 37017299,
 "call": 4309599,
 "stackcheck": 13031972,
-"tls": 26828848,
+"tls": 78066391,
 "morestack": 6723,
 "got": 6038626,
 "guard": 3954795
@@ -25656,9 +25681,9 @@
 {
 "stackcheck": 4723172,
 "pushpop": 14168484,
-"rest": 604088081,
-"framemem": 117229286,
-"tls": 25674184,
+"rest": 561074979,
+"framemem": 110190189,
+"tls": 75726383,
 "got": 5683400,
 "call": 1358833,
 "guard": 3944049,
@@ -25791,9 +25816,9 @@
 {
 "stackcheck": 209628,
 "pushpop": 628872,
-"rest": 3874311,
-"framemem": 635119,
-"tls": 628872,
+"rest": 2931003,
+"framemem": 530307,
+"tls": 1676992,
 "call": 52406,
 "got": 41895,
 "morestack": 47
@@ -25844,9 +25869,10 @@
 {
 "stackcheck": 80280,
 "pushpop": 321120,
-"rest": 3758663,
+"rest": 3754623,
 "framemem": 653101,
-"call": 80462
+"call": 80462,
+"tls": 4040
 }
 ],
 [
@@ -25962,8 +25988,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2383341,
+"rest": 2274513,
 "framemem": 39617,
+"tls": 108828,
 "call": 5866
 }
 ],
@@ -26007,8 +26034,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2080852,
+"rest": 2078706,
 "framemem": 11762,
+"tls": 2146,
 "call": 5866
 }
 ],
@@ -26101,12 +26129,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 2111338791,
+"rest": 2009965237,
 "pushpop": 214417141,
 "call": 24015546,
-"framemem": 346849119,
+"framemem": 334370307,
 "stackcheck": 73805322,
-"tls": 59374672,
+"tls": 173227038,
 "morestack": 14051,
 "got": 8100836,
 "guard": 14923077
@@ -26121,9 +26149,9 @@
 {
 "stackcheck": 10244200,
 "pushpop": 30731724,
-"rest": 1139927710,
-"framemem": 207363742,
-"tls": 46804240,
+"rest": 1057321743,
+"framemem": 196894201,
+"tls": 139879748,
 "got": 7787410,
 "guard": 14912331,
 "call": 5974808,
@@ -26160,9 +26188,9 @@
 {
 "stackcheck": 4014884,
 "pushpop": 12044640,
-"rest": 66249535,
-"framemem": 11041053,
-"tls": 12044640,
+"rest": 48182575,
+"framemem": 9033613,
+"tls": 32119040,
 "call": 1003720,
 "got": 95,
 "morestack": 47
@@ -26187,9 +26215,10 @@
 "morestack": 282,
 "stackcheck": 1664160,
 "pushpop": 6656568,
-"rest": 62786055,
+"rest": 62782015,
 "framemem": 12373687,
-"call": 1171781
+"call": 1171781,
+"tls": 4040
 }
 ],
 [
@@ -26316,9 +26345,10 @@
 "morestack": 235,
 "stackcheck": 3389037,
 "pushpop": 2259348,
-"rest": 16790679,
-"framemem": 4982251,
-"call": 482701
+"rest": 16790356,
+"framemem": 4982207,
+"call": 482701,
+"tls": 367
 }
 ],
 [
@@ -26398,8 +26428,9 @@
 {
 "stackcheck": 27,
 "pushpop": 108,
-"rest": 13746479,
+"rest": 13075162,
 "framemem": 236603,
+"tls": 671317,
 "call": 16278
 }
 ],
@@ -26421,8 +26452,9 @@
 {
 "stackcheck": 30,
 "pushpop": 108,
-"rest": 12979218,
+"rest": 12974327,
 "framemem": 32625,
+"tls": 4891,
 "call": 16278,
 "morestack": 47
 }
@@ -26579,14 +26611,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 947015418,
+"rest": 944444951,
 "pushpop": 25573802,
-"framemem": 85978794,
+"framemem": 85656310,
 "call": 3112150,
 "morestack": 7062,
 "stackcheck": 9036080,
 "guard": 930351,
-"tls": 1789414,
+"tls": 4682365,
 "got": 326531
 },
 "calls": 3199746,
@@ -26599,9 +26631,9 @@
 {
 "stackcheck": 11192,
 "pushpop": 33360,
-"rest": 770798971,
-"framemem": 53314173,
-"tls": 1261510,
+"rest": 768303487,
+"framemem": 52993872,
+"tls": 4077295,
 "got": 13155,
 "call": 306686,
 "guard": 919605,
@@ -26930,9 +26962,10 @@
 {
 "stackcheck": 11748,
 "pushpop": 46992,
-"rest": 1323457,
+"rest": 1319417,
 "framemem": 106860,
-"call": 16623
+"call": 16623,
+"tls": 4040
 }
 ],
 [
@@ -26968,8 +27001,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1114925,
+"rest": 1069675,
 "framemem": 21229,
+"tls": 45250,
 "call": 2815
 }
 ],
@@ -26990,8 +27024,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1064433,
+"rest": 1062287,
 "framemem": 5654,
+"tls": 2146,
 "call": 2815
 }
 ],
@@ -27032,12 +27067,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 146016945,
+"rest": 145850327,
 "pushpop": 14937677,
-"framemem": 31075686,
+"framemem": 31050515,
 "call": 2198348,
 "stackcheck": 5865728,
-"tls": 598832,
+"tls": 790621,
 "morestack": 1835,
 "got": 324166,
 "guard": 43203
@@ -27273,9 +27308,9 @@
 {
 "stackcheck": 9204,
 "pushpop": 27612,
-"rest": 1366338,
-"framemem": 295572,
-"tls": 71216,
+"rest": 1244697,
+"framemem": 272536,
+"tls": 215893,
 "got": 10790,
 "call": 10966,
 "guard": 32463
@@ -27309,9 +27344,10 @@
 {
 "stackcheck": 11568,
 "pushpop": 46272,
-"rest": 1321186,
+"rest": 1317146,
 "framemem": 108548,
-"call": 14036
+"call": 14036,
+"tls": 4040
 }
 ],
 [
@@ -27391,12 +27427,12 @@
 "js_parse_statement_or_decl",
 728999,
 {
-"rest": 398992,
+"rest": 397651,
 "pushpop": 87048,
-"framemem": 166160,
+"framemem": 165862,
 "call": 47149,
 "stackcheck": 29016,
-"tls": 634
+"tls": 2273
 }
 ],
 [
@@ -27479,12 +27515,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1126799938,
+"rest": 1092993035,
 "pushpop": 96963624,
 "call": 12299194,
-"framemem": 189989833,
+"framemem": 184237195,
 "stackcheck": 33615337,
-"tls": 21078962,
+"tls": 60638503,
 "morestack": 9684,
 "got": 3548132,
 "guard": 7398585
@@ -27500,10 +27536,10 @@
 "morestack": 2350,
 "stackcheck": 3515324,
 "pushpop": 10545372,
-"rest": 578895822,
-"framemem": 98613187,
+"rest": 549304554,
+"framemem": 93326090,
 "call": 2694537,
-"tls": 17770910,
+"tls": 52649275,
 "got": 3234705,
 "guard": 7387821
 }
@@ -27515,9 +27551,10 @@
 "morestack": 47,
 "stackcheck": 1210326,
 "pushpop": 4841292,
-"rest": 50055214,
+"rest": 50051174,
 "framemem": 9761199,
-"call": 1426812
+"call": 1426812,
+"tls": 4040
 }
 ],
 [
@@ -27599,18 +27636,19 @@
 "morestack": 423,
 "stackcheck": 3578541,
 "pushpop": 2385676,
-"rest": 15552193,
-"framemem": 4819602,
-"call": 51086
+"rest": 15551870,
+"framemem": 4819558,
+"call": 51086,
+"tls": 367
 }
 ],
 [
 "js_call_c_function",
 25419839,
 {
-"framemem": 2550543,
-"rest": 16145411,
-"tls": 2782260,
+"framemem": 2086833,
+"rest": 11972021,
+"tls": 7419360,
 "pushpop": 2782260,
 "stackcheck": 927420,
 "call": 231855,
@@ -27956,12 +27994,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 6135714681,
+"rest": 5404276640,
 "pushpop": 178715885,
-"framemem": 938940117,
+"framemem": 909736814,
 "call": 28733424,
 "stackcheck": 64937397,
-"tls": 322391382,
+"tls": 1083032726,
 "morestack": 31409,
 "got": 2520221,
 "guard": 12139377
@@ -27976,10 +28014,10 @@
 {
 "stackcheck": 4876304,
 "pushpop": 14628600,
-"rest": 5149537188,
-"framemem": 761322642,
+"rest": 4450003773,
+"framemem": 735931952,
 "call": 5541970,
-"tls": 302003784,
+"tls": 1026927889,
 "got": 2010640,
 "guard": 8716590,
 "morestack": 1222
@@ -27989,13 +28027,13 @@
 "JS_CallInternal",
 240219863,
 {
-"rest": 174746295,
+"rest": 167920350,
 "pushpop": 15992376,
 "morestack": 1927,
 "stackcheck": 5330956,
-"framemem": 33889294,
+"framemem": 32678372,
 "call": 2434833,
-"tls": 4235406,
+"tls": 12272273,
 "got": 176735,
 "guard": 3412041
 }
@@ -28016,9 +28054,9 @@
 "js_call_c_function",
 138731823,
 {
-"rest": 86693293,
-"framemem": 14327563,
-"tls": 15599160,
+"rest": 63294553,
+"framemem": 11727703,
+"tls": 41597760,
 "pushpop": 15599160,
 "morestack": 94,
 "stackcheck": 5199728,
@@ -28036,11 +28074,12 @@
 86496077,
 {
 "morestack": 235,
-"rest": 63570232,
+"rest": 63423282,
 "pushpop": 13608768,
 "stackcheck": 4536276,
 "framemem": 4624099,
-"call": 156467
+"call": 156467,
+"tls": 146950
 }
 ],
 [
@@ -28214,9 +28253,10 @@
 {
 "stackcheck": 336453,
 "pushpop": 1345812,
-"rest": 15383554,
+"rest": 15379514,
 "framemem": 2907979,
-"call": 459509
+"call": 459509,
+"tls": 4040
 }
 ],
 [
@@ -28270,7 +28310,8 @@
 14021040,
 {
 "pushpop": 447480,
-"rest": 13573560
+"rest": 12454860,
+"tls": 1118700
 }
 ],
 [
@@ -28381,9 +28422,10 @@
 {
 "stackcheck": 1028247,
 "pushpop": 685496,
-"rest": 4176251,
-"framemem": 1372837,
+"rest": 4175928,
+"framemem": 1372793,
 "call": 4689,
+"tls": 367,
 "morestack": 47
 }
 ]
@@ -28402,12 +28444,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 494827449,
+"rest": 477010090,
 "pushpop": 24907735,
 "call": 3050307,
-"framemem": 84059212,
+"framemem": 81269992,
 "stackcheck": 8820294,
-"tls": 10841944,
+"tls": 31448523,
 "got": 2348526,
 "morestack": 4585,
 "guard": 2259222
@@ -28422,9 +28464,9 @@
 {
 "stackcheck": 1628844,
 "pushpop": 4886124,
-"rest": 330927457,
-"framemem": 51338785,
-"tls": 10313200,
+"rest": 313158075,
+"framemem": 48551888,
+"tls": 30869479,
 "got": 2035150,
 "call": 749675,
 "guard": 2248476,
@@ -28704,9 +28746,10 @@
 {
 "stackcheck": 12474,
 "pushpop": 49896,
-"rest": 1355406,
+"rest": 1351366,
 "framemem": 116438,
-"call": 15174
+"call": 15174,
+"tls": 4040
 }
 ],
 [
@@ -28797,12 +28840,12 @@
 "js_parse_statement_or_decl",
 729050,
 {
-"rest": 398992,
+"rest": 397651,
 "pushpop": 87048,
-"framemem": 166160,
+"framemem": 165862,
 "call": 47149,
 "stackcheck": 29020,
-"tls": 634,
+"tls": 2273,
 "morestack": 47
 }
 ],
@@ -28855,13 +28898,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1707763843,
+"rest": 1670950184,
 "pushpop": 156796927,
-"framemem": 225524674,
+"framemem": 221982400,
 "call": 20897721,
 "stackcheck": 54819950,
 "morestack": 14314,
-"tls": 17386982,
+"tls": 57742915,
 "got": 3537761,
 "guard": 14087355
 },
@@ -28874,11 +28917,11 @@
 694315609,
 {
 "morestack": 1128,
-"rest": 551335500,
-"framemem": 93790248,
+"rest": 522157974,
+"framemem": 90282437,
 "guard": 14027649,
 "call": 4692261,
-"tls": 16665398,
+"tls": 49350735,
 "got": 3224385,
 "pushpop": 7934208,
 "stackcheck": 2644832
@@ -28890,8 +28933,9 @@
 {
 "stackcheck": 39,
 "pushpop": 156,
-"rest": 139863162,
+"rest": 132552223,
 "framemem": 3054367,
+"tls": 7310939,
 "call": 605594
 }
 ],
@@ -28899,7 +28943,8 @@
 "gc_scan",
 141128812,
 {
-"rest": 139311757,
+"rest": 139304670,
+"tls": 7087,
 "framemem": 1211266,
 "call": 605594,
 "pushpop": 156,
@@ -28912,9 +28957,10 @@
 {
 "stackcheck": 2412099,
 "pushpop": 9648228,
-"rest": 89310089,
+"rest": 89306049,
 "framemem": 18090633,
 "call": 1688744,
+"tls": 4040,
 "morestack": 658
 }
 ],
@@ -28951,12 +28997,13 @@
 "JS_DefineProperty",
 79377818,
 {
-"rest": 43304754,
+"rest": 43304750,
 "pushpop": 12367284,
 "morestack": 1222,
 "stackcheck": 4122532,
 "framemem": 18551420,
-"call": 1030606
+"call": 1030606,
+"tls": 4
 }
 ],
 [
@@ -28989,10 +29036,10 @@
 {
 "stackcheck": 4122380,
 "pushpop": 12367140,
-"rest": 35045924,
+"rest": 35045163,
 "framemem": 5154127,
 "call": 1030598,
-"tls": 404
+"tls": 1165
 }
 ],
 [
@@ -29030,10 +29077,11 @@
 {
 "stackcheck": 4192941,
 "pushpop": 2795274,
-"rest": 20793461,
-"framemem": 6636697,
+"rest": 20793138,
+"framemem": 6636653,
 "call": 1048989,
-"morestack": 470
+"morestack": 470,
+"tls": 367
 }
 ],
 [
@@ -29323,13 +29371,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1487743917,
+"rest": 1466185490,
 "pushpop": 74816149,
 "call": 9435418,
-"framemem": 125351042,
+"framemem": 125246630,
 "morestack": 10352,
 "stackcheck": 29981445,
-"tls": 11922137,
+"tls": 33584976,
 "got": 725660,
 "guard": 7410552
 },
@@ -29343,9 +29391,9 @@
 {
 "stackcheck": 349848,
 "pushpop": 1049520,
-"rest": 1124194690,
-"framemem": 65229973,
-"tls": 11334094,
+"rest": 1102771871,
+"framemem": 65137764,
+"tls": 32849122,
 "got": 411845,
 "call": 2471697,
 "guard": 7399794,
@@ -29660,9 +29708,10 @@
 {
 "stackcheck": 12105,
 "pushpop": 48420,
-"rest": 1364402,
+"rest": 1360362,
 "framemem": 115545,
-"call": 17243
+"call": 17243,
+"tls": 4040
 }
 ],
 [
@@ -29753,12 +29802,12 @@
 "js_parse_statement_or_decl",
 728999,
 {
-"rest": 393414,
+"rest": 392080,
 "pushpop": 87048,
-"framemem": 164100,
+"framemem": 163804,
 "call": 46292,
 "stackcheck": 29016,
-"tls": 633
+"tls": 2263
 }
 ]
 ]
@@ -29776,14 +29825,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 828163277,
+"rest": 792913591,
 "pushpop": 37012951,
 "call": 4319853,
-"framemem": 143621750,
+"framemem": 142251275,
 "stackcheck": 13053055,
 "morestack": 5329,
 "got": 6038626,
-"tls": 26828840,
+"tls": 63449001,
 "guard": 3954744
 },
 "calls": 4590676,
@@ -29797,9 +29846,9 @@
 "morestack": 3149,
 "stackcheck": 4723096,
 "pushpop": 14168484,
-"rest": 640460667,
-"framemem": 107050031,
-"tls": 25674176,
+"rest": 606289664,
+"framemem": 105786196,
+"tls": 61109014,
 "got": 5683400,
 "call": 1358816,
 "guard": 3943998
@@ -29937,9 +29986,9 @@
 {
 "stackcheck": 209624,
 "pushpop": 628872,
-"rest": 3874311,
-"framemem": 635119,
-"tls": 628872,
+"rest": 2931003,
+"framemem": 530307,
+"tls": 1676992,
 "call": 52406,
 "got": 41895
 }
@@ -29982,11 +30031,12 @@
 "free_gc_object",
 4893676,
 {
-"rest": 3758663,
+"rest": 3754623,
 "pushpop": 321120,
 "stackcheck": 80283,
 "framemem": 653101,
 "call": 80462,
+"tls": 4040,
 "morestack": 47
 }
 ],
@@ -30101,8 +30151,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2383341,
+"rest": 2274513,
 "framemem": 39617,
+"tls": 108828,
 "call": 5866
 }
 ],
@@ -30147,8 +30198,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2080852,
+"rest": 2078706,
 "framemem": 11762,
+"tls": 2146,
 "call": 5866
 }
 ],
@@ -30246,13 +30298,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 2244553467,
+"rest": 2155627725,
 "pushpop": 214621473,
-"framemem": 337724456,
+"framemem": 334116346,
 "call": 24044993,
 "morestack": 154803,
 "stackcheck": 73950912,
-"tls": 59374672,
+"tls": 151908524,
 "got": 8100836,
 "guard": 14888808
 },
@@ -30266,9 +30318,9 @@
 {
 "stackcheck": 10244232,
 "pushpop": 30731724,
-"rest": 1264594259,
-"framemem": 197753797,
-"tls": 46780868,
+"rest": 1194436104,
+"framemem": 196154958,
+"tls": 118537862,
 "got": 7787410,
 "guard": 14878062,
 "call": 5963107,
@@ -30305,9 +30357,9 @@
 {
 "stackcheck": 4014904,
 "pushpop": 12044640,
-"rest": 66249535,
-"framemem": 11041053,
-"tls": 12044640,
+"rest": 48182575,
+"framemem": 9033613,
+"tls": 32119040,
 "call": 1003720,
 "got": 95,
 "morestack": 282
@@ -30331,9 +30383,10 @@
 {
 "stackcheck": 1664157,
 "pushpop": 6656568,
-"rest": 62786055,
+"rest": 62782015,
 "framemem": 12373687,
 "call": 1171781,
+"tls": 4040,
 "morestack": 235
 }
 ],
@@ -30461,9 +30514,10 @@
 {
 "stackcheck": 3389052,
 "pushpop": 2259348,
-"rest": 16790679,
-"framemem": 4982251,
+"rest": 16790356,
+"framemem": 4982207,
 "call": 482701,
+"tls": 367,
 "morestack": 470
 }
 ],
@@ -30543,8 +30597,9 @@
 {
 "stackcheck": 27,
 "pushpop": 108,
-"rest": 13746479,
+"rest": 13075162,
 "framemem": 236603,
+"tls": 671317,
 "call": 16278
 }
 ],
@@ -30567,8 +30622,9 @@
 {
 "stackcheck": 30,
 "pushpop": 108,
-"rest": 12979218,
+"rest": 12974327,
 "framemem": 32625,
+"tls": 4891,
 "call": 16278,
 "morestack": 47
 }
@@ -30725,12 +30781,12 @@
 "alloca": 17
 },
 "classes": {
-"framemem": 97693282,
-"rest": 1026879501,
+"framemem": 97683969,
+"rest": 1024325472,
 "pushpop": 25712814,
 "call": 3110013,
 "stackcheck": 8668111,
-"tls": 1789414,
+"tls": 4352756,
 "morestack": 6277,
 "got": 326531,
 "guard": 930300
@@ -30745,9 +30801,9 @@
 {
 "stackcheck": 11164,
 "pushpop": 33360,
-"rest": 849527369,
-"framemem": 64854187,
-"tls": 1261502,
+"rest": 847048323,
+"framemem": 64847057,
+"tls": 3747678,
 "got": 13155,
 "call": 306669,
 "guard": 919554,
@@ -31072,9 +31128,10 @@
 {
 "stackcheck": 11748,
 "pushpop": 46992,
-"rest": 1323457,
+"rest": 1319417,
 "framemem": 106860,
-"call": 16623
+"call": 16623,
+"tls": 4040
 }
 ],
 [
@@ -31110,8 +31167,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1114925,
+"rest": 1069675,
 "framemem": 21229,
+"tls": 45250,
 "call": 2815
 }
 ],
@@ -31132,8 +31190,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1064433,
+"rest": 1062287,
 "framemem": 5654,
+"tls": 2146,
 "call": 2815
 }
 ],
@@ -31182,13 +31241,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 146024787,
+"rest": 145874293,
 "pushpop": 14966084,
 "call": 2215264,
-"framemem": 31083420,
+"framemem": 31074601,
 "stackcheck": 5889948,
+"tls": 758144,
 "morestack": 1589,
-"tls": 598831,
 "got": 324166,
 "guard": 43155
 },
@@ -31411,9 +31470,9 @@
 {
 "stackcheck": 9204,
 "pushpop": 27612,
-"rest": 1503923,
-"framemem": 288292,
-"tls": 71208,
+"rest": 1398399,
+"framemem": 281606,
+"tls": 183418,
 "got": 10790,
 "call": 10950,
 "guard": 32415
@@ -31459,9 +31518,10 @@
 {
 "stackcheck": 11568,
 "pushpop": 46272,
-"rest": 1321186,
+"rest": 1317146,
 "framemem": 108548,
-"call": 14036
+"call": 14036,
+"tls": 4040
 }
 ],
 [
@@ -31536,12 +31596,12 @@
 "js_parse_statement_or_decl",
 728999,
 {
-"rest": 392381,
+"rest": 391047,
 "pushpop": 87048,
-"framemem": 163766,
+"framemem": 163470,
 "call": 45888,
 "stackcheck": 29016,
-"tls": 633
+"tls": 2263
 }
 ],
 [
@@ -31634,13 +31694,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1167725987,
+"rest": 1140325957,
 "pushpop": 98625221,
 "call": 12355667,
-"framemem": 179819408,
+"framemem": 178086624,
 "morestack": 523328,
 "stackcheck": 34315148,
-"tls": 20617892,
+"tls": 49750706,
 "got": 3548076,
 "guard": 6912434
 },
@@ -31655,9 +31715,9 @@
 "morestack": 3055,
 "stackcheck": 3515384,
 "pushpop": 10545366,
-"rest": 595482126,
-"framemem": 84450733,
-"tls": 17370327,
+"rest": 571070907,
+"framemem": 83183490,
+"tls": 43048789,
 "got": 3234703,
 "call": 2529451,
 "guard": 6901670
@@ -31669,9 +31729,10 @@
 {
 "stackcheck": 1210323,
 "pushpop": 4841292,
-"rest": 50055214,
+"rest": 50051174,
 "framemem": 9761199,
-"call": 1426812
+"call": 1426812,
+"tls": 4040
 }
 ],
 [
@@ -31766,9 +31827,10 @@
 {
 "stackcheck": 3578562,
 "pushpop": 2385676,
-"rest": 15552193,
-"framemem": 4819602,
+"rest": 15551870,
+"framemem": 4819558,
 "call": 51086,
+"tls": 367,
 "morestack": 752
 }
 ],
@@ -31778,9 +31840,9 @@
 {
 "stackcheck": 927420,
 "pushpop": 2475554,
-"rest": 13748870,
-"framemem": 2397094,
-"tls": 2322201,
+"rest": 10802304,
+"framemem": 1933384,
+"tls": 5732477,
 "call": 209939,
 "got": 30
 }
@@ -32113,12 +32175,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 6145544927,
+"rest": 5415846329,
 "pushpop": 176742521,
-"framemem": 946032585,
+"framemem": 917528558,
 "call": 28583815,
 "stackcheck": 63289845,
-"tls": 321497444,
+"tls": 1079700069,
 "morestack": 238273,
 "got": 2507326,
 "guard": 12140217
@@ -32133,10 +32195,10 @@
 {
 "stackcheck": 4876220,
 "pushpop": 14628600,
-"rest": 5149537188,
-"framemem": 761322642,
+"rest": 4450003773,
+"framemem": 735931952,
 "call": 5541970,
-"tls": 302003784,
+"tls": 1026927889,
 "got": 2010640,
 "guard": 8716590,
 "morestack": 235
@@ -32147,11 +32209,11 @@
 259147632,
 {
 "morestack": 658,
-"rest": 186085510,
+"rest": 178628976,
 "pushpop": 15992376,
 "stackcheck": 5330848,
-"framemem": 41377710,
-"tls": 4230222,
+"framemem": 40866064,
+"tls": 12198402,
 "got": 176735,
 "call": 2433141,
 "guard": 3412881
@@ -32177,9 +32239,9 @@
 "js_call_c_function",
 138731772,
 {
-"rest": 82237873,
-"framemem": 14002976,
-"tls": 14710398,
+"rest": 61209165,
+"framemem": 11403116,
+"tls": 38338966,
 "pushpop": 15006652,
 "morestack": 47,
 "stackcheck": 5199724,
@@ -32198,9 +32260,10 @@
 "morestack": 329,
 "stackcheck": 4536284,
 "pushpop": 13608768,
-"rest": 63570232,
+"rest": 63423282,
 "framemem": 4624099,
-"call": 156467
+"call": 156467,
+"tls": 146950
 }
 ],
 [
@@ -32362,9 +32425,10 @@
 {
 "stackcheck": 336453,
 "pushpop": 1345812,
-"rest": 15383554,
+"rest": 15379514,
 "framemem": 2907979,
-"call": 459509
+"call": 459509,
+"tls": 4040
 }
 ],
 [
@@ -32406,7 +32470,8 @@
 14021040,
 {
 "pushpop": 447480,
-"rest": 13573560
+"rest": 12454860,
+"tls": 1118700
 }
 ],
 [
@@ -32520,9 +32585,10 @@
 {
 "stackcheck": 1028247,
 "pushpop": 685496,
-"rest": 4176251,
-"framemem": 1372837,
+"rest": 4175928,
+"framemem": 1372793,
 "call": 4689,
+"tls": 367,
 "morestack": 47
 }
 ],
@@ -32554,14 +32620,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 526036124,
+"rest": 511472811,
 "pushpop": 24991116,
-"framemem": 78185554,
+"framemem": 77770597,
 "call": 3059189,
 "stackcheck": 8844438,
 "morestack": 3835,
 "guard": 2241669,
-"tls": 10841944,
+"tls": 25820214,
 "got": 2348526
 },
 "calls": 3264973,
@@ -32574,9 +32640,9 @@
 {
 "stackcheck": 1628800,
 "pushpop": 4886124,
-"rest": 361923404,
-"framemem": 45378387,
-"tls": 10313192,
+"rest": 347408068,
+"framemem": 44965753,
+"tls": 25241162,
 "got": 2035150,
 "call": 750239,
 "guard": 2230923,
@@ -32857,9 +32923,10 @@
 {
 "stackcheck": 12474,
 "pushpop": 49896,
-"rest": 1355406,
+"rest": 1351366,
 "framemem": 116438,
-"call": 15174
+"call": 15174,
+"tls": 4040
 }
 ],
 [
@@ -32946,12 +33013,12 @@
 "js_parse_statement_or_decl",
 728999,
 {
-"rest": 398992,
+"rest": 397651,
 "pushpop": 87048,
-"framemem": 166160,
+"framemem": 165862,
 "call": 47149,
 "stackcheck": 29016,
-"tls": 634
+"tls": 2273
 }
 ],
 [
@@ -33014,14 +33081,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1771084476,
+"rest": 1739372679,
 "pushpop": 162635421,
-"framemem": 215926962,
+"framemem": 215665655,
 "call": 21960388,
 "morestack": 15501,
 "stackcheck": 57194998,
 "got": 3537761,
-"tls": 17386982,
+"tls": 49360086,
 "guard": 14870664
 },
 "calls": 23891175,
@@ -33034,9 +33101,9 @@
 {
 "stackcheck": 2644820,
 "pushpop": 7934208,
-"rest": 580441764,
-"framemem": 81848980,
-"tls": 16665390,
+"rest": 556366100,
+"framemem": 81622136,
+"tls": 40967898,
 "got": 3224385,
 "guard": 14810958,
 "call": 4953364,
@@ -33049,8 +33116,9 @@
 {
 "stackcheck": 39,
 "pushpop": 156,
-"rest": 139863162,
+"rest": 132552223,
 "framemem": 3054367,
+"tls": 7310939,
 "call": 605594
 }
 ],
@@ -33058,7 +33126,8 @@
 "gc_scan",
 141128812,
 {
-"rest": 139311757,
+"rest": 139304670,
+"tls": 7087,
 "framemem": 1211266,
 "call": 605594,
 "pushpop": 156,
@@ -33072,9 +33141,10 @@
 "morestack": 799,
 "stackcheck": 2412108,
 "pushpop": 9648228,
-"rest": 89310089,
+"rest": 89306049,
 "framemem": 18090633,
-"call": 1688744
+"call": 1688744,
+"tls": 4040
 }
 ],
 [
@@ -33110,12 +33180,13 @@
 "JS_DefineProperty",
 79377410,
 {
-"rest": 43304754,
+"rest": 43304750,
 "pushpop": 12367284,
 "stackcheck": 4122500,
 "framemem": 18551420,
 "call": 1030606,
-"morestack": 846
+"morestack": 846,
+"tls": 4
 }
 ],
 [
@@ -33153,10 +33224,10 @@
 {
 "stackcheck": 4122380,
 "pushpop": 12367140,
-"rest": 35045924,
+"rest": 35045163,
 "framemem": 5154127,
 "call": 1030598,
-"tls": 404
+"tls": 1165
 }
 ],
 [
@@ -33188,9 +33259,10 @@
 {
 "stackcheck": 4192938,
 "pushpop": 2795274,
-"rest": 20793461,
-"framemem": 6636697,
+"rest": 20793138,
+"framemem": 6636653,
 "call": 1048989,
+"tls": 367,
 "morestack": 423
 }
 ],
@@ -33483,13 +33555,13 @@
 },
 "classes": {
 "pushpop": 74816886,
-"rest": 1344636585,
-"framemem": 120272014,
+"rest": 1322516807,
+"framemem": 119006371,
 "call": 9424042,
 "morestack": 11880,
 "stackcheck": 29981544,
 "got": 725660,
-"tls": 11922134,
+"tls": 35307555,
 "guard": 7410552
 },
 "calls": 9659679,
@@ -33503,9 +33575,9 @@
 "morestack": 188,
 "stackcheck": 349856,
 "pushpop": 1049520,
-"rest": 981861169,
-"framemem": 60794192,
-"tls": 11334094,
+"rest": 959877000,
+"framemem": 59540752,
+"tls": 34571703,
 "got": 411845,
 "call": 2471697,
 "guard": 7399794
@@ -33820,9 +33892,10 @@
 {
 "stackcheck": 12105,
 "pushpop": 48420,
-"rest": 1364402,
+"rest": 1360362,
 "framemem": 115545,
-"call": 17243
+"call": 17243,
+"tls": 4040
 }
 ],
 [
@@ -33915,10 +33988,10 @@
 {
 "stackcheck": 29016,
 "pushpop": 87048,
-"rest": 390161,
-"framemem": 163379,
+"rest": 388826,
+"framemem": 163083,
 "call": 46335,
-"tls": 630
+"tls": 2261
 }
 ]
 ]
@@ -33936,13 +34009,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 782080568,
+"rest": 739048418,
 "pushpop": 37048281,
-"framemem": 147996928,
+"framemem": 143138395,
 "call": 4326534,
 "morestack": 6686,
 "stackcheck": 13053169,
-"tls": 26828844,
+"tls": 74719527,
 "got": 6038626,
 "guard": 3954744
 },
@@ -33957,9 +34030,9 @@
 "morestack": 4371,
 "stackcheck": 4723200,
 "pushpop": 14168484,
-"rest": 594073262,
-"framemem": 111419977,
-"tls": 25674176,
+"rest": 552119807,
+"framemem": 106668085,
+"tls": 72379523,
 "got": 5683400,
 "call": 1358816,
 "guard": 3943998
@@ -34099,9 +34172,9 @@
 {
 "stackcheck": 209624,
 "pushpop": 628872,
-"rest": 3874311,
-"framemem": 635119,
-"tls": 628872,
+"rest": 2931003,
+"framemem": 530307,
+"tls": 1676992,
 "call": 52406,
 "got": 41895
 }
@@ -34147,9 +34220,10 @@
 {
 "stackcheck": 80280,
 "pushpop": 321120,
-"rest": 3758663,
+"rest": 3754623,
 "framemem": 653101,
-"call": 80462
+"call": 80462,
+"tls": 4040
 }
 ],
 [
@@ -34266,8 +34340,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2383341,
+"rest": 2274513,
 "framemem": 39617,
+"tls": 108828,
 "call": 5866
 }
 ],
@@ -34311,8 +34386,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2080852,
+"rest": 2078706,
 "framemem": 11762,
+"tls": 2146,
 "call": 5866
 }
 ],
@@ -34411,12 +34487,12 @@
 },
 "classes": {
 "pushpop": 214708296,
-"rest": 2114659116,
-"framemem": 335331502,
+"rest": 2018560842,
+"framemem": 326028415,
 "call": 24058711,
 "morestack": 13950,
 "stackcheck": 73950726,
-"tls": 59374653,
+"tls": 164776014,
 "got": 8100834,
 "guard": 14886838
 },
@@ -34431,9 +34507,9 @@
 "morestack": 3737,
 "stackcheck": 10244228,
 "pushpop": 30731718,
-"rest": 1135609169,
-"framemem": 195416859,
-"tls": 46780850,
+"rest": 1058278475,
+"framemem": 188123041,
+"tls": 131405362,
 "got": 7787408,
 "call": 5962679,
 "guard": 14876092
@@ -34469,9 +34545,9 @@
 {
 "stackcheck": 4014880,
 "pushpop": 12044640,
-"rest": 66249535,
-"framemem": 11041053,
-"tls": 12044640,
+"rest": 48182575,
+"framemem": 9033613,
+"tls": 32119040,
 "call": 1003720,
 "got": 95
 }
@@ -34492,12 +34568,13 @@
 "free_gc_object",
 84652383,
 {
-"rest": 62786055,
+"rest": 62782015,
 "framemem": 12373687,
 "pushpop": 6656568,
 "morestack": 141,
 "stackcheck": 1664151,
-"call": 1171781
+"call": 1171781,
+"tls": 4040
 }
 ],
 [
@@ -34624,9 +34701,10 @@
 "morestack": 282,
 "stackcheck": 3389040,
 "pushpop": 2259348,
-"rest": 16790679,
-"framemem": 4982251,
-"call": 482701
+"rest": 16790356,
+"framemem": 4982207,
+"call": 482701,
+"tls": 367
 }
 ],
 [
@@ -34705,8 +34783,9 @@
 {
 "stackcheck": 27,
 "pushpop": 108,
-"rest": 13746479,
+"rest": 13075162,
 "framemem": 236603,
+"tls": 671317,
 "call": 16278
 }
 ],
@@ -34729,8 +34808,9 @@
 {
 "stackcheck": 27,
 "pushpop": 108,
-"rest": 12979218,
+"rest": 12974327,
 "framemem": 32625,
+"tls": 4891,
 "call": 16278
 }
 ],
@@ -34884,10 +34964,10 @@
 },
 "classes": {
 "pushpop": 25712946,
-"rest": 951674801,
-"framemem": 70999408,
+"rest": 949116510,
+"framemem": 70685582,
 "call": 3109617,
-"tls": 1789414,
+"tls": 4661531,
 "guard": 929703,
 "got": 326531,
 "morestack": 7584,
@@ -34901,9 +34981,9 @@
 "JS_CallInternal",
 815052004,
 {
-"rest": 774337857,
-"framemem": 38157098,
-"tls": 1261502,
+"rest": 771854549,
+"framemem": 37845455,
+"tls": 4056453,
 "guard": 918957,
 "call": 306664,
 "got": 13155,
@@ -35227,11 +35307,12 @@
 "free_gc_object",
 1505680,
 {
-"rest": 1323457,
+"rest": 1319417,
 "framemem": 106860,
 "pushpop": 46992,
 "call": 16623,
-"stackcheck": 11748
+"stackcheck": 11748,
+"tls": 4040
 }
 ],
 [
@@ -35267,8 +35348,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1114925,
+"rest": 1069675,
 "framemem": 21229,
+"tls": 45250,
 "call": 2815
 }
 ],
@@ -35289,8 +35371,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 1064433,
+"rest": 1062287,
 "framemem": 5654,
+"tls": 2146,
 "call": 2815
 }
 ],
@@ -35339,13 +35422,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 146214256,
+"rest": 146062657,
 "pushpop": 15021351,
 "call": 2206467,
-"framemem": 31155339,
+"framemem": 31138274,
 "morestack": 1741,
 "stackcheck": 5889954,
-"tls": 598832,
+"tls": 767496,
 "got": 324166,
 "guard": 43155
 },
@@ -35581,9 +35664,9 @@
 {
 "stackcheck": 9204,
 "pushpop": 27612,
-"rest": 1360200,
-"framemem": 288581,
-"tls": 71208,
+"rest": 1253578,
+"framemem": 273651,
+"tls": 192760,
 "got": 10790,
 "call": 10950,
 "guard": 32415
@@ -35617,9 +35700,10 @@
 {
 "stackcheck": 11568,
 "pushpop": 46272,
-"rest": 1321186,
+"rest": 1317146,
 "framemem": 108548,
-"call": 14036
+"call": 14036,
+"tls": 4040
 }
 ],
 [
@@ -35694,12 +35778,12 @@
 "js_parse_statement_or_decl",
 728999,
 {
-"rest": 398992,
+"rest": 397651,
 "pushpop": 87048,
-"framemem": 166160,
+"framemem": 165862,
 "call": 47149,
 "stackcheck": 29016,
-"tls": 634
+"tls": 2273
 }
 ],
 [
@@ -35794,12 +35878,12 @@
 "math": 3795986
 },
 "classes": {
-"framemem": 182400132,
-"rest": 1121000434,
+"framemem": 178344687,
+"rest": 1089251476,
 "pushpop": 99387781,
 "morestack": 9580,
 "call": 12517108,
-"tls": 21078962,
+"tls": 56883365,
 "stackcheck": 34315054,
 "guard": 6906405,
 "got": 3548138
@@ -35812,9 +35896,9 @@
 "JS_CallInternal",
 676431491,
 {
-"rest": 545378813,
-"framemem": 86957522,
-"tls": 17371338,
+"rest": 517845490,
+"framemem": 83367618,
+"tls": 48494565,
 "guard": 6895641,
 "call": 2530477,
 "got": 3234705,
@@ -35829,9 +35913,10 @@
 {
 "stackcheck": 1210329,
 "pushpop": 4841292,
-"rest": 50055214,
+"rest": 50051174,
 "framemem": 9761199,
 "call": 1426812,
+"tls": 4040,
 "morestack": 94
 }
 ],
@@ -35927,19 +36012,20 @@
 {
 "stackcheck": 3578529,
 "pushpop": 2385676,
-"rest": 15552193,
-"framemem": 4819602,
+"rest": 15551870,
+"framemem": 4819558,
 "morestack": 235,
-"call": 51086
+"call": 51086,
+"tls": 367
 }
 ],
 [
 "js_call_c_function",
 25419890,
 {
-"framemem": 2550543,
-"rest": 16145411,
-"tls": 2782260,
+"framemem": 2086833,
+"rest": 11972021,
+"tls": 7419360,
 "pushpop": 2782260,
 "morestack": 47,
 "stackcheck": 927424,
@@ -36277,13 +36363,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 6137605851,
+"rest": 5405324652,
 "pushpop": 177565515,
-"framemem": 939012142,
+"framemem": 909722362,
 "call": 28604025,
 "morestack": 29474,
 "stackcheck": 63291211,
-"tls": 322391382,
+"tls": 1083962361,
 "got": 2520221,
 "guard": 12139638
 },
@@ -36298,10 +36384,10 @@
 "morestack": 940,
 "stackcheck": 4876280,
 "pushpop": 14628600,
-"rest": 5149537188,
-"framemem": 761322642,
+"rest": 4450003773,
+"framemem": 735931952,
 "call": 5541970,
-"tls": 302003784,
+"tls": 1026927889,
 "got": 2010640,
 "guard": 8716590
 }
@@ -36313,9 +36399,9 @@
 "morestack": 1786,
 "stackcheck": 5330944,
 "pushpop": 15992376,
-"rest": 172906132,
-"framemem": 34104375,
-"tls": 4235398,
+"rest": 165237029,
+"framemem": 32806976,
+"tls": 13201900,
 "got": 176735,
 "call": 2434920,
 "guard": 3412302
@@ -36343,9 +36429,9 @@
 138731925,
 {
 "morestack": 188,
-"rest": 86693293,
-"framemem": 14327563,
-"tls": 15599160,
+"rest": 63294553,
+"framemem": 11727703,
+"tls": 41597760,
 "pushpop": 15599160,
 "stackcheck": 5199736,
 "call": 1299930,
@@ -36364,9 +36450,10 @@
 "morestack": 517,
 "stackcheck": 4536300,
 "pushpop": 13608768,
-"rest": 63570232,
+"rest": 63423282,
 "framemem": 4624099,
-"call": 156467
+"call": 156467,
+"tls": 146950
 }
 ],
 [
@@ -36529,9 +36616,10 @@
 {
 "stackcheck": 336453,
 "pushpop": 1345812,
-"rest": 15383554,
+"rest": 15379514,
 "framemem": 2907979,
-"call": 459509
+"call": 459509,
+"tls": 4040
 }
 ],
 [
@@ -36573,7 +36661,8 @@
 14021040,
 {
 "pushpop": 447480,
-"rest": 13573560
+"rest": 12454860,
+"tls": 1118700
 }
 ],
 [
@@ -36684,9 +36773,10 @@
 {
 "stackcheck": 1028244,
 "pushpop": 685496,
-"rest": 4176251,
-"framemem": 1372837,
-"call": 4689
+"rest": 4175928,
+"framemem": 1372793,
+"call": 4689,
+"tls": 367
 }
 ],
 [
@@ -36717,13 +36807,13 @@
 "alloca": 17
 },
 "classes": {
-"framemem": 81484002,
-"rest": 490656592,
+"framemem": 79513101,
+"rest": 473260195,
 "pushpop": 24936112,
 "call": 3068006,
 "morestack": 4456,
 "stackcheck": 8844487,
-"tls": 10841936,
+"tls": 30209234,
 "got": 2348526,
 "guard": 2259171
 },
@@ -36738,9 +36828,9 @@
 "morestack": 1457,
 "stackcheck": 1628832,
 "pushpop": 4886124,
-"rest": 326810584,
-"framemem": 48748545,
-"tls": 10313192,
+"rest": 309462146,
+"framemem": 46779964,
+"tls": 29630211,
 "got": 2035150,
 "call": 749658,
 "guard": 2248425
@@ -37018,9 +37108,10 @@
 {
 "stackcheck": 12474,
 "pushpop": 49896,
-"rest": 1355406,
+"rest": 1351366,
 "framemem": 116438,
-"call": 15174
+"call": 15174,
+"tls": 4040
 }
 ],
 [
@@ -37106,12 +37197,12 @@
 "js_parse_statement_or_decl",
 728999,
 {
-"framemem": 164216,
-"rest": 392669,
+"framemem": 163920,
+"rest": 391336,
 "call": 46077,
 "pushpop": 87048,
 "stackcheck": 29016,
-"tls": 630
+"tls": 2259
 }
 ],
 [
@@ -37174,13 +37265,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1709571876,
+"rest": 1673534661,
 "pushpop": 162690551,
-"framemem": 219381043,
+"framemem": 217174227,
 "call": 21951137,
 "morestack": 18074,
 "guard": 14870782,
-"tls": 17386982,
+"tls": 55631013,
 "got": 3537761,
 "stackcheck": 57195186
 },
@@ -37192,11 +37283,11 @@
 "JS_CallInternal",
 657787664,
 {
-"rest": 522295743,
-"framemem": 85209527,
+"rest": 493894661,
+"framemem": 83037174,
 "guard": 14811076,
 "call": 4954086,
-"tls": 16665390,
+"tls": 47238825,
 "got": 3224385,
 "pushpop": 7934208,
 "morestack": 1363,
@@ -37209,8 +37300,9 @@
 {
 "stackcheck": 39,
 "pushpop": 156,
-"rest": 139863162,
+"rest": 132552223,
 "framemem": 3054367,
+"tls": 7310939,
 "call": 605594
 }
 ],
@@ -37218,12 +37310,13 @@
 "gc_scan",
 141128862,
 {
-"rest": 139311757,
+"rest": 139304670,
 "framemem": 1211266,
 "call": 605594,
 "pushpop": 156,
 "morestack": 47,
-"stackcheck": 42
+"stackcheck": 42,
+"tls": 7087
 }
 ],
 [
@@ -37233,9 +37326,10 @@
 "morestack": 799,
 "stackcheck": 2412108,
 "pushpop": 9648228,
-"rest": 89310089,
+"rest": 89306049,
 "framemem": 18090633,
-"call": 1688744
+"call": 1688744,
+"tls": 4040
 }
 ],
 [
@@ -37271,12 +37365,13 @@
 "JS_DefineProperty",
 79377920,
 {
-"rest": 43304754,
+"rest": 43304750,
 "pushpop": 12367284,
 "morestack": 1316,
 "stackcheck": 4122540,
 "framemem": 18551420,
-"call": 1030606
+"call": 1030606,
+"tls": 4
 }
 ],
 [
@@ -37314,10 +37409,10 @@
 {
 "stackcheck": 4122380,
 "pushpop": 12367140,
-"rest": 35045924,
+"rest": 35045163,
 "framemem": 5154127,
 "call": 1030598,
-"tls": 404
+"tls": 1165
 }
 ],
 [
@@ -37349,9 +37444,10 @@
 {
 "stackcheck": 4192932,
 "pushpop": 2795274,
-"rest": 20793461,
-"framemem": 6636697,
+"rest": 20793138,
+"framemem": 6636653,
 "call": 1048989,
+"tls": 367,
 "morestack": 329
 }
 ],
@@ -37641,13 +37737,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1538798576,
+"rest": 1536795061,
 "pushpop": 117263973,
 "call": 12482790,
-"framemem": 159008945,
+"framemem": 158996391,
 "stackcheck": 39327271,
 "got": 724443,
-"tls": 2002158,
+"tls": 4018227,
 "morestack": 37901,
 "guard": 11908959
 },
@@ -37661,9 +37757,9 @@
 {
 "stackcheck": 349844,
 "pushpop": 1049520,
-"rest": 1150020173,
+"rest": 1148125707,
 "framemem": 67618469,
-"tls": 1482638,
+"tls": 3377104,
 "got": 411845,
 "call": 3971167,
 "guard": 11898204,
@@ -38066,11 +38162,12 @@
 "JS_RunGC",
 840272,
 {
-"rest": 810681,
+"rest": 808086,
 "framemem": 20614,
 "call": 8947,
 "pushpop": 24,
-"stackcheck": 6
+"stackcheck": 6,
+"tls": 2595
 }
 ],
 [
@@ -38093,14 +38190,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 852709033,
+"rest": 825602358,
 "pushpop": 37242262,
-"framemem": 153918135,
+"framemem": 153811143,
 "call": 4486962,
 "stackcheck": 13787472,
 "morestack": 6017,
 "got": 6037409,
-"tls": 21546384,
+"tls": 48760051,
 "guard": 3956448
 },
 "calls": 4604943,
@@ -38114,9 +38211,9 @@
 "morestack": 4183,
 "stackcheck": 4723184,
 "pushpop": 14168484,
-"rest": 697966967,
+"rest": 671823348,
 "framemem": 108115618,
-"tls": 20460236,
+"tls": 46603855,
 "got": 5683400,
 "call": 1359381,
 "guard": 3945705
@@ -38218,9 +38315,9 @@
 {
 "stackcheck": 209624,
 "pushpop": 628872,
-"rest": 4285162,
-"framemem": 792337,
-"tls": 628872,
+"rest": 3341854,
+"framemem": 687525,
+"tls": 1676992,
 "call": 52406,
 "got": 41895
 }
@@ -38248,8 +38345,9 @@
 {
 "stackcheck": 15,
 "pushpop": 60,
-"rest": 5736428,
+"rest": 5729768,
 "framemem": 132421,
+"tls": 6660,
 "call": 38644
 }
 ],
@@ -38560,13 +38658,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 2492721672,
+"rest": 2438503212,
 "pushpop": 212638412,
 "call": 26126603,
-"framemem": 411137438,
+"framemem": 409084932,
 "stackcheck": 81330286,
 "morestack": 17226,
-"tls": 40559952,
+"tls": 96830918,
 "got": 8099619,
 "guard": 14980392
 },
@@ -38580,9 +38678,9 @@
 {
 "stackcheck": 10244300,
 "pushpop": 30731724,
-"rest": 1382929354,
+"rest": 1347107289,
 "framemem": 206349725,
-"tls": 28058036,
+"tls": 63880101,
 "got": 7787410,
 "call": 5993624,
 "guard": 14969649,
@@ -38619,9 +38717,9 @@
 "morestack": 94,
 "stackcheck": 4014888,
 "pushpop": 12044640,
-"rest": 73275504,
-"framemem": 14052213,
-"tls": 12044640,
+"rest": 55208544,
+"framemem": 12044773,
+"tls": 32119040,
 "call": 1003720,
 "got": 95
 }
@@ -38793,8 +38891,9 @@
 {
 "stackcheck": 36,
 "pushpop": 144,
-"rest": 30834595,
+"rest": 30818450,
 "framemem": 592115,
+"tls": 16145,
 "call": 76269
 }
 ],
@@ -38805,9 +38904,10 @@
 "morestack": 329,
 "stackcheck": 3389442,
 "pushpop": 2259614,
-"rest": 16793652,
-"framemem": 4983094,
-"call": 482345
+"rest": 16793257,
+"framemem": 4983041,
+"call": 482345,
+"tls": 448
 }
 ],
 [
@@ -38963,9 +39063,10 @@
 {
 "stackcheck": 130668,
 "pushpop": 522648,
-"rest": 3277458,
-"framemem": 518652,
+"rest": 2977242,
+"framemem": 475764,
 "call": 554,
+"tls": 343104,
 "morestack": 94
 }
 ],
@@ -39033,13 +39134,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1050277263,
+"rest": 1050194979,
 "pushpop": 25739092,
-"framemem": 95357371,
+"framemem": 95354806,
 "call": 3164155,
 "morestack": 7615,
 "stackcheck": 9396333,
-"tls": 506742,
+"tls": 591591,
 "got": 325314,
 "guard": 932415
 },
@@ -39053,9 +39154,9 @@
 {
 "stackcheck": 11168,
 "pushpop": 33360,
-"rest": 915737494,
+"rest": 915677002,
 "framemem": 57027965,
-"tls": 47354,
+"tls": 107846,
 "got": 13155,
 "call": 307375,
 "guard": 921672,
@@ -39340,8 +39441,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2251099,
+"rest": 2245794,
 "framemem": 47442,
+"tls": 5305,
 "call": 10089
 }
 ],
@@ -39485,14 +39587,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 102904062,
+"rest": 102836030,
 "pushpop": 15063498,
 "call": 2267534,
-"framemem": 36836637,
+"framemem": 36834153,
 "stackcheck": 6230901,
 "got": 322949,
 "morestack": 1176,
-"tls": 497940,
+"tls": 568456,
 "guard": 44844
 },
 "calls": 2363299,
@@ -39725,9 +39827,9 @@
 {
 "stackcheck": 9204,
 "pushpop": 27612,
-"rest": 1793632,
+"rest": 1744019,
 "framemem": 271348,
-"tls": 38840,
+"tls": 88453,
 "got": 10790,
 "call": 11513,
 "guard": 34104
@@ -39820,8 +39922,9 @@
 {
 "stackcheck": 6,
 "pushpop": 24,
-"rest": 809775,
+"rest": 807180,
 "framemem": 20571,
+"tls": 2595,
 "call": 8934
 }
 ],
@@ -39878,12 +39981,12 @@
 "js_parse_statement_or_decl",
 730127,
 {
-"rest": 436787,
-"framemem": 130380,
+"rest": 435446,
+"framemem": 130082,
 "call": 46262,
 "pushpop": 87048,
 "stackcheck": 29016,
-"tls": 634
+"tls": 2273
 }
 ],
 [
@@ -39928,14 +40031,14 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1252319827,
+"rest": 1233251132,
 "pushpop": 105790911,
 "call": 15184015,
-"framemem": 243309384,
+"framemem": 242843494,
 "stackcheck": 43247881,
 "morestack": 9558,
 "guard": 7400043,
-"tls": 15284034,
+"tls": 34818619,
 "got": 3546915
 },
 "calls": 15950432,
@@ -39946,10 +40049,10 @@
 "JS_CallInternal",
 785337008,
 {
-"rest": 654758353,
+"rest": 639878731,
 "guard": 7389282,
 "framemem": 91152365,
-"tls": 12044498,
+"tls": 26924120,
 "got": 3234705,
 "pushpop": 10545372,
 "call": 2695014,
@@ -40077,9 +40180,9 @@
 {
 "stackcheck": 927420,
 "pushpop": 2782260,
-"rest": 17900619,
-"framemem": 3246108,
-"tls": 2782260,
+"rest": 13727229,
+"framemem": 2782398,
+"tls": 7419360,
 "call": 231855,
 "got": 90
 }
@@ -40090,9 +40193,10 @@
 {
 "stackcheck": 3578937,
 "pushpop": 2385942,
-"rest": 15555166,
-"framemem": 4820597,
+"rest": 15554771,
+"framemem": 4820544,
 "call": 50882,
+"tls": 448,
 "morestack": 376
 }
 ],
@@ -40409,12 +40513,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 6777386023,
+"rest": 6037246919,
 "pushpop": 300468638,
 "call": 44487399,
-"framemem": 1170695453,
+"framemem": 1141322250,
 "stackcheck": 115328693,
-"tls": 327104202,
+"tls": 1096616509,
 "morestack": 41239,
 "guard": 12141528,
 "got": 2519004
@@ -40430,10 +40534,10 @@
 "morestack": 705,
 "stackcheck": 4876260,
 "pushpop": 14628600,
-"rest": 5175214168,
-"framemem": 788072122,
+"rest": 4475680193,
+"framemem": 762681432,
 "call": 5541970,
-"tls": 302004104,
+"tls": 1026928769,
 "got": 2010640,
 "guard": 8716590
 }
@@ -40442,11 +40546,11 @@
 "JS_CallInternal",
 297509613,
 {
-"rest": 210994982,
+"rest": 210182022,
 "framemem": 46795999,
 "guard": 3414195,
 "call": 3125723,
-"tls": 636242,
+"tls": 1449202,
 "got": 176735,
 "pushpop": 24273576,
 "stackcheck": 8091268,
@@ -40471,18 +40575,19 @@
 "morestack": 940,
 "stackcheck": 12360484,
 "pushpop": 37081212,
-"rest": 199063726,
+"rest": 195560676,
 "framemem": 13750930,
-"call": 827690
+"call": 827690,
+"tls": 3503050
 }
 ],
 [
 "js_call_c_function",
 230977352,
 {
-"rest": 145364834,
-"framemem": 27888753,
-"tls": 23880360,
+"rest": 109544294,
+"framemem": 23908693,
+"tls": 63680960,
 "pushpop": 23880360,
 "stackcheck": 7960120,
 "call": 1990030,
@@ -40578,9 +40683,10 @@
 {
 "stackcheck": 2064100,
 "pushpop": 6192300,
-"rest": 35908371,
+"rest": 35908367,
 "framemem": 14953964,
-"call": 516025
+"call": 516025,
+"tls": 4
 }
 ],
 [
@@ -40649,10 +40755,10 @@
 {
 "stackcheck": 2064016,
 "pushpop": 6192048,
-"rest": 18334831,
+"rest": 18334418,
 "framemem": 5670904,
 "call": 516010,
-"tls": 236
+"tls": 649
 }
 ],
 [
@@ -40874,13 +40980,13 @@
 },
 "classes": {
 "pushpop": 24197152,
-"rest": 521363281,
-"framemem": 90414881,
+"rest": 511981513,
+"framemem": 90412209,
 "call": 3118737,
 "stackcheck": 9192353,
 "morestack": 3834,
 "got": 2347307,
-"tls": 7786758,
+"tls": 17171198,
 "guard": 2260378
 },
 "calls": 3222177,
@@ -40894,9 +41000,9 @@
 "morestack": 1222,
 "stackcheck": 1628812,
 "pushpop": 4886118,
-"rest": 398415584,
+"rest": 389053927,
 "framemem": 48616442,
-"tls": 7326530,
+"tls": 16688187,
 "got": 2035148,
 "call": 750222,
 "guard": 2249635
@@ -41226,8 +41332,9 @@
 {
 "stackcheck": 6,
 "pushpop": 24,
-"rest": 875360,
+"rest": 872765,
 "framemem": 22428,
+"tls": 2595,
 "call": 9734
 }
 ],
@@ -41325,13 +41432,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1867759954,
+"rest": 1852603521,
 "pushpop": 177215404,
 "call": 24909487,
-"framemem": 302836432,
+"framemem": 302801619,
 "stackcheck": 67190516,
 "morestack": 49724,
-"tls": 12260850,
+"tls": 27452096,
 "got": 3536544,
 "guard": 13283004
 },
@@ -41345,9 +41452,9 @@
 {
 "stackcheck": 2644840,
 "pushpop": 7934208,
-"rest": 591251050,
+"rest": 576418900,
 "framemem": 84053511,
-"tls": 11607782,
+"tls": 26439932,
 "got": 3224385,
 "call": 4432276,
 "guard": 13247781,
@@ -41360,8 +41467,9 @@
 {
 "stackcheck": 39,
 "pushpop": 130,
-"rest": 259739342,
+"rest": 259721842,
 "framemem": 7859441,
+"tls": 17500,
 "call": 1050506
 }
 ],
@@ -41409,12 +41517,13 @@
 "JS_DefineProperty",
 100085350,
 {
-"rest": 54706711,
+"rest": 54706707,
 "pushpop": 12374424,
 "morestack": 4794,
 "stackcheck": 4125216,
 "framemem": 27843003,
-"call": 1031202
+"call": 1031202,
+"tls": 4
 }
 ],
 [
@@ -41463,10 +41572,10 @@
 {
 "stackcheck": 4124724,
 "pushpop": 12374172,
-"rest": 34031543,
+"rest": 34031130,
 "framemem": 10312304,
 "call": 1031187,
-"tls": 236
+"tls": 649
 }
 ],
 [
@@ -41525,10 +41634,11 @@
 {
 "stackcheck": 4193352,
 "pushpop": 2795540,
-"rest": 20796434,
-"framemem": 6637540,
+"rest": 20796039,
+"framemem": 6637487,
 "call": 1048633,
-"morestack": 658
+"morestack": 658,
+"tls": 448
 }
 ],
 [
@@ -41791,13 +41901,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1490659336,
+"rest": 1488655821,
 "pushpop": 117027023,
-"framemem": 142256136,
+"framemem": 142161213,
 "call": 12499802,
 "stackcheck": 39359224,
 "morestack": 13254,
-"tls": 2002158,
+"tls": 4100596,
 "got": 724443,
 "guard": 11909190
 },
@@ -41811,9 +41921,9 @@
 {
 "stackcheck": 349860,
 "pushpop": 1049520,
-"rest": 1102661580,
-"framemem": 52553950,
-"tls": 1482638,
+"rest": 1100767114,
+"framemem": 52471581,
+"tls": 3459473,
 "got": 411845,
 "call": 3971243,
 "guard": 11898432,
@@ -42212,8 +42322,9 @@
 {
 "stackcheck": 6,
 "pushpop": 24,
-"rest": 810681,
+"rest": 808086,
 "framemem": 20614,
+"tls": 2595,
 "call": 8947
 }
 ],
@@ -42248,13 +42359,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 846974551,
+"rest": 819867876,
 "pushpop": 36951716,
-"framemem": 150133393,
+"framemem": 148889721,
 "call": 4501901,
 "stackcheck": 13828873,
 "morestack": 6041,
-"tls": 21546384,
+"tls": 49896731,
 "got": 6037409,
 "guard": 3956679
 },
@@ -42269,9 +42380,9 @@
 "morestack": 4183,
 "stackcheck": 4723184,
 "pushpop": 14168484,
-"rest": 692776114,
-"framemem": 105866606,
-"tls": 20460236,
+"rest": 666632495,
+"framemem": 104729926,
+"tls": 47740535,
 "got": 5683400,
 "call": 1359457,
 "guard": 3945933
@@ -42377,9 +42488,9 @@
 {
 "stackcheck": 209624,
 "pushpop": 628872,
-"rest": 4285162,
-"framemem": 792337,
-"tls": 628872,
+"rest": 3341854,
+"framemem": 687525,
+"tls": 1676992,
 "call": 52406,
 "got": 41895
 }
@@ -42402,8 +42513,9 @@
 {
 "stackcheck": 15,
 "pushpop": 60,
-"rest": 5736428,
+"rest": 5729768,
 "framemem": 132421,
+"tls": 6660,
 "call": 38644
 }
 ],
@@ -42720,12 +42832,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 2452882425,
+"rest": 2398663977,
 "pushpop": 211877003,
 "call": 26171629,
-"framemem": 390502387,
+"framemem": 386892399,
 "stackcheck": 81463500,
-"tls": 40559946,
+"tls": 98388382,
 "morestack": 17368,
 "guard": 15008627,
 "got": 8099617
@@ -42740,9 +42852,9 @@
 {
 "stackcheck": 10244348,
 "pushpop": 30731718,
-"rest": 1353710060,
-"framemem": 198985620,
-"tls": 28058030,
+"rest": 1317888007,
+"framemem": 197428138,
+"tls": 65437565,
 "got": 7787408,
 "call": 6001816,
 "guard": 14997881,
@@ -42779,9 +42891,9 @@
 "morestack": 188,
 "stackcheck": 4014896,
 "pushpop": 12044640,
-"rest": 73275504,
-"framemem": 14052213,
-"tls": 12044640,
+"rest": 55208544,
+"framemem": 12044773,
+"tls": 32119040,
 "call": 1003720,
 "got": 95
 }
@@ -42953,8 +43065,9 @@
 {
 "stackcheck": 36,
 "pushpop": 144,
-"rest": 30834595,
+"rest": 30818450,
 "framemem": 592115,
+"tls": 16145,
 "call": 76269
 }
 ],
@@ -42964,9 +43077,10 @@
 {
 "stackcheck": 3389433,
 "pushpop": 2259614,
-"rest": 16793652,
-"framemem": 4983094,
+"rest": 16793257,
+"framemem": 4983041,
 "call": 482345,
+"tls": 448,
 "morestack": 188
 }
 ],
@@ -43139,9 +43253,10 @@
 {
 "stackcheck": 130665,
 "pushpop": 522648,
-"rest": 3277458,
-"framemem": 518652,
+"rest": 2977242,
+"framemem": 475764,
 "call": 554,
+"tls": 343104,
 "morestack": 47
 }
 ],
@@ -43192,13 +43307,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1007039530,
+"rest": 1006957252,
 "pushpop": 25409905,
-"framemem": 87197732,
+"framemem": 87192538,
 "call": 3176020,
 "stackcheck": 9432038,
 "morestack": 7877,
-"tls": 507074,
+"tls": 594546,
 "got": 325314,
 "guard": 932649
 },
@@ -43212,9 +43327,9 @@
 {
 "stackcheck": 11180,
 "pushpop": 33360,
-"rest": 872948385,
-"framemem": 49837871,
-"tls": 47354,
+"rest": 872887893,
+"framemem": 49835240,
+"tls": 110477,
 "got": 13155,
 "call": 307452,
 "guard": 921903,
@@ -43493,8 +43608,9 @@
 {
 "stackcheck": 12,
 "pushpop": 48,
-"rest": 2251099,
+"rest": 2245794,
 "framemem": 47442,
+"tls": 5305,
 "call": 10089
 }
 ],
@@ -43648,13 +43764,13 @@
 "alloca": 17
 },
 "classes": {
-"rest": 100276956,
+"rest": 100208924,
 "pushpop": 14686652,
-"framemem": 34465000,
+"framemem": 34460358,
 "call": 2266156,
 "stackcheck": 6266289,
 "morestack": 40876,
-"tls": 498281,
+"tls": 570955,
 "got": 322949,
 "guard": 45072
 },
@@ -43904,9 +44020,9 @@
 {
 "stackcheck": 9204,
 "pushpop": 27612,
-"rest": 1746560,
-"framemem": 261840,
-"tls": 38840,
+"rest": 1696947,
+"framemem": 259682,
+"tls": 90611,
 "got": 10790,
 "call": 11589,
 "guard": 34332
@@ -43982,8 +44098,9 @@
 {
 "stackcheck": 6,
 "pushpop": 24,
-"rest": 809775,
+"rest": 807180,
 "framemem": 20571,
+"tls": 2595,
 "call": 8934
 }
 ],
@@ -44100,15 +44217,15 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1248370654,
+"rest": 1229301971,
 "pushpop": 108258370,
-"framemem": 235335826,
+"framemem": 234222995,
 "call": 15590900,
 "stackcheck": 43882664,
 "morestack": 9999,
 "guard": 7400685,
 "got": 3546913,
-"tls": 15284028
+"tls": 35465542
 },
 "calls": 16711237,
 "dispatch_ijmp": 14822998,
@@ -44120,9 +44237,9 @@
 {
 "stackcheck": 3515332,
 "pushpop": 10545366,
-"rest": 650094933,
-"framemem": 87769243,
-"tls": 12044492,
+"rest": 635215323,
+"framemem": 87122302,
+"tls": 27571043,
 "got": 3234703,
 "call": 2696089,
 "guard": 7389921,
@@ -44248,9 +44365,9 @@
 {
 "stackcheck": 927424,
 "pushpop": 2782260,
-"rest": 17900619,
-"framemem": 3246108,
-"tls": 2782260,
+"rest": 13727229,
+"framemem": 2782398,
+"tls": 7419360,
 "call": 231855,
 "morestack": 47,
 "got": 90
@@ -44263,9 +44380,10 @@
 "morestack": 282,
 "stackcheck": 3578931,
 "pushpop": 2385942,
-"rest": 15555166,
-"framemem": 4820597,
-"call": 50882
+"rest": 15554771,
+"framemem": 4820544,
+"call": 50882,
+"tls": 448
 }
 ],
 [
@@ -44578,12 +44696,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 6765907039,
+"rest": 6025767935,
 "pushpop": 300020397,
 "call": 44545711,
-"framemem": 1162136250,
+"framemem": 1132727700,
 "stackcheck": 114079590,
-"tls": 327104202,
+"tls": 1096651856,
 "morestack": 23598,
 "got": 2519004,
 "guard": 12173189
@@ -44599,10 +44717,10 @@
 "morestack": 376,
 "stackcheck": 4876232,
 "pushpop": 14628600,
-"rest": 5175214168,
-"framemem": 788072122,
+"rest": 4475680193,
+"framemem": 762681432,
 "call": 5541970,
-"tls": 302004104,
+"tls": 1026928769,
 "got": 2010640,
 "guard": 8716590
 }
@@ -44611,12 +44729,12 @@
 "JS_CallInternal",
 286713696,
 {
-"rest": 201506820,
+"rest": 200693860,
 "pushpop": 24273576,
 "morestack": 1316,
 "stackcheck": 8091304,
-"framemem": 44696143,
-"tls": 636242,
+"framemem": 44660796,
+"tls": 1484549,
 "got": 176735,
 "guard": 3445853,
 "call": 3160103
@@ -44640,8 +44758,9 @@
 {
 "stackcheck": 12360496,
 "pushpop": 37081212,
-"rest": 199063726,
+"rest": 195560676,
 "framemem": 13750930,
+"tls": 3503050,
 "call": 827690,
 "morestack": 1081
 }
@@ -44650,9 +44769,9 @@
 "js_call_c_function",
 230977607,
 {
-"rest": 144656954,
-"framemem": 27416833,
-"tls": 23880360,
+"rest": 108836414,
+"framemem": 23436773,
+"tls": 63680960,
 "pushpop": 23880360,
 "stackcheck": 7960140,
 "call": 1990030,
@@ -44743,9 +44862,10 @@
 {
 "stackcheck": 2064100,
 "pushpop": 6192300,
-"rest": 36940676,
+"rest": 36940672,
 "framemem": 11335948,
-"call": 516025
+"call": 516025,
+"tls": 4
 }
 ],
 [
@@ -44813,10 +44933,10 @@
 {
 "stackcheck": 2064016,
 "pushpop": 6192048,
-"rest": 18334831,
+"rest": 18334418,
 "framemem": 5670904,
 "call": 516010,
-"tls": 236
+"tls": 649
 }
 ],
 [
@@ -45047,12 +45167,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 519041607,
+"rest": 509659827,
 "pushpop": 23834764,
-"framemem": 88047149,
+"framemem": 87637447,
 "call": 3130261,
 "stackcheck": 9227723,
-"tls": 7786764,
+"tls": 17578246,
 "got": 2347309,
 "morestack": 76263,
 "guard": 2261058
@@ -45067,9 +45187,9 @@
 {
 "stackcheck": 1628840,
 "pushpop": 4886124,
-"rest": 396412234,
-"framemem": 47218492,
-"tls": 7326536,
+"rest": 387050565,
+"framemem": 46811462,
+"tls": 17095235,
 "got": 2035150,
 "call": 750299,
 "guard": 2250312,
@@ -45394,8 +45514,9 @@
 {
 "stackcheck": 6,
 "pushpop": 24,
-"rest": 875360,
+"rest": 872765,
 "framemem": 22428,
+"tls": 2595,
 "call": 9734
 }
 ],
@@ -45499,12 +45620,12 @@
 "alloca": 17
 },
 "classes": {
-"rest": 1857682898,
+"rest": 1842526465,
 "pushpop": 177869273,
-"framemem": 293516360,
+"framemem": 292836670,
 "call": 25450501,
 "stackcheck": 68792665,
-"tls": 12260850,
+"tls": 28096973,
 "got": 3536544,
 "guard": 13305885,
 "morestack": 19485
@@ -45519,9 +45640,9 @@
 {
 "stackcheck": 2644824,
 "pushpop": 7934208,
-"rest": 561171677,
-"framemem": 83635479,
-"tls": 11607782,
+"rest": 546339527,
+"framemem": 82990602,
+"tls": 27084809,
 "got": 3224385,
 "guard": 13246179,
 "call": 4431767,
@@ -45532,11 +45653,12 @@
 "JS_RunGC",
 268663027,
 {
-"rest": 259752885,
+"rest": 259735385,
 "framemem": 7859454,
 "call": 1050493,
 "pushpop": 156,
-"stackcheck": 39
+"stackcheck": 39,
+"tls": 17500
 }
 ],
 [
@@ -45602,10 +45724,11 @@
 {
 "stackcheck": 4125224,
 "pushpop": 12374424,
-"rest": 56769370,
+"rest": 56769366,
 "framemem": 19593201,
 "call": 1031202,
-"morestack": 4888
+"morestack": 4888,
+"tls": 4
 }
 ],
 [
@@ -45636,11 +45759,11 @@
 61874166,
 {
 "framemem": 10312304,
-"rest": 34031543,
+"rest": 34031130,
 "pushpop": 12374172,
 "stackcheck": 4124724,
 "call": 1031187,
-"tls": 236
+"tls": 649
 }
 ],
 [
@@ -45699,10 +45822,11 @@
 {
 "stackcheck": 4193343,
 "pushpop": 2795540,
-"rest": 20796434,
-"framemem": 6637540,
+"rest": 20796039,
+"framemem": 6637487,
 "call": 1048633,
-"morestack": 517
+"morestack": 517,
+"tls": 448
 }
 ],
 [
