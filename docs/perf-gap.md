@@ -411,7 +411,7 @@ df016:   mov    %r12,(%r15)
 df019:   mov    %r8,0x8(%r15)
 ```
 
-回溯栈本身是 `alloca` 出来的，goc 把 `alloca` 降成 `goc_dynalloc`（堆上的 `cptr`），所以往里存指针都要走编码。`pc` 指向字节码、`cptr` 指向输入字符串，实际上都在堆上。【实测】
+`pc` 指向字节码、`cptr` 指向输入字符串，实际上都在堆上。要编码不是因为回溯栈字段没标色，而是 gstack 补丁的恢复宏用 `goc_uptr_decode` 读回 `pc`/`cptr`，解码结果被当成“可能指向栈”，之后每次压栈都要再编码，`pc+k` 也成了 GC 根。恢复改成普通整数转换后，`lre_exec` 里的编码和 `FS:-8` 读取全部消失；把字段标成 `cptr` 则没有变化。【实测：IR，只编译未运行】逐个指针的着色、编码/解码来源和实验见 [perf-gap/regexp-colors.md](perf-gap/regexp-colors.md)。
 
 tls 类还包括 JS 栈溢出检查：两个 goc 版本都打了 `qjs-gstack*.patch`，`js_check_stack_overflow` 改成每次用 `goc_stack_hi()` 读当前 `g->stack.hi` 再算深度（栈会搬家，不能用创建 runtime 时记下的绝对地址），每次 JS 调用都要执行。Bellard 的 tls 比 ng 多约 2 个点，逐子项看主要多在 DeltaBlue、Richards、EarleyBoyer 这几个调用密集的子项，具体是哪几处写入没有逐点拆开。【分类实测；来源拆分未做】
 
@@ -661,7 +661,7 @@ benchmark.md 的主表里，goc-bellard/Bellard 的 V8 是 0.80 倍，goc-ng/ng 
 | 4 | `memcmp` 每步 8 字节（补丁已有）或 SSE2 | 5.3 | **实测** 1 KiB 比较 366 → 83 ns，`string-validate-input` −20%；SSE2 估计可到 ~40 ns | 低 |
 | 5 | 超越函数（`sin/cos/exp/pow/log`…）不走 Go→cgo：C 实现（如 CORE-MATH 的正确舍入实现）或更轻的系统栈直调 | 5.1 | **估计** `3d-morph` −35%～40%、`math-partial-sums` −30% | 中：非正确舍入的实现会在最后一位和 glibc 不同，可能改变 SunSpider/test262 的输出，需逐位对照 |
 | 6 | uptr 检查：同一函数内 `g` 的读取不再 volatile（`g` 在 goroutine 生命周期内不变，`stack.lo/hi` 只在调用里变），可合并、可提到循环外；或默认用 `GOC_FIXED_G`（`r14` 固定存 `g`） | 4.4 | **估计** tls 类 9.4 个点 Ir 里能省一半左右，RegExp 最多快 10%+ | 中：直接关系到栈搬家的正确性；`GOC_FIXED_G` 的 Bellard 构建这次没编过（`goc-variants/bellard-fixedg/build.log`） |
-| 7 | 让编译器证明更多写入不指向栈：例如 `libregexp` 回溯栈的字段显式标成 `cptr`（`pc`、字符指针都在堆上） | 4.4 | **估计** RegExp 子项 Ir −15 个点（最热的块 48 → 约 26 条指令） | 中：源码补丁，需要确保这些值确实不会是栈地址 |
+| 7 | 让编译器证明更多写入不指向栈：`libregexp` 的 gstack 补丁恢复 `pc`/`cptr`/捕获时改用普通整数转换，不再 `goc_uptr_decode`（E1，见 [regexp-colors.md](perf-gap/regexp-colors.md)）。字段标 `cptr` 已证明无效（E2） | 4.4 | **估计** RegExp 子项 Ir −15 个点（最热的块 48 → 约 26 条指令）；E1 编译后 `lre_exec` 的 FS:-8 读取 29 → 0、pc 根槽消失，未运行 | 中：补丁改动；需要确保这些值确实不会是栈地址（test262、外部 `lre_exec` 调用者） |
 | 8 | GC 根槽不再 volatile：两个 safepoint 之间留在寄存器，只在调用前写回、调用后重读（类似 LLVM statepoint 的重定位） | 4.5 | **估计** 最多省 3.9 个点 Ir（`lre_exec` 2.5、`JS_CallInternal` 0.9） | 高：后端改动，漏一个就是搬栈后的悬垂指针 |
 | 9 | 只对非根槽恢复栈槽共享（`-no-stack-slot-sharing` 只作用于 stackmap 登记的槽） | 4.6 | **估计** `JS_CallInternal` 帧 1768 → 约 1200 字节，递归深度 +30% 以上；速度影响见 6.1 的单参数实验 | 中高：需要改 LLVM 的 StackSlotColoring 或在 goc-llc 里标记 |
 | 10 | 小叶子函数免栈检查（去掉 `GOC_NO_NOSPLIT=1`，让链接器检查 NOSPLIT 预算） | 4.7 | **估计** stackcheck 1.8 个点 Ir 的一部分；叶子调用每次 ~0.07 ns | 低中：超预算由链接器拒绝，不会静默出错 |
