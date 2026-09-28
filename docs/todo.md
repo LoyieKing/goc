@@ -79,6 +79,24 @@
 
 接下来先讨论方案，不在这里定实现。现在 Go 和 goc 没有函数指针互转：Go 走 ABIInternal thunk，C 的函数指针走 SysV `.impl`，C 调 Go 是手写的 `.goabi` 调用。`JS_NewCFunction2` 这类回调、闭包、以及其它跨边的值该怎么过，都留到这次讨论。
 
+## 开箱即用的 goc 编译器
+
+现在要用 goc，得先自己下 LLVM 19.1.7 源码、打补丁、编 Clang（几十分钟），再装好 `llc-19`、`opt-19` 等系统工具，设一串环境变量（`GOC_CLANG`、`GOC_MORESTACK` 等），最后用 `go build -toolexec` 接进 Go 的构建。门槛太高。下一版要做的：
+
+- 发布预编译的 goc 工具链（打过补丁的 Clang、goc 的 LLVM pass、elfpack、运行时），下载解压即可使用，不再要求系统装 LLVM 19。
+- 一个统一的 `goc` 命令接管整条流水线，默认值就是 QuickJS 验证过的那组配置，不需要手设环境变量。
+- 和 Go 构建的集成更简单：普通 Go 包里放 `.c` 文件，一条命令编完，不再需要手写 `.s` 占位文件和 `-toolexec` 参数。
+- 附带最小的端到端示例和安装后的自检命令。
+
+## 量化 goc 与 Go 互相调用的开销
+
+现在仓库里没有测过 Go 调用 goc、goc 调用 Go 各自一次要花多少时间。README 只说了“不切栈、不经过 `entersyscall`”，给不出数字。下一版要补：
+
+- 基准：空函数、少量整数参数、指针参数、浮点参数几种签名，分别测 Go 调 goc、goc 调 Go 的单次开销（ns/op）。
+- 对照组：同样签名的 Go 调 Go（不内联）、cgo、以及可能的话 purego / directcgo。
+- 同时测调用中触发搬栈的情况，看 morestack 在 goc 帧上的代价。
+- 结果写进 benchmark.md，图表带上所有对照组。
+
 ## 性能：缩小和原生 QuickJS 的差距
 
 来源是 [perf-gap.md](perf-gap.md) 第 8 节。收益一栏里，“实测”是 A/B 计时的结果（时间比，小于 1 表示变快）；“估计”是按指令份额推算的，没有计时验证。所有项都还没合入默认构建。合入任何一项前，都要重跑正确性对照：goc-ng 为 test262 1502/1526、官方测试 69/77；goc-bellard 为 1501/1526、73/77。
