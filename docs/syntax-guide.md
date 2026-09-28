@@ -405,12 +405,17 @@ void example_frame(cptr<JSRuntime> rt) {
     rt->current_stack_frame = /* unlink / 空 uptr */;
 }
 
-/* 非法：sptr / 栈绝对地址进堆 —— 编译错误（不会自动升成 uptr） */
-void bad(cptr<JSRuntime> rt) {
+/* v0.2.2 起：sptr 存进 T * / cptr 的堆字段，编译器自动用 uptr 编码该存储 */
+void implicit(cptr<JSRuntime> rt) {
     JSStackFrame sf_s;
     sptr<JSStackFrame> p = &sf_s;
-    rt->current_stack_frame_abs = p;                // ERROR：sptr 逃逸，无自动升格
-    rt->current_stack_frame_abs = &sf_s;            // ERROR：同上
+    rt->current_stack_frame_ptr = p;                // OK：该存储自动 uptr 编码，读出自动解码
+}
+
+/* 非法：返回栈地址 —— 编译错误（函数返回后栈帧已不存在，无法补救） */
+JSStackFrame *bad(void) {
+    JSStackFrame sf_s;
+    return &sf_s;                                   // ERROR：sptr 逃逸（返回栈指针）
 }
 
 /* gptr：独轨；写入 Go 堆槽自动写屏障 */
@@ -426,8 +431,8 @@ void use_go(gptr<GoObj> o, gptr<GoObj> *slot_on_go_heap) {
 1. union 禁止含指针色。  
 2. 指针分色：`cptr` / `sptr` / `uptr` / `auto_ptr`（`T *`）/ `gptr`；**无 `dsptr`**。  
 3. 禁止指针↔整数等野转换（除内建）。  
-4. 栈源绝对地址禁止入库；长寿栈引用须**显式** `uptr`（或 `auto_ptr` 一开始收成 `uptr`）；**`sptr` 逃逸 = 编译错误，无自动升格**。  
-5. `sptr` 指针字禁止进堆字段；跨 morestack 须 spill 到 stackmap 槽。  
+4. 栈源绝对地址禁止以绝对地址形式入库；存进 `T *` / `cptr` 的非栈存储时编译器自动改用 `uptr` 编码（v0.2.2），其它逃逸（返回栈指针、存进 `uptr` / `gptr` 显式色的非栈存储、用栈地址初始化全局）仍是编译错误。  
+5. `sptr` 的原始指针字不进堆字段（入库的是 `uptr` 编码）；跨 morestack 须 spill 到 stackmap 槽。  
 6. `gptr` 独轨 + stackmap + 写屏障；与其它色无隐式转换。  
 7. 栈探测用方言 API，不用 C builtin。  
 8. `alloca(n)` 降为函数作用域的 `cptr`（§7.2），不是栈上变长帧，也不是 `sptr`。  

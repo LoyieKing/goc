@@ -3,7 +3,7 @@
 | File | Intent |
 |------|--------|
 | `hello_colors.c` | OK: `sptr` out-param + `cptr` loads |
-| `sptr_escape_bad.c` | ERROR: stores `sptr` to a global (Sema) |
+| `sptr_escape_bad.c` | ERROR: returns a stack pointer (Sema). Storing `sptr` into a plain `T *` global is allowed and is encoded as `uptr` |
 
 Color checks only. Linking into Go is [docs/guide.md](../docs/guide.md). The verified program is `tests/goabi`.
 

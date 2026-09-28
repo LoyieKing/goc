@@ -149,7 +149,7 @@ func goabi_store(out *int32, v int32) int32
 
 C 的 `int` 是 32 位。Go 的 `int` 在 amd64 上是 64 位。按 C 类型写 Go 类型：`int` → `int32`，`long` → `int64`，`float` → `float32`，`double` → `float64`。
 
-`//go:noescape` 只表示这次调用不保留指针。C 把指针存进堆或全局，是另一件事：`sptr` 逃逸是编译错误，要长期保存就用 `uptr`。
+`//go:noescape` 只表示这次调用不保留指针。C 把指针存进堆或全局，是另一件事：把 `sptr` 存进普通 `T *` 或 `cptr` 的全局变量、堆字段时，编译器自动改用 `uptr` 编码，读出时自动解码；返回指向栈的指针、用栈地址初始化全局变量，是编译错误。
 
 不要在 Go 里声明 `.impl`。那是 C 内部的 SysV 入口。
 
@@ -190,7 +190,7 @@ Go 调用 main.goabi_add2
 
 ```bash
 ./cmd/goc cc -emit-llvm -S -o /tmp/hello.ll examples/hello_colors.c
-./cmd/goc cc -c examples/sptr_escape_bad.c   # 预期失败：sptr 写入全局
+./cmd/goc cc -c examples/sptr_escape_bad.c   # 预期失败：返回指向栈的指针
 ```
 
 `examples/` 只覆盖颜色，不是集成例子。
@@ -371,7 +371,7 @@ func goabi_store(out *int32, v int32) int32
 
 C `int` is 32 bits. Go `int` is 64 bits on amd64. Match the C type: `int` → `int32`, `long` → `int64`, `float` → `float32`, `double` → `float64`.
 
-`//go:noescape` means this call does not retain the pointer. Storing it into the heap or a global is separate: an `sptr` escape is a compile error. A pointer that must outlive the call is an `uptr`.
+`//go:noescape` means this call does not retain the pointer. Storing it into the heap or a global is separate: storing an `sptr` into a plain `T *` or `cptr` global or heap field is encoded as `uptr` automatically and decoded on load; returning a stack pointer or initializing a global with a stack address is a compile error.
 
 Do not declare `.impl` from Go. That symbol is the SysV entry used by other C.
 
@@ -412,7 +412,7 @@ To see Sema reject an escape without linking Go:
 
 ```bash
 ./cmd/goc cc -emit-llvm -S -o /tmp/hello.ll examples/hello_colors.c
-./cmd/goc cc -c examples/sptr_escape_bad.c   # expected failure: sptr stored to a global
+./cmd/goc cc -c examples/sptr_escape_bad.c   # expected failure: returns a stack pointer
 ```
 
 `examples/` covers colors only. It is not the integration example.
