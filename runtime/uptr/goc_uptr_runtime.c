@@ -33,6 +33,30 @@ void goc_uptr_fatal(const char *msg) {
   long n = (long)(end - text);
   /* write(2, text, n). Freestanding: no libc, and the message must survive
    * a trap that the Go traceback cannot attribute. */
+#if defined(__aarch64__)
+  /* Linux arm64 write is syscall 64 (x8). The buffer is pinned to x1 so
+   * the compiler cannot allocate it in x0, which this sequence overwrites
+   * with the file descriptor. */
+  {
+    register long x8 __asm__("x8") = 64;
+    register long x0 __asm__("x0") = 2;
+    register const char *x1 __asm__("x1") = text;
+    register long x2 __asm__("x2") = n;
+    __asm__ volatile("svc #0"
+                     : "+r"(x0)
+                     : "r"(x1), "r"(x2), "r"(x8)
+                     : "memory");
+    const char nl = '\n';
+    x8 = 64;
+    x0 = 2;
+    x1 = &nl;
+    x2 = 1;
+    __asm__ volatile("svc #0"
+                     : "+r"(x0)
+                     : "r"(x1), "r"(x2), "r"(x8)
+                     : "memory");
+  }
+#else
   __asm__ volatile("syscall"
                    :
                    : "a"(1), "D"(2), "S"(text), "d"(n)
@@ -42,6 +66,7 @@ void goc_uptr_fatal(const char *msg) {
                    :
                    : "a"(1), "D"(2), "S"(&nl), "d"(1)
                    : "rcx", "r11", "memory");
+#endif
   __builtin_trap();
   for (;;) {
   }
@@ -79,7 +104,30 @@ void goc_test_clear_stack_bounds(void) {
 #endif
 }
 
-/* linux/amd64 Go TLS — same convention as P1 morestack / P5 FS:-8. */
+/* g: linux/amd64 reads FS:-8 (P1 morestack / P5). linux/arm64 reads x28,
+ * which llc reserves; this TU must be compiled with that reservation. */
+#if defined(__aarch64__)
+static inline uintptr_t goc_tls_getg(void) {
+  uintptr_t g;
+  __asm__ volatile("mov %0, x28" : "=r"(g));
+  return g;
+}
+
+static inline uintptr_t goc_tls_stack_hi_inline(void) {
+  uintptr_t g = goc_tls_getg();
+  uintptr_t hi;
+  /* g.stack.hi is at g+8; stackguard0 stays at g+16. */
+  __asm__ volatile("ldr %0, [%1, #8]" : "=r"(hi) : "r"(g));
+  return hi;
+}
+
+static inline uintptr_t goc_tls_stack_lo_inline(void) {
+  uintptr_t g = goc_tls_getg();
+  uintptr_t lo;
+  __asm__ volatile("ldr %0, [%1]" : "=r"(lo) : "r"(g));
+  return lo;
+}
+#else
 static inline uintptr_t goc_tls_getg(void) {
   uintptr_t g;
   __asm__ volatile("movq %%fs:-8, %0" : "=r"(g));
@@ -99,6 +147,7 @@ static inline uintptr_t goc_tls_stack_lo_inline(void) {
   __asm__ volatile("movq 0(%1), %0" : "=r"(lo) : "r"(g));
   return lo;
 }
+#endif
 
 uintptr_t goc_runtime_getg(void) { return goc_tls_getg(); }
 uintptr_t goc_runtime_stack_hi(void) { return goc_tls_stack_hi_inline(); }

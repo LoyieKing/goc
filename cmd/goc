@@ -29,7 +29,12 @@ Environment:
                     Default off. Does not change colors. Adds -g so bare T*
                     names and declaration locations are in the table, then
                     strips that debug info before real-body lowering.
-  LLC          llc binary (default: llc-19)
+  GOC_ARCH     amd64 (default) or arm64. arm64 uses system llc-19
+               (aarch64, x28 reserved as g). Pointer colors stay the same.
+               Frame-address repair and GOC_SPTR_MAPS are refused. A TU that
+               contains the linux/amd64 host sequence (movq %%fs:-8 or
+               "syscall") is refused, except runtime/uptr.
+  LLC          llc binary (default: llc-19; arm64 forces stock llc-19)
   CLANG_FALLBACK  System clang when GOC_CLANG unset (default: clang-19)
 
 Product frontend: P28 in-tree Clang (Sema colors + escape; no -fplugin).
@@ -121,7 +126,7 @@ cmd_build() {
       -h|--help)
         echo "usage: goc build [foo.c -o foo.o] [-O0|-O1|-O2|-O3] [--all] [--goabi]  # or goc build → P28 test suite"
         echo "  --all: emit TEXT for every defined function (P29 multi-function)"
-        echo "  --goabi: Go amd64 ABIInternal entry thunks for supported signatures"
+        echo "  --goabi: Go ABIInternal entry thunks (amd64 SysV, or arm64 AAPCS64)"
         echo "  --abi0:  emit ABI0 TEXT (C-side SysV entry points, e.g. libc shim)"
         echo "  -O0..3: LLVM IR optimization level (overrides GOC_OPT_LEVEL)"
         exit 0
@@ -142,6 +147,33 @@ cmd_build() {
     OUT_O="${OUT_O%.goc}.o"
   fi
 
+  # Default stays linux/amd64. arm64 is a separate backend, not -march.
+  GOC_ARCH="${GOC_ARCH:-amd64}"
+  case "$GOC_ARCH" in
+    amd64|arm64) ;;
+    *) echo "goc build: FATAL GOC_ARCH=$GOC_ARCH (want amd64 or arm64)" >&2; exit 1 ;;
+  esac
+  export GOC_ARCH
+  if [[ "$GOC_ARCH" == arm64 ]]; then
+    # gep is unsafe across a stack copy until GocFrameAddrFix exists for
+    # AArch64, and the x86 leaq remat does not assemble. Force the stock
+    # llc path and refuse the x86 stack-map repairs.
+    export GOC_FRAMEADDR_MODE=asm
+    if [[ "${GOC_SPTR_MAPS:-0}" == 1 || "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
+      echo "goc build: FATAL GOC_SPTR_MAPS and GOC_CSR_ADJUST are x86-only; arm64 has no frame-address repair" >&2
+      exit 1
+    fi
+    case "$SRC" in
+      *runtime/uptr/*) ;;
+      *)
+        if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$SRC"; then
+          echo "goc build: FATAL $SRC is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
+          exit 1
+        fi
+        ;;
+    esac
+  fi
+
   local CLANG USE_PLUGIN=0
   CLANG="$(resolve_clang)"
   if ! is_intree_clang "$CLANG"; then
@@ -149,6 +181,12 @@ cmd_build() {
   fi
   local INC="$ROOT/include"
   local LLC="${LLC:-llc-19}"
+  if [[ "$GOC_ARCH" == arm64 ]]; then
+    # goc-llc is the X86-only in-tree backend. arm64 ISel is system llc-19.
+    case "$LLC" in
+      *goc-llc*) LLC=llc-19 ;;
+    esac
+  fi
   local REALBODY="$ROOT/backend/realbody/goc_p28_realbody.sh"
   local COLOR_ESC="$ROOT/frontend/color-escape/build/goc-color-escape"
   local PLUGIN="$ROOT/build/libGocClang.so"
@@ -210,6 +248,11 @@ cmd_build() {
     fi
   fi
 
+  if [[ "$GOC_ARCH" == arm64 ]]; then
+    # IR datalayout must be aarch64. -ffixed-x28 matches llc's reservation
+    # of g; the in-tree clang accepts it and records +reserve-x28.
+    CLANG_ARGS+=(-target aarch64-unknown-linux-gnu -ffixed-x28)
+  fi
   if ! "$CLANG" "${CLANG_ARGS[@]}" "${EXTRA[@]}" -o "$TMP/a.ll" "$SRC"; then
     echo "goc build: Clang Sema/frontend failed for $SRC" >&2
     cleanup_build_tmp
@@ -308,6 +351,7 @@ cmd_build() {
     if [[ $GOABI -eq 1 ]]; then RB_ARGS+=(--goabi); fi
     if [[ $ABI0 -eq 1 ]]; then RB_ARGS+=(--abi0); fi
     if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" GOC_OPT_LEVEL="$OPT_LEVEL" \
+        GOC_ARCH="$GOC_ARCH" LLC="$LLC" \
         GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
         "$REALBODY" "${RB_ARGS[@]}"; then
       echo "goc build: wrote multi-function real-body goobj $OUT_O (all fns; not seedMIR)"
@@ -327,6 +371,7 @@ cmd_build() {
       p21_gptr_store) GOSYM="main.P21GptrStoreWB" ;;
     esac
     if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" GOC_OPT_LEVEL="$OPT_LEVEL" \
+        GOC_ARCH="$GOC_ARCH" LLC="$LLC" \
         GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
         "$REALBODY" "$BODY_LL" "$OUT_O" "$FN" "$GOSYM"; then
       echo "goc build: wrote real-body goobj $OUT_O (fn=$FN; not seedMIR)"

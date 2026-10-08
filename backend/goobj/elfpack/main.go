@@ -290,7 +290,7 @@ func makeConstPcsp(ctxt *obj.Link, size int64, spdelta int32) *obj.LSym {
 	var dst []byte
 	n := binary.PutVarint(buf, int64(spdelta-(-1)))
 	dst = append(dst, buf[:n]...)
-	n = binary.PutUvarint(buf, uint64(size))
+	n = binary.PutUvarint(buf, pcSpanUnits(ctxt, size))
 	dst = append(dst, buf[:n]...)
 	dst = append(dst, 0)
 	sym.P = dst
@@ -348,7 +348,11 @@ func makePcdataFromTransitions(ctxt *obj.Link, size int64, trans []pcValue) *obj
 		}
 		n := binary.PutVarint(buf, int64(s.val)-int64(prevVal))
 		dst = append(dst, buf[:n]...)
-		n = binary.PutUvarint(buf, uint64(end-s.start))
+		// PC spans are in MinLC units. amd64 MinLC is 1, so this is the
+		// byte length. arm64 MinLC is 4; the runtime multiplies by
+		// PCQuantum and would otherwise walk four times too far.
+		// The value itself stays a byte SP delta.
+		n = binary.PutUvarint(buf, pcSpanUnits(ctxt, end-s.start))
 		dst = append(dst, buf[:n]...)
 		prevVal = s.val
 	}
@@ -356,6 +360,20 @@ func makePcdataFromTransitions(ctxt *obj.Link, size int64, trans []pcValue) *obj
 	sym.P = dst
 	sym.Size = int64(len(dst))
 	return sym
+}
+
+// pcSpanUnits converts a byte length into the pctab's PC quantum.
+// MinLC 1 (amd64) leaves the length unchanged.
+func pcSpanUnits(ctxt *obj.Link, span int64) uint64 {
+	minLC := int64(1)
+	if ctxt != nil && ctxt.Arch != nil && ctxt.Arch.MinLC > 0 {
+		minLC = int64(ctxt.Arch.MinLC)
+	}
+	if span < 0 || span%minLC != 0 {
+		fmt.Fprintf(os.Stderr, "elfpack: FATAL pc span %d is not a multiple of MinLC %d\n", span, minLC)
+		os.Exit(1)
+	}
+	return uint64(span / minLC)
 }
 
 // ---------------------------------------------------------------------------
@@ -460,6 +478,10 @@ func pcRelELF(t uint32) bool {
 // rel32 fields of its branches to the stub. The stub is emitted after the body,
 // so the caller patches them with patchSplitCheck once that offset is known.
 func gocSplitCheck(frame int32, preserveArgs bool) ([]byte, []int) {
+	if gocIsArm64() {
+		// X16/X17 are not argument registers, so preserveArgs is unused.
+		return arm64SplitCheck(frame)
+	}
 	var b []byte
 	var branches []int
 	spBias := int32(0)
@@ -526,6 +548,10 @@ func gocSplitCheck(frame int32, preserveArgs bool) ([]byte, []int) {
 
 // patchSplitCheck resolves the check's forward branches to the stub offset.
 func patchSplitCheck(b []byte, branches []int, stub int) {
+	if gocIsArm64() {
+		arm64PatchCond(b, branches, stub)
+		return
+	}
 	for _, off := range branches {
 		binary.LittleEndian.PutUint32(b[off:], uint32(int32(stub-(off+4))))
 	}
@@ -621,6 +647,9 @@ func gocArgSpillInsn(a metaArgSpill, load bool) []byte {
 // fields. morestack clobbers every caller-saved register: save the ABIInternal
 // arguments in their caller-allocated spill slots and reload after stack copy.
 func gocSplitStub(preserveArgs bool, argSpills []metaArgSpill) (stub []byte, callRel, jmpRel int) {
+	if gocIsArm64() {
+		return arm64SplitStub(argSpills)
+	}
 	if preserveArgs {
 		// Only the failed check reaches the stub, still holding both pushes.
 		stub = append(stub, 0x41, 0x5b, 0x41, 0x5a) // POP R11; POP R10
@@ -821,6 +850,9 @@ var sysvStubCode, sysvStubCallRel, sysvStubJmpRel, sysvStubSP = gocSysvSplitStub
 // gocBodyTerminates reports whether the LLVM body cannot fall through into an
 // appended stub: it must end in a return/jump/trap.
 func gocBodyTerminates(code []byte) bool {
+	if gocIsArm64() {
+		return arm64BodyTerminates(code)
+	}
 	if len(code) == 0 {
 		return false
 	}
@@ -868,16 +900,24 @@ func emitStackmapROData(ctxt *obj.Link, name string, b []byte) {
 // linker has to apply. isCall separates the safepoints (CALL) from the refs
 // that can never grow the stack (JMP/Jcc/LEA).
 type bakedRef struct {
-	dispOff int64 // rel8/rel32 field, function-relative
+	dispOff int64 // rel8/rel32 field, function-relative (the instruction on arm64)
 	insnLen int64
 	rel8    bool
 	isCall  bool
+	// pcAtInsn: AArch64 PC-relative offsets are from this instruction, not
+	// the next one. imm26: the displacement is a sign-extended 26-bit word
+	// offset in the low bits; clear only those bits (the linker ORs).
+	pcAtInsn bool
+	imm26    bool
 }
 
 // decodeBakedRef decodes the branch / address-materialization instruction that
 // starts at off. Only the forms llc emits for intra-object .text references are
 // accepted; anything else is reported by the caller, never guessed at.
 func decodeBakedRef(code []byte, off int64) (bakedRef, bool) {
+	if gocIsArm64() {
+		return decodeBakedRefARM64(code, off)
+	}
 	if off < 0 || off >= int64(len(code)) {
 		return bakedRef{}, false
 	}
@@ -905,6 +945,9 @@ func decodeBakedRef(code []byte, off int64) (bakedRef, bool) {
 // displacement to bake. A RIP-relative memory operand may still have an ELF
 // relocation, which the ordinary relocation pass handles.
 func isIndirectCall(code []byte, off int64) bool {
+	if gocIsArm64() {
+		return arm64IsIndirectCall(code, off)
+	}
 	if off < 0 || off >= int64(len(code)) {
 		return false
 	}
@@ -925,6 +968,13 @@ func isIndirectCall(code []byte, off int64) bool {
 // findCallSites returns file-relative offsets of CALL rel32 (0xe8) in code,
 // using ELF PLT32/PC32 relocs whose preceding byte is 0xe8.
 func findCallSites(code []byte, baseOff uint64, rels []rela, syms []elf.Symbol) []callSite {
+	if gocIsArm64() {
+		names := make([]string, len(syms))
+		for i := range syms {
+			names[i] = syms[i].Name
+		}
+		return findCallSitesARM64(code, baseOff, rels, names)
+	}
 	var out []callSite
 	for _, r := range rels {
 		if r.Off < baseOff || r.Off >= baseOff+uint64(len(code)) {
@@ -999,6 +1049,42 @@ func main() {
 	}
 	defer ef.Close()
 
+	switch ef.Machine {
+	case elf.EM_X86_64:
+		gocArch = "amd64"
+	case elf.EM_AARCH64:
+		gocArch = "arm64"
+	default:
+		fmt.Fprintf(os.Stderr, "elfpack: FATAL unsupported ELF machine %d in %s\n", ef.Machine, *elfPath)
+		os.Exit(1)
+	}
+	// HeaderString reads GOARCH, not the ELF machine. A host-built elfpack
+	// defaults that to amd64, so an arm64 object must be packed with
+	// GOARCH=arm64 or the linker rejects the header.
+	goarch := os.Getenv("GOARCH")
+	if goarch == "" {
+		goarch = "amd64"
+	}
+	if goarch != gocArch {
+		fmt.Fprintf(os.Stderr, "elfpack: FATAL ELF is %s but GOARCH=%s; the goobj header follows GOARCH\n", gocArch, goarch)
+		os.Exit(1)
+	}
+	if gocIsArm64() {
+		// GocFrameAddrFix is an X86 pass. The leaq asm does not assemble
+		// on AArch64 (the memory operand is already a register). Refuse
+		// the map rather than emit a bitmap the copier would mis-apply.
+		if useSptrMaps || os.Getenv("GOC_CSR_ADJUST") == "1" {
+			fmt.Fprintf(os.Stderr, "elfpack: FATAL GOC_SPTR_MAPS and GOC_CSR_ADJUST are x86-only; arm64 has no frame-address repair\n")
+			os.Exit(1)
+		}
+		for _, fn := range meta.Functions {
+			if len(fn.SptrSlots) > 0 {
+				fmt.Fprintf(os.Stderr, "elfpack: FATAL %s has sptr slots; arm64 does not emit stack maps\n", fn.GoSym)
+				os.Exit(1)
+			}
+		}
+	}
+
 	textSec := ef.Section(".text")
 	if textSec == nil {
 		fmt.Fprintf(os.Stderr, "elfpack: FATAL no .text in %s\n", *elfPath)
@@ -1035,27 +1121,33 @@ func main() {
 	}
 
 	// P13 reloc hardening: PLT32 addend must be -4; PC32 typically -4 or -5 (with rex/modrm).
+	// arm64 CALL26/JUMP26 addend must be 0 because the linker ORs imm26.
 	relocOK := 0
-	for _, r := range rels {
-		switch r.Type {
-		case uint32(elf.R_X86_64_PLT32):
-			if r.Add != -4 {
-				fmt.Fprintf(os.Stderr, "elfpack: FATAL PLT32 at 0x%x addend=%d want -4 (llc PIC call)\n", r.Off, r.Add)
-				os.Exit(1)
+	if gocIsArm64() {
+		relocOK = arm64CheckRelocs(rels)
+		fmt.Printf("elfpack: reloc check OK (%d arm64 relocs)\n", relocOK)
+	} else {
+		for _, r := range rels {
+			switch r.Type {
+			case uint32(elf.R_X86_64_PLT32):
+				if r.Add != -4 {
+					fmt.Fprintf(os.Stderr, "elfpack: FATAL PLT32 at 0x%x addend=%d want -4 (llc PIC call)\n", r.Off, r.Add)
+					os.Exit(1)
+				}
+				relocOK++
+			case uint32(elf.R_X86_64_PC32):
+				// RIP-relative refs: -4/-5 for direct refs, but local symbol refs
+				// (e.g. .rodata / jump-table offsets in large TUs) carry any addend.
+				// The translation (A' = A+4) is addend-agnostic; only range matters.
+				if r.Add < math.MinInt32 || r.Add > math.MaxInt32 {
+					fmt.Fprintf(os.Stderr, "elfpack: FATAL PC32 at 0x%x addend=%d out of int32 range\n", r.Off, r.Add)
+					os.Exit(1)
+				}
+				relocOK++
 			}
-			relocOK++
-		case uint32(elf.R_X86_64_PC32):
-			// RIP-relative refs: -4/-5 for direct refs, but local symbol refs
-			// (e.g. .rodata / jump-table offsets in large TUs) carry any addend.
-			// The translation (A' = A+4) is addend-agnostic; only range matters.
-			if r.Add < math.MinInt32 || r.Add > math.MaxInt32 {
-				fmt.Fprintf(os.Stderr, "elfpack: FATAL PC32 at 0x%x addend=%d out of int32 range\n", r.Off, r.Add)
-				os.Exit(1)
-			}
-			relocOK++
 		}
+		fmt.Printf("elfpack: reloc check OK (%d PLT32/PC32 addends match llc PIC expectations)\n", relocOK)
 	}
-	fmt.Printf("elfpack: reloc check OK (%d PLT32/PC32 addends match llc PIC expectations)\n", relocOK)
 	if *checkOnly {
 		fmt.Println("elfpack: -check-relocs done")
 		return
@@ -1288,7 +1380,12 @@ func main() {
 		abiByGoSym[r.goSym] = r.abi
 	}
 
-	ctxt := obj.Linknew(&x86.Linkamd64)
+	var ctxt *obj.Link
+	if gocIsArm64() {
+		ctxt = obj.Linknew(&linkARM64)
+	} else {
+		ctxt = obj.Linknew(&x86.Linkamd64)
+	}
 	ctxt.IsAsm = true
 	ctxt.Pkgpath = *pkg
 	ctxt.DiagFunc = func(format string, args ...interface{}) {
@@ -2126,20 +2223,24 @@ func main() {
 			var typ objabi.RelocType
 			siz := 4
 			goAdd := baseAdd
-			switch r.Type {
-			case uint32(elf.R_X86_64_64):
-				typ, siz = objabi.R_ADDR, 8
-			case uint32(elf.R_X86_64_32), uint32(elf.R_X86_64_32S):
-				typ = objabi.R_ADDR
-			case uint32(elf.R_X86_64_PC32), uint32(elf.R_X86_64_PLT32):
-				// resolveTarget already converted ELF's S+A-P into an absolute
-				// symbol-relative addend (A+4). Go R_PCREL subtracts Siz=4 at
-				// link time, so another +4 would jump four bytes into each
-				// switch case (QJS .rodata jump tables use .text+addend).
-				typ, goAdd = objabi.R_PCREL, baseAdd
-			default:
-				fmt.Fprintf(os.Stderr, "elfpack: FATAL unsupported data reloc type %d in %s at +0x%x\n", r.Type, secName[i], off)
-				os.Exit(1)
+			if gocIsArm64() {
+				typ, siz, goAdd = arm64DataReloc(r.Type, baseAdd, secName[i], off)
+			} else {
+				switch r.Type {
+				case uint32(elf.R_X86_64_64):
+					typ, siz = objabi.R_ADDR, 8
+				case uint32(elf.R_X86_64_32), uint32(elf.R_X86_64_32S):
+					typ = objabi.R_ADDR
+				case uint32(elf.R_X86_64_PC32), uint32(elf.R_X86_64_PLT32):
+					// resolveTarget already converted ELF's S+A-P into an absolute
+					// symbol-relative addend (A+4). Go R_PCREL subtracts Siz=4 at
+					// link time, so another +4 would jump four bytes into each
+					// switch case (QJS .rodata jump tables use .text+addend).
+					typ, goAdd = objabi.R_PCREL, baseAdd
+				default:
+					fmt.Fprintf(os.Stderr, "elfpack: FATAL unsupported data reloc type %d in %s at +0x%x\n", r.Type, secName[i], off)
+					os.Exit(1)
+				}
 			}
 			hostSym.AddRel(ctxt, obj.Reloc{
 				Off:  int32(relOff),
@@ -2206,12 +2307,25 @@ func main() {
 		// symbol without guessing from the name. The offsets come from the
 		// meta's disassembly, so this cannot mis-decode an unrelated 0xe8.
 		var disp int64
-		if r.rel8 {
+		if r.imm26 {
+			w := binary.LittleEndian.Uint32(pe.code[off:])
+			imm := int64(w & 0x03ffffff)
+			if imm&(1<<25) != 0 {
+				imm -= 1 << 26
+			}
+			disp = imm << 2
+		} else if r.rel8 {
 			disp = int64(int8(pe.code[r.dispOff]))
 		} else {
 			disp = int64(int32(binary.LittleEndian.Uint32(pe.code[r.dispOff:])))
 		}
-		targetOff := int64(pe.baseOff) + off + r.insnLen + disp
+		// x86 displacements are from the next instruction. AArch64's are
+		// from the instruction itself.
+		origin := int64(pe.baseOff) + off
+		if !r.pcAtInsn {
+			origin += r.insnLen
+		}
+		targetOff := origin + disp
 		if targetOff >= int64(pe.baseOff) &&
 			targetOff < int64(pe.baseOff)+int64(len(pe.code)) &&
 			targetOff != int64(pe.baseOff) {
@@ -2244,9 +2358,22 @@ func main() {
 			fmt.Fprintf(os.Stderr, "elfpack: FATAL %s: unresolved %s target %q at +0x%x\n", pe.sym.Name, what, callee, off)
 			os.Exit(1)
 		}
-		binary.LittleEndian.PutUint32(pe.code[r.dispOff:], 0)
+		if r.imm26 {
+			w := binary.LittleEndian.Uint32(pe.code[r.dispOff:])
+			binary.LittleEndian.PutUint32(pe.code[r.dispOff:], w&^0x03ffffff)
+		} else {
+			binary.LittleEndian.PutUint32(pe.code[r.dispOff:], 0)
+		}
 		relType := objabi.R_PCREL
-		if r.isCall {
+		if r.imm26 {
+			// Both BL and B are R_CALLARM64. The linker rejects a non-zero
+			// addend on a PLT call and ORs the displacement into imm26.
+			if add != 0 {
+				fmt.Fprintf(os.Stderr, "elfpack: FATAL %s: arm64 %s at +0x%x has addend %d, want 0\n", pe.sym.Name, what, off, add)
+				os.Exit(1)
+			}
+			relType = objabi.R_CALLARM64
+		} else if r.isCall {
 			relType = objabi.R_CALL
 		}
 		bakedRels[pi] = append(bakedRels[pi], obj.Reloc{
@@ -2292,6 +2419,10 @@ func main() {
 			checkFrame = 16 // the thunk's two pushes; the reserve is gone
 		}
 		if gocWantsSplit(pe.req) {
+			if gocIsArm64() && (len(pe.code)%4 != 0 || pe.baseOff%4 != 0) {
+				fmt.Fprintf(os.Stderr, "elfpack: FATAL %s: arm64 body length %d at 0x%x is not 4-byte aligned\n", s.Name, len(pe.code), pe.baseOff)
+				os.Exit(1)
+			}
 			if !gocBodyTerminates(pe.code) {
 				fmt.Fprintf(os.Stderr, "elfpack: note %s frame=%d: body tail is not a ret/jmp/trap (tail byte 0x%02x); trapping fallthrough\n", s.Name, pe.frame, pe.code[len(pe.code)-1])
 			}
@@ -2299,19 +2430,29 @@ func main() {
 			var stub []byte
 			var callRel, jmpRel int
 			if pe.req.abi == obj.ABI0 {
-				stub, callRel, jmpRel = sysvStubCode, sysvStubCallRel, sysvStubJmpRel
+				if gocIsArm64() {
+					stub, callRel, jmpRel, _ = arm64SysvSplitStub()
+				} else {
+					stub, callRel, jmpRel = sysvStubCode, sysvStubCallRel, sysvStubJmpRel
+				}
 			} else {
 				stub, callRel, jmpRel = gocSplitStub(preserveArgs, pe.req.argSpills)
 			}
 			stubCallRel, stubJmpRel = callRel, jmpRel
 			checkLen = len(pre)
-			// 0f 0b (UD2): the stub must never be entered by fallthrough.
-			stubOff = checkLen + len(pe.code) + 2
+			// amd64: 0f 0b (UD2). arm64: 4-byte BRK #1. The stub must never
+			// be entered by fallthrough. The length is fixed so the pcsp
+			// stubOff matches this insertion.
+			trap := []byte{0x0f, 0x0b}
+			if gocIsArm64() {
+				trap = arm64Trap()
+			}
+			stubOff = checkLen + len(pe.code) + len(trap)
 			patchSplitCheck(pre, branches, stubOff)
 			code := make([]byte, 0, stubOff+len(stub))
 			code = append(code, pre...)
 			code = append(code, pe.code...)
-			code = append(code, 0x0f, 0x0b)
+			code = append(code, trap...)
 			code = append(code, stub...)
 			s.P = code
 			nMorestack++
@@ -2329,55 +2470,60 @@ func main() {
 			}
 		}
 
-		// Reloc translation
-		for _, r := range rels {
-			if r.Off < pe.baseOff || r.Off >= pe.baseOff+uint64(len(pe.code)) {
-				continue
-			}
-			off := int64(r.Off-pe.baseOff) + int64(checkLen)
-			target, baseAdd, ename := resolveTarget(r)
-			if target == nil {
-				fmt.Fprintf(os.Stderr, "elfpack: FATAL reloc at %s+0x%x with unresolved symbol %q\n", s.Name, off, ename)
-				os.Exit(1)
-			}
-			// GOTPCREL/GOTPCRELX (9/41/42): redirect through a materialized slot.
-			if r.Type == 9 || r.Type == 41 || r.Type == 42 {
-				target = gotSlot(target, baseAdd)
-				baseAdd = 0
-				r.Type = uint32(elf.R_X86_64_PC32)
-			}
-			var typ objabi.RelocType
-			switch r.Type {
-			case uint32(elf.R_X86_64_PLT32), uint32(elf.R_X86_64_PC32):
-				if off > 0 && s.P[off-1] == 0xe8 {
-					typ = objabi.R_CALL
-				} else {
-					typ = objabi.R_PCREL
+		// Reloc translation. arm64 pairs ADRP+LO12 into one size-8 reloc
+		// and uses R_CALLARM64; the x86 loop below is unchanged.
+		if gocIsArm64() {
+			arm64EmitTextRelocs(ctxt, s, pe.code, pe.baseOff, checkLen, rels, resolveTarget)
+		} else {
+			for _, r := range rels {
+				if r.Off < pe.baseOff || r.Off >= pe.baseOff+uint64(len(pe.code)) {
+					continue
 				}
-			case uint32(elf.R_X86_64_32S), uint32(elf.R_X86_64_32):
-				typ = objabi.R_ADDR
-			default:
-				fmt.Fprintf(os.Stderr, "elfpack: FATAL unsupported ELF reloc type %d for %s at +0x%x\n", r.Type, s.Name, off)
-				os.Exit(1)
+				off := int64(r.Off-pe.baseOff) + int64(checkLen)
+				target, baseAdd, ename := resolveTarget(r)
+				if target == nil {
+					fmt.Fprintf(os.Stderr, "elfpack: FATAL reloc at %s+0x%x with unresolved symbol %q\n", s.Name, off, ename)
+					os.Exit(1)
+				}
+				// GOTPCREL/GOTPCRELX (9/41/42): redirect through a materialized slot.
+				if r.Type == 9 || r.Type == 41 || r.Type == 42 {
+					target = gotSlot(target, baseAdd)
+					baseAdd = 0
+					r.Type = uint32(elf.R_X86_64_PC32)
+				}
+				var typ objabi.RelocType
+				switch r.Type {
+				case uint32(elf.R_X86_64_PLT32), uint32(elf.R_X86_64_PC32):
+					if off > 0 && s.P[off-1] == 0xe8 {
+						typ = objabi.R_CALL
+					} else {
+						typ = objabi.R_PCREL
+					}
+				case uint32(elf.R_X86_64_32S), uint32(elf.R_X86_64_32):
+					typ = objabi.R_ADDR
+				default:
+					fmt.Fprintf(os.Stderr, "elfpack: FATAL unsupported ELF reloc type %d for %s at +0x%x\n", r.Type, s.Name, off)
+					os.Exit(1)
+				}
+				// resolveTarget already normalized the addend to an absolute
+				// offset from the symbol start, which is exactly Go's A'.
+				goAdd := baseAdd
+				if dbg := os.Getenv("GOC_DBG_RELOC"); dbg != "" && (strings.Contains(s.Name, dbg) || strings.Contains(ename, dbg) || strings.Contains(target.Name, dbg)) {
+					fmt.Fprintf(os.Stderr, "elfpack-DBG sym=%s off=0x%x prev=0x%02x ename=%q target=%q elfType=%d baseAdd=%d goAdd=%d typ=%v\n",
+						s.Name, off, s.P[off-1], ename, target.Name, r.Type, baseAdd, goAdd, typ)
+				}
+				if typ == objabi.R_CALL && goAdd != 0 {
+					fmt.Fprintf(os.Stderr, "elfpack: FATAL R_CALL addend for %s+0x%x: goAdd=%d want 0 (from ELF A=-4)\n", s.Name, off, goAdd)
+					os.Exit(1)
+				}
+				s.AddRel(ctxt, obj.Reloc{
+					Off:  int32(off),
+					Siz:  4,
+					Type: typ,
+					Add:  goAdd,
+					Sym:  target,
+				})
 			}
-			// resolveTarget already normalized the addend to an absolute
-			// offset from the symbol start, which is exactly Go's A'.
-			goAdd := baseAdd
-			if dbg := os.Getenv("GOC_DBG_RELOC"); dbg != "" && (strings.Contains(s.Name, dbg) || strings.Contains(ename, dbg) || strings.Contains(target.Name, dbg)) {
-				fmt.Fprintf(os.Stderr, "elfpack-DBG sym=%s off=0x%x prev=0x%02x ename=%q target=%q elfType=%d baseAdd=%d goAdd=%d typ=%v\n",
-					s.Name, off, s.P[off-1], ename, target.Name, r.Type, baseAdd, goAdd, typ)
-			}
-			if typ == objabi.R_CALL && goAdd != 0 {
-				fmt.Fprintf(os.Stderr, "elfpack: FATAL R_CALL addend for %s+0x%x: goAdd=%d want 0 (from ELF A=-4)\n", s.Name, off, goAdd)
-				os.Exit(1)
-			}
-			s.AddRel(ctxt, obj.Reloc{
-				Off:  int32(off),
-				Siz:  4,
-				Type: typ,
-				Add:  goAdd,
-				Sym:  target,
-			})
 		}
 
 		// Branches llc had resolved itself, now handed to the linker.
@@ -2389,18 +2535,28 @@ func main() {
 		// Slow-path stub relocations: CALL runtime.morestack_noctxt (ABI0, as
 		// in Go's own split prologue) and JMP back to the function entry.
 		if stubOff > 0 {
+			callType := objabi.R_CALL
+			jmpType := objabi.R_PCREL
+			if gocIsArm64() {
+				// Off is the instruction, not a displacement byte. Both the
+				// BL and the retry B are R_CALLARM64 with imm26 left 0.
+				callType = objabi.R_CALLARM64
+				jmpType = objabi.R_CALLARM64
+			}
 			s.AddRel(ctxt, obj.Reloc{
 				Off:  int32(stubOff + stubCallRel),
 				Siz:  4,
-				Type: objabi.R_CALL,
+				Type: callType,
 				Sym:  ctxt.Lookup("runtime.morestack_noctxt"),
 			})
-			s.AddRel(ctxt, obj.Reloc{
-				Off:  int32(stubOff + stubJmpRel),
-				Siz:  4,
-				Type: objabi.R_PCREL,
-				Sym:  s,
-			})
+			if stubJmpRel >= 0 {
+				s.AddRel(ctxt, obj.Reloc{
+					Off:  int32(stubOff + stubJmpRel),
+					Siz:  4,
+					Type: jmpType,
+					Sym:  s,
+				})
+			}
 		}
 
 		// Dense PCDATA at CALL safepoints
@@ -2560,9 +2716,14 @@ func main() {
 		}
 	}
 
-	// pcsp: PUSH BP (+8) + SUB $frame → spdelta = frame+8 when frame>0
+	// pcsp: PUSH BP (+8) + SUB $frame → spdelta = frame+8 when frame>0.
+	// arm64 has no pushed return address: spdelta is the SP decrement.
 	for _, pe := range pend {
 		s := pe.sym
+		if gocIsArm64() {
+			arm64ApplyPcsp(ctxt, s, pe.code, pe.frame, pe.req)
+			continue
+		}
 		fi := s.Func()
 		fi.Locals = int32(pe.frame)
 		s.Set(obj.AttrNoFrame, pe.frame == 0)

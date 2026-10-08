@@ -4,9 +4,10 @@
 #   --all:   emit TEXT for every defined function in the TU (multi-function, P29);
 #            frames derived from each llc prologue, per-function CALL lists.
 #            Real-MF pointer maps are not available yet → stackmap_index=-1.
-#   --goabi: Go amd64 ABIInternal entry thunks (int/ptr subset, <=6 args): each
-#            eligible F is renamed F.impl (SysV body, internal calls unchanged)
-#            and gains a Go-ABI thunk F (Go arg regs -> SysV regs, jmp F.impl).
+#   --goabi: Go ABIInternal entry thunks for the three call paths that exist
+#            today (Go→C thunk, C→C on the platform ABI, C→Go .goabi).
+#            GOC_ARCH=amd64 (default): SysV rdi/rsi/...  arm64: AAPCS64 x0–x7.
+#            Each eligible F is renamed F.impl and gains a thunk F.
 set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${GOC_ROOT:-$(cd "$SELF/../.." && pwd)}"
@@ -48,6 +49,27 @@ if [[ -z "$CLANG" ]]; then
   done
   [[ -n "$CLANG" ]] || CLANG="${CLANG_FALLBACK:-clang-19}"
 fi
+# Default stays linux/amd64. arm64 is a separate ISel, not a -march switch.
+# gep remat is unsafe on arm64 until GocFrameAddrFix is ported, and the x86
+# leaq asm does not assemble, so arm64 forces the stock-llc path and refuses
+# stack maps. g is x28, reserved by llc; there is no TLS load.
+GOC_ARCH="${GOC_ARCH:-amd64}"
+case "$GOC_ARCH" in
+  amd64|arm64) ;;
+  *) echo "realbody: FATAL GOC_ARCH=$GOC_ARCH (want amd64 or arm64)" >&2; exit 1 ;;
+esac
+export GOC_ARCH
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  export GOC_FRAMEADDR_MODE=asm
+  if [[ "${GOC_SPTR_MAPS:-0}" == 1 || "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
+    echo "realbody: FATAL GOC_SPTR_MAPS and GOC_CSR_ADJUST are x86-only; arm64 has no frame-address repair" >&2
+    exit 1
+  fi
+  case "${LLC:-}" in
+    *goc-llc*|"") LLC=llc-19 ;;
+  esac
+  echo "realbody: GOC_ARCH=arm64 llc=$LLC (x28 reserved; frame-address repair not ported)" >&2
+fi
 # GOC_FRAMEADDR_MODE=gep (default): goc-reanchor rematerializes frame
 # addresses as plain GEPs, which is only safe with goc-llc's post-RA
 # GocFrameAddrFix pass (backend/pass/goc_llc.cpp). asm: the old opaque leaq
@@ -84,6 +106,20 @@ cleanup() { [[ -n "${GOC_KEEP_TMP:-}" ]] || rm -rf "$TMP"; }
 trap cleanup EXIT
 
 LL="$TMP/body.ll"
+if [[ "$GOC_ARCH" == arm64 && "$IN" == *.c ]]; then
+  # runtime/uptr is the one TU that has an aarch64 path. Every other file
+  # that still contains the amd64 host sequence is refused rather than
+  # compiled into a binary that reads FS or traps in syscall.
+  case "$IN" in
+    *runtime/uptr/*) ;;
+    *)
+      if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$IN"; then
+        echo "realbody: FATAL $IN is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
+        exit 1
+      fi
+      ;;
+  esac
+fi
 if [[ "$IN" == *.ll ]]; then
   cp "$IN" "$LL"
 else
@@ -102,7 +138,11 @@ else
     OPT_FLAGS+=(-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
                 -fno-optimize-sibling-calls -Xclang -disable-llvm-passes)
   fi
-  "$CLANG" "${NATIVE_DEFS[@]}" -mno-red-zone -fno-stack-protector \
+  TARGET_ARGS=()
+  if [[ "$GOC_ARCH" == arm64 ]]; then
+    TARGET_ARGS=(-target aarch64-unknown-linux-gnu -ffixed-x28)
+  fi
+  "$CLANG" "${NATIVE_DEFS[@]}" "${TARGET_ARGS[@]}" -mno-red-zone -fno-stack-protector \
     -fno-asynchronous-unwind-tables -I "$INC" \
     -emit-llvm -S "${OPT_FLAGS[@]}" \
     -o "$LL" "$IN"
@@ -120,10 +160,14 @@ fi
 # the 8-byte stack alignment); the few aligned SSE moves LLVM still selects are
 # made unaligned after instruction selection (see ALIGNFIX below).
 python3 - "$LL" <<'PYFIX'
-import re, sys
+import os, re, sys
 path = sys.argv[1]
 ll = open(path).read()
-if 'override-stack-alignment' not in ll:
+# amd64 Go calls are only 8-byte aligned, so the x86 backend must be told.
+# arm64 Go requires 16-byte SP; do not inject the x86 override. The
+# no-realign-stack attribute still applies: a dynamic AND of SP would make
+# pcsp unusable on either architecture.
+if os.environ.get("GOC_ARCH", "amd64") != "arm64" and 'override-stack-alignment' not in ll:
     if '!llvm.module.flags = !{' in ll:
         ll = ll.replace('!llvm.module.flags = !{', '!llvm.module.flags = !{!9000, ', 1)
     else:
@@ -208,27 +252,39 @@ fi
 # Tail merging would hoist a CALL shared by two blocks into a common tail and
 # leave each stackmap record before a JMP; elfpack attaches a record to the
 # next CALL in layout order, so the merged CALL would get another path's roots.
-LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
-          -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
-          -no-stack-slot-sharing -no-x86-call-frame-opt -enable-tail-merge=false)
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  # No -march=x86-64, no -no-x86-call-frame-opt, no -reserve-goc-r14.
+  # +reserve-x28 keeps g live across the body. AArch64 has no red zone.
+  LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic
+            -mtriple=aarch64-unknown-linux-gnu -mattr=+reserve-x28
+            -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
+            -no-stack-slot-sharing -enable-tail-merge=false)
+else
+  LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
+            -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
+            -no-stack-slot-sharing -no-x86-call-frame-opt -enable-tail-merge=false)
+fi
 # GOC_LLC_EXTRA: extra llc flags for experiments (default empty), e.g.
 # "-tail-dup-pred-size=1000 -tail-dup-succ-size=1000" (docs/perf-gap.md).
 if [[ -n "${GOC_LLC_EXTRA:-}" ]]; then
   read -r -a _goc_llc_extra <<<"$GOC_LLC_EXTRA"
   LLC_ARGS+=("${_goc_llc_extra[@]}")
 fi
-if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
+    echo "realbody: note GOC_FIXED_G is implicit on arm64 (x28 reserved); not passing -reserve-goc-r14" >&2
+  fi
+elif [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-reserve-goc-r14)
   echo "realbody: GOC_FIXED_G=1 llc=$LLC" >&2
 fi
 "$LLC" "${LLC_ARGS[@]}" -filetype=asm \
   -o "$TMP/body.s" "$LL"
 
-# ALIGNFIX: without realignment a frame is only 8-byte aligned, so aligned SSE
-# memory moves (va_start's XMM save area, 16-byte JSValue copies) would #GP.
-# The unaligned forms have identical encodings lengths and semantics. Any other
-# packed SSE instruction with a non-constant-pool memory operand also demands
-# alignment; refuse it instead of emitting code that faults at run time.
+# ALIGNFIX: without realignment an amd64 frame is only 8-byte aligned, so
+# aligned SSE memory moves would #GP. arm64 has no SSE and keeps 16-byte SP,
+# so this rewrite does not apply.
+if [[ "$GOC_ARCH" != arm64 ]]; then
 python3 - "$TMP/body.s" <<'ALIGNFIX'
 import re, sys
 path = sys.argv[1]
@@ -244,12 +300,23 @@ for line in text.splitlines():
                              "on an 8-byte-aligned Go stack: " + s)
 open(path, 'w').write(text)
 ALIGNFIX
-"$MC" -filetype=obj -triple=x86_64-unknown-linux-gnu \
+fi
+MC_TRIPLE=x86_64-unknown-linux-gnu
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  MC_TRIPLE=aarch64-unknown-linux-gnu
+fi
+"$MC" -filetype=obj -triple="$MC_TRIPLE" \
   -o "$TMP/body.llc.o" "$TMP/body.s"
 
 ELF="$TMP/body.llc.o"
 if [[ $GOABI -eq 1 ]]; then
-  "$CLANG" -c "$TMP/thunks.s" -o "$TMP/thunks.o"
+  # In-tree clang cannot assemble aarch64. llvm-mc can. amd64 stays on clang -c.
+  if [[ "$GOC_ARCH" == arm64 ]]; then
+    "$MC" -filetype=obj -triple=aarch64-unknown-linux-gnu \
+      -o "$TMP/thunks.o" "$TMP/thunks.s"
+  else
+    "$CLANG" -c "$TMP/thunks.s" -o "$TMP/thunks.o"
+  fi
   "$LDLLD" -r -o "$TMP/merged.o" "$TMP/body.llc.o" "$TMP/thunks.o"
   ELF="$TMP/merged.o"
 fi
@@ -294,8 +361,43 @@ except Exception:
     pass
 
 
+def arm64_prologue_delta(text_lines):
+    """SP drop of an AArch64 prologue.
+
+    Counts `sub sp, sp, #N` and pre-index `[sp, #-N]!`. mov/add x29 and
+    non-writeback stp/str to SP contribute 0 and stay inside the prologue,
+    matching elfpack arm64PrologueDelta. A load, bl, or any other instruction
+    ends the walk. A missing prologue is 0, not the amd64 fallback of 24.
+    """
+    total, in_pro = 0, False
+    for line in text_lines:
+        t = line.split("//", 1)[0].strip()
+        if not t or t.startswith('.') or t.startswith('#'):
+            continue
+        pre = re.search(r'\[sp,\s*#-(0x[0-9a-fA-F]+|\d+)\]!', t)
+        if pre and re.match(r'^(stp|str[bh]?)\b', t):
+            total += int(pre.group(1), 0)
+            in_pro = True
+            continue
+        if re.match(r'^sub\s+sp,\s*sp,\s*#', t):
+            m2 = re.search(r'#(0x[0-9a-fA-F]+|\d+)', t)
+            total += int(m2.group(1), 0)
+            in_pro = True
+            continue
+        if re.match(r'^(?:mov\s+x29,\s*sp|add\s+x29,\s*sp,\s*#)', t):
+            in_pro = True
+            continue
+        if re.match(r'^(stp|str[bh]?)\b', t) and '[sp' in t and ']!' not in t:
+            in_pro = True
+            continue
+        break
+    return total if in_pro else 0
+
+
 def prologue_delta(text_lines):
-    """RSP delta of the prologue: push rbp (+8) + optional pushes (+8) + sub N."""
+    """SP delta of the prologue. amd64: push rbp + sub. arm64: sub / pre-index."""
+    if os.environ.get("GOC_ARCH", "amd64") == "arm64":
+        return arm64_prologue_delta(text_lines)
     total, in_pro = 0, False
     for line in text_lines:
         t = line.strip()
@@ -341,9 +443,14 @@ if cur is not None:
 # references to the function entry are retained so they target its TEXT symbol
 # (including any inserted split preamble).
 FN_RE = re.compile(r'^([0-9a-f]+) <([^>]+)>:')
-INSN_RE = re.compile(r'^\s+([0-9a-f]+):\s+(?:[0-9a-f]{2} )+\s*(\S+)\s*(.*)$')
-RELOC_RE = re.compile(r'^\s+([0-9a-f]+):\s+R_X86_64_(\S+)\s+(\S+)')
+# x86 objdump prints space-separated bytes (`55 `). AArch64 prints one
+# 8-digit word (`d10083ff `). The byte-pair alternative stays first so a
+# hex mnemonic is not swallowed by the word alternative.
+INSN_RE = re.compile(
+    r'^\s+([0-9a-f]+):\s+(?:(?:[0-9a-f]{2} )+|[0-9a-f]{8}\s+)\s*(\S+)\s*(.*)$')
+RELOC_RE = re.compile(r'^\s+([0-9a-f]+):\s+R_(?:X86_64|AARCH64)_(\S+)\s+(\S+)')
 TGT_RE = re.compile(r'#\s*(0x[0-9a-f]+)\s*<([^>]+)>')
+ARM_TGT_RE = re.compile(r'\b(0x[0-9a-f]+)\s*<([^>]+)>')
 JMP_MNEMONIC = re.compile(r'^j[a-z]+$')
 
 calls, branches = {}, {}
@@ -381,10 +488,15 @@ for line in open(dis_path):
     mi = INSN_RE.match(line)
     if not mi:
         continue
+    mn, ops = mi.group(2), mi.group(3)
     mt = TGT_RE.search(line)
+    # AArch64 prints `bl 0x10 <leaf>` with no '#'. Only those mnemonics are
+    # scanned: `sub sp, sp, #0x20` is not a target.
+    if mt is None and (mn in ("bl", "b", "blr", "adrp", "adr") or mn.startswith("b.")):
+        mt = ARM_TGT_RE.search(ops)
     # objdump instruction addresses are .text-relative, while elfpack expects
     # the CALL/JMP/LEA opcode offset within its function body.
-    insns.append([int(mi.group(1), 16) - cur_addr, mi.group(2), mi.group(3),
+    insns.append([int(mi.group(1), 16) - cur_addr, mn, ops,
                   int(mt.group(1), 16) if mt else None,
                   mt.group(2) if mt else None, None])
 flush()
@@ -399,18 +511,29 @@ for name, ilist in dis.items():
     lo = starts[name]
     hi = ends.get(name)
     for off, mn, operands, tgt, tsym, reloc in ilist:
-        if mn.startswith('call'):
+        # bl/blr are the AArch64 calls. b.cond is not a safepoint and is not
+        # a relocatable B (elfpack rejects CONDBR19); leave it immediate.
+        if mn.startswith('call') or mn in ("bl", "blr"):
             # Every CALL is a safepoint, so its offset always reaches the meta:
             # a direct call (baked or relocated) also needs the linker to own
             # its displacement, an indirect one has no baked reference to fix.
             calls[name].append({"callee": reloc or tsym or "*", "off": off})
             continue
+        # ADRP+ADD / ADRP+LDR belong to the page-pair reloc, not to branches.
+        # A baked adrp has no ELF reloc for that path to see, so refuse it.
+        if mn in ("adrp", "adr"):
+            if not reloc:
+                raise SystemExit(
+                    "realbody: %s+0x%x: baked %s has no ELF reloc; "
+                    "elfpack cannot re-relocate a page address" % (name, off, mn))
+            continue
+        direct_jump = bool(JMP_MNEMONIC.match(mn)) or mn == "b"
         if reloc:
             # The ELF already carries this reference, so elfpack leaves the
             # relocation to the generic path — but direct JMP/LEA references
             # are still recorded here, so branches stays complete and separate
             # from call safepoints.
-            if JMP_MNEMONIC.match(mn) or (
+            if direct_jump or (
                 mn.startswith('lea') and (reloc == '.text' or reloc in starts)
             ):
                 branches[name].append({"callee": reloc, "off": off})
@@ -419,12 +542,16 @@ for name, ilist in dis.items():
             continue                      # no reference operand
         if tgt > lo and (hi is None or tgt < hi):
             continue                      # interior shifts with body; entry needs its TEXT symbol
-        if JMP_MNEMONIC.match(mn) or mn.startswith('lea'):
+        if direct_jump or mn.startswith('lea'):
             branches[name].append({"callee": tsym or "", "off": off})
         elif '(%rip)' in operands:
             raise SystemExit(
                 "realbody: %s+0x%x: baked RIP-relative reference to %s is neither "
                 "a call, jump nor lea; elfpack cannot re-relocate it" % (name, off, tsym))
+        elif os.environ.get("GOC_ARCH", "amd64") == "arm64" and tsym:
+            raise SystemExit(
+                "realbody: %s+0x%x: baked reference to %s is neither a call nor "
+                "a jump; elfpack cannot re-relocate it" % (name, off, tsym))
 
 
 # Stack maps: the runtime refuses to copy a frame that has locals but no
@@ -594,8 +721,11 @@ sptr_slots = _sptr_slots(ll, sptr_nodes, mir_slots) if mir_slots else {}
 
 
 def sysv_pointer_registers(info):
-    """Pointer-typed SysV GPR arguments to adjust when the slow stub grows."""
-    regs = ("rdi", "rsi", "rdx", "rcx", "r8", "r9")
+    """Pointer-typed C-ABI GPR arguments to adjust when the slow stub grows."""
+    if os.environ.get("GOC_ARCH", "amd64") == "arm64":
+        regs = tuple("x%d" % i for i in range(8))
+    else:
+        regs = ("rdi", "rsi", "rdx", "rcx", "r8", "r9")
     used = sse_used = 0
     ptrs = []
     for ty, attrs in zip(info["params"], info["param_abi_attrs"]):
@@ -623,7 +753,7 @@ def sysv_pointer_registers(info):
             fields = aggregate["fields"]
             gpr_need = sum(field["bank"] == "int" for field in fields)
             sse_need = len(fields) - gpr_need
-            if aggregate["size"] <= 16 and used + gpr_need <= 6 and sse_used + sse_need <= 8:
+            if aggregate["size"] <= 16 and used + gpr_need <= len(regs) and sse_used + sse_need <= 8:
                 for field in fields:
                     if field["bank"] == "int":
                         if field["type"] == "ptr":
@@ -690,12 +820,15 @@ mfns = []
 # In --goabi mode the C-side symbols are ABI0 (SysV: C calls them directly,
 # cross-TU refs are ABI0) and only the Go-facing thunks are ABIInternal.
 c_abi = "ABI0" if goabi else ""
-# GOC_CRESERVE reserves C stack inside the thunk: the frame is then a constant
-# 8+reserve (so elfpack emits the split check and an exact pcsp) and the C call
-# tree never triggers morestack — C frames with unions (JSValue) cannot have
-# precise pointer maps, so they must not be copied.
-thunk_reserve = int(__import__("os").environ.get("GOC_CRESERVE", "0") or "0")
-thunk_frame = (8 + thunk_reserve) if thunk_reserve > 0 else 0
+# GOC_CRESERVE reserves C stack inside the thunk. amd64 frame is 8+reserve
+# when the reserve is non-zero (push rbp); a zero reserve emits no frame.
+# arm64 always saves x29/x30 (16 bytes) because BL clobbers LR, then the
+# reserve. elfpack checks this against the prologue's SP delta.
+thunk_reserve = int(os.environ.get("GOC_CRESERVE", "0") or "0")
+if os.environ.get("GOC_ARCH", "amd64") == "arm64":
+    thunk_frame = 16 + thunk_reserve
+else:
+    thunk_frame = (8 + thunk_reserve) if thunk_reserve > 0 else 0
 for name in goabi:
     spills, stack_ptrs, arg_area = go_args_layout(goabi[name]["abi"]["go"])
     e = entry(name, f"{sym_prefix}.{name}", thunk_frame, "ABIInternal",
@@ -741,8 +874,9 @@ else
     CALLS_JSON='[{"callee":"p28_external_hook","stackmap_index":0}]'
   fi
   FRAME="$(python3 - "$TMP/body.s" "$FN_NAME" <<'PY'
-import re, sys
+import os, re, sys
 s_path, fn = sys.argv[1], sys.argv[2]
+arch = os.environ.get("GOC_ARCH", "amd64")
 frames, cur, body = {}, None, []
 for line in open(s_path):
     m = re.match(r'^([A-Za-z_][A-Za-z0-9_.$]*):', line)
@@ -757,10 +891,24 @@ if cur is not None:
     frames[cur] = body
 total, in_pro = 0, False
 for line in frames.get(fn, []):
-    t = line.strip()
+    raw = line.split("//", 1)[0] if arch == "arm64" else line
+    t = raw.strip()
     if not t or t.startswith('.') or t.startswith('#'):
         continue
-    if re.match(r'^pushq\s+%', t):
+    if arch == "arm64":
+        pre = re.search(r'\[sp,\s*#-(0x[0-9a-fA-F]+|\d+)\]!', t)
+        if pre and re.match(r'^(stp|str[bh]?)\b', t):
+            total += int(pre.group(1), 0)
+        elif re.match(r'^sub\s+sp,\s*sp,\s*#', t):
+            m2 = re.search(r'#(0x[0-9a-fA-F]+|\d+)', t)
+            total += int(m2.group(1), 0)
+        elif re.match(r'^(?:mov\s+x29,\s*sp|add\s+x29,\s*sp,\s*#)', t):
+            pass
+        elif re.match(r'^(stp|str[bh]?)\b', t) and '[sp' in t and ']!' not in t:
+            pass
+        else:
+            break
+    elif re.match(r'^pushq\s+%', t):
         total += 8
     elif re.match(r'^movq\s+%rsp,\s*%rbp', t):
         pass
@@ -770,7 +918,10 @@ for line in frames.get(fn, []):
     else:
         break
     in_pro = True
-print(total if in_pro else 24)
+# amd64 with no recognisable prologue keeps the historical 24-byte guess.
+# arm64 must not: a real prologue of 0 is pcsp 0, and a lie of 24 fails
+# elfpack's delta check only when the body did allocate.
+print(total if in_pro else (0 if arch == "arm64" else 24))
 PY
 )"
   cat > "$TMP/meta.json" << JSON
@@ -808,7 +959,9 @@ if rg -q 'attrs→seedMIR|seedMIR→Spill' "$TMP/meta.json"; then
 fi
 
 ( cd "$P5" && go build -o "$TMP/elfpack" ./goobj/elfpack/ )
-"$TMP/elfpack" -elf "$ELF" -meta "$TMP/meta.json" \
+# HeaderString follows GOARCH, not the host. An explicit amd64 must override
+# a user's GOARCH too. The elfpack binary itself stays a host (amd64) tool.
+GOARCH="$GOC_ARCH" "$TMP/elfpack" -elf "$ELF" -meta "$TMP/meta.json" \
   -maps "$TMP/maps" -out-o "$OUT_O" -p "$PKG"
 
 if [[ $MAGIC_OK -eq 1 ]]; then

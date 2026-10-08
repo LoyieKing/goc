@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""Prepare clang IR bodies for Go 1.24 amd64 ABIInternal entry thunks.
+"""Prepare clang IR bodies for Go 1.24 ABIInternal entry thunks.
+
+GOC_ARCH selects the register file (default amd64). arm64 ports the same
+three call paths: a Go→C thunk, C→C on the platform ABI, and the handwritten
+C→Go .goabi call. It does not add cross-edge function-pointer interop.
 
 The supported signature subset is scalar integer/pointer/floating-point
 parameters and returns, plus literal aggregates whose scalar fields each occupy
 a distinct eightbyte. Aggregate parameters are assigned atomically by field:
 they use registers only when every field fits, otherwise the whole value uses
 the stack. Results are limited to 16 bytes; fields become separate Go results
-and use their SysV eightbyte class (integer RAX/RDX, floating XMM0/XMM1).
-Signatures outside this deliberately small subset remain SysV-only. Go
-ABIInternal integer arguments through R10/R11 rely on the realbody split
-preamble preserving those registers before the thunk.
+and use their platform result class (amd64 RAX/RDX and XMM0/XMM1, arm64
+X0/X1 and V0/V1). Signatures outside this deliberately small subset stay on
+the C ABI. amd64 integer arguments through R10/R11 rely on the realbody split
+preamble preserving those registers before the thunk. On arm64 the first eight
+integer and float registers already match AAPCS64; X8–X15 are Go-only.
 
 Usage: goc_goabi.py <in.ll> <out.ll> <thunks.s> <goabi.json>
 """
@@ -26,6 +31,8 @@ SYSV_INT_REGS = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 SYSV_FLOAT_REGS = ["xmm%d" % i for i in range(8)]
 SYSV_INT_RESULT_REGS = ["rax", "rdx"]
 SYSV_FLOAT_RESULT_REGS = ["xmm0", "xmm1"]
+# main() reassigns the register lists when GOC_ARCH=arm64, before analysis.
+ARCH = "amd64"
 INT_WIDTHS = {1, 8, 16, 32, 64}
 NAME = r"[A-Za-z_][A-Za-z0-9_.$]*"
 HEADER_RE = re.compile(r"^\s*(define|declare)\s+(.+?)@(" + NAME + r")\(", re.M)
@@ -383,7 +390,9 @@ def return_assignment(ret):
     info = scalar(ret)
     if info:
         bank = info[0]
-        reg = "rax" if bank == "int" else "xmm0"
+        # amd64: rax / xmm0. arm64: x0 / d0. Both ABIs return a scalar in
+        # the same register, so the two sides stay equal.
+        reg = GO_INT_REGS[0] if bank == "int" else GO_FLOAT_REGS[0]
         return ([{"type": ret, "location": location("reg", reg)}],
                 [{"type": ret, "location": location("reg", reg)}],
                 [], None)
@@ -448,10 +457,12 @@ def analyze_signature(d, reserve):
                     for src, dst in zip(sysv_results, go_results)
                     if src["location"]["register"] != dst["location"]["register"]]
 
-    # A C body may clobber XMM15, which is Go ABIInternal's fixed-zero
-    # register. A tail jump has no return edge on which to restore it, so every
-    # emitted thunk uses the fixed CALL frame and clears XMM15 on return.
-    if reserve <= 0:
+    # amd64: a C body may clobber XMM15, Go's fixed-zero register. A tail
+    # jump has no return edge on which to restore it, so every emitted thunk
+    # uses the fixed CALL frame and clears XMM15 on return. arm64 has no
+    # fixed-zero register; BL clobbers LR, and the thunk always saves X29/X30,
+    # so a zero reserve is legal when nothing is passed on the stack.
+    if ARCH != "arm64" and reserve <= 0:
         return None, "safe Go return requires a fixed thunk frame; set GOC_CRESERVE"
     if assigned["sysv_stack_size"] > reserve:
         return None, ("SysV outgoing stack arguments need %d bytes but GOC_CRESERVE is %d" %
@@ -579,7 +590,151 @@ def emit_register_argument(ty, source, dest):
         move_mnemonic(size), stack_source(source), gpr_view(dest, size))]
 
 
+def arm64_int_name(reg, size):
+    """xN for a 64-bit move, wN otherwise. ABI tables store the x form."""
+    n = reg[1:]
+    return ("x" if size == 8 else "w") + n
+
+
+def arm64_float_name(reg, ty):
+    """dN or sN. ABI tables store the d form (same number as vN)."""
+    n = reg[1:]
+    return ("s" if ty == "float" else "d") + n
+
+
+def arm64_mem(base, offset):
+    return "[%s, #%d]" % (base, offset)
+
+
+def parallel_arm64_gpr(moves):
+    """Dependency-safe integer copies. Scratch is x16, never an arg or g."""
+    pending = [(src, dst, size) for src, dst, size in moves if src != dst]
+    output = []
+    while pending:
+        sources = {src for src, _, _ in pending}
+        ready = next((i for i, (_, dst, _) in enumerate(pending) if dst not in sources), None)
+        if ready is not None:
+            src, dst, size = pending.pop(ready)
+            output.append("\tmov\t%s, %s" % (
+                arm64_int_name(dst, size), arm64_int_name(src, size)))
+            continue
+        src, _, size = pending[0]
+        output.append("\tmov\t%s, %s" % (
+            arm64_int_name("x16", size), arm64_int_name(src, size)))
+        pending = [("x16" if old_src == src else old_src, dst, old_size)
+                   for old_src, dst, old_size in pending]
+    return output
+
+
+def parallel_arm64_fpr(moves):
+    """Dependency-safe scalar FP copies. Scratch is d16."""
+    pending = [(src, dst, ty) for src, dst, ty in moves if src != dst]
+    output = []
+    while pending:
+        sources = {src for src, _, _ in pending}
+        ready = next((i for i, (_, dst, _) in enumerate(pending) if dst not in sources), None)
+        if ready is not None:
+            src, dst, ty = pending.pop(ready)
+            output.append("\tfmov\t%s, %s" % (
+                arm64_float_name(dst, ty), arm64_float_name(src, ty)))
+            continue
+        src, _, ty = pending[0]
+        output.append("\tfmov\t%s, %s" % (
+            arm64_float_name("d16", ty), arm64_float_name(src, ty)))
+        pending = [("d16" if old_src == src else old_src, dst, old_ty)
+                   for old_src, dst, old_ty in pending]
+    return output
+
+
+def emit_arm64_stack_argument(ty, source, dest_off):
+    """Store one outgoing AAPCS stack argument. Stack sources use x16/d16."""
+    bank, size, _ = scalar(ty)
+    dest = arm64_mem("sp", dest_off)
+    if bank == "float":
+        fname = "s16" if ty == "float" else "d16"
+        if source["kind"] == "register":
+            return ["\tstr\t%s, %s" % (arm64_float_name(source["register"], ty), dest)]
+        src = arm64_mem("x29", 24 + source["offset"])
+        return ["\tldr\t%s, %s" % (fname, src), "\tstr\t%s, %s" % (fname, dest)]
+    op = {1: "strb", 2: "strh"}.get(size, "str")
+    if source["kind"] == "register":
+        return ["\t%s\t%s, %s" % (op, arm64_int_name(source["register"], size), dest)]
+    load = {1: "ldrb", 2: "ldrh"}.get(size, "ldr")
+    tmp = arm64_int_name("x16", size)
+    src = arm64_mem("x29", 24 + source["offset"])
+    return ["\t%s\t%s, %s" % (load, tmp, src), "\t%s\t%s, %s" % (op, tmp, dest)]
+
+
+def emit_arm64_register_argument(ty, source, dest):
+    """Load a stack-assigned Go field into its AAPCS register."""
+    bank, size, _ = scalar(ty)
+    src = arm64_mem("x29", 24 + source["offset"])
+    if bank == "float":
+        return ["\tldr\t%s, %s" % (arm64_float_name(dest, ty), src)]
+    load = {1: "ldrb", 2: "ldrh"}.get(size, "ldr")
+    return ["\t%s\t%s, %s" % (load, arm64_int_name(dest, size), src)]
+
+
+def emit_arm64_thunks(goabi, reserve):
+    """AAPCS64 thunk. BL clobbers LR, so X29/X30 are saved even if reserve is 0.
+
+    After `stp x29, x30, [sp, #-16]!` / `mov x29, sp`, x29 is entry-16 and
+    the first Go stack argument is at entry+8, i.e. [x29, #24+offset].
+    Outgoing stack arguments are [sp, #offset] below the reserve. Stack
+    stores run before register moves so the 9th Go argument (x8) is not
+    clobbered on its way to the AAPCS stack.
+    """
+    lines = ["// Go 1.24 arm64 ABIInternal -> AAPCS64 entry thunks — generated",
+             "\t.text"]
+    for d in goabi:
+        lines += ["\t.globl\t%s" % d["name"],
+                  "\t.type\t%s, %%function" % d["name"],
+                  "\t.balign\t4",
+                  "%s:" % d["name"],
+                  "\tstp\tx29, x30, [sp, #-16]!",
+                  "\tmov\tx29, sp"]
+        if reserve > 0:
+            lines.append("\tsub\tsp, sp, #%d" % reserve)
+        plan = d["_plan"]
+        reg_moves = []
+        float_moves = []
+        int_loads = []
+        float_loads = []
+        for i, arg in enumerate(plan["abi"]["go"]["params"]):
+            ty = arg["type"]
+            go_loc = arg["location"]
+            sysv_loc = plan["abi"]["sysv"]["params"][i]["location"]
+            if sysv_loc["kind"] == "stack":
+                lines += emit_arm64_stack_argument(ty, go_loc, sysv_loc["offset"])
+                continue
+            bank, size, _ = scalar(ty)
+            if go_loc["kind"] == "stack":
+                load = emit_arm64_register_argument(ty, go_loc, sysv_loc["register"])
+                (int_loads if bank == "int" else float_loads).extend(load)
+            elif bank == "int":
+                reg_moves.append((go_loc["register"], sysv_loc["register"], size))
+            elif go_loc["register"] != sysv_loc["register"]:
+                float_moves.append((go_loc["register"], sysv_loc["register"], ty))
+        lines += parallel_arm64_gpr(reg_moves)
+        lines += parallel_arm64_fpr(float_moves)
+        lines += int_loads + float_loads
+        lines.append("\tbl\t%s" % d["impl"])
+        for src, dst in plan["result_moves"]:
+            if src[:1] in ("d", "s", "q", "v"):
+                lines.append("\tfmov\t%s, %s" % (dst, src))
+            else:
+                lines.append("\tmov\t%s, %s" % (dst, src))
+        lines += ["\tmov\tsp, x29",
+                  "\tldp\tx29, x30, [sp], #16",
+                  "\tret",
+                  "\t.size\t%s, .-%s" % (d["name"], d["name"])]
+    lines.append("")
+    return lines
+
+
 def emit_thunks(goabi, reserve):
+    if ARCH == "arm64":
+        return emit_arm64_thunks(goabi, reserve)
     lines = ["# Go 1.24 ABIInternal -> SysV entry thunks — generated", "\t.text"]
     for d in goabi:
         lines += ["\t.globl\t%s" % d["name"],
@@ -631,10 +786,29 @@ def emit_thunks(goabi, reserve):
 
 
 def main():
+    global ARCH
+    global GO_INT_REGS, GO_FLOAT_REGS, SYSV_INT_REGS, SYSV_FLOAT_REGS
+    global SYSV_INT_RESULT_REGS, SYSV_FLOAT_RESULT_REGS
     in_ll, out_ll, out_s, out_json = sys.argv[1:5]
     text = open(in_ll).read()
+    arch = os.environ.get("GOC_ARCH", "amd64") or "amd64"
+    if arch not in ("amd64", "arm64"):
+        raise ValueError("GOC_ARCH must be amd64 or arm64, got %s" % arch)
+    ARCH = arch
     reserve = int(os.environ.get("GOC_CRESERVE", "0") or "0")
-    if reserve < 0 or reserve % 8 or reserve > 0x7fffffff:
+    if arch == "arm64":
+        # Go ABIInternal: X0–X15, V0–V15. AAPCS64 arguments: X0–X7, V0–V7.
+        # Results match (X0/X1, V0/V1). Names are the 64-bit forms; the
+        # emitter picks wN/sN from the type width.
+        GO_INT_REGS = ["x%d" % i for i in range(16)]
+        GO_FLOAT_REGS = ["d%d" % i for i in range(16)]
+        SYSV_INT_REGS = ["x%d" % i for i in range(8)]
+        SYSV_FLOAT_REGS = ["d%d" % i for i in range(8)]
+        SYSV_INT_RESULT_REGS = ["x0", "x1"]
+        SYSV_FLOAT_RESULT_REGS = ["d0", "d1"]
+        if reserve < 0 or reserve % 16 or reserve > 0x7fffffff:
+            raise ValueError("GOC_CRESERVE must be a 16-byte multiple within signed 32-bit range")
+    elif reserve < 0 or reserve % 8 or reserve > 0x7fffffff:
         raise ValueError("GOC_CRESERVE must be an 8-byte multiple within signed 32-bit range")
 
     defs = parse_functions(text, "define")

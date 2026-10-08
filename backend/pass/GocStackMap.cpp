@@ -843,6 +843,16 @@ bool frameAddrAsmMode() {
 }
 
 Value *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
+  // AArch64 has no GocFrameAddrFix, and the x86 `leaq $1, $0` asm does not
+  // assemble (the memory operand is printed as [reg]). A GEP is also unsafe
+  // across a goroutine stack copy until that pass exists. Unset GOC_ARCH
+  // stays on the amd64 path. The driver refuses maps on arm64; this is the
+  // backstop if a stale pass plugin is asked to rematerialize anyway.
+  if (const char *Arch = std::getenv("GOC_ARCH")) {
+    if (std::strcmp(Arch, "arm64") == 0)
+      report_fatal_error("goc: frame-address rematerialization is x86-only; "
+                          "arm64 has no GocFrameAddrFix and leaq does not assemble");
+  }
   Value *Addr = nullptr;
   int64_t Off = 0;
   if (auto Frame = pureFrameAddress(V, DL)) {
