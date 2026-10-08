@@ -129,4 +129,8 @@ echo "=== P17 summary: $PASS passed, $FAIL failed ==="
 if [[ $FAIL -ne 0 ]]; then
   exit 1
 fi
+
+echo "=== P17: color report ==="
+bash "$ROOT/tests/check_color_report.sh"
+
 echo "OK: bin/goc-fe ready; build/goc-color-escape ready"

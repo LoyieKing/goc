@@ -25,6 +25,10 @@ Environment:
   GOC_ROOT     Repository root (default: parent of cmd/)
   GOC_CLANG    Path to patched clang-19 (preferred)
   GOC_OPT_LEVEL  LLVM IR optimization level 0..3 (default 0); QuickJS scripts default 3
+  GOC_COLOR_REPORT  Set to 1 to print the pointer-color table after coloring.
+                    Default off. Does not change colors. Adds -g so bare T*
+                    names and declaration locations are in the table, then
+                    strips that debug info before real-body lowering.
   LLC          llc binary (default: llc-19)
   CLANG_FALLBACK  System clang when GOC_CLANG unset (default: clang-19)
 
@@ -172,6 +176,11 @@ cmd_build() {
   # Go-stack compatible codegen: no red zone, no stack protector, no unwind tables.
   local CLANG_ARGS=(-mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables
                     -I "$INC" -emit-llvm -S "-O$OPT_LEVEL")
+  if [[ "${GOC_COLOR_REPORT:-}" == 1 ]]; then
+    # Names and declaration lines for bare T* live in debug info. Coloring
+    # ignores dbg records; the report is printed from the same pass tables.
+    CLANG_ARGS+=(-g)
+  fi
   if [[ "$OPT_LEVEL" == 0 ]]; then
     CLANG_ARGS+=(-Xclang -disable-O0-optnone)
   else
@@ -217,6 +226,18 @@ cmd_build() {
     exit 1
   fi
   local BODY_LL="$TMP/a.color.ll"
+  if [[ "${GOC_COLOR_REPORT:-}" == 1 ]]; then
+    # The report already ran inside the pass. -g leaves !dbg on the define
+    # line, and realbody appends "no-realign-stack" after that attachment,
+    # which llc rejects. Drop debug only. Keep names and !goc.color.
+    local STRIP="${OPT:-opt-19}"
+    if ! "$STRIP" --strip-debug -S "$BODY_LL" -o "$TMP/a.color.nodbg.ll"; then
+      echo "goc build: failed to strip debug info after color report for $SRC" >&2
+      cleanup_build_tmp
+      exit 1
+    fi
+    BODY_LL="$TMP/a.color.nodbg.ll"
+  fi
   local STACKMAP_PREPARED=0
   if [[ "$OPT_LEVEL" != 0 ]]; then
     local OPT="${OPT:-opt-19}"

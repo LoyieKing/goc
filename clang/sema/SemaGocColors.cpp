@@ -7,7 +7,10 @@
 // Attr.td defines GocCPtr/SPtr/UPtr/AutoPtr/GPtr with SimpleHandler=1.
 // This file:
 //   1. Mirrors Goc*Attr → AnnotateAttr("goc.color.*") so CodeGen emits
-//      llvm.var.annotation for P17 refine / P18 bridge (same as P27 plugin).
+//      llvm.var.annotation / llvm.global.annotations for P17 (same as the
+//      P27 plugin). MirrorGocColorAttrs runs from ParseAST before
+//      HandleTopLevelDecl. CodeGen is incremental, so the end-of-TU mirror
+//      is too late for IR.
 //   2. Runs AST escape analysis at end of TU (same rules as GocClangPlugin).
 //===----------------------------------------------------------------------===//
 
@@ -242,6 +245,11 @@ public:
     mirrorGocAttrsToAnnotate(Ctx, TD);
     return true;
   }
+  bool VisitFunctionDecl(FunctionDecl *FD) {
+    // Return-position goc_* appertains to the function (sptr(T) foo()).
+    mirrorGocAttrsToAnnotate(Ctx, FD);
+    return true;
+  }
 };
 
 class GocEscapeVisitor : public RecursiveASTVisitor<GocEscapeVisitor> {
@@ -306,6 +314,15 @@ public:
 };
 
 } // namespace
+
+namespace clang {
+void MirrorGocColorAttrs(ASTContext &Ctx, Decl *D) {
+  if (!D)
+    return;
+  GocMirrorVisitor Mirror(Ctx);
+  Mirror.TraverseDecl(D);
+}
+} // namespace clang
 
 void Sema::DiagnoseGocColorEscapes() {
   // Attr.td Goc* types are generated after tablegen; until then this TU may

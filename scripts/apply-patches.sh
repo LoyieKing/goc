@@ -15,8 +15,8 @@ Or set LLVM_SRC. Expected layout:
 Patches applied (in order):
   1. clang/patches/0001-Attr.td-goc-colors.patch
   2. clang/patches/0001-SemaGocColors-real.patch  (P28 real Sema)
-  3. Copy clang/sema/SemaGocColors.cpp into clang/lib/Sema/
-     (if the patch does not already add the file)
+  3. Copy clang/sema/SemaGocColors.cpp over clang/lib/Sema/SemaGocColors.cpp
+  4. clang/patches/0003-mirror-goc-colors-before-codegen.patch
 
 See clang/README.md for cmake/ninja build instructions.
 HINT
@@ -65,10 +65,13 @@ if ! apply_flex "$SEMA_PATCH" "$CLANG_ROOT"; then
   echo "warning: Sema patch failed — installing SemaGocColors.cpp manually" >&2
 fi
 
-SEMA_DST="$CLANG_ROOT/lib/Sema/SemaGocColors.cpp"
-if [[ ! -f "$SEMA_DST" ]]; then
-  echo "=== Copying clang/sema/SemaGocColors.cpp ==="
-  cp -a "$ROOT/clang/sema/SemaGocColors.cpp" "$SEMA_DST"
+echo "=== Installing clang/sema/SemaGocColors.cpp ==="
+cp -a "$ROOT/clang/sema/SemaGocColors.cpp" "$CLANG_ROOT/lib/Sema/SemaGocColors.cpp"
+
+echo "=== Applying early goc color mirror ==="
+MIRROR_PATCH="$ROOT/clang/patches/0003-mirror-goc-colors-before-codegen.patch"
+if ! apply_flex "$MIRROR_PATCH" "$CLANG_ROOT"; then
+  echo "warning: early-mirror patch failed — ParseAST.cpp may already mirror" >&2
 fi
 
 echo "Patches applied (or best-effort). Next:"

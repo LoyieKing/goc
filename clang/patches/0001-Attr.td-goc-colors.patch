@@ -8,31 +8,31 @@
 +
 +def GocCPtr : InheritableAttr {
 +  let Spellings = [GNU<"goc_cptr">, CXX11<"goc", "cptr">, C23<"goc", "cptr">];
-+  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar, Function]>;
 +  let Documentation = [Undocumented];
 +  let SimpleHandler = 1;
 +}
 +def GocSPtr : InheritableAttr {
 +  let Spellings = [GNU<"goc_sptr">, CXX11<"goc", "sptr">, C23<"goc", "sptr">];
-+  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar, Function]>;
 +  let Documentation = [Undocumented];
 +  let SimpleHandler = 1;
 +}
 +def GocUPtr : InheritableAttr {
 +  let Spellings = [GNU<"goc_uptr">, CXX11<"goc", "uptr">, C23<"goc", "uptr">];
-+  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar, Function]>;
 +  let Documentation = [Undocumented];
 +  let SimpleHandler = 1;
 +}
 +def GocAutoPtr : InheritableAttr {
 +  let Spellings = [GNU<"goc_auto_ptr">, CXX11<"goc", "auto_ptr">, C23<"goc", "auto_ptr">];
-+  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar, Function]>;
 +  let Documentation = [Undocumented];
 +  let SimpleHandler = 1;
 +}
 +def GocGPtr : InheritableAttr {
 +  let Spellings = [GNU<"goc_gptr">, CXX11<"goc", "gptr">, C23<"goc", "gptr">];
-+  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar]>;
++  let Subjects = SubjectList<[Var, Field, TypedefName, ParmVar, Function]>;
 +  let Documentation = [Undocumented];
 +  let SimpleHandler = 1;
 +}
