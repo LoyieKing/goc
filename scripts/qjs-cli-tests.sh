@@ -207,8 +207,7 @@ TOP_LEVEL_AWAIT = re.compile(
 HOST_MODULE = re.compile(r"\b(?:from\s*|import\s*(?:\(\s*)?)(['\"])(qjs:[^'\"]+)\1", re.S)
 HUGE_ALLOCATION = re.compile(
     r"(?:new\s+(?:Shared)?ArrayBuffer\s*\(\s*(?:0x80000000|2147483648|2\s*\*\*\s*31)"
-    r"|new\s+Uint(?:8|16|32)Array\s*\(\s*(?:0x80000000|2147483648|2\s*\*\*\s*31)"
-    r"|(?:\.length|\blength)\s*=\s*(?:0x7fffffff|2147483647|2\s*\*\*\s*31))",
+    r"|new\s+Uint(?:8|16|32)Array\s*\(\s*(?:0x80000000|2147483648|2\s*\*\*\s*31))",
     re.I,
 )
 
@@ -280,7 +279,7 @@ def unsupported_reasons(path, source, metadata, metadata_error):
         reasons.append(f"unsupported host module {match.group(2)}")
     if re.search(r"\b(?:new\s+)?SharedWorker\s*\(", executable_code):
         reasons.append("SharedWorker is unsupported")
-    if path.as_posix().endswith("/bug1468.js") or HUGE_ALLOCATION.search(executable_code):
+    if HUGE_ALLOCATION.search(executable_code):
         reasons.append("2 GiB-scale memory stress is unsupported")
 
     return list(dict.fromkeys(reasons))
@@ -304,7 +303,7 @@ def read_capture(file_obj, limit=8192):
     return data.decode("utf-8", "replace")
 
 
-def run_case(path, module, negative, interrupt, track_rejections):
+def run_case(path, module, negative, interrupt, track_rejections, force_script):
     relative = path.relative_to(tests_root).as_posix()
     argv = [str(cli)]
     if not track_rejections:
@@ -313,6 +312,9 @@ def run_case(path, module, negative, interrupt, track_rejections):
         argv.extend(["--interrupt-after", "150"])
     if module:
         argv.append("-m")
+    elif force_script:
+        # qjs -C. quickjs-ng otherwise classifies a valid script as a module.
+        argv.append("--script")
     argv.append(str(path))
     start = time.monotonic()
     with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
@@ -435,7 +437,8 @@ for path in tests:
     else:
         record.update(run_case(path, module, negative,
                                "qjs:set-interrupt-handler" in flags,
-                               "qjs:track-promise-rejections" in flags))
+                               "qjs:track-promise-rejections" in flags,
+                               "qjs:no-detect-module" in flags))
         record.pop("unsupportedReasons", None)
     records.append(record)
     label = record["status"].upper()

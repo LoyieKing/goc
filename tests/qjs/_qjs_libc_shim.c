@@ -1,10 +1,13 @@
 /* P29 north-star: freestanding libc surface for quickjs-ng on goroutine stacks.
  *
- * goc-compiled C must not enter libc: libc may switch stacks or use TLS in
- * ways Go's stack discipline cannot describe. This shim provides QuickJS's
- * C heap (coalescing fixed arena plus mmap slabs), memory/string/formatting,
- * raw clocks and Go-backed numeric/timezone conversions. Unsupported I/O
- * deliberately traps instead of faking values.
+ * goc-compiled C must not enter libc for allocation, I/O, or TLS: libc may
+ * switch stacks in ways Go's stack discipline cannot describe. This shim
+ * provides QuickJS's C heap (coalescing fixed arena plus mmap slabs),
+ * memory/string/formatting, vDSO clocks, and timezone conversions.
+ * libm is the exception. sqrt/floor/ceil/trunc/round are inline, and the
+ * transcendentals are a direct glibc call (tests/qjs/asm/goc_libm_glibc.S) so
+ * the result stays bit-identical to glibc, including Math.sin(1).
+ * Unsupported I/O deliberately traps instead of faking values.
  * Pthread operations below are single-thread-only shims, not concurrency.
  *
  * Compiled with --goabi: QJS's SysV calls bind to the .impl bodies; Go uses
@@ -214,21 +217,25 @@ void *goc_realloc(void *p, size_t n) {
   unsigned char *np = (unsigned char *)goc_malloc(n);
   if (!np)
     return NULL;
-  size_t copied = n < h->size ? n : h->size;
+  /* Callers may write up to usable size, which is the rounded capacity,
+   * not the size passed to malloc. Copy that whole region. */
+  size_t copied = h->capacity;
   goc_memcpy(np, p, copied);
   goc_free(p);
   return np;
 }
 
 size_t goc_malloc_usable_size(void *p) {
-  return p ? ((GocAllocHeader *)p - 1)->size : 0;
+  return p ? ((GocAllocHeader *)p - 1)->capacity : 0;
 }
 
 /* ---------- string / memory ops ---------- */
 /* Small sizes (<= 64 bytes) use overlapping unaligned 8/4/2/1-byte accesses:
  * every load happens before any store, so the same helper serves memmove.
  * Fixed-size __builtin_memcpy lowers to a single load/store, never a call.
- * Larger sizes use rep movsb/stosb (ERMS). */
+ * 64 bytes through 4 KiB use an SSE2 movups loop (the goc path has no AVX).
+ * Larger sizes use rep movsb/stosb (ERMS). The stack is 8-byte aligned, so
+ * the loop must not emit movaps. */
 static inline uint64_t goc_ld8(const unsigned char *p) { uint64_t v; __builtin_memcpy(&v, p, 8); return v; }
 static inline void goc_st8(unsigned char *p, uint64_t v) { __builtin_memcpy(p, &v, 8); }
 static inline uint32_t goc_ld4(const unsigned char *p) { uint32_t v; __builtin_memcpy(&v, p, 4); return v; }
@@ -261,12 +268,45 @@ static inline void goc_copy_small(unsigned char *d, const unsigned char *s, size
   }
 }
 
+/* The loop is asm so -O3 does not turn it back into a memcpy libcall. */
+static void goc_copy_sse2(unsigned char *d, const unsigned char *s, size_t n) {
+  size_t chunks = n >> 6;
+  unsigned char *dst = d;
+  const unsigned char *src = s;
+  __asm__ volatile(
+      "test %[chunks], %[chunks]\n\t"
+      "jz L%=e\n\t"
+      "L%=l:\n\t"
+      "movups (%[src]), %%xmm0\n\t"
+      "movups 16(%[src]), %%xmm1\n\t"
+      "movups 32(%[src]), %%xmm2\n\t"
+      "movups 48(%[src]), %%xmm3\n\t"
+      "movups %%xmm0, (%[dst])\n\t"
+      "movups %%xmm1, 16(%[dst])\n\t"
+      "movups %%xmm2, 32(%[dst])\n\t"
+      "movups %%xmm3, 48(%[dst])\n\t"
+      "add $64, %[src]\n\t"
+      "add $64, %[dst]\n\t"
+      "dec %[chunks]\n\t"
+      "jnz L%=l\n\t"
+      "L%=e:\n\t"
+      : [dst] "+r"(dst), [src] "+r"(src), [chunks] "+r"(chunks)
+      :
+      : "xmm0", "xmm1", "xmm2", "xmm3", "cc", "memory");
+  if (n & 63)
+    goc_copy_small(dst, src, n & 63);
+}
+
 void *goc_memcpy(void *d, const void *s, size_t n) {
   /* A C loop is recognized as a memcpy libcall at -O3 and recursively
    * enters this freestanding implementation. */
   void *result = d;
   if (n <= 64) {
     goc_copy_small((unsigned char *)d, (const unsigned char *)s, n);
+    return result;
+  }
+  if (n <= 4096) {
+    goc_copy_sse2((unsigned char *)d, (const unsigned char *)s, n);
     return result;
   }
   __asm__ volatile("rep movsb" : "+D"(d), "+S"(s), "+c"(n) : : "memory");
@@ -284,32 +324,66 @@ void *goc_memmove(void *d, const void *s, size_t n) {
     const unsigned char *from = (const unsigned char *)s + n - 1;
     __asm__ volatile("std; rep movsb; cld"
                      : "+D"(end), "+S"(from), "+c"(n) : : "cc", "memory");
+  } else if (n <= 4096) {
+    goc_copy_sse2((unsigned char *)d, (const unsigned char *)s, n);
   } else {
     __asm__ volatile("rep movsb" : "+D"(d), "+S"(s), "+c"(n) : : "memory");
   }
   return result;
 }
 
+/* always_inline: a real call to goc_memset from its own SSE2 tail is a
+ * nosplit cycle (the body has no annotated CALL, so elfpack marks the
+ * small frame AttrNoSplit and the linker rejects the recursion). */
+static inline __attribute__((always_inline)) void goc_memset_small(
+    unsigned char *p, unsigned char byte, size_t n) {
+  uint64_t v = (uint64_t)byte * 0x0101010101010101ull;
+  if (n >= 16) {
+    goc_st8(p, v); goc_st8(p + 8, v);
+    goc_st8(p + n - 16, v); goc_st8(p + n - 8, v);
+    if (n > 32) {
+      goc_st8(p + 16, v); goc_st8(p + 24, v);
+      goc_st8(p + n - 32, v); goc_st8(p + n - 24, v);
+    }
+  } else if (n >= 8) {
+    goc_st8(p, v); goc_st8(p + n - 8, v);
+  } else if (n >= 4) {
+    goc_st4(p, (uint32_t)v); goc_st4(p + n - 4, (uint32_t)v);
+  } else if (n) {
+    p[0] = byte; p[n >> 1] = byte; p[n - 1] = byte;
+  }
+}
+
 void *goc_memset(void *d, int c, size_t n) {
   void *result = d;
   unsigned char byte = (unsigned char)c;
   if (n <= 64) {
-    unsigned char *p = (unsigned char *)d;
+    goc_memset_small((unsigned char *)d, byte, n);
+    return result;
+  }
+  if (n <= 4096) {
+    size_t chunks = n >> 6;
+    unsigned char *dst = (unsigned char *)d;
     uint64_t v = (uint64_t)byte * 0x0101010101010101ull;
-    if (n >= 16) {
-      goc_st8(p, v); goc_st8(p + 8, v);
-      goc_st8(p + n - 16, v); goc_st8(p + n - 8, v);
-      if (n > 32) {
-        goc_st8(p + 16, v); goc_st8(p + 24, v);
-        goc_st8(p + n - 32, v); goc_st8(p + n - 24, v);
-      }
-    } else if (n >= 8) {
-      goc_st8(p, v); goc_st8(p + n - 8, v);
-    } else if (n >= 4) {
-      goc_st4(p, (uint32_t)v); goc_st4(p + n - 4, (uint32_t)v);
-    } else if (n) {
-      p[0] = byte; p[n >> 1] = byte; p[n - 1] = byte;
-    }
+    __asm__ volatile(
+        "movq %[v], %%xmm0\n\t"
+        "punpcklqdq %%xmm0, %%xmm0\n\t"
+        "test %[chunks], %[chunks]\n\t"
+        "jz L%=e\n\t"
+        "L%=l:\n\t"
+        "movups %%xmm0, (%[dst])\n\t"
+        "movups %%xmm0, 16(%[dst])\n\t"
+        "movups %%xmm0, 32(%[dst])\n\t"
+        "movups %%xmm0, 48(%[dst])\n\t"
+        "add $64, %[dst]\n\t"
+        "dec %[chunks]\n\t"
+        "jnz L%=l\n\t"
+        "L%=e:\n\t"
+        : [dst] "+r"(dst), [chunks] "+r"(chunks)
+        : [v] "r"(v)
+        : "xmm0", "cc", "memory");
+    if (n & 63)
+      goc_memset_small(dst, byte, n & 63);
     return result;
   }
   __asm__ volatile("rep stosb" : "+D"(d), "+c"(n) : "a"(byte) : "memory");
@@ -318,7 +392,17 @@ void *goc_memset(void *d, int c, size_t n) {
 
 int goc_memcmp(const void *a, const void *b, size_t n) {
   const unsigned char *x = (const unsigned char *)a, *y = (const unsigned char *)b;
-  for (size_t i = 0; i < n; i++)
+  size_t i = 0;
+  for (; i + 8 <= n; i += 8) {
+    uint64_t u = goc_ld8(x + i), v = goc_ld8(y + i);
+    if (u != v) {
+      /* First differing byte is the most significant after a bswap. */
+      u = __builtin_bswap64(u);
+      v = __builtin_bswap64(v);
+      return u < v ? -1 : 1;
+    }
+  }
+  for (; i < n; i++)
     if (x[i] != y[i])
       return x[i] < y[i] ? -1 : 1;
   return 0;
@@ -696,6 +780,26 @@ struct timespec_s {
 };
 
 int goc_clock_gettime(int clk, struct timespec_s *ts) {
+  /* CLOCK_REALTIME (0) and CLOCK_MONOTONIC (1) go through Go's vDSO clocks.
+   * A raw syscall is about 100 ns slower. Other clocks stay on syscall 228. */
+  if (clk == 0 || clk == 1) {
+    long sec = clk, nsec;
+    __asm__ volatile(
+        "subq $64, %%rsp\n\t"
+        "movq %%fs:-8, %%r14\n\t"
+        "pxor %%xmm15, %%xmm15\n\t"
+        "call main.gocGoClockGettime.goabi\n\t"
+        "addq $64, %%rsp"
+        : "+a"(sec), "=b"(nsec)
+        :
+        : "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11",
+          "r12", "r13", "r14", "r15", "xmm0", "xmm1", "xmm2", "xmm3", "xmm4",
+          "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12",
+          "xmm13", "xmm14", "xmm15", "cc", "memory");
+    ts->tv_sec = sec;
+    ts->tv_nsec = nsec;
+    return 0;
+  }
   long ret;
   __asm__ volatile("syscall" : "=a"(ret) : "a"(228), "D"((long)clk), "S"(ts) : "rcx", "r11", "memory");
   return (int)ret;
@@ -803,35 +907,115 @@ void goc___assert_fail(const char *expr, const char *file, unsigned line, const 
     return out; \
   }
 
-GOC_GO_MATH2(pow, main.gocGoMathPow)
-GOC_GO_MATH1(sqrt, main.gocGoMathSqrt)
-GOC_GO_MATH1(trunc, main.gocGoMathTrunc)
-GOC_GO_MATH1(floor, main.gocGoMathFloor)
-GOC_GO_MATH1(ceil, main.gocGoMathCeil)
-GOC_GO_MATH2(hypot, main.gocGoMathHypot)
-GOC_GO_MATH2(fmod, main.gocGoMathMod)
-GOC_GO_MATH1(round, main.gocGoMathRound)
-GOC_GO_MATH1(goc_round, main.gocGoMathRound)
-GOC_GO_MATH1(acos, main.gocGoMathAcos)
-GOC_GO_MATH1(acosh, main.gocGoMathAcosh)
-GOC_GO_MATH1(asin, main.gocGoMathAsin)
-GOC_GO_MATH1(asinh, main.gocGoMathAsinh)
-GOC_GO_MATH1(atan, main.gocGoMathAtan)
-GOC_GO_MATH2(atan2, main.gocGoMathAtan2)
-GOC_GO_MATH1(atanh, main.gocGoMathAtanh)
-GOC_GO_MATH1(cbrt, main.gocGoMathCbrt)
-GOC_GO_MATH1(cos, main.gocGoMathCos)
-GOC_GO_MATH1(cosh, main.gocGoMathCosh)
-GOC_GO_MATH1(exp, main.gocGoMathExp)
-GOC_GO_MATH1(expm1, main.gocGoMathExpm1)
-GOC_GO_MATH1(log, main.gocGoMathLog)
-GOC_GO_MATH1(log10, main.gocGoMathLog10)
-GOC_GO_MATH1(log1p, main.gocGoMathLog1p)
-GOC_GO_MATH1(log2, main.gocGoMathLog2)
-GOC_GO_MATH1(sin, main.gocGoMathSin)
-GOC_GO_MATH1(sinh, main.gocGoMathSinh)
-GOC_GO_MATH1(tan, main.gocGoMathTan)
-GOC_GO_MATH1(tanh, main.gocGoMathTanh)
+/* sqrt/floor/ceil/trunc/round are IEEE-754 specified. The C bodies match
+ * glibc bit for bit (floor/ceil/trunc/round follow musl, MIT). */
+typedef union { double f; uint64_t i; } goc_dbits;
+static const double goc_toint = 4503599627370496.0; /* 2^52 */
+double sqrt(double x) { double r; __asm__("sqrtsd %1, %0" : "=x"(r) : "x"(x)); return r; }
+double floor(double x) {
+  goc_dbits u = {x};
+  int e = (int)(u.i >> 52 & 0x7ff);
+  double y;
+  if (e >= 0x3ff + 52 || x == 0) return x;
+  if (u.i >> 63) y = x - goc_toint + goc_toint - x; else y = x + goc_toint - goc_toint - x;
+  if (e <= 0x3ff - 1) return u.i >> 63 ? -1.0 : 0.0;
+  if (y > 0) return x + y - 1;
+  return x + y;
+}
+double ceil(double x) {
+  goc_dbits u = {x};
+  int e = (int)(u.i >> 52 & 0x7ff);
+  double y;
+  if (e >= 0x3ff + 52 || x == 0) return x;
+  if (u.i >> 63) y = x - goc_toint + goc_toint - x; else y = x + goc_toint - goc_toint - x;
+  if (e <= 0x3ff - 1) return u.i >> 63 ? -0.0 : 1.0;
+  if (y < 0) return x + y + 1;
+  return x + y;
+}
+double trunc(double x) {
+  goc_dbits u = {x};
+  int e = (int)(u.i >> 52 & 0x7ff) - 0x3ff + 12;
+  uint64_t m;
+  if (e >= 52 + 12) return x;
+  if (e < 12) e = 1;
+  m = -1ULL >> e;
+  if ((u.i & m) == 0) return x;
+  u.i &= ~m;
+  return u.f;
+}
+double round(double x) {
+  goc_dbits u = {x};
+  int e = (int)(u.i >> 52 & 0x7ff);
+  double y;
+  if (e >= 0x3ff + 52) return x;
+  if (u.i >> 63) x = -x;
+  if (e < 0x3ff - 1) return 0 * u.f; /* |x| < 0.5: +-0 */
+  y = x + goc_toint - goc_toint - x;
+  if (y > 0.5) y = y + x - 1;
+  else if (y <= -0.5) y = y + x + 1;
+  else y = y + x;
+  if (u.i >> 63) y = -y;
+  return y;
+}
+double goc_round(double x) { return round(x); }
+
+/* Transcendentals call glibc through tests/qjs/asm/goc_libm_glibc.S. The asm
+ * symbol is goc_libc_<name>; elfpack records it as main.goc_libc_<name>.
+ * A Go -> cgo -> glibc hop is not bit-identical in cost, and a C libm
+ * would change the last bit. The trampoline realigns SP, then calls
+ * glibc, so the SysV registers set up here are the ones glibc sees. */
+#define GOC_LIBC_CLOBBERS \
+  "rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11", \
+  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7", \
+  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15", \
+  "cc", "memory"
+
+#define GOC_LIBC1(name) \
+  double name(double x) { \
+    double out; \
+    __asm__ volatile( \
+        "movsd %1, %%xmm0\n\t" \
+        "call goc_libc_" #name "\n\t" \
+        "movsd %%xmm0, %0" \
+        : "=m"(out) : "m"(x) : GOC_LIBC_CLOBBERS); \
+    return out; \
+  }
+
+#define GOC_LIBC2(name) \
+  double name(double x, double y) { \
+    double out; \
+    __asm__ volatile( \
+        "movsd %1, %%xmm0\n\t" \
+        "movsd %2, %%xmm1\n\t" \
+        "call goc_libc_" #name "\n\t" \
+        "movsd %%xmm0, %0" \
+        : "=m"(out) : "m"(x), "m"(y) : GOC_LIBC_CLOBBERS); \
+    return out; \
+  }
+
+GOC_LIBC2(pow)
+GOC_LIBC2(hypot)
+GOC_LIBC2(fmod)
+GOC_LIBC1(acos)
+GOC_LIBC1(acosh)
+GOC_LIBC1(asin)
+GOC_LIBC1(asinh)
+GOC_LIBC1(atan)
+GOC_LIBC2(atan2)
+GOC_LIBC1(atanh)
+GOC_LIBC1(cbrt)
+GOC_LIBC1(cos)
+GOC_LIBC1(cosh)
+GOC_LIBC1(exp)
+GOC_LIBC1(expm1)
+GOC_LIBC1(log)
+GOC_LIBC1(log10)
+GOC_LIBC1(log1p)
+GOC_LIBC1(log2)
+GOC_LIBC1(sin)
+GOC_LIBC1(sinh)
+GOC_LIBC1(tan)
+GOC_LIBC1(tanh)
 
 long goc_lrint(double x) {
   long out;

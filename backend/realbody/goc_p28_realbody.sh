@@ -88,6 +88,16 @@ if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
 else
   LLC="${LLC:-llc-19}"
 fi
+# gep remat is a plain GEP. Stock llc CSEs it into a callee-saved register
+# and keeps that register across the call; tail duplication makes that
+# live range common. Only goc-llc's post-RA GocFrameAddrFix re-derives it.
+# A pre-set LLC=llc-19 used to skip the missing-binary check above.
+if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
+  if ! grep -a -q 'goc-frameaddr-fix' "$LLC" 2>/dev/null; then
+    echo "realbody: FATAL $LLC has no GocFrameAddrFix; frame-address GEPs would stay stale across calls. Build backend/build/pass-out/goc-llc, or set GOC_FRAMEADDR_MODE=asm." >&2
+    exit 1
+  fi
+fi
 MC="${LLVM_MC:-llvm-mc-19}"
 OBJDUMP="${OBJDUMP:-llvm-objdump-19}"
 OPT="${OPT:-opt-19}"
@@ -244,28 +254,32 @@ LLC_OPT_LEVEL="$OPT_LEVEL"
 if [[ -n "${GOC_LLC_OPT:-}" ]]; then
   LLC_OPT_LEVEL="$GOC_LLC_OPT"
 fi
-# Per-call Direct locations are the roots. Keep RBP valid at every call, and
-# do not share a pointer slot with a later scalar: the previous call's map
-# stays active until the next safepoint. Call-frame opt turns a reserved
-# outgoing area into PUSH/POP around a call, so SP is not the constant pcsp
-# claims and the unwinder reads g as a return PC.
+# Per-call Direct locations are the roots. Keep RBP valid at every call.
+# Spill slots share (no -no-stack-slot-sharing): root allocas are not spill
+# slots, and goc-reanchor keeps their lifetime markers off so a scalar cannot
+# take a stackmap slot. Call-frame opt turns a reserved outgoing area into
+# PUSH/POP around a call, so SP is not the constant pcsp claims and the
+# unwinder reads g as a return PC.
 # Tail merging would hoist a CALL shared by two blocks into a common tail and
 # leave each stackmap record before a JMP; elfpack attaches a record to the
 # next CALL in layout order, so the merged CALL would get another path's roots.
+# Tail duplication is on: QuickJS dispatch blocks are shared tails, and gcc
+# duplicates them. Stock llc accepts the thresholds on both arches.
 if [[ "$GOC_ARCH" == arm64 ]]; then
   # No -march=x86-64, no -no-x86-call-frame-opt, no -reserve-goc-r14.
   # +reserve-x28 keeps g live across the body. AArch64 has no red zone.
   LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic
             -mtriple=aarch64-unknown-linux-gnu -mattr=+reserve-x28
             -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
-            -no-stack-slot-sharing -enable-tail-merge=false)
+            -enable-tail-merge=false
+            -tail-dup-pred-size=1000 -tail-dup-succ-size=1000)
 else
   LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
             -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
-            -no-stack-slot-sharing -no-x86-call-frame-opt -enable-tail-merge=false)
+            -no-x86-call-frame-opt -enable-tail-merge=false
+            -tail-dup-pred-size=1000 -tail-dup-succ-size=1000)
 fi
-# GOC_LLC_EXTRA: extra llc flags for experiments (default empty), e.g.
-# "-tail-dup-pred-size=1000 -tail-dup-succ-size=1000" (docs/perf-gap.md).
+# GOC_LLC_EXTRA: extra llc flags for experiments (default empty).
 if [[ -n "${GOC_LLC_EXTRA:-}" ]]; then
   read -r -a _goc_llc_extra <<<"$GOC_LLC_EXTRA"
   LLC_ARGS+=("${_goc_llc_extra[@]}")

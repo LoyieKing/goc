@@ -39,6 +39,8 @@ import (
 //go:linkname JS_PromiseState main.JS_PromiseState
 //go:linkname JS_PromiseResult main.JS_PromiseResult
 //go:linkname goc_qjs_cli_install main.goc_qjs_cli_install
+//go:linkname goc_qjs_cli_load_std main.goc_qjs_cli_load_std
+//go:linkname goc_qjs_cli_detect_module main.goc_qjs_cli_detect_module
 //go:linkname goc_qjs_cli_unhandled_rejections main.goc_qjs_cli_unhandled_rejections
 //go:linkname goc_qjs_cli_rejection_reason main.goc_qjs_cli_rejection_reason
 //go:linkname goc_qjs_cli_clear_rejections main.goc_qjs_cli_clear_rejections
@@ -61,6 +63,8 @@ func JS_ExecutePendingJob(rt unsafe.Pointer, ctx **byte) int32
 func JS_PromiseState(ctx unsafe.Pointer, promise jsValue) int32
 func JS_PromiseResult(ctx unsafe.Pointer, promise jsValue) jsValue
 func goc_qjs_cli_install(ctx unsafe.Pointer) int32
+func goc_qjs_cli_load_std(ctx unsafe.Pointer) int32
+func goc_qjs_cli_detect_module(input *byte, length uint64) int32
 func goc_qjs_cli_unhandled_rejections(ctx unsafe.Pointer) int32
 func goc_qjs_cli_rejection_reason(ctx unsafe.Pointer) jsValue
 func goc_qjs_cli_clear_rejections(ctx unsafe.Pointer)
@@ -196,6 +200,21 @@ type gocTM struct {
 	Zone                                               *byte
 }
 
+//go:linkname gocRuntimeNanotime runtime.nanotime
+func gocRuntimeNanotime() int64
+
+// gocGoClockGettime backs goc_clock_gettime for CLOCK_REALTIME (0) and
+// CLOCK_MONOTONIC (1). Monotonic time is runtime.nanotime (vDSO). Realtime
+// is time.Now (vDSO). //go:noinline stays on gocGoLocaltime, not here.
+func gocGoClockGettime(clk int64) (int64, int64) {
+	if clk == 1 {
+		n := gocRuntimeNanotime()
+		return n / 1e9, n % 1e9
+	}
+	t := time.Now()
+	return t.Unix(), int64(t.Nanosecond())
+}
+
 //go:noinline
 func gocGoLocaltime(seconds int64, out *gocTM, zone *byte) {
 	t := time.Unix(seconds, 0).Local()
@@ -317,7 +336,10 @@ func evaluate(rt, ctx unsafe.Pointer, source []byte, filename string,
 			if err != nil {
 				return fmt.Errorf("qjscli:runtime: %s: rejected module (%v)", filename, err)
 			}
-			return fmt.Errorf("qjscli:runtime: %s: rejected module: %s", filename, text)
+			// js_std_await surfaces the rejection reason itself, so the
+			// error class stays RangeError / SyntaxError rather than the
+			// word "rejected".
+			return fmt.Errorf("qjscli:runtime: %s: %s", filename, text)
 		}
 	}
 	return nil
@@ -339,10 +361,27 @@ func forceGrow(n int) {
 func run(args []string) error {
 	var filename, expression string
 	var module bool
+	var forceScript bool
+	var loadStd bool
 	var interruptAfter int
 	var allowUnhandled bool
 	var stackSizeKB int
 	for len(args) > 0 {
+		if args[0] == "--std" {
+			loadStd = true
+			args = args[1:]
+			continue
+		}
+		// Same as qjs -C/--script: force a classic script and skip
+		// JS_DetectModule. quickjs-ng's detector treats any source that
+		// compiles as a module as a module, so tests flagged
+		// qjs:no-detect-module must opt out.
+		if args[0] == "--script" || args[0] == "-C" {
+			forceScript = true
+			module = false
+			args = args[1:]
+			continue
+		}
 		if args[0] == "--allow-unhandled-rejections" {
 			allowUnhandled = true
 			args = args[1:]
@@ -374,11 +413,12 @@ func run(args []string) error {
 		filename = "<eval>"
 	case len(args) == 2 && args[0] == "-m":
 		module = true
+		forceScript = false
 		filename = args[1]
 	case len(args) == 1 && args[0] != "-e" && args[0] != "-m":
 		filename = args[0]
 	default:
-		return errors.New("usage: qjscli [--stack-size KiB] [--interrupt-after count] [--allow-unhandled-rejections] [-e expression | [-m] script.js | -]")
+		return errors.New("usage: qjscli [--std] [--script] [--stack-size KiB] [--interrupt-after count] [--allow-unhandled-rejections] [-e expression | [-m] script.js | -]")
 	}
 
 	var source []byte
@@ -398,8 +438,13 @@ func run(args []string) error {
 			return err
 		}
 	}
-	if strings.HasSuffix(filename, ".mjs") {
-		module = true
+	// Same rule as qjs.c eval_file: .mjs, or JS_DetectModule on the source.
+	// -e stays a script unless -m was given.
+	if !module && !forceScript && filename != "<eval>" {
+		if strings.HasSuffix(filename, ".mjs") ||
+			(len(source) > 0 && goc_qjs_cli_detect_module(&source[0], uint64(len(source))) != 0) {
+			module = true
+		}
 	}
 	rt := JS_NewRuntime()
 	if rt == nil {
@@ -417,6 +462,9 @@ func run(args []string) error {
 	defer JS_FreeContext(ctx)
 	if goc_qjs_cli_install(ctx) < 0 {
 		return fmt.Errorf("QuickJS host initialization: %w", jsException(ctx))
+	}
+	if loadStd && goc_qjs_cli_load_std(ctx) < 0 {
+		return fmt.Errorf("qjscli: --std: %w", jsException(ctx))
 	}
 	defer goc_qjs_cli_clear_rejections(ctx)
 	defer goc_qjs_cli_worker_cleanup(ctx)

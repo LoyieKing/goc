@@ -109,7 +109,9 @@ void goc_test_clear_stack_bounds(void) {
 #if defined(__aarch64__)
 static inline uintptr_t goc_tls_getg(void) {
   uintptr_t g;
-  __asm__ volatile("mov %0, x28" : "=r"(g));
+  /* g is invariant for this goroutine. Not volatile, so a caller that
+   * inlines two checks keeps one read of x28. */
+  __asm__("mov %0, x28" : "=r"(g));
   return g;
 }
 
@@ -130,7 +132,9 @@ static inline uintptr_t goc_tls_stack_lo_inline(void) {
 #else
 static inline uintptr_t goc_tls_getg(void) {
   uintptr_t g;
-  __asm__ volatile("movq %%fs:-8, %0" : "=r"(g));
+  /* g is invariant for this goroutine. Not volatile, so a caller that
+   * inlines two checks keeps one FS:-8 read. stack.lo/hi stay volatile. */
+  __asm__("movq %%fs:-8, %0" : "=r"(g));
   return g;
 }
 

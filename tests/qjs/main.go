@@ -207,6 +207,21 @@ type gocTM struct {
 	Zone                                               *byte
 }
 
+//go:linkname gocRuntimeNanotime runtime.nanotime
+func gocRuntimeNanotime() int64
+
+// gocGoClockGettime backs goc_clock_gettime for CLOCK_REALTIME (0) and
+// CLOCK_MONOTONIC (1). Monotonic time is runtime.nanotime (vDSO). Realtime
+// is time.Now (vDSO). //go:noinline stays on gocGoLocaltime, not here.
+func gocGoClockGettime(clk int64) (int64, int64) {
+	if clk == 1 {
+		n := gocRuntimeNanotime()
+		return n / 1e9, n % 1e9
+	}
+	t := time.Now()
+	return t.Unix(), int64(t.Nanosecond())
+}
+
 //go:noinline
 func gocGoLocaltime(seconds int64, out *gocTM, zone *byte) {
 	t := time.Unix(seconds, 0).Local()

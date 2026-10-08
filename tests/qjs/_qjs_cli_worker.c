@@ -22,6 +22,7 @@ extern void goc_qjs_cli_clear_rejections(JSContext *ctx);
 
 typedef struct GocQjsCliMessage GocQjsCliMessage;
 typedef struct GocQjsCliTimer GocQjsCliTimer;
+typedef struct GocQjsCliRW GocQjsCliRW;
 typedef struct GocQjsCliRuntime GocQjsCliRuntime;
 typedef struct GocQjsCliWorker GocQjsCliWorker;
 
@@ -41,6 +42,15 @@ struct GocQjsCliTimer {
   bool repeats;
   JSValue func;
   GocQjsCliTimer *next;
+};
+
+/* One fd, same as Bellard's JSOSRWHandler: funcs[0] is read, funcs[1] is write.
+   An empty slot is JS_NULL. Both empty means the node is not on the list. */
+struct GocQjsCliRW {
+  int fd;
+  int poll_index;
+  JSValue funcs[2];
+  struct GocQjsCliRW *next;
 };
 
 struct GocQjsCliWorker {
@@ -63,6 +73,7 @@ struct GocQjsCliRuntime {
   JSRuntime *rt;
   JSContext *ctx;
   GocQjsCliTimer *timers;
+  GocQjsCliRW *rw;
   int64_t next_timer_id;
   GocQjsCliWorker *workers;
   GocQjsCliWorker *parent_worker;
@@ -137,6 +148,36 @@ static void goc_qjs_cli_wait_ns(int64_t nanoseconds) {
       "call main.gocQjsCliWorkerSleep.goabi"
       :
       : "m"(nanoseconds)
+      : GOC_GO_CLOBBERS);
+}
+
+/* Same layout as syscall.PollFd and the Go bridge in tests/qjscli/worker.go. */
+typedef struct {
+  int32_t fd;
+  int16_t events;
+  int16_t revents;
+} GocQjsCliPollFd;
+
+typedef struct {
+  GocQjsCliPollFd *fds;
+  int32_t count;
+  int32_t timeout_ms;
+  int32_t result;
+  int32_t pad;
+} GocQjsCliPollRequest;
+
+_Static_assert(sizeof(GocQjsCliPollFd) == 8, "pollfd layout");
+_Static_assert(sizeof(GocQjsCliPollRequest) == 24, "poll request layout");
+_Static_assert(offsetof(GocQjsCliPollRequest, result) == 16, "poll result");
+
+static void goc_qjs_cli_call_go_poll(GocQjsCliPollRequest *request) {
+  __asm__ volatile(
+      "movq %0, %%rax\n\t"
+      "movq %%fs:-8, %%r14\n\t"
+      "pxor %%xmm15, %%xmm15\n\t"
+      "call main.gocQjsCliPoll.goabi"
+      :
+      : "m"(request)
       : GOC_GO_CLOBBERS);
 }
 
@@ -687,6 +728,13 @@ static void goc_qjs_cli_cleanup_runtime(GocQjsCliRuntime *state) {
     JS_FreeValue(state->ctx, timer->func);
     js_free(state->ctx, timer);
   }
+  while (state->rw) {
+    GocQjsCliRW *rh = state->rw;
+    state->rw = rh->next;
+    JS_FreeValue(state->ctx, rh->funcs[0]);
+    JS_FreeValue(state->ctx, rh->funcs[1]);
+    js_free(state->ctx, rh);
+  }
 }
 
 void goc_qjs_cli_worker_cleanup(JSContext *ctx) {
@@ -799,11 +847,84 @@ static JSValue goc_qjs_cli_worker_ctor(JSContext *ctx,
   return object;
 }
 
+/* Linux poll(2) bits. Same values as the kernel and Go's syscall.POLLIN. */
+#define GOC_POLLIN 0x001
+#define GOC_POLLOUT 0x004
+#define GOC_POLLERR 0x008
+#define GOC_POLLHUP 0x010
+#define GOC_POLLNVAL 0x020
+
+static GocQjsCliRW *goc_qjs_cli_find_rw(GocQjsCliRuntime *state, int fd) {
+  for (GocQjsCliRW *rh = state->rw; rh; rh = rh->next) {
+    if (rh->fd == fd)
+      return rh;
+  }
+  return NULL;
+}
+
+static void goc_qjs_cli_free_rw(JSContext *ctx, GocQjsCliRuntime *state,
+                                GocQjsCliRW *rh) {
+  GocQjsCliRW **link = &state->rw;
+  while (*link && *link != rh)
+    link = &(*link)->next;
+  if (*link == rh)
+    *link = rh->next;
+  JS_FreeValue(ctx, rh->funcs[0]);
+  JS_FreeValue(ctx, rh->funcs[1]);
+  js_free(ctx, rh);
+}
+
+/* os.setReadHandler / os.setWriteHandler. magic 0 is read, 1 is write.
+   null removes that direction, matching quickjs-libc.c js_os_setReadHandler. */
+static JSValue goc_qjs_cli_set_rw_handler(JSContext *ctx, JSValueConst this_val,
+                                          int argc, JSValueConst *argv,
+                                          int magic) {
+  (void)this_val;
+  GocQjsCliRuntime *state = goc_qjs_cli_get_runtime(ctx, true);
+  if (!state)
+    return JS_EXCEPTION;
+  int32_t fd;
+  JSValueConst func = argc > 1 ? argv[1] : JS_UNDEFINED;
+  if (argc < 1 || JS_ToInt32(ctx, &fd, argv[0]))
+    return JS_EXCEPTION;
+  GocQjsCliRW *rh = goc_qjs_cli_find_rw(state, fd);
+  if (JS_IsNull(func)) {
+    if (!rh)
+      return JS_UNDEFINED;
+    JS_FreeValue(ctx, rh->funcs[magic]);
+    rh->funcs[magic] = JS_NULL;
+    if (JS_IsNull(rh->funcs[0]) && JS_IsNull(rh->funcs[1]))
+      goc_qjs_cli_free_rw(ctx, state, rh);
+    return JS_UNDEFINED;
+  }
+  if (!JS_IsFunction(ctx, func))
+    return JS_ThrowTypeError(ctx, "not a function");
+  if (!rh) {
+    rh = js_malloc(ctx, sizeof(*rh));
+    if (!rh)
+      return JS_EXCEPTION;
+    rh->fd = fd;
+    rh->poll_index = -1;
+    rh->funcs[0] = JS_NULL;
+    rh->funcs[1] = JS_NULL;
+    rh->next = NULL;
+    GocQjsCliRW **tail = &state->rw;
+    while (*tail)
+      tail = &(*tail)->next;
+    *tail = rh;
+  }
+  JS_FreeValue(ctx, rh->funcs[magic]);
+  rh->funcs[magic] = JS_DupValue(ctx, func);
+  return JS_UNDEFINED;
+}
+
 static const JSCFunctionListEntry goc_qjs_cli_timer_funcs[] = {
     JS_CFUNC_MAGIC_DEF("setTimeout", 2, goc_qjs_cli_set_timer, 0),
     JS_CFUNC_MAGIC_DEF("setInterval", 2, goc_qjs_cli_set_timer, 1),
     JS_CFUNC_DEF("clearTimeout", 1, goc_qjs_cli_clear_timer),
     JS_CFUNC_DEF("clearInterval", 1, goc_qjs_cli_clear_timer),
+    JS_CFUNC_MAGIC_DEF("setReadHandler", 2, goc_qjs_cli_set_rw_handler, 0),
+    JS_CFUNC_MAGIC_DEF("setWriteHandler", 2, goc_qjs_cli_set_rw_handler, 1),
 };
 
 int goc_qjs_cli_worker_add(JSContext *ctx, JSModuleDef *module) {
@@ -1049,12 +1170,13 @@ int64_t goc_qjs_cli_worker_next_deadline(JSRuntime *rt) {
   return earliest;
 }
 
-/* True while the qjs:os loop has timers, startup work, or a live message port. */
+/* True while the qjs:os loop has timers, fd handlers, startup work, or a
+ * live message port. */
 int goc_qjs_cli_workers_pending(JSRuntime *rt) {
   GocQjsCliRuntime *state = goc_qjs_cli_find_runtime(rt);
   if (!state)
     return 0;
-  if (state->timers)
+  if (state->timers || state->rw)
     return 1;
   for (GocQjsCliWorker *worker = state->workers; worker;
        worker = worker->next) {
@@ -1071,6 +1193,102 @@ int goc_qjs_cli_workers_pending(JSRuntime *rt) {
       return 1;
   }
   return 0;
+}
+
+/* deadline_ns < 0 waits until an fd is ready. Otherwise the wait also ends at
+   that monotonic time, so os.setTimeout still runs. One handler is called,
+   matching js_os_poll, because the handler may edit the list. */
+static int goc_qjs_cli_poll_rw(GocQjsCliRuntime *state, JSContext *ctx,
+                               int64_t deadline_ns) {
+  int count = 0;
+  for (GocQjsCliRW *rh = state->rw; rh; rh = rh->next) {
+    if (!JS_IsNull(rh->funcs[0]) || !JS_IsNull(rh->funcs[1]))
+      count++;
+  }
+  if (count == 0)
+    return 0;
+
+  GocQjsCliPollFd *fds = js_malloc(ctx, (size_t)count * sizeof(*fds));
+  if (!fds)
+    return -1;
+  int index = 0;
+  for (GocQjsCliRW *rh = state->rw; rh; rh = rh->next) {
+    int events = 0;
+    if (!JS_IsNull(rh->funcs[0]))
+      events |= GOC_POLLIN;
+    if (!JS_IsNull(rh->funcs[1]))
+      events |= GOC_POLLOUT;
+    if (!events) {
+      rh->poll_index = -1;
+      continue;
+    }
+    rh->poll_index = index;
+    fds[index].fd = rh->fd;
+    fds[index].events = (int16_t)events;
+    fds[index].revents = 0;
+    index++;
+  }
+
+  int32_t timeout_ms = -1;
+  if (deadline_ns >= 0) {
+    int64_t now = goc_qjs_cli_now_ns();
+    if (deadline_ns <= now) {
+      timeout_ms = 0;
+    } else {
+      int64_t ms = (deadline_ns - now + 999999) / 1000000;
+      if (ms < 1)
+        ms = 1;
+      if (ms > INT32_MAX)
+        ms = INT32_MAX;
+      timeout_ms = (int32_t)ms;
+    }
+  }
+
+  GocQjsCliPollRequest request = {
+      .fds = fds,
+      .count = index,
+      .timeout_ms = timeout_ms,
+  };
+  goc_qjs_cli_call_go_poll(&request);
+  int ready = request.result;
+  if (ready < 0) {
+    js_free(ctx, fds);
+    JS_ThrowInternalError(ctx, "os poll failed: %d", -ready);
+    return -1;
+  }
+  if (ready == 0) {
+    js_free(ctx, fds);
+    return 0;
+  }
+
+  JSValue func = JS_UNDEFINED;
+  bool found = false;
+  for (GocQjsCliRW *rh = state->rw; rh; rh = rh->next) {
+    if (rh->poll_index < 0)
+      continue;
+    int16_t revents = fds[rh->poll_index].revents;
+    int magic = -1;
+    if (!JS_IsNull(rh->funcs[0]) &&
+        (revents & (GOC_POLLIN | GOC_POLLERR | GOC_POLLHUP | GOC_POLLNVAL)))
+      magic = 0;
+    else if (!JS_IsNull(rh->funcs[1]) &&
+             (revents & (GOC_POLLOUT | GOC_POLLERR | GOC_POLLHUP | GOC_POLLNVAL)))
+      magic = 1;
+    if (magic < 0)
+      continue;
+    func = JS_DupValue(ctx, rh->funcs[magic]);
+    found = true;
+    break;
+  }
+  js_free(ctx, fds);
+  if (!found)
+    return 0;
+  JSValue result = JS_Call(ctx, func, JS_UNDEFINED, 0, NULL);
+  JS_FreeValue(ctx, func);
+  if (JS_IsException(result))
+    return -1;
+  JS_FreeValue(ctx, result);
+  return 1;
 }
 
 /* Run one callback/message at a time, waiting through Go when only timers are
@@ -1176,6 +1394,13 @@ int goc_qjs_cli_dispatch_workers(JSContext *ctx) {
         }
       }
     }
+    if (state->rw) {
+      int rw = goc_qjs_cli_poll_rw(state, ctx, have_deadline ? earliest : -1);
+      if (rw != 0)
+        return rw;
+      continue;
+    }
+
     int64_t now = goc_qjs_cli_now_ns();
     int64_t wait_ns = have_deadline && earliest > now ? earliest - now :
                       have_deadline ? 0 : INT64_MAX;

@@ -64,8 +64,18 @@
 //   6. Any non-call write to RSP (dynamic alloca) or RBP invalidates FA
 //      states based on it (they become tainted).
 //   7. Addresses loaded from memory (a pointer stored in a local, a pointer
-//      argument into the caller's frame) are not FA values; they remain the
-//      job of goc-stackmap / goc-reanchor exactly as before.
+//      argument into the caller's frame) are not FA values. Go's copystack
+//      rewrites the stack slot when its stack map marks it, but a
+//      callee-saved register that still holds the pre-call copy is restored
+//      verbatim by the morestack stub. After the call this pass reloads that
+//      register from the slot. The slots are spill slots and the 8-byte root
+//      allocas goc-reanchor emits (goc.arganchor, goc.anchor, goc.spill.root):
+//      a volatile reload in the IR does not stop the allocator from keeping
+//      the pre-call bits in a CSR, which is how Bellard's inlined round_to_d
+//      kept a stale bignum pointer in r14 across mpb_shr_round. Root allocas
+//      are not also rebased here; Go already rewrote them. The reload is
+//      unconditional: if the stack did not move, the slot and the register
+//      already agree.
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
 
@@ -106,6 +116,7 @@
 #include "llvm/TargetParser/Host.h"
 
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <optional>
 #include <cstring>
@@ -139,8 +150,12 @@ struct Val {
   unsigned Base = 0;
   int64_t Off = 0;
   const MachineInstr *Org = nullptr; // diagnostics only
+  // Exact copy of tracked slot Alias (>= 0), grouped by CopyId. Go adjusts the
+  // slot; a CSR that still holds the copy does not, so the fix pass reloads it.
+  int Alias = -1;
+  uintptr_t CopyId = 0;
   bool operator==(const Val &O) const {
-    if (K != O.K)
+    if (K != O.K || Alias != O.Alias || CopyId != O.CopyId)
       return false;
     if (K == FA)
       return Base == O.Base && Off == O.Off;
@@ -157,14 +172,24 @@ Val taint(const MachineInstr *Org) { Val V; V.K = Taint; V.Org = Org; return V; 
 Val join(const Val &A, const Val &B) {
   if (A.K == Bot) return B;
   if (B.K == Bot) return A;
-  if (A == B) return A;
-  if (A.moves() && B.moves())
-    return mk(D1); // both move with the stack by the same delta
-  if ((A.repairable() || A.K == NotFA) && (B.repairable() || B.K == NotFA))
-    return mk(MS);
-  Val T = mk(Taint);
-  T.Org = A.K == Taint ? A.Org : B.Org;
-  return T;
+  Val R;
+  if (A.K == B.K && (A.K != FA || (A.Base == B.Base && A.Off == B.Off)))
+    R = A;
+  else if (A.moves() && B.moves())
+    R = mk(D1); // both move with the stack by the same delta
+  else if ((A.repairable() || A.K == NotFA) && (B.repairable() || B.K == NotFA))
+    R = mk(MS);
+  else {
+    R = mk(Taint);
+    R.Org = A.K == Taint ? A.Org : B.Org;
+  }
+  // Different paths (or a kind change) are not one exact spill copy.
+  if (A.K != B.K || A.Alias != B.Alias || A.CopyId != B.CopyId ||
+      (A.K == FA && (A.Base != B.Base || A.Off != B.Off))) {
+    R.Alias = -1;
+    R.CopyId = 0;
+  }
+  return R;
 }
 
 struct State {
@@ -187,30 +212,58 @@ struct GocFrameAddrFix : MachineFunctionPass {
   const TargetRegisterInfo *TRI = nullptr;
   const TargetInstrInfo *TII = nullptr;
   MachineFrameInfo *MFI = nullptr;
-  DenseMap<int, unsigned> SlotIdx; // spill FI -> index
+  DenseMap<int, unsigned> SlotIdx; // tracked FI -> index
+  // Volatile reloads of root allocas keep the IR alloca on the memoperand
+  // instead of a FixedStack pseudo-value. Map those allocas to the same index.
+  DenseMap<const AllocaInst *, unsigned> AllocaSlot;
   SmallVector<int, 16> SlotFI;
+  // Parallel to SlotFI. Root allocas are stack-map slots Go rewrites; the
+  // repair walk reloads CSR copies and must not add delta to the slot again.
+  SmallVector<uint8_t, 16> SlotIsRoot;
   unsigned NU = 0;
-  struct Stats { unsigned Calls = 0, Lea = 0, Rebase = 0, Range = 0, Slot = 0, Derived = 0, Split = 0; } St;
+  struct Stats { unsigned Calls = 0, Lea = 0, Rebase = 0, Range = 0, Slot = 0, Derived = 0, Split = 0, Reload = 0; } St;
 
   static bool isFrameBase(unsigned R) { return R == X86::RBP || R == X86::RSP; }
+  // 8-byte stack-map roots whose address does not escape to a callee. A CSR
+  // that is an exact copy has to be reloaded: the morestack stub restores the
+  // register, and Go has already adjusted the slot.
+  static bool isCopiedRoot(const AllocaInst *AI) {
+    StringRef N = AI->getName();
+    return N.starts_with("goc.arganchor") || N.starts_with("goc.anchor") ||
+           N.starts_with("goc.spill.root");
+  }
+  bool aliasesCopiedRoot(const Val &V) const {
+    return V.Alias >= 0 && (unsigned)V.Alias < SlotIsRoot.size() &&
+           SlotIsRoot[V.Alias];
+  }
   static bool isSafepoint(const MachineInstr &MI) {
     return MI.isCall() && MI.getOpcode() != TargetOpcode::STACKMAP;
   }
 
-  // Spill-slot index touched by MI through its memory operands, or -1.
+  // Tracked-slot index touched by MI through its memory operands, or -1.
+  // Spill slots use a FixedStack pseudo-value. Root allocas (goc.arganchor
+  // and the like) stay as the IR alloca on volatile loads and stores.
   int spillSlotOf(const MachineInstr &MI, uint64_t *Size = nullptr) const {
     for (const MachineMemOperand *MMO : MI.memoperands()) {
-      const PseudoSourceValue *PSV = MMO->getPseudoValue();
-      if (!PSV)
-        continue;
-      if (auto *FS = dyn_cast<FixedStackPseudoSourceValue>(PSV)) {
-        auto It = SlotIdx.find(FS->getFrameIndex());
-        if (It != SlotIdx.end()) {
-          if (Size)
-            *Size = MMO->getSize().hasValue() ? MMO->getSize().getValue() : 0;
-          return (int)It->second;
+      int Sl = -1;
+      if (const PseudoSourceValue *PSV = MMO->getPseudoValue()) {
+        if (auto *FS = dyn_cast<FixedStackPseudoSourceValue>(PSV)) {
+          auto It = SlotIdx.find(FS->getFrameIndex());
+          if (It != SlotIdx.end())
+            Sl = (int)It->second;
+        }
+      } else if (const Value *V = MMO->getValue()) {
+        if (auto *AI = dyn_cast<AllocaInst>(V->stripPointerCasts())) {
+          auto It = AllocaSlot.find(AI);
+          if (It != AllocaSlot.end())
+            Sl = (int)It->second;
         }
       }
+      if (Sl < 0)
+        continue;
+      if (Size)
+        *Size = MMO->getSize().hasValue() ? MMO->getSize().getValue() : 0;
+      return Sl;
     }
     return -1;
   }
@@ -357,7 +410,15 @@ struct GocFrameAddrFix : MachineFunctionPass {
       else
         V = taint(&MI);
     } else if (Op == X86::MOV64rr) {
-      V = readReg(S, MI.getOperand(1).getReg());
+      unsigned Src = MI.getOperand(1).getReg();
+      V = readReg(S, Src);
+      // Group the source with this copy so a later spill of either one is
+      // reloaded into both. The id is the instruction address, stable across
+      // dataflow iterations.
+      if (V.CopyId == 0 && Src && Src != MI.getOperand(0).getReg()) {
+        V.CopyId = reinterpret_cast<uintptr_t>(&MI);
+        writeReg(S, Src, V);
+      }
     } else if ((Op == X86::ADD64ri32 || Op == X86::ADD64ri8 ||
                 Op == X86::SUB64ri32 || Op == X86::SUB64ri8) &&
                MI.getOperand(2).isImm()) {
@@ -369,12 +430,18 @@ struct GocFrameAddrFix : MachineFunctionPass {
         V = fa(VS.Base, VS.Off + C);
       else
         V = VS.frameish() ? VS : mk(NotFA);
+      if (C != 0) {
+        V.Alias = -1;
+        V.CopyId = 0;
+      }
     } else if (Op == X86::INC64r || Op == X86::DEC64r) {
       Val VS = readReg(S, MI.getOperand(1).getReg());
       if (VS.K == FA)
         V = fa(VS.Base, VS.Off + (Op == X86::INC64r ? 1 : -1));
       else
         V = VS.frameish() ? VS : mk(NotFA);
+      V.Alias = -1;
+      V.CopyId = 0;
     } else if (Op == X86::ADD64rr || Op == X86::ADD64rm) {
       Val A = readReg(S, MI.getOperand(1).getReg());
       Val B = Op == X86::ADD64rr ? readReg(S, MI.getOperand(2).getReg()) : mk(NotFA);
@@ -425,15 +492,22 @@ struct GocFrameAddrFix : MachineFunctionPass {
         V = taint(&MI); // p - x: pointer or pointer difference?
     } else {
       Exact = false;
-      int FI = 0;
-      if (Register R = TII->isLoadFromStackSlotPostFE(MI, FI)) {
-        int Sl = spillSlotOf(MI);
-        if (Op == X86::MOV64rm && Sl >= 0 && MI.getOperand(0).getReg() == R) {
-          V = S.Slots[Sl];
-          if (V.K == Bot)
-            V = mk(NotFA);
-          Exact = true;
-        }
+      // Full-width reload of a tracked slot. isLoadFromStackSlotPostFE misses
+      // volatile reloads whose memoperand still names the IR alloca.
+      uint64_t LdSize = 0;
+      int Sl = spillSlotOf(MI, &LdSize);
+      if (Op == X86::MOV64rm && Sl >= 0 && LdSize == 8 &&
+          MFI->getObjectSize(SlotFI[Sl]) == 8 && MI.getOperand(0).isReg() &&
+          MI.getOperand(0).getReg()) {
+        V = S.Slots[Sl];
+        if (V.K == Bot)
+          V = mk(NotFA);
+        // This register is now the slot's value, including after a stack
+        // copy rewrites the slot.
+        V.Alias = Sl;
+        if (V.CopyId == 0)
+          V.CopyId = reinterpret_cast<uintptr_t>(&MI);
+        Exact = true;
       }
     }
     if (!Exact) {
@@ -445,6 +519,14 @@ struct GocFrameAddrFix : MachineFunctionPass {
       }
       V = T ? taint(&MI) : mk(NotFA);
     }
+    auto forgetAlias = [&](int Sl) {
+      for (Val &U : S.Units)
+        if (U.Alias == Sl)
+          U.Alias = -1;
+      for (Val &U : S.Slots)
+        if (U.Alias == Sl)
+          U.Alias = -1;
+    };
     // Spill slot writes.
     if (MI.mayStore()) {
       uint64_t Size = 0;
@@ -452,12 +534,33 @@ struct GocFrameAddrFix : MachineFunctionPass {
       if (Sl >= 0) {
         int FI = 0;
         Register R = TII->isStoreToStackSlotPostFE(MI, FI);
+        if (!R && Op == X86::MOV64mr && Size == 8 &&
+            MFI->getObjectSize(SlotFI[Sl]) == 8) {
+          const MachineOperand &Src = MI.getOperand(X86::AddrNumOperands);
+          if (Src.isReg() && Src.getReg())
+            R = Src.getReg();
+        }
         if (R && Op == X86::MOV64mr && Size == 8 &&
             MFI->getObjectSize(SlotFI[Sl]) == 8) {
-          S.Slots[Sl] = readReg(S, R);
+          Val VR = readReg(S, R);
+          uintptr_t Id = VR.CopyId;
+          forgetAlias(Sl);
+          VR = readReg(S, R);
+          S.Slots[Sl] = VR;
+          S.Slots[Sl].Alias = -1;
+          // Every register still holding this exact value aliases the slot.
+          if (Id == 0) {
+            VR.Alias = Sl;
+            writeReg(S, R, VR);
+          } else {
+            for (Val &U : S.Units)
+              if (U.CopyId == Id)
+                U.Alias = Sl;
+          }
         } else {
           // Partial or non-MOV write: tainted if it already was or if any
           // value operand (not the store's own address) is frame-derived.
+          forgetAlias(Sl);
           bool T = S.Slots[Sl].frameish() || anyFrameValueOperand(S, MI);
           S.Slots[Sl] = T ? taint(&MI) : mk(NotFA);
         }
@@ -524,7 +627,9 @@ struct GocFrameAddrFix : MachineFunctionPass {
     MFI = &MF.getFrameInfo();
     NU = TRI->getNumRegUnits();
     SlotIdx.clear();
+    AllocaSlot.clear();
     SlotFI.clear();
+    SlotIsRoot.clear();
     St = Stats();
     int OldFP = INT_MIN;
     for (int FI = MFI->getObjectIndexBegin(), FE = MFI->getObjectIndexEnd(); FI != FE; ++FI) {
@@ -533,9 +638,16 @@ struct GocFrameAddrFix : MachineFunctionPass {
       if (MFI->isSpillSlotObjectIndex(FI)) {
         SlotIdx[FI] = SlotFI.size();
         SlotFI.push_back(FI);
+        SlotIsRoot.push_back(0);
       } else if (const AllocaInst *AI = MFI->getObjectAllocation(FI)) {
         if (AI->getName() == "goc.oldfp")
           OldFP = FI;
+        else if (MFI->getObjectSize(FI) == 8 && isCopiedRoot(AI)) {
+          AllocaSlot[AI] = SlotFI.size();
+          SlotIdx[FI] = SlotFI.size();
+          SlotFI.push_back(FI);
+          SlotIsRoot.push_back(1);
+        }
       }
     }
     unsigned NS = SlotFI.size();
@@ -709,6 +821,10 @@ struct GocFrameAddrFix : MachineFunctionPass {
           if (!Live || !AnyFrame)
             continue;
           Val V = readReg(S, R);
+          // Go already rewrote the root slot. Reloading below is the adjusted
+          // pointer; LEA/rebase on top of that would apply the delta twice.
+          if (aliasesCopiedRoot(V))
+            continue;
           if (!V.repairable()) {
             derivedLive(MF, TRI->getName(R), MI, V);
             continue;
@@ -718,6 +834,8 @@ struct GocFrameAddrFix : MachineFunctionPass {
           NeedRange |= V.K == MS;
         }
         for (unsigned Sl = 0; Sl < NS; ++Sl) {
+          if (Sl < SlotIsRoot.size() && SlotIsRoot[Sl])
+            continue;
           const Val &V = S.Slots[Sl];
           if (!LA.second.test(Sl) || !V.frameish())
             continue;
@@ -729,7 +847,25 @@ struct GocFrameAddrFix : MachineFunctionPass {
           NeedDelta |= V.K != FA;
           NeedRange |= V.K == MS;
         }
-        if (Regs.empty() && Slots.empty()) {
+        // CSR that is an exact copy of a spill. copystack rewrites the slot
+        // and the morestack stub restores the register, so reload it.
+        SmallVector<std::pair<unsigned, int>, 4> Reloads;
+        for (unsigned R : CSRs) {
+          if (MRI.isReserved(R))
+            continue;
+          bool Live = false;
+          for (MCRegUnit U : TRI->regunits(R))
+            Live |= LA.first.test(U);
+          if (!Live)
+            continue;
+          Val V = readReg(S, R);
+          // Root-slot copies are reloaded even when the value is also a frame
+          // address. Other slots are reloaded only when this pass cannot
+          // rebase them itself.
+          if (aliasesCopiedRoot(V) || (V.Alias >= 0 && !V.repairable()))
+            Reloads.push_back({R, V.Alias});
+        }
+        if (Regs.empty() && Slots.empty() && Reloads.empty()) {
           ++It;
           continue;
         }
@@ -738,8 +874,29 @@ struct GocFrameAddrFix : MachineFunctionPass {
             (P.second.K == FA ? St.Lea : P.second.K == D1 ? St.Rebase : St.Range)++;
           for (auto &P : Slots)
             (void)P, ++St.Slot;
+          St.Reload += Reloads.size();
           ++St.Calls;
           ++It;
+          continue;
+        }
+        // Reload before any cold split, on every path. Tail is the first
+        // instruction that was already after the call.
+        MachineBasicBlock::iterator Tail = std::next(It);
+        for (auto &P : Reloads) {
+          int FI = SlotFI[P.second];
+          Register FR;
+          int64_t SOff = frameRef(FI, FR);
+          auto mmo = MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(MF, FI),
+                                             MachineMemOperand::MOLoad, 8, MFI->getObjectAlign(FI));
+          BuildMI(*MBB, Tail, DL, TII->get(X86::MOV64rm), P.first)
+              .addReg(FR).addImm(1).addReg(0).addImm(SOff).addReg(0)
+              .addMemOperand(mmo);
+          ++St.Reload;
+        }
+        if (Regs.empty() && Slots.empty()) {
+          Any = true;
+          ++St.Calls;
+          It = Tail;
           continue;
         }
         // Scratch registers: clobbered by the call, not a result, dead after.
@@ -767,7 +924,7 @@ struct GocFrameAddrFix : MachineFunctionPass {
         // before the call, compare after it, and branch to an out-of-line
         // block that rebases everything only if the stack actually moved.
         MachineBasicBlock *FixMBB = MBB;
-        MachineBasicBlock::iterator InsertAt = std::next(It);
+        MachineBasicBlock::iterator InsertAt = Tail;
         MachineBasicBlock *Cont = nullptr;
         Register OFR;
         int64_t OOff = 0;
@@ -786,7 +943,7 @@ struct GocFrameAddrFix : MachineFunctionPass {
               .addMemOperand(oMMO(MachineMemOperand::MOStore));
           Cont = MF.CreateMachineBasicBlock(MBB->getBasicBlock());
           MF.insert(std::next(MBB->getIterator()), Cont);
-          Cont->splice(Cont->end(), MBB, std::next(It), MBB->end());
+          Cont->splice(Cont->end(), MBB, Tail, MBB->end());
           Cont->transferSuccessors(MBB);
           FixMBB = MF.CreateMachineBasicBlock(MBB->getBasicBlock());
           MF.push_back(FixMBB);
@@ -871,7 +1028,8 @@ struct GocFrameAddrFix : MachineFunctionPass {
     if (std::getenv("GOC_FRAMEADDR_STATS") && (St.Calls || St.Derived))
       errs() << "goc-frameaddr-fix: " << MF.getName() << " calls=" << St.Calls
              << " lea=" << St.Lea << " rebase=" << St.Rebase << " range=" << St.Range
-             << " slot=" << St.Slot << " split=" << St.Split << " unrepairable=" << St.Derived << "\n";
+             << " slot=" << St.Slot << " reload=" << St.Reload << " split=" << St.Split
+             << " unrepairable=" << St.Derived << "\n";
     return Any;
   }
 };

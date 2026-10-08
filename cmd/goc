@@ -34,7 +34,8 @@ Environment:
                Frame-address repair and GOC_SPTR_MAPS are refused. A TU that
                contains the linux/amd64 host sequence (movq %%fs:-8 or
                "syscall") is refused, except runtime/uptr.
-  LLC          llc binary (default: llc-19; arm64 forces stock llc-19)
+  LLC          llc binary. amd64 default is goc-llc (frame-address fix).
+               arm64 forces stock llc-19. GOC_FRAMEADDR_MODE=asm uses stock llc.
   CLANG_FALLBACK  System clang when GOC_CLANG unset (default: clang-19)
 
 Product frontend: P28 in-tree Clang (Sema colors + escape; no -fplugin).
@@ -180,12 +181,19 @@ cmd_build() {
     USE_PLUGIN=1
   fi
   local INC="$ROOT/include"
-  local LLC="${LLC:-llc-19}"
+  # amd64 gep remat is only safe with goc-llc's GocFrameAddrFix. Passing
+  # stock llc-19 here used to skip realbody's missing-binary check, so tail
+  # duplication kept frame addresses in callee-saved registers across calls.
+  local LLC="${LLC:-}"
   if [[ "$GOC_ARCH" == arm64 ]]; then
     # goc-llc is the X86-only in-tree backend. arm64 ISel is system llc-19.
     case "$LLC" in
-      *goc-llc*) LLC=llc-19 ;;
+      *goc-llc*|"") LLC=llc-19 ;;
     esac
+  elif [[ -z "$LLC" && "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
+    LLC="$ROOT/backend/build/pass-out/goc-llc"
+  elif [[ -z "$LLC" ]]; then
+    LLC=llc-19
   fi
   local REALBODY="$ROOT/backend/realbody/goc_p28_realbody.sh"
   local COLOR_ESC="$ROOT/frontend/color-escape/build/goc-color-escape"
@@ -316,9 +324,10 @@ cmd_build() {
     # Inlining is done. Record maps on the surviving functions, then spill
     # frame addresses O3 left in SSA across calls. Nothing after this may
     # inline: a caller cannot retarget a callee's frame-word offsets.
-    # goc-pin-i64 is not run. llc is invoked with -no-stack-slot-sharing, so
-    # an integer spill is never reused for g. Integer fragments stay in
-    # registers; the copier copies callee-saved spills verbatim.
+    # goc-pin-i64 is not run. Spill slots share; root allocas do not. The
+    # hoisted g value lives in a callee-saved register, not a colored spill.
+    # Integer fragments stay in registers; the copier copies those spills
+    # verbatim.
     if [[ $ALL -eq 1 && "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
       local SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
       [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }

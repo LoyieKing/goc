@@ -67,7 +67,12 @@ fi
 QJS_DEFS=("${FLAVOR_DEFS[@]}" -D_GNU_SOURCE -DGOC_QJS_GSTACK=1 -DNDEBUG)
 UPTR_DEFS=(-DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS -DGOC_DYNALLOC_POOL)
 export GOC_DEFAULT_PTR_COLOR=cptr   # bulk coloring: uncolored ptrs are cptr
-export GOC_NO_NOSPLIT=1             # let the meta say "splittable", not "nosplit"
+# "noframe" in the meta, not "nosplit". Unsetting this marks every function
+# nosplit, including JS_CallInternal, and the linker rejects the chain.
+# ABI0 leaves with no call and 0 < frame <= StackSmall (128) still skip the
+# probe: elfpack gocLeafNosplit sets AttrNoSplit and the linker checks the
+# nosplit budget. GOC_MORESTACK=1 stays on for everyone else.
+export GOC_NO_NOSPLIT=1
 export GOC_MORESTACK="${GOC_MORESTACK:-1}"  # real split check + morestack stub in goc TEXT
 export GOC_SPTR_MAPS="${GOC_SPTR_MAPS:-1}"  # real locals maps at C call sites
 export GOC_INLINE_DYNALLOC=1        # bump the alloca pool in-line; no per-call memset
@@ -131,6 +136,12 @@ for src in "${QJS_TUS[@]}"; do
 done
 
 echo "=== [3/4] link Go caller (toolexec packs goobjs; -lm via extld) ==="
+# glibc trampolines for the shim's transcendentals. The .S stays outside
+# the Go package: cgo would compile a .S next to the .go files, and a
+# .syso of the same code would be a second definition. *.syso is gitignored;
+# both Go packages pick the file up from their directory.
+gcc -c -o "$ROOT/tests/qjs/goc_libm_glibc.syso" "$ROOT/tests/qjs/asm/goc_libm_glibc.S"
+cp -f "$ROOT/tests/qjs/goc_libm_glibc.syso" "$ROOT/tests/qjscli/goc_libm_glibc.syso"
 BINOBJ=""
 for src in "${QJS_TUS[@]}"; do BINOBJ="$BINOBJ $OUT/$src.o"; done
 BINOBJ="${BINOBJ# } $OUT/shim.o $OUT/uptr.o $OUT/promise_probe.o$EXTRA_OBJS"

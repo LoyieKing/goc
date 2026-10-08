@@ -1467,9 +1467,9 @@ func main() {
 		// Color slots and tagged aggregate fields. Compiler spill roots
 		// (goc.spill.root / goc.anchor) are not in this base: they are
 		// uninitialized until their store, and the stackmap at that call
-		// names them. Safe as a function-wide base only because llc is passed
-		// -no-stack-slot-sharing: a later call cannot reuse the slot for a
-		// scalar. Per-call Direct locations are still OR'd on top.
+		// names them. These allocas stay unmerged (lifetime markers dropped
+		// in goc-reanchor). Spill-slot sharing does not alias them. Per-call
+		// Direct locations are still OR'd on top.
 		if useSptrMaps {
 			for _, off := range rq.sptrSlots {
 				// Same indexing as Direct locations: bit 0 is the word at

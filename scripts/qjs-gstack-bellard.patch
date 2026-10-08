@@ -74,21 +74,21 @@ https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz). Everything is under
  
 +#ifdef GOC_QJS_GSTACK
 +#include "../../runtime/goc_uptr.h"
-+/* Decode the saved word as an integer. A pointer-typed helper return is
-+   colored cptr and the return guard traps when the address is still on
-+   this goroutine (function-local input, regex bytecode). */
-+#define goc_regexp_restore_capture(elem) \
-+    ((uint8_t *)goc_uptr_decode((goc_uptr)(elem).val))
++/* pc, cptr, and capture are heap bytecode and the subject string.
++   An integer cast keeps them off the GC-root path: goc_uptr_decode
++   returns "may point at the stack", so every later push re-encodes
++   and pc+k becomes a spill root. next_sp is the saved backtrack
++   pointer sp1, a real goroutine stack address, and still decodes.
++   That is the pointer the old return guard trapped on.
++   Capture words are the same heap pointers as cptr. */
++#define goc_regexp_restore_capture(elem) ((uint8_t *)(uintptr_t)(elem).val)
++#define goc_regexp_restore_ptr(elem) ((uint8_t *)(uintptr_t)(elem).val)
++#define goc_regexp_restore_stackptr(elem) \
++    ((StackElem *)goc_uptr_decode((goc_uptr)(elem).val))
 +#else
 +#define goc_regexp_restore_capture(elem) ((elem).ptr)
-+#endif
-+#ifdef GOC_QJS_GSTACK
-+/* Load the encoded word as an integer. A pointer-typed load is colored cptr
-+   and the return guard traps when the address is still on this goroutine. */
-+#define goc_regexp_restore_ptr(elem) \
-+    ((uint8_t *)goc_uptr_decode((goc_uptr)(elem).val))
-+#else
 +#define goc_regexp_restore_ptr(elem) ((elem).ptr)
++#define goc_regexp_restore_stackptr(elem) ((StackElem *)(elem).ptr)
 +#endif
 +
  typedef struct {
@@ -175,7 +175,7 @@ https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz). Everything is under
                      sp1 = sp;
                      while (sp1 < sp_top) {
 -                        next_sp = (void *)sp1[2].ptr;
-+                        next_sp = (StackElem *)goc_regexp_restore_ptr(sp1[2]);
++                        next_sp = goc_regexp_restore_stackptr(sp1[2]);
                          sp1 += 3;
                          while (sp1 < next_sp)
                              *sp++ = *sp1++;

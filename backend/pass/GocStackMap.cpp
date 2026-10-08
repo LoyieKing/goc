@@ -38,14 +38,14 @@
 // "bad pointer in frame". uptr is for an sptr stored where the copier cannot
 // see it (the heap), not for a frame slot this map already scans.
 //
-// SROA splits an i64 JSValue into 32-bit halves and leaves them in SSA across
-// calls. With stack-slot sharing, llc can spill a half into a slot later
-// reused for g; the join then looks like a pointer and JS_FreeValueRT faults
-// (seen in js_regexp_Symbol_replace). goc-pin-i64 exists for that case. The
-// default pipeline does not run it: llc gets -no-stack-slot-sharing, so an
-// integer spill is never reused, and the pin allocas were a per-call memory
-// tax (137 slots in JS_CallInternal). Stack-derived integers stay with
-// goc-reanchor so growth can still adjust them.
+// Spill slots share again (llc is not passed -no-stack-slot-sharing). Root
+// allocas are not spill slots, and goc-reanchor drops their lifetime markers
+// so StackColoring cannot merge them with a scalar. goc-pin-i64 stays out of
+// the default pipeline: pinning every i64 half was 137 slots in
+// JS_CallInternal. A short-lived spill of g used to share a colored slot with
+// an i64 half (js_regexp_Symbol_replace). g is now one hoisted value, so its
+// home is a callee-saved spill, which StackSlotColoring does not recolor.
+// Stack-derived integers stay with goc-reanchor so growth can still adjust them.
 #include <algorithm>
 #include <optional>
 #include <memory>
@@ -304,10 +304,39 @@ bool outgoingPointerWords(const CallBase &CB, const DataLayout &DL,
   return true;
 }
 
+// g is one value for the whole goroutine. O3 often leaves a separate
+// FS:-8 / x28 read at each inlined stack check. Fold them to a single read
+// in the entry block. stack.lo / stack.hi loads stay volatile.
+bool hoistTlsG(Function &F) {
+  SmallVector<CallInst *, 8> Reads;
+  for (Instruction &I : instructions(F)) {
+    auto *CI = dyn_cast<CallInst>(&I);
+    if (!CI || !CI->isInlineAsm())
+      continue;
+    const auto *IA = dyn_cast<InlineAsm>(CI->getCalledOperand());
+    if (!IA)
+      continue;
+    StringRef Asm = IA->getAsmString();
+    if (Asm == "movq %fs:-8, $0" || Asm == "mov $0, x28")
+      Reads.push_back(CI);
+  }
+  if (Reads.size() <= 1)
+    return false;
+  IRBuilder<> B(&*F.getEntryBlock().getFirstInsertionPt());
+  CallInst *Keep = cast<CallInst>(Reads[0]->clone());
+  B.Insert(Keep);
+  for (CallInst *CI : Reads) {
+    CI->replaceAllUsesWith(Keep);
+    CI->eraseFromParent();
+  }
+  return true;
+}
+
 struct GocStackMap : PassInfoMixin<GocStackMap> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &FAM) {
     if (F.isDeclaration())
       return PreservedAnalyses::all();
+    bool Hoisted = hoistTlsG(F);
 
     const DataLayout &DL = F.getParent()->getDataLayout();
     // Computed before this pass rewrites uses. Includes allocas, GEPs of
@@ -357,7 +386,7 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
       if (isSptrColored(I) || FromStackFormal || stackDerived.count(&I))
         sptr.push_back(&I);
     }
-    bool Changed = false;
+    bool Changed = Hoisted;
     if (!sptr.empty()) {
       Changed = true;
       // Clang may emit numbered (nameless) allocas. MIR drops those names, but
@@ -637,8 +666,12 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
       auto *Root = Entry.CreateAlloca(V->getType(), nullptr, "goc.spill.root");
       roots[V] = Root;
 
-      // Remember original users before adding the save. Every reloaded use
-      // sees the stack-copied root, including uses on a PHI incoming edge.
+      // Remember original users before adding the save. The slot is the
+      // stackmap root. Between safepoints the reloaded SSA value stays in a
+      // register; the next safepoint reloads, because morestack may have
+      // adjusted the slot. The store and the reload stay volatile so DSE
+      // cannot drop the store (the stackmap names the slot address) and so
+      // the post-call load is not forwarded from before the call.
       SmallVector<Use *, 16> uses;
       for (Use &U : V->uses())
         uses.push_back(&U);
@@ -648,32 +681,66 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
         IP = V->getParent()->getTerminator();
       IRBuilder<> Save(IP);
       Save.CreateStore(V, Root)->setVolatile(true);
-      // A switch or duplicated CFG edge can list one predecessor twice. Those
-      // incoming values must be the same instruction; two loads are not.
+      // One volatile reload per safepoint-free stretch in a block. Later
+      // uses in that stretch keep the SSA value in a register. The next
+      // call reloads: morestack may have adjusted the slot, and a
+      // callee-saved copy of the pre-call bits is not adjusted. Volatile
+      // stops the post-call load from being forwarded. Frame addresses are
+      // not spilled here; GocFrameAddrFix re-derives them after tail
+      // duplication. A switch can list one predecessor twice; those edges
+      // must share one reload instruction.
+      for (BasicBlock &BB : F)
+        BB.renumberInstructions();
+      SmallVector<Use *, 16> ordered(uses.begin(), uses.end());
+      std::sort(ordered.begin(), ordered.end(), [](Use *A, Use *B) {
+        Instruction *IA = usePoint(*A);
+        Instruction *IB = usePoint(*B);
+        if (IA == IB)
+          return false;
+        if (IA->getParent() != IB->getParent())
+          return IA->getParent() < IB->getParent();
+        return IA->comesBefore(IB);
+      });
       DenseMap<std::pair<PHINode *, BasicBlock *>, LoadInst *> phiReload;
-      for (Use *U : uses) {
+      SmallVector<LoadInst *, 8> placed;
+      for (Use *U : ordered) {
         auto *UserInst = dyn_cast<Instruction>(U->getUser());
         if (!UserInst)
           report_fatal_error("goc-stackmap: non-instruction sptr user");
         if (auto *Call = dyn_cast<CallBase>(UserInst))
           if (isNonSafepointIntrinsic(*Call))
             continue; // preserve the original alloca for annotations
-        if (auto *Phi = dyn_cast<PHINode>(UserInst)) {
-          BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
-          auto Key = std::make_pair(Phi, Inc);
-          LoadInst *Reload = phiReload.lookup(Key);
-          if (!Reload) {
-            IRBuilder<> B(Inc->getTerminator());
-            Reload = B.CreateLoad(V->getType(), Root, "goc.spill.reload");
-            Reload->setVolatile(true);
-            phiReload[Key] = Reload;
+        Instruction *At = usePoint(*U);
+        PHINode *Phi = dyn_cast<PHINode>(UserInst);
+        std::pair<PHINode *, BasicBlock *> Key{nullptr, nullptr};
+        if (Phi) {
+          Key = std::make_pair(Phi, Phi->getIncomingBlock(U->getOperandNo()));
+          if (LoadInst *Existing = phiReload.lookup(Key)) {
+            U->set(Existing);
+            continue;
           }
-          U->set(Reload);
+        }
+        LoadInst *Share = nullptr;
+        for (LoadInst *Prev : placed) {
+          if (Prev->getParent() != At->getParent())
+            continue;
+          if (separatedBySafepoint(Prev, At))
+            continue;
+          Share = Prev;
+          break;
+        }
+        if (Share) {
+          if (Phi)
+            phiReload[Key] = Share;
+          U->set(Share);
           continue;
         }
-        IRBuilder<> B(UserInst);
+        IRBuilder<> B(At);
         auto *Reload = B.CreateLoad(V->getType(), Root, "goc.spill.reload");
         Reload->setVolatile(true);
+        placed.push_back(Reload);
+        if (Phi)
+          phiReload[Key] = Reload;
         U->set(Reload);
       }
     }
@@ -1850,8 +1917,7 @@ struct GocPinI64 : PassInfoMixin<GocPinI64> {
       auto *Z = Zero.CreateStore(Constant::getNullValue(fix.Def->getType()), Slot);
       // Non-volatile: these are integer fragments, not stack pointers. A
       // volatile reload would force a memory round-trip at every call.
-      // -no-stack-slot-sharing keeps the slot from being reused for g if
-      // the value is spilled; the register itself does not move.
+      // This pass is not in the default pipeline.
 
       Instruction *After = pinStorePoint(fix.Def);
       if (!After || isa<PHINode>(After))
@@ -1889,15 +1955,37 @@ struct GocPinI64 : PassInfoMixin<GocPinI64> {
 // copystack adjusts them. Source noinline is left untouched.
 //
 // goc_stack_hi / goc_uptr_decode / goc_uptr_from_ptr are out of line in
-// another TU, so every JS entry pays a PLT call to read FS:-8 and add.
-// Give each an alwaysinline body here. The O3 pipeline that follows this
-// pass inlines it. The load of g->stack.hi is volatile: morestack updates
-// that word, and a CSE across a call would decode against the old stack.
+// another TU, so every JS entry pays a PLT call to read g and add.
+// Give each an alwaysinline body here. goc-inline-gate runs before O3, and
+// that pipeline inlines the body. g is invariant for the goroutine. The
+// FS:-8 / x28 read is readnone, and hoistTlsG (in goc-stackmap, after O3)
+// leaves one read per function. stack.lo and stack.hi change only inside a
+// call. The morestack prologue that writes them is inserted after this IR,
+// so a call O3 proved readonly can still move the stack. Those loads stay
+// volatile.
+bool gocArchArm64() {
+  static int Arm = -1;
+  if (Arm < 0) {
+    const char *Arch = std::getenv("GOC_ARCH");
+    Arm = (Arch && std::strcmp(Arch, "arm64") == 0) ? 1 : 0;
+  }
+  return Arm == 1;
+}
+
 Value *tlsGWord(IRBuilder<> &B, uint64_t Off) {
   FunctionType *FT = FunctionType::get(B.getInt64Ty(), false);
-  InlineAsm *IA = InlineAsm::get(FT, "movq %fs:-8, $0", "=r",
-                                  /*hasSideEffects=*/true);
-  Value *G = B.CreateIntToPtr(B.CreateCall(IA), B.getPtrTy());
+  // arm64 keeps g in x28 (llc -mattr=+reserve-x28). amd64 reads FS:-8.
+  // Do not reserve r14 here: the installed llc has no -reserve-goc-r14.
+  const char *Asm = gocArchArm64() ? "mov $0, x28" : "movq %fs:-8, $0";
+  InlineAsm *IA = InlineAsm::get(FT, Asm, "=r", /*hasSideEffects=*/false);
+  CallInst *C = B.CreateCall(IA);
+  // g does not change for the life of the goroutine, and FS/x28 is not
+  // LLVM memory. readnone + willreturn is what lets O3 treat the read as a
+  // pure value (nounwind alone still counts as a side effect).
+  C->setDoesNotAccessMemory();
+  C->setDoesNotThrow();
+  C->addFnAttr(Attribute::WillReturn);
+  Value *G = B.CreateIntToPtr(C, B.getPtrTy());
   LoadInst *L = B.CreateLoad(
       B.getInt64Ty(), B.CreateGEP(B.getInt8Ty(), G, B.getInt64(Off)));
   L->setVolatile(true);

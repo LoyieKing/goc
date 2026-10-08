@@ -853,6 +853,66 @@ void goc_qjs_cli_enable_interrupt(JSRuntime *rt, int countdown) {
   JS_SetInterruptHandler(rt, goc_qjs_cli_interrupt, NULL);
 }
 
+/* qjs.c treats a file as a module when the name ends in .mjs or
+   JS_DetectModule says so. ng returns bool, Bellard returns int. */
+int goc_qjs_cli_detect_module(const char *input, size_t len) {
+  return JS_DetectModule(input, len) ? 1 : 0;
+}
+
+/* Same prelude as qjs.c when argv contains --std. */
+int goc_qjs_cli_load_std(JSContext *ctx) {
+#ifdef GOC_QJS_BELLARD
+  static const char source[] =
+      "import * as std from 'std';\n"
+      "import * as os from 'os';\n"
+      "globalThis.std = std;\n"
+      "globalThis.os = os;\n";
+#else
+  static const char source[] =
+      "import * as bjson from 'qjs:bjson';\n"
+      "import * as std from 'qjs:std';\n"
+      "import * as os from 'qjs:os';\n"
+      "globalThis.bjson = bjson;\n"
+      "globalThis.std = std;\n"
+      "globalThis.os = os;\n";
+#endif
+  JSValue compiled = JS_Eval(ctx, source, sizeof(source) - 1, "<input>",
+                             JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+  if (JS_IsException(compiled))
+    return -1;
+  if (goc_qjs_cli_set_import_meta(ctx, compiled) < 0) {
+    JS_FreeValue(ctx, compiled);
+    return -1;
+  }
+  JSValue result = JS_EvalFunction(ctx, compiled);
+  if (JS_IsException(result))
+    return -1;
+  JSRuntime *rt = JS_GetRuntime(ctx);
+  for (;;) {
+    JSContext *job_ctx = NULL;
+    int pending = JS_ExecutePendingJob(rt, &job_ctx);
+    if (pending < 0) {
+      JS_FreeValue(ctx, result);
+      return -1;
+    }
+    if (pending == 0)
+      break;
+  }
+  if (JS_PromiseState(ctx, result) != JS_PROMISE_FULFILLED) {
+    if (JS_PromiseState(ctx, result) == JS_PROMISE_REJECTED) {
+      JSValue reason = JS_PromiseResult(ctx, result);
+      JS_FreeValue(ctx, result);
+      JS_Throw(ctx, reason);
+    } else {
+      JS_FreeValue(ctx, result);
+      JS_ThrowInternalError(ctx, "--std module evaluation did not finish");
+    }
+    return -1;
+  }
+  JS_FreeValue(ctx, result);
+  return 0;
+}
+
 int goc_qjs_cli_install(JSContext *ctx) {
   JSValue global = JS_GetGlobalObject(ctx);
   if (JS_IsException(global))
@@ -893,14 +953,23 @@ int goc_qjs_cli_install(JSContext *ctx) {
     return -1;
   }
 
-  JSModuleDef *std = JS_NewCModule(ctx, "qjs:std", goc_qjs_cli_std_init);
+  /* Bellard registers "std"/"os". quickjs-ng registers "qjs:std"/"qjs:os".
+     --std imports those exact names; see goc_qjs_cli_load_std. */
+#ifdef GOC_QJS_BELLARD
+  const char *std_name = "std";
+  const char *os_name = "os";
+#else
+  const char *std_name = "qjs:std";
+  const char *os_name = "qjs:os";
+#endif
+  JSModuleDef *std = JS_NewCModule(ctx, std_name, goc_qjs_cli_std_init);
   if (!std || JS_AddModuleExport(ctx, std, "gc") < 0 ||
       JS_AddModuleExport(ctx, std, "evalScript") < 0 ||
       goc_qjs_cli_std_extra_add(ctx, std) < 0) {
     JS_FreeValue(ctx, global);
     return -1;
   }
-  JSModuleDef *os = JS_NewCModule(ctx, "qjs:os", goc_qjs_cli_os_init);
+  JSModuleDef *os = JS_NewCModule(ctx, os_name, goc_qjs_cli_os_init);
   if (!os || JS_AddModuleExport(ctx, os, "platform") < 0 ||
       JS_AddModuleExport(ctx, os, "now") < 0 ||
       goc_qjs_cli_os_extra_add(ctx, os) < 0 ||

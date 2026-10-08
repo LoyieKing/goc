@@ -1144,8 +1144,28 @@ static const JSCFunctionListEntry goc_qjs_cli_std_error_props[] = {
   JS_PROP_INT32_DEF("EPIPE", EPIPE, JS_PROP_CONFIGURABLE),
   JS_PROP_INT32_DEF("EBADF", EBADF, JS_PROP_CONFIGURABLE),
 };
+#ifdef GOC_QJS_BELLARD
+/* Same entry as quickjs-libc.c js_std_parseExtJSON. */
+static JSValue goc_qjs_cli_std_parse_ext_json(JSContext *ctx,
+                                              JSValueConst this_val,
+                                              int argc, JSValueConst *argv) {
+  (void)this_val;
+  (void)argc;
+  size_t length;
+  const char *text = JS_ToCStringLen(ctx, &length, argc > 0 ? argv[0] : JS_UNDEFINED);
+  if (!text)
+    return JS_EXCEPTION;
+  JSValue value = JS_ParseJSON2(ctx, text, length, "<input>", JS_PARSE_JSON_EXT);
+  JS_FreeCString(ctx, text);
+  return value;
+}
+#endif
+
 static const JSCFunctionListEntry goc_qjs_cli_std_funcs[] = {
   JS_CFUNC_DEF("loadFile", 1, goc_qjs_cli_std_load_file),
+#ifdef GOC_QJS_BELLARD
+  JS_CFUNC_DEF("parseExtJSON", 1, goc_qjs_cli_std_parse_ext_json),
+#endif
   JS_CFUNC_DEF("writeFile", 2, goc_qjs_cli_std_write_file),
   JS_CFUNC_DEF("strerror", 1, goc_qjs_cli_std_strerror),
   JS_CFUNC_DEF("open", 2, goc_qjs_cli_std_open),

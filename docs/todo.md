@@ -99,51 +99,44 @@
 
 ## 性能：缩小和原生 QuickJS 的差距
 
-来源是 [perf-gap.md](perf-gap.md) 第 8 节。收益一栏里，“实测”是 A/B 计时的结果（时间比，小于 1 表示变快）；“估计”是按指令份额推算的，没有计时验证。所有项都还没合入默认构建。合入任何一项前，都要重跑正确性对照：goc-ng 为 test262 1502/1526、官方测试 69/77；goc-bellard 为 1501/1526、73/77。
+来源是 [perf-gap.md](perf-gap.md) 第 8 节。下面每一项都在默认构建里（linux/amd64，`GOC_OPT_LEVEL=3`，gep 模式用 `goc-llc`）。`GOC_FIXED_G` 仍默认关。perf-gap 第 13 项 `-inline-threshold=250` 不在这份清单里，没有开。收益一栏仍是合入前的数字：“实测”是当时的 A/B（时间比，小于 1 表示变快）；“估计”按指令份额推算，这次没有再计时。
+
+这套二进制上的正确性对照：
+
+- goc-ng：test262 1502/1526，栈增长扫描 300/300。`tests.conf` 套件 116/116。`quickjs.ll` 里没有函数读 `g` 超过一次，`JS_CallInternal` 是 1 次。
+- goc-bellard：test262 1501/1526，栈增长扫描 300/300。Bellard `tests/` 按函数 77/77，`make test` 的整文件（含 `test_builtin.js --std`、`test_std.js`、`test_rw_handler.js`）通过。同样每个函数最多一次 `g` 读取。
+- 两边 CLI：`Math.sin(1).toString()` 为 `0.8414709848078965`。
+- Bellard 和 ng 的 `libregexp`：隐式 uptr 存储 2，解码指针加载 0。
+- `backend/realbody/check_arm64.sh` 通过。arm64 ELF 没有在 qemu 里执行。
 
 ### RegExp（V8 里差距最大的子项）
 
 同样的编译参数下，goc 的 RegExp 多执行 36% 的指令，耗时是原生的 1.24 到 1.28 倍。原因见 perf-gap.md 第 4.4 和 4.5 节。
 
-- **恢复回溯栈时不再解码（E1）。** `lre_exec` 每压一条回溯记录，都要存两个指针：字节码位置 `pc` 和输入字符指针 `cptr`，现在各插一段 uptr 编码检查（每段读两次 `g`、比较两次、分支一次）。最热的块执行 2442 万次，goc 版 48 条指令，原生 22 条。根源是 `scripts/qjs-gstack*.patch` 的两个恢复宏 `goc_regexp_restore_ptr` / `goc_regexp_restore_capture` 用 `goc_uptr_decode` 读回：解码结果在 color-escape 里算“可能指向栈”，于是之后每次压栈都要再编码，`pc+k` 也成了 GC 根。改成普通整数转换 `(uint8_t *)(uintptr_t)(elem).val` 即可。原先设想的“把回溯栈字段标成 `cptr`”已被实验否定（E2：标了之后没有任何变化）。细节见 [perf-gap/regexp-colors.md](perf-gap/regexp-colors.md)。
-  - 收益：只编译未运行。`lre_exec` 的 `FS:-8` 读取 29 → 0，TU 隐式 uptr 存储 12 → 2，`lre_exec` spill 根槽 12 → 7、根重载 52 → 12（`pc` 的根槽全部消失）。按指令份额估计 RegExp 指令数少约 15 个点。
-  - 风险：中。条件是压进回溯栈的指针跨安全点时都不是 goroutine 栈地址。合入前：
-    - 用 E1 构建，跑 test262 和正则测试（bellard、ng 各一遍），对照上面的正确性基线。
-    - 确认没有外部 `lre_exec` 调用者把栈上缓冲区作为输入或字节码传进来（它是导出函数；QuickJS 自己的两个调用点都传堆缓冲区）。
-    - 查清补丁注释里说的“return guard traps”当初是哪个指针触发的。嫌疑是 `next_sp`（保存的 `sp1`，真栈地址）；如果是它，只对 `next_sp` 保留解码。
-- **同一函数里只读一次 `g`。** `g` 在 goroutine 的生命周期内不变，`stack.lo` 和 `stack.hi` 只会在调用里变。现在 `FS:-8` 的读取是 volatile 的，不能合并，也不能提到循环外。可以改成允许合并和外提，或者默认打开 `GOC_FIXED_G`，让 `r14` 固定存 `g`。
-  - 收益：估计读 `g` 这一类的 9.4 个点指令能省一半左右，RegExp 最多快 10% 以上，其他子项也受益。E1 合入后 `lre_exec` 里已没有 `g` 读取，这一项在 RegExp 上的收益会变小，主要剩 JS 栈溢出检查等其他位置。
-  - 风险：中。直接关系到搬栈是否正确；`GOC_FIXED_G` 的 Bellard 构建这次还没编通。
-- **GC 根槽不再 volatile。** 现在一个可能指向栈、又要跨调用存活的指针，每次修改都要写回栈槽，每次使用都要从栈槽读。可以改成两次调用之间留在寄存器，只在调用前写回、调用后重读，类似 LLVM statepoint 的重定位。
-  - 收益：估计最多省 3.9 个点指令，其中 `lre_exec` 2.5 个点，`JS_CallInternal` 0.9 个点。E1 已经去掉 `lre_exec` 里的 `pc` 根槽（最热的一个有 30 次重载），`lre_exec` 这部分要在 E1 之后重估。
-  - 风险：高。这是后端改动，漏一处就会在搬栈后留下悬空指针。
+- **恢复回溯栈时不再解码（E1）。** 已进两份 `scripts/qjs-gstack*.patch`。`pc` / `cptr` / `capture` 用 `(uint8_t *)(uintptr_t)(elem).val`。`next_sp` 仍走 `goc_regexp_restore_stackptr`（`goc_uptr_decode`）：它保存的是真栈地址。标成 `cptr` 的做法（E2）没有采用。
+  - 收益：合入前只编译未运行。`lre_exec` 的 `FS:-8` 读取 29 → 0，TU 隐式 uptr 存储 12 → 2，`lre_exec` spill 根槽 12 → 7、根重载 52 → 12。按指令份额估计 RegExp 指令数少约 15 个点。这次默认构建上 Bellard 和 ng 的 `libregexp` 都是隐式 uptr 存储 2、解码加载 0。
+- **同一函数里只读一次 `g`。** 已进默认构建，没有开 `GOC_FIXED_G`。`tlsGWord` 的读 `g` 是 `readnone` + `nounwind` + `willreturn`（amd64 `movq %fs:-8, $0`，arm64 `mov $0, x28`）。O3 之后 `hoistTlsG` 把一个函数里的多次读取收成入口处一次。`stack.lo` / `stack.hi` 的加载仍是 volatile。
+  - 收益：估计读 `g` 这一类的 9.4 个点指令能省一半左右。E1 之后 `lre_exec` 里已经没有 `g` 读取，剩下的是 JS 栈溢出检查等位置。Bellard 的 `quickjs.ll` 从 481 次读、54 个函数重复读，变成 122 次读、0 个函数重复读。
+- **GC 根在两次调用之间留在寄存器。** 定义处仍 volatile 写回根槽（stackmap 认的是槽地址，不能被 DSE 删掉）。同一段没有 safepoint 的区间只 volatile 重载一次，后面的使用留在寄存器里；下一次调用后再重载。另外，根槽（`goc.arganchor` / `goc.anchor` / `goc.spill.root`）的精确拷贝若活在被调用者保存的寄存器里，调用后从槽里重读，不再对这份拷贝做 LEA。Go 已经改过槽里的指针。arm64 的帧地址重物化仍然直接失败，没有移植。
+  - 收益：估计最多省 3.9 个点指令。这次没有重测指令数。Bellard 的 300 次栈增长扫描通过；原先字面量 `8` 在搬栈后会被读成 `8*(1+2^-32)`，就是这条路径。
 
 ### 其他项（按收益和风险排序）
 
-- **llc 打开分派块的尾部复制**（`-tail-dup-pred-size=1000 -tail-dup-succ-size=1000`，也可以只对含 `indirectbr` 的函数放开）。
-  - 收益：实测 goc-bellard 的 V8 时间比 0.927、SunSpider 0.848；goc-ng 的 SunSpider 0.929。
-  - 风险：低。要重跑正确性对照和栈增长扫描。
-- **精确规定的 libm 函数改用 C 实现**（`sqrt`、`floor`、`ceil`、`trunc`、`round`，补丁已有）。
-  - 收益：实测 `Math.sqrt` 快 2.4 倍，`Math.floor` 快 1.9 倍。
-  - 风险：低。
-- **`clock_gettime` 走 vDSO**（补丁已有）。
-  - 收益：实测 `Date.now()` 从 166 ns 降到 103 ns。
-  - 风险：低。合入前要把 `//go:noinline` 改回 `gocGoLocaltime` 上。
-- **`memcmp` 每步比较 8 字节**（补丁已有），或者用 SSE2。
-  - 收益：实测 1 KiB 比较从 366 ns 降到 83 ns。
-  - 风险：低。
-- **shim 的 `goc_malloc_usable_size` 返回实际容量**，同时 `goc_realloc` 按容量拷贝。现在它返回的是申请时的尺寸，Bellard 的字符串追加因此每次都整串重建，`string_build*` 慢 1.8 倍。
+- **llc 打开分派块的尾部复制。** amd64 和 arm64 都带 `-tail-dup-pred-size=1000 -tail-dup-succ-size=1000`。尾部合并仍关。
+  - 收益：合入前实测 goc-bellard 的 V8 时间比 0.927、SunSpider 0.848；goc-ng 的 SunSpider 0.929。
+- **精确规定的 libm 函数改用 C 实现。** `sqrt` 是 `sqrtsd`。`floor`、`ceil`、`trunc`、`round` 按 musl 写，`goc_toint` 是 2^52。
+  - 收益：合入前实测 `Math.sqrt` 快 2.4 倍，`Math.floor` 快 1.9 倍。
+- **`clock_gettime` 走 vDSO。** `CLOCK_MONOTONIC` 用 `runtime.nanotime`，`CLOCK_REALTIME` 用 `time.Now`，其它时钟仍是 syscall 228。`//go:noinline` 在 `gocGoLocaltime` 上，不在这个辅助函数上。
+  - 收益：合入前实测 `Date.now()` 从 166 ns 降到 103 ns。
+- **`memcmp` 每步比较 8 字节。** `goc_ld8` 加 `bswap64`，没有改成 SSE2。
+  - 收益：合入前实测 1 KiB 比较从 366 ns 降到 83 ns。
+- **`goc_malloc_usable_size` 返回 `h->capacity`，`goc_realloc` 按这个容量拷贝。**
   - 收益：机制已实测；估计 Bellard microbench 的几何平均少约 2%。
-  - 风险：低。
-- **超越函数不走 Go 再转 cgo**，改用 C 实现（如 CORE-MATH），或者用更轻的系统栈直调。
-  - 收益：估计 `3d-morph` 少 35% 到 40%。
-  - 风险：中。结果的最后一位可能和 glibc 不同，需要逐位对照。
-- **只对非根槽恢复栈槽共享。**
-  - 收益：估计 `JS_CallInternal` 的帧从 1768 字节降到约 1200 字节。
-  - 风险：中高。
-- **小叶子函数免栈检查**，由链接器检查 NOSPLIT 预算。
+- **超越函数直接调 glibc。** `tests/qjs/asm/goc_libm_glibc.S` 做栈对齐后调用，不经 Go 的 cgo。`frexp` / `modf` / `ldexp` / `scalbn` / `lrint` / `strtod` 仍走原来的 cgo。CLI 要求 `Math.sin(1)` 的十进制和 glibc 一致。
+  - 收益：估计 `3d-morph` 少 35% 到 40%。这次没有重测，只对了 `sin` / `log` / `atan2` 的值。
+- **非根槽恢复栈槽共享。** 默认 llc 不再传 `-no-stack-slot-sharing`。根 alloca 仍独占槽位。没有开 `goc-pin-i64`。
+  - 收益：估计 `JS_CallInternal` 的帧从 1768 字节降到约 1200 字节。关掉槽共享的实验构建在第 16 次扫描 SIGSEGV，默认构建保持打开。
+- **小叶子函数免栈检查。** `GOC_NO_NOSPLIT=1` 仍在，大函数不会整段标成 nosplit。没有调用、帧不超过 `StackSmall` 的 ABI0 叶子由 `gocLeafNosplit` 标 `AttrNoSplit`，链接器检查预算。
   - 收益：估计能省下栈检查那 1.8 个点指令里的一部分。
-  - 风险：低中。
-- **shim 的 `memcpy` / `memset` 在 64 字节到几 KiB 的区间用 SSE2 循环**（goc 路径上不能用 AVX）。
-  - 收益：估计。
-  - 风险：低。
+- **`memcpy` / `memset` 在 64 字节到 4096 字节用 SSE2 `movups`。** 不用 AVX，不用 `movaps`。`memset` 的尾巴走 `always_inline` 的 `goc_memset_small`，不递归调用 `goc_memset`。这段汇编只在 amd64 宿主里，arm64 构建会拒绝这份 shim。
+  - 收益：估计。这次没有重测。

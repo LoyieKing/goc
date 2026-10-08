@@ -7,8 +7,8 @@ top-level `name();` call line in a file, the file is emitted with its
 non-call top-level code, the target function and every function it
 references (transitively), `name();` is appended, and it runs in a fresh
 process. PASS is
-exit status 0. `std` / `os` are not provided, so functions that need them fail
-on every engine.
+exit status 0. test_builtin.js is run with `--std`, matching QuickJS
+`make test` (`qjs --std tests/test_builtin.js`).
 
 Usage: qjs-official-tests.py --tests DIR --engine NAME=CMD [--engine ...] [--out F.json]
 A later engine is compared function-by-function against the first.
@@ -64,12 +64,12 @@ def cases(d):
             out.append((f, name, "\n".join(body) + "\n" + name + "();\n"))
     return out
 
-def run(cmd, js, timeout):
+def run(cmd, js, timeout, extra):
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as t:
         t.write(js)
         p = t.name
     try:
-        r = subprocess.run(cmd + [p], capture_output=True, text=True, timeout=timeout, errors="replace")
+        r = subprocess.run(cmd + extra + [p], capture_output=True, text=True, timeout=timeout, errors="replace")
         if r.returncode == 0:
             return "pass"
         msg = (r.stderr.strip() or r.stdout.strip()).replace(p, "<t>").splitlines()
@@ -93,7 +93,9 @@ def main():
         name, cmd = spec.split("=", 1)
         cmd = shlex.split(cmd)
         with cf.ThreadPoolExecutor(a.j) as ex:
-            futs = {(f, fn): ex.submit(run, cmd, js, a.timeout) for f, fn, js in cs}
+            futs = {(f, fn): ex.submit(run, cmd, js, a.timeout,
+                                       ["--std"] if f == "test_builtin.js" else [])
+                    for f, fn, js in cs}
             res[name] = {"%s:%s" % k: v.result() for k, v in futs.items()}
         r = res[name]
         print("%s: %d/%d functions pass" % (name, sum(v == "pass" for v in r.values()), len(r)))
