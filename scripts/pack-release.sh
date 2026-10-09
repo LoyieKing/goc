@@ -71,12 +71,6 @@ copy_tool opt "$OPT"
 copy_tool llc
 copy_tool llvm-mc
 copy_tool llvm-objdump
-if lld="$(goc_beside ld.lld 2>/dev/null || true)"; [[ -n "$lld" ]]; then
-  copy_tool ld.lld "$lld"
-else
-  echo "pack-release: no ld.lld beside clang; the package will use the system ld" >&2
-fi
-
 cp -a "$LLC" "$stage/passes/goc-llc"
 cp -a "$GOC_COLOR_ESCAPE" "$stage/passes/goc-color-escape"
 cp -a "$GOC_STACKMAP" "$stage/passes/GocStackMap.so"
@@ -131,9 +125,6 @@ if command -v patchelf >/dev/null 2>&1; then
   for bin in "$stage/passes/goc-llc" "$stage/passes/goc-color-escape"; do
     patchelf --set-rpath '$ORIGIN/../lib' "$bin"
   done
-  if [[ -f "$stage/bin/ld.lld" ]]; then
-    patchelf --set-rpath '$ORIGIN/../lib' "$stage/bin/ld.lld" || true
-  fi
 fi
 
 # Assertion builds embed the absolute source path. Overwrite this checkout's

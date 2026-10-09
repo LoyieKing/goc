@@ -26,7 +26,7 @@ cd goc
 
 ## 3. 编打过补丁的 Clang
 
-`scripts/build-clang.sh` 下载 LLVM 19.1.7，打上 `clang/patches` 里的补丁，再编进 `third_party/llvm-19.1.7-clang-build`。目标是 X86 和 AArch64，共享 `libLLVM`，并带上 `clang`、`opt`、`llc`、`llvm-mc`、`llvm-objdump`、`llvm-config` 和 `ld.lld`。
+`scripts/build-clang.sh` 下载 LLVM 19.1.7，打上 `clang/patches` 里的补丁，再编进 `third_party/llvm-19.1.7-clang-build`。目标是 X86 和 AArch64，共享 `libLLVM`，并带上 `clang`、`opt`、`llc`、`llvm-mc`、`llvm-objdump` 和 `llvm-config`。
 
 Release 构建大约要几十分钟到一个多小时。构建目录已被 gitignore。
 
@@ -63,7 +63,6 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 | `bin/goc` | 指向 `../cmd/goc` |
 | `bin/clang` | 打过补丁的 Clang |
 | `bin/opt`、`bin/llc`、`bin/llvm-mc`、`bin/llvm-objdump` | 同一个 LLVM 的工具 |
-| `bin/ld.lld` | 有编出来才放进去。没有时运行用系统 `ld` |
 | `bin/elfpack` | 预编译的 goobj 打包器 |
 | `bin/goc-lower` | 预编译的 realbody 辅助程序（签名、thunk、meta） |
 | `lib/libLLVM.so.19.1`、`lib/clang/` | Clang 的运行库和资源目录 |
@@ -130,7 +129,7 @@ Run the later commands from the repository root.
 
 ## 3. Build the patched Clang
 
-`scripts/build-clang.sh` downloads LLVM 19.1.7, applies the patches in `clang/patches`, and builds into `third_party/llvm-19.1.7-clang-build`. The targets are X86 and AArch64, with a shared `libLLVM`, plus `clang`, `opt`, `llc`, `llvm-mc`, `llvm-objdump`, `llvm-config`, and `ld.lld`.
+`scripts/build-clang.sh` downloads LLVM 19.1.7, applies the patches in `clang/patches`, and builds into `third_party/llvm-19.1.7-clang-build`. The targets are X86 and AArch64, with a shared `libLLVM`, plus `clang`, `opt`, `llc`, `llvm-mc`, `llvm-objdump`, and `llvm-config`.
 
 A Release build takes tens of minutes to a bit over an hour. The build directory is gitignored.
 
@@ -167,7 +166,6 @@ Layout after unpacking:
 | `bin/goc` | Symlink to `../cmd/goc` |
 | `bin/clang` | Patched Clang |
 | `bin/opt`, `bin/llc`, `bin/llvm-mc`, `bin/llvm-objdump` | Tools from that same LLVM |
-| `bin/ld.lld` | Included when the build produced it. Otherwise the run uses system `ld` |
 | `bin/elfpack` | Prebuilt goobj packer |
 | `bin/goc-lower` | Prebuilt real-body helper (signatures, thunks, meta) |
 | `lib/libLLVM.so.19.1`, `lib/clang/` | Clang's runtime library and resource directory |

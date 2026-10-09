@@ -9,7 +9,6 @@
 系统是 linux/amd64。需要：
 
 - Go 1.24 或更新（`go version`）
-- `ld`（binutils）。系统没有 `ld.lld` 时，`goc` 用它把 Go 入口和函数体合到一个对象里
 
 ## 2. 下载
 
@@ -162,7 +161,6 @@ This compiler is experimental. The path below is internal linking: the C cannot 
 linux/amd64. You need:
 
 - Go 1.24 or newer (`go version`)
-- `ld` (binutils). When the archive has no `ld.lld`, `goc` uses it to merge the Go entry and the function body into one object
 
 ## 2. Download
 

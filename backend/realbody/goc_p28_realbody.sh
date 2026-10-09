@@ -148,16 +148,6 @@ fi
   echo "realbody: FATAL opt missing. See docs/build-from-source.md" >&2
   exit 1
 }
-if [[ -z "${LDLLD:-}" || ! -x "${LDLLD:-}" ]]; then
-  LDLLD="$(goc_beside ld.lld 2>/dev/null || true)"
-  if [[ -z "$LDLLD" ]]; then
-    LDLLD="$(command -v ld.lld-19 || command -v ld.lld || command -v ld || true)"
-  fi
-fi
-[[ -n "${LDLLD:-}" && -x "$LDLLD" ]] || {
-  echo "realbody: FATAL need ld.lld or ld to merge the Go thunk. See docs/build-from-source.md" >&2
-  exit 1
-}
 INC="$ROOT/include"
 OPT_LEVEL="${GOC_OPT_LEVEL:-0}"
 case "$OPT_LEVEL" in
@@ -352,21 +342,17 @@ MC_TRIPLE=x86_64-unknown-linux-gnu
 if [[ "$GOC_ARCH" == arm64 ]]; then
   MC_TRIPLE=aarch64-unknown-linux-gnu
 fi
-"$MC" -filetype=obj -triple="$MC_TRIPLE" \
-  -o "$TMP/body.llc.o" "$TMP/body.s"
-
-ELF="$TMP/body.llc.o"
+# Go thunks are appended to the same assembly and assembled once. That puts
+# both .text contributions in one relocatable object, so the driver does not
+# call ld or ld.lld.
+ASM_IN="$TMP/body.s"
 if [[ $GOABI -eq 1 ]]; then
-  # In-tree clang cannot assemble aarch64. llvm-mc can. amd64 stays on clang -c.
-  if [[ "$GOC_ARCH" == arm64 ]]; then
-    "$MC" -filetype=obj -triple=aarch64-unknown-linux-gnu \
-      -o "$TMP/thunks.o" "$TMP/thunks.s"
-  else
-    "$CLANG" -c "$TMP/thunks.s" -o "$TMP/thunks.o"
-  fi
-  "$LDLLD" -r -o "$TMP/merged.o" "$TMP/body.llc.o" "$TMP/thunks.o"
-  ELF="$TMP/merged.o"
+  cat "$TMP/body.s" "$TMP/thunks.s" > "$TMP/body.thunks.s"
+  ASM_IN="$TMP/body.thunks.s"
 fi
+"$MC" -filetype=obj -triple="$MC_TRIPLE" \
+  -o "$TMP/body.llc.o" "$ASM_IN"
+ELF="$TMP/body.llc.o"
 
 if [[ $ALL -eq 1 ]]; then
   "$OBJDUMP" -dr "$ELF" > "$TMP/body.dis"
