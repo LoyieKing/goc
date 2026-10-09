@@ -53,10 +53,12 @@ fi
 
 make -C "$ROOT/frontend/color-escape/pass" all \
   CXX="$CXX" LLVM_CFG="$LLVM_CFG" LIBS="$LIBS"
+# Goals must be the makefile's relative paths. An absolute path is a
+# different target, and make has no rule for it when the file is absent.
 make -C "$ROOT/backend/pass" \
   CXX="$CXX" LLVM_CFG="$LLVM_CFG" LIBS="$LIBS" \
   LLVM_X86_SRC="$X86_SRC" LLVM_X86_BUILD="$X86_BUILD" \
-  "$SM" "$LLC"
+  ../build/pass-out/GocStackMap.so ../build/pass-out/goc-llc
 
 [[ -x "$COLOR" && -x "$LLC" && -f "$SM" ]] || {
   echo "build-passes: outputs missing" >&2
