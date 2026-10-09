@@ -46,13 +46,14 @@ jobs:
             third_party/llvm-19.1.7-clang-build/bin
             third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
             third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
+            third_party/llvm-19.1.7-clang-build/lib/libclang-cpp.so*
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
             frontend/color-escape/build/goc-color-escape
             backend/build/pass-out/goc-llc
             backend/build/pass-out/GocStackMap.so
-          key: goc-clang-19.1.7-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
+          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
 
       - name: Build clang and passes
         if: steps.cache.outputs.cache-hit != 'true'
@@ -69,13 +70,14 @@ jobs:
             third_party/llvm-19.1.7-clang-build/bin
             third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
             third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
+            third_party/llvm-19.1.7-clang-build/lib/libclang-cpp.so*
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
             frontend/color-escape/build/goc-color-escape
             backend/build/pass-out/goc-llc
             backend/build/pass-out/GocStackMap.so
-          key: goc-clang-19.1.7-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
+          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
 
       - name: Test
         run: |

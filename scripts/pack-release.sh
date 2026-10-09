@@ -64,6 +64,11 @@ libdir="$(goc_clang_libdir "$clang")"
 [[ -e "$libdir/libLLVM.so.19.1" ]] || goc_die "no libLLVM.so.19.1 in $libdir"
 cp -a "$libdir/libLLVM.so.19.1" "$stage/lib/libLLVM.so.19.1"
 ln -sfn libLLVM.so.19.1 "$stage/lib/libLLVM.so"
+# build-clang.sh sets LLVM_LINK_LLVM_DYLIB, so clang links libclang-cpp.
+if [[ -e "$libdir/libclang-cpp.so.19.1" ]]; then
+  cp -a "$libdir/libclang-cpp.so.19.1" "$stage/lib/libclang-cpp.so.19.1"
+  ln -sfn libclang-cpp.so.19.1 "$stage/lib/libclang-cpp.so"
+fi
 [[ -d "$libdir/clang" ]] || goc_die "no clang resource dir in $libdir"
 cp -a "$libdir/clang" "$stage/lib/clang"
 
@@ -117,7 +122,8 @@ open(path, "wb").write(data)
 PY
 }
 for bin in "$stage/bin/clang-19" "$stage/bin/opt" "$stage/bin/llc" \
-           "$stage/bin/llvm-mc" "$stage/bin/llvm-objdump"; do
+           "$stage/bin/llvm-mc" "$stage/bin/llvm-objdump" \
+           "$stage/lib/libclang-cpp.so.19.1"; do
   [[ -f "$bin" ]] || continue
   rpath_origin "$bin"
 done
