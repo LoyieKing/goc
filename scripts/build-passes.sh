@@ -7,11 +7,15 @@ export GOC_ROOT="$ROOT"
 BUILD="$ROOT/third_party/llvm-19.1.7-clang-build"
 SRC="${LLVM_SRC:-$ROOT/third_party/llvm-project-19.1.7}"
 LLVM_CFG="${LLVM_CFG:-$BUILD/bin/llvm-config}"
+# Passes are ordinary LLVM C++. The patched clang diagnoses every
+# `return &local` as an sptr escape, including the returns inside LLVM
+# headers, so it cannot compile these files. Use the same host compiler
+# that build-clang.sh used to build libLLVM.
 CXX="${CXX:-}"
 if [[ -z "$CXX" ]]; then
-  if [[ -x "$BUILD/bin/clang++" ]]; then CXX="$BUILD/bin/clang++"
-  elif command -v clang++-19 >/dev/null 2>&1; then CXX="$(command -v clang++-19)"
-  else CXX="$(command -v clang++ || command -v g++ || true)"
+  if command -v clang++-19 >/dev/null 2>&1; then CXX="$(command -v clang++-19)"
+  elif command -v clang++ >/dev/null 2>&1; then CXX="$(command -v clang++)"
+  else CXX="$(command -v g++ || true)"
   fi
 fi
 [[ -x "$LLVM_CFG" ]] || { echo "build-passes: missing $LLVM_CFG (run scripts/build-clang.sh)" >&2; exit 1; }

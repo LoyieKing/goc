@@ -42,7 +42,7 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 ./scripts/build-passes.sh
 ```
 
-这一步用刚才的 `llvm-config` 和 X86 后端头文件编出：
+这一步用宿主的 `clang++-19`、刚才的 `llvm-config` 和 X86 后端头文件编出。打过补丁的 `clang++` 会把 LLVM 头文件里的 `return &局部` 判成栈指针逃逸，所以不用它来编 pass：
 
 - `frontend/color-escape/build/goc-color-escape`
 - `backend/build/pass-out/goc-llc`
@@ -145,7 +145,7 @@ When `bin/clang`, `opt`, `llc`, `llvm-mc`, and `llvm-objdump` are already there,
 ./scripts/build-passes.sh
 ```
 
-This uses that `llvm-config` and the X86 backend headers to produce:
+This uses the host `clang++-19`, that `llvm-config`, and the X86 backend headers to produce. The patched `clang++` reports `return &local` inside LLVM headers as a stack-pointer escape, so it is not the compiler for these passes:
 
 - `frontend/color-escape/build/goc-color-escape`
 - `backend/build/pass-out/goc-llc`
