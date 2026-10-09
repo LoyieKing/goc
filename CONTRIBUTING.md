@@ -14,7 +14,7 @@ patches are preferred over large refactors.
 See [docs/build-from-source.md](docs/build-from-source.md).
 
 Build dependencies: `clang-19` / `clang++-19`, `cmake`, `ninja`,
-Go 1.24+, `python3`, `rg` (ripgrep).
+Go 1.24+. Packing a release also uses `python3`. Repository tests also use `python3` and `rg` (ripgrep).
 
 ```bash
 ./scripts/build-clang.sh

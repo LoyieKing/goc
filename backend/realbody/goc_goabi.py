@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Prepare clang IR bodies for Go 1.24 ABIInternal entry thunks.
 
+The driver calls goc-lower (backend/goobj/lower). This module is the oracle
+that go test compares against.
+
 GOC_ARCH selects the register file (default amd64). arm64 ports the same
 three call paths: a Go→C thunk, C→C on the platform ABI, and the handwritten
 C→Go .goabi call. It does not add cross-edge function-pointer interop.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pack a complete linux/amd64 goc release: the driver, the patched clang,
-# opt/llc/llvm-mc/llvm-objdump, the passes, and a prebuilt elfpack.
+# opt/llc/llvm-mc/llvm-objdump, the passes, and prebuilt elfpack and goc-lower.
 # Usage: scripts/pack-release.sh DEST
 # DEST is a directory, or a path ending in .tar / .tar.gz.
 set -euo pipefail
@@ -50,7 +50,6 @@ cp -a "$ROOT/include/goc.h" "$ROOT/include/goc_uptr.h" "$stage/include/"
 cp -a "$ROOT/examples/hello/go.mod" "$ROOT/examples/hello/main.go" \
   "$ROOT/examples/hello/add.c" "$stage/examples/hello/"
 cp -a "$ROOT/backend/realbody/goc_p28_realbody.sh" \
-  "$ROOT/backend/realbody/goc_goabi.py" \
   "$ROOT/backend/realbody/args_map.bin" \
   "$ROOT/backend/realbody/locals_map.bin" \
   "$stage/backend/realbody/"
@@ -85,6 +84,8 @@ chmod a+rx "$stage/passes/goc-llc" "$stage/passes/goc-color-escape"
 
 ( cd "$ROOT/backend" && go build -o "$stage/bin/elfpack" ./goobj/elfpack/ )
 chmod a+rx "$stage/bin/elfpack"
+( cd "$ROOT/backend" && go build -o "$stage/bin/goc-lower" ./goobj/goclower/ )
+chmod a+rx "$stage/bin/goc-lower"
 
 # Drop the absolute build-machine directory from RUNPATH. $ORIGIN/../lib
 # is already the first entry, and it is the one the unpacked tree uses.
@@ -166,7 +167,7 @@ linux/amd64. This archive is the whole compiler: \`goc\` and the patched Clang.
 
 ## Install
 
-Need Go 1.24 or newer, \`python3\`, and \`rg\` (ripgrep).
+Need Go 1.24 or newer.
 
 \`\`\`bash
 tar -xzf ${name}.tar.gz

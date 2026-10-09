@@ -12,7 +12,7 @@
 
 ## 1. 要装什么
 
-只用编译器：下载发布包，见 [quickstart.md](quickstart.md)。需要 Go 1.24 或更新、`python3`、`rg`。系统是 linux/amd64。
+只用编译器：下载发布包，见 [quickstart.md](quickstart.md)。需要 Go 1.24 或更新。系统是 linux/amd64。
 
 在仓库里开发时还要 `cmake`、`ninja` 和宿主 `clang-19`，用来编打过补丁的 Clang。步骤在 [build-from-source.md](build-from-source.md)。
 
@@ -61,7 +61,7 @@
 看符号：
 
 ```bash
-go tool nm build/p29-goabi/goabi.o | rg 'goabi_add2'
+go tool nm build/p29-goabi/goabi.o | grep goabi_add2
 ```
 
 应能看到 `main.goabi_add2` 和 `main.goabi_add2.impl`。前者是 Go 调用的 thunk，后者是 SysV 函数体。文件内 `static` 函数会再加翻译单元名，避免跨文件重名。
@@ -207,7 +207,7 @@ To download and run, see [quickstart.md](quickstart.md). To build the package fr
 
 ## 1. Tools
 
-To use the compiler, download a release. See [quickstart.md](quickstart.md). You need Go 1.24 or newer, `python3`, and `rg`. The machine is linux/amd64.
+To use the compiler, download a release. See [quickstart.md](quickstart.md). You need Go 1.24 or newer. The machine is linux/amd64.
 
 Developing in the checkout also needs `cmake`, `ninja`, and a host `clang-19` to build the patched Clang. The steps are in [build-from-source.md](build-from-source.md).
 
@@ -256,7 +256,7 @@ Supported signatures: integers, pointers, floating-point, and literal aggregates
 Inspect the symbols:
 
 ```bash
-go tool nm build/p29-goabi/goabi.o | rg 'goabi_add2'
+go tool nm build/p29-goabi/goabi.o | grep goabi_add2
 ```
 
 Expect `main.goabi_add2` and `main.goabi_add2.impl`. The first is the thunk Go calls. The second is the SysV body. A `static` function is further qualified with the translation-unit name so two files can reuse the name.

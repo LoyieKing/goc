@@ -57,13 +57,12 @@ append_goc_symabis() {
   for obj in ${GOC_BINOBJ:-}; do
     meta="${obj%.o}.meta.json"
     [[ -f "$meta" ]] || continue
-    python3 -c '
-import json, sys
-m = json.load(open(sys.argv[1]))
-abi = m.get("abi", "ABIInternal")
-for f in m["functions"]:
-    print("def %s %s" % (f["go_sym"], abi))
-' "$meta" >> "$out"
+    lower="${GOC_LOWER:-${GOC_ROOT:-}/bin/goc-lower}"
+    if [[ ! -x "$lower" ]]; then
+      echo "toolexec: goc-lower missing ($lower)" >&2
+      exit 1
+    fi
+    "$lower" symabis "$meta" >> "$out"
     echo "toolexec: appended goc ABIInternal symabis from $(basename "$meta")" >&2
   done
   echo "toolexec: appended goc ABIInternal symabis → $out" >&2

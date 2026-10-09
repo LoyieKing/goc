@@ -180,7 +180,7 @@ More detail in [docs/architecture.md](docs/architecture.md).
 
 ## Usage
 
-**Requirements:** linux/amd64, Go 1.24+, `python3`, `rg`. The release archive already contains the patched Clang.
+**Requirements:** linux/amd64, Go 1.24+. The release archive already contains the patched Clang.
 
 Download and the smallest program: [docs/quickstart.md](docs/quickstart.md).
 

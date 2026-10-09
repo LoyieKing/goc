@@ -180,7 +180,7 @@ flowchart LR
 
 ## 使用方法
 
-**依赖**：linux/amd64、Go 1.24+、`python3`、`rg`。发布包里已经带了打过补丁的 Clang。
+**依赖**：linux/amd64、Go 1.24+。发布包里已经带了打过补丁的 Clang。
 
 下载和最小例子在 [docs/quickstart.md](docs/quickstart.md)。
 

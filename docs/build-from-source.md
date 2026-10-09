@@ -2,18 +2,18 @@
 
 这篇是给要自己编发布包的人。只用 `goc` 的话，下载现成的包：[quickstart.md](quickstart.md)。
 
-产物是一个目录（或 `.tar.gz`）。里面有驱动、打过补丁的 Clang 19.1.7、`opt`、`llc`、`llvm-mc`、`llvm-objdump`、`goc-llc`、`goc-color-escape`、`GocStackMap.so` 和预编译的 `elfpack`。用户把 `bin` 放到 `PATH` 上即可。Clang 不进 git。
+产物是一个目录（或 `.tar.gz`）。里面有驱动、打过补丁的 Clang 19.1.7、`opt`、`llc`、`llvm-mc`、`llvm-objdump`、`goc-llc`、`goc-color-escape`、`GocStackMap.so`，以及预编译的 `elfpack` 和 `goc-lower`。用户把 `bin` 放到 `PATH` 上即可。Clang 不进 git。
 
 ## 1. 宿主工具
 
 linux/amd64。需要：
 
-- `git`、`curl`、`python3`、`rg`
+- `git`、`curl`
 - Go 1.24 或更新
 - `cmake`、`ninja`、`patchelf`
 - 用来编 Clang 的 C/C++ 编译器：`clang-19` 和 `clang++-19`。没有时脚本会退到系统 `clang` 或 `gcc`
 
-`patchelf` 用来去掉二进制里指向编译机的绝对 `RUNPATH`，让包只靠旁边的 `lib/libLLVM.so.19.1`。
+`patchelf` 用来去掉二进制里指向编译机的绝对 `RUNPATH`，让包只靠旁边的 `lib/libLLVM.so.19.1`。打包脚本在没有 `patchelf` 时用 `python3` 改写 `RUNPATH`，并用 `python3` 改写编译机路径。仓库里的测试脚本还会用到 `python3` 和 `rg`。
 
 ## 2. 克隆
 
@@ -65,6 +65,7 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 | `bin/opt`、`bin/llc`、`bin/llvm-mc`、`bin/llvm-objdump` | 同一个 LLVM 的工具 |
 | `bin/ld.lld` | 有编出来才放进去。没有时运行用系统 `ld` |
 | `bin/elfpack` | 预编译的 goobj 打包器 |
+| `bin/goc-lower` | 预编译的 realbody 辅助程序（签名、thunk、meta） |
 | `lib/libLLVM.so.19.1`、`lib/clang/` | Clang 的运行库和资源目录 |
 | `passes/` | `goc-llc`、`goc-color-escape`、`GocStackMap.so` |
 | `cmd/`、`scripts/`、`include/`、`backend/realbody/`、`examples/hello/` | 驱动和自检样例 |
@@ -105,18 +106,18 @@ QuickJS 和跑分不在 CI 里。它们要另外下载引擎源码。
 
 This page is for producing the release archive. To use `goc`, download one: [quickstart.md](quickstart.md).
 
-The result is a directory (or a `.tar.gz`). It contains the driver, patched Clang 19.1.7, `opt`, `llc`, `llvm-mc`, `llvm-objdump`, `goc-llc`, `goc-color-escape`, `GocStackMap.so`, and a prebuilt `elfpack`. The user puts `bin` on `PATH`. Clang is not committed to git.
+The result is a directory (or a `.tar.gz`). It contains the driver, patched Clang 19.1.7, `opt`, `llc`, `llvm-mc`, `llvm-objdump`, `goc-llc`, `goc-color-escape`, `GocStackMap.so`, and prebuilt `elfpack` and `goc-lower`. The user puts `bin` on `PATH`. Clang is not committed to git.
 
 ## 1. Host tools
 
 linux/amd64. You need:
 
-- `git`, `curl`, `python3`, `rg`
+- `git`, `curl`
 - Go 1.24 or newer
 - `cmake`, `ninja`, `patchelf`
 - A C/C++ compiler to build Clang: `clang-19` and `clang++-19`. Without them the script falls back to system `clang` or `gcc`
 
-`patchelf` strips the absolute `RUNPATH` that points at the build machine, so the package loads `lib/libLLVM.so.19.1` beside itself.
+`patchelf` strips the absolute `RUNPATH` that points at the build machine, so the package loads `lib/libLLVM.so.19.1` beside itself. Without `patchelf`, the pack script uses `python3` to shorten that `RUNPATH`, and it uses `python3` to rewrite the checkout path. Repository tests also use `python3` and `rg`.
 
 ## 2. Clone
 
@@ -168,6 +169,7 @@ Layout after unpacking:
 | `bin/opt`, `bin/llc`, `bin/llvm-mc`, `bin/llvm-objdump` | Tools from that same LLVM |
 | `bin/ld.lld` | Included when the build produced it. Otherwise the run uses system `ld` |
 | `bin/elfpack` | Prebuilt goobj packer |
+| `bin/goc-lower` | Prebuilt real-body helper (signatures, thunks, meta) |
 | `lib/libLLVM.so.19.1`, `lib/clang/` | Clang's runtime library and resource directory |
 | `passes/` | `goc-llc`, `goc-color-escape`, `GocStackMap.so` |
 | `cmd/`, `scripts/`, `include/`, `backend/realbody/`, `examples/hello/` | The driver and the self-check sample |

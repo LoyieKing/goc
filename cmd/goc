@@ -405,10 +405,11 @@ cmd_build() {
     fi
   fi
 
-  local FN
-  FN="$(rg -o 'define [^@]*@([A-Za-z_][A-Za-z0-9_]*)' -r '$1' "$BODY_LL" | head -1 || true)"
+  local FN LOWER
+  LOWER="$(goc_lower_bin)"
+  FN="$("$LOWER" fnname "$BODY_LL" 2>/dev/null || true)"
   if [[ -z "$FN" ]]; then
-    FN="$(rg -o 'define [^@]*@([A-Za-z_][A-Za-z0-9_]*)' -r '$1' "$TMP/a.ll" | head -1 || true)"
+    FN="$("$LOWER" fnname "$TMP/a.ll" 2>/dev/null || true)"
   fi
   if [[ $ALL -eq 1 ]]; then
     [[ -x "$REALBODY" ]] || { echo "goc build: missing real-body goobj builder" >&2; cleanup_build_tmp; exit 1; }

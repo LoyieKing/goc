@@ -99,6 +99,31 @@ goc_export_tools() {
   fi
 }
 
+# goc-lower replaces the real-body Python and ripgrep steps. A release
+# ships bin/goc-lower. A checkout builds it on first use.
+goc_lower_bin() {
+  local bin="$ROOT/bin/goc-lower" stale=0 src
+  if [[ ! -x "$bin" ]]; then
+    stale=1
+  else
+    for src in "$ROOT/backend/goobj/goclower/"*.go "$ROOT/backend/goobj/lower/"*.go; do
+      if [[ -f "$src" && "$src" -nt "$bin" ]]; then
+        stale=1
+        break
+      fi
+    done
+  fi
+  if [[ $stale -eq 1 ]]; then
+    if [[ ! -f "$ROOT/backend/goobj/goclower/main.go" ]]; then
+      goc_die "goc-lower missing ($bin). See docs/build-from-source.md"
+    fi
+    mkdir -p "$ROOT/bin"
+    ( cd "$ROOT/backend" && GOPROXY=off go build -o "$bin" ./goobj/goclower/ ) \
+      || goc_die "could not build goc-lower"
+  fi
+  printf '%s\n' "$bin"
+}
+
 goc_require_tools() {
   local clang
   goc_export_tools

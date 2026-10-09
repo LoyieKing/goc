@@ -84,7 +84,7 @@ jobs:
 
           The archive contains goc and the patched Clang. Unpack it, put \`bin\` on \`PATH\`, and run \`goc check\`.
 
-          You need Go 1.24+, python3, and rg. See docs/quickstart.md.
+          You need Go 1.24 or newer. See docs/quickstart.md.
           EOF
           if gh release view "v${ver}" >/dev/null 2>&1; then
             gh release upload "v${ver}" "$asset" --clobber
