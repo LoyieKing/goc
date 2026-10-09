@@ -10,9 +10,17 @@ PKG_NEEDLE="p5-machinepass-goobj"
 
 is_our_pkg_args() {
   local prev="" arg
+  local want="${GOC_PACK_PKG:-}"
   for arg in "$@"; do
-    if [[ "$prev" == "-p" ]] && [[ "$arg" == *"$PKG_NEEDLE"* || "$arg" == "main" ]]; then
-      return 0
+    if [[ "$prev" == "-p" ]]; then
+      # goc go sets GOC_PACK_PKG to the compiler -p value (main, or the
+      # import path). Unset keeps the historical match: package main and the
+      # P5 needle. Other packages are not packed, so a dependency is left alone.
+      if [[ -n "$want" ]]; then
+        [[ "$arg" == "$want" ]] && return 0
+      elif [[ "$arg" == *"$PKG_NEEDLE"* || "$arg" == "main" ]]; then
+        return 0
+      fi
     fi
     prev="$arg"
   done

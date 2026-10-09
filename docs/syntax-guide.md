@@ -311,7 +311,7 @@ void     goc_dynrelease(void **scope);
 | 定义 `GOC_DYNALLOC_POOL` | 进程全局 bump pool。默认 16 MiB，`-DGOC_DYNALLOC_POOL_SIZE=` 可改。只许一个 goroutine 调用；两个同时调用会踩同一个游标。不清零，与 C `alloca` 一致。 |
 | 未定义 | 每次 `malloc` / `free`。freestanding 路径清零。指针仍是 `cptr`。 |
 
-`GOC_INLINE_DYNALLOC=1` 只把 pool 路径的 bump 内联进调用点，不改变上面的合同。
+`--fast-stack-alloca`（传给 pass 的变量仍是 `GOC_INLINE_DYNALLOC=1`）只把 pool 路径的 bump 内联进调用点，不改变上面的合同。快很多。游标是进程全局的，只能单线程用；多线程同时调用有线程安全问题。
 
 引擎自己的栈预算不是本条。`alloca` 不再消耗 goroutine 栈之后，用绝对 SP 减去 `alloca_size` 去比一个创建时记下的栈顶，是那个引擎的事。编译器不改那些函数。
 

@@ -76,4 +76,5 @@ fi
 
 echo "Patches applied (or best-effort). Next:"
 echo "  cmake/ninja build — see clang/README.md"
-echo "  export GOC_CLANG=\$BUILD/bin/clang"
+echo "  The driver finds third_party/llvm-19.1.7-clang-build/bin/clang."
+echo "  Elsewhere: ./cmd/goc go --clang \$BUILD/bin/clang"

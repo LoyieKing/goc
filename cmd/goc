@@ -9,40 +9,43 @@ else
   ROOT="$(cd "$SELF/.." && pwd)"
 fi
 export GOC_ROOT="$ROOT"
+# shellcheck source=scripts/goc-flags.sh
+source "$ROOT/scripts/goc-flags.sh"
 
 usage() {
   cat <<'USAGE'
 goc — experimental compiler driver (pointer-colored C → Go stacks)
 
 Usage:
-  goc build foo.c -o foo.o       In-tree Clang Sema → real-body goobj (P28)
-  goc cc [clang-args…] file.c    Invoke resolved clang with goc include/attrs
-  goc test [--p27|--p28]         Run curated golden tests
-  goc version                    Print version
-  goc help | -h | --help         This help
+  goc go [dir] [-o bin] [flags] [-- …]
+      Compile a Go package's .c files and link. Ignores inherited GOC_* .
+  goc check [flags]
+      Toolchain self-check: build and run examples/hello
+  goc toolchain status|pack DEST [flags]
+      Resolve or pack the relocatable toolchain
+  goc build foo.c -o foo.o [flags] [-- …]
+      In-tree Clang Sema → real-body goobj (P28). Default -O0.
+  goc cc [--clang PATH] [clang-args…]
+      Invoke resolved clang with goc include/attrs
+  goc test [--clang PATH] [--p27|--p28]
+      Run curated golden tests
+  goc version
+  goc help | -h | --help
 
-Environment:
-  GOC_ROOT     Repository root (default: parent of cmd/)
-  GOC_CLANG    Path to patched clang-19 (preferred)
-  GOC_OPT_LEVEL  LLVM IR optimization level 0..3 (default 0); QuickJS scripts default 3
-  GOC_COLOR_REPORT  Set to 1 to print the pointer-color table after coloring.
-                    Default off. Does not change colors. Adds -g so bare T*
-                    names and declaration locations are in the table, then
-                    strips that debug info before real-body lowering.
-  GOC_ARCH     amd64 (default) or arm64. arm64 uses system llc-19
-               (aarch64, x28 reserved as g). Pointer colors stay the same.
-               Frame-address repair and GOC_SPTR_MAPS are refused. A TU that
-               contains the linux/amd64 host sequence (movq %%fs:-8 or
-               "syscall") is refused, except runtime/uptr.
-  LLC          llc binary. amd64 default is goc-llc (frame-address fix).
-               arm64 forces stock llc-19. GOC_FRAMEADDR_MODE=asm uses stock llc.
-  CLANG_FALLBACK  System clang when GOC_CLANG unset (default: clang-19)
+`goc go` / `goc check` defaults:
+  -O3 --default-ptr-color cptr --fast-stack-alloca
+  --fast-stack-alloca is much faster and single-threaded only: the alloca
+  pool cursor is process-global, so concurrent calls are not thread-safe.
+  Morestack, splittable frames, and sptr maps are always on.
+  linux/amd64. --fixed-g and --opt-extra=-inline-threshold=250 stay off.
+`goc build --goabi` turns on morestack and splittable frames as well. amd64
+also records sptr maps. arm64 cannot. `goc build` without `--goabi` stays at
+-O0. A flag wins over an inherited variable.
 
-Product frontend: P28 in-tree Clang (Sema colors + escape; no -fplugin).
-P27 out-of-tree plugin remains as LEGACY fallback.
-
-Docs: docs/README pointers in repository README.md
+From-zero instructions: docs/quickstart.md
 USAGE
+  echo
+  goc_flags_help
 }
 
 cmd_version() {
@@ -82,9 +85,33 @@ is_intree_clang() {
   return 1
 }
 
+# In-tree and packed clangs need their own libLLVM. Prepend that lib dir so
+# goc-llc and goc-color-escape start without a hand-set LD_LIBRARY_PATH.
+prepend_clang_lib() {
+  local clang="$1" bin libdir
+  bin="$(readlink -f "$clang" 2>/dev/null || true)"
+  [[ -n "$bin" ]] || return 0
+  libdir="$(cd "$(dirname "$bin")/../lib" 2>/dev/null && pwd || true)"
+  [[ -n "$libdir" && -e "$libdir/libLLVM.so.19.1" ]] || return 0
+  case ":${LD_LIBRARY_PATH:-}:" in
+    *":$libdir:"*) ;;
+    *) export LD_LIBRARY_PATH="$libdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ;;
+  esac
+}
+
 cmd_cc() {
   local CLANG PLUGIN INC
+  GOC_FLAG_MODE=driver
+  while [[ $# -gt 0 ]]; do
+    if goc_consume_flag "$1" "${2:-}"; then
+      shift "$GOC_FLAG_SHIFT"
+      continue
+    fi
+    break
+  done
+  unset GOC_FLAG_MODE
   CLANG="$(resolve_clang)"
+  prepend_clang_lib "$CLANG"
   INC="$ROOT/include"
   PLUGIN="$ROOT/clang/plugin/../build/libGocClang.so"
   # Prefer plugin build dir next to plugin sources
@@ -116,20 +143,26 @@ cmd_build() {
   if [[ $# -eq 0 ]]; then
     exec bash "$ROOT/scripts/test-p28.sh"
   fi
-  local SRC="" OUT_O="" EXTRA=() ALL=0 GOABI=0 ABI0=0 OPT_ARG=""
+  local SRC="" OUT_O="" EXTRA=() ALL=0 GOABI=0 ABI0=0
   while [[ $# -gt 0 ]]; do
+    if goc_consume_flag "$1" "${2:-}"; then
+      shift "$GOC_FLAG_SHIFT"
+      continue
+    fi
     case "$1" in
       -o) OUT_O="$2"; shift 2 ;;
       --all) ALL=1; shift ;;
       --goabi) GOABI=1; ALL=1; shift ;;
       --abi0) ABI0=1; ALL=1; shift ;;
-      -O0|-O1|-O2|-O3) OPT_ARG="${1#-O}"; shift ;;
+      --) shift; EXTRA+=("$@"); break ;;
       -h|--help)
-        echo "usage: goc build [foo.c -o foo.o] [-O0|-O1|-O2|-O3] [--all] [--goabi]  # or goc build → P28 test suite"
+        echo "usage: goc build [foo.c -o foo.o] [flags] [-- clang-args]"
+        echo "       goc build            # P28 test suite"
         echo "  --all: emit TEXT for every defined function (P29 multi-function)"
         echo "  --goabi: Go ABIInternal entry thunks (amd64 SysV, or arm64 AAPCS64)"
         echo "  --abi0:  emit ABI0 TEXT (C-side SysV entry points, e.g. libc shim)"
-        echo "  -O0..3: LLVM IR optimization level (overrides GOC_OPT_LEVEL)"
+        echo
+        goc_flags_help
         exit 0
         ;;
       -*) EXTRA+=("$1"); shift ;;
@@ -141,6 +174,10 @@ cmd_build() {
     esac
   done
   if [[ -z "$SRC" ]]; then
+    if [[ -n "${GOC_FLAG_SEEN// /}" ]]; then
+      echo "goc build: missing input file" >&2
+      exit 2
+    fi
     exec bash "$ROOT/scripts/test-p28.sh"
   fi
   if [[ -z "$OUT_O" ]]; then
@@ -175,12 +212,24 @@ cmd_build() {
     esac
   fi
 
+  # Go linking needs a splittable frame and a morestack prologue. amd64 also
+  # records sptr maps. arm64 has no frame-address repair, so maps stay off.
+  if [[ $GOABI -eq 1 ]]; then
+    export GOC_MORESTACK=1
+    export GOC_NO_NOSPLIT=1
+    if [[ "$GOC_ARCH" == amd64 ]]; then
+      export GOC_SPTR_MAPS=1
+    fi
+  fi
+
   local CLANG USE_PLUGIN=0
   CLANG="$(resolve_clang)"
+  prepend_clang_lib "$CLANG"
   if ! is_intree_clang "$CLANG"; then
     USE_PLUGIN=1
   fi
   local INC="$ROOT/include"
+  local COLOR_ESC="${GOC_COLOR_ESCAPE:-$ROOT/frontend/color-escape/build/goc-color-escape}"
   # amd64 gep remat is only safe with goc-llc's GocFrameAddrFix. Passing
   # stock llc-19 here used to skip realbody's missing-binary check, so tail
   # duplication kept frame addresses in callee-saved registers across calls.
@@ -196,15 +245,18 @@ cmd_build() {
     LLC=llc-19
   fi
   local REALBODY="$ROOT/backend/realbody/goc_p28_realbody.sh"
-  local COLOR_ESC="$ROOT/frontend/color-escape/build/goc-color-escape"
   local PLUGIN="$ROOT/build/libGocClang.so"
-  local OPT_LEVEL="${OPT_ARG:-${GOC_OPT_LEVEL:-0}}"
+  local OPT_LEVEL="${GOC_OPT_LEVEL:-0}"
   case "$OPT_LEVEL" in
     0|1|2|3) ;;
     *) echo "goc build: GOC_OPT_LEVEL must be 0, 1, 2, or 3" >&2; exit 1 ;;
   esac
 
   if [[ ! -x "$COLOR_ESC" ]]; then
+    if [[ -n "${GOC_COLOR_ESCAPE:-}" ]]; then
+      echo "goc build: missing color-escape pass $COLOR_ESC" >&2
+      exit 1
+    fi
     make -C "$ROOT/frontend/color-escape/pass" all
     [[ -x "$COLOR_ESC" ]] || { echo "goc build: missing color-escape pass" >&2; exit 1; }
   fi
@@ -292,7 +344,7 @@ cmd_build() {
   local STACKMAP_PREPARED=0
   if [[ "$OPT_LEVEL" != 0 ]]; then
     local OPT="${OPT:-opt-19}"
-    local SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+    local SMPASS="${GOC_STACKMAP:-$ROOT/backend/build/pass-out/GocStackMap.so}"
     [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
     # goc-inline-gate is a no-op: call-bearing functions may inline. Maps are
     # recorded after O3 on the merged frame. Stack-pointer arguments and slots
@@ -329,7 +381,7 @@ cmd_build() {
     # Integer fragments stay in registers; the copier copies those spills
     # verbatim.
     if [[ $ALL -eq 1 && "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
-      local SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+      local SMPASS="${GOC_STACKMAP:-$ROOT/backend/build/pass-out/GocStackMap.so}"
       [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
       if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap \
           -S "$BODY_LL" -o "$TMP/a.sm.ll"; then
@@ -399,7 +451,12 @@ cmd_build() {
 
 cmd_test() {
   local ONLY_P27=0 ONLY_P28=0
+  GOC_FLAG_MODE=driver
   while [[ $# -gt 0 ]]; do
+    if goc_consume_flag "$1" "${2:-}"; then
+      shift "$GOC_FLAG_SHIFT"
+      continue
+    fi
     case "$1" in
       --p27) ONLY_P27=1; shift ;;
       --p28) ONLY_P28=1; shift ;;
@@ -410,6 +467,10 @@ cmd_test() {
       *) echo "unknown goc test flag: $1" >&2; exit 2 ;;
     esac
   done
+  unset GOC_FLAG_MODE
+  # test-p28.sh calls realbody, which runs goc-llc. That binary needs the
+  # clang tree's libLLVM, the same way goc build does.
+  prepend_clang_lib "$(resolve_clang)"
   if [[ $ONLY_P27 -eq 1 ]]; then
     exec bash "$ROOT/scripts/test-p27.sh"
   fi
@@ -432,6 +493,9 @@ main() {
   fi
   case "$1" in
     build) shift; cmd_build "$@" ;;
+    go) shift; exec bash "$ROOT/scripts/goc-go.sh" "$@" ;;
+    check) shift; exec bash "$ROOT/scripts/goc-check.sh" "$@" ;;
+    toolchain) shift; exec bash "$ROOT/scripts/goc-toolchain.sh" "$@" ;;
     cc) shift; cmd_cc "$@" ;;
     test|pipeline) shift; cmd_test "$@" ;;
     version) cmd_version ;;

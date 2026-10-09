@@ -6,6 +6,8 @@
 
 下一版要做的 arm64 后端见 [todo.md](todo.md)。现在换 `-march` 没有用。
 
+从零开始、并且用命令行参数配置，见 [quickstart.md](quickstart.md)。下面是手动把单个 `.c` 编成 goobj 再链进 Go 的路径。
+
 ---
 
 ## 1. 要装什么
@@ -17,7 +19,6 @@
 ```bash
 git clone https://github.com/LoyieKing/goc.git
 cd goc
-export GOC_ROOT="$(pwd)"
 ```
 
 ## 2. 编打过补丁的 Clang
@@ -38,20 +39,14 @@ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ASSERTIONS=ON \
   -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_ARCMT=OFF \
   -S "$LLVM_SRC/llvm" \
-  -B "$GOC_ROOT/third_party/llvm-19.1.7-clang-build"
+  -B third_party/llvm-19.1.7-clang-build
 
-ninja -C "$GOC_ROOT/third_party/llvm-19.1.7-clang-build" -j"$(nproc)" clang
-export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
+ninja -C third_party/llvm-19.1.7-clang-build -j"$(nproc)" clang
 ```
 
 Release 构建大约要几十分钟。构建目录在 `third_party/` 下，已被 gitignore，不要提交二进制。细节见 [clang/README.md](../clang/README.md)。
 
-把这两行放进 shell 配置，后面的命令都依赖它们：
-
-```bash
-export GOC_ROOT=/path/to/goc
-export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
-```
+驱动会找到 `third_party/llvm-19.1.7-clang-build/bin/clang`。Clang 在别的路径时给命令加 `--clang`。
 
 ## 3. 确认驱动能用
 
@@ -60,26 +55,22 @@ export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
 ./cmd/goc test --p28
 ```
 
-`--p28` 需要上面的 `GOC_CLANG`。它编译一小批黄金样例，不链接 Go 程序。
+`--p28` 使用仓库里编出来的 Clang，或 `--clang` 指到的那一个。它编译一小批黄金样例，不链接 Go 程序。
 
-`goc build` 第一次会自己编 `frontend/color-escape`。那一步用 `clang++-19` 和 `llvm-config-19` 链 `libLLVM-19`。若启动时报找不到 `libLLVM-19.so`，把 `llvm-config-19 --libdir` 加进 `LD_LIBRARY_PATH`。
+`goc build` 第一次会自己编 `frontend/color-escape`。那一步用 `clang++-19` 和 `llvm-config-19` 链 `libLLVM-19`。运行 pass 时，驱动把 clang 那棵树的 `lib/` 加进本次进程。
 
 ## 4. 把 C 编成 Go 对象
 
 ```bash
-export GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 GOC_SPTR_MAPS=1
-export GOC_CRESERVE=32768
-./cmd/goc build tests/goabi/goabi.c -o build/p29-goabi/goabi.o --all --goabi
+./cmd/goc build tests/goabi/goabi.c -o build/p29-goabi/goabi.o --all --goabi \
+  -O0 --no-default-ptr-color
 ```
 
-这四个环境变量和 [scripts/test-p29-goabi.sh](../scripts/test-p29-goabi.sh) 一致，第一次集成就用这组：
+这组和 [scripts/test-p29-goabi.sh](../scripts/test-p29-goabi.sh) 一致。`--goabi` 一定打开 morestack 前导和可分裂帧，没有开关。没有前导时，帧按 nosplit 核算，超过约 792 字节链接器拒绝。amd64 还会记录 sptr 栈图，搬栈时改写栈上的 `sptr`。arm64 记不了栈图。每个 Go 入口的 thunk 帧是该签名的栈参数，向上取整到 16，amd64 再加 8 字节的 `%rbp`。
 
-| 变量 | 作用 |
+| 参数 | 作用 |
 |---|---|
-| `GOC_MORESTACK=1` | 给 TEXT 加 morestack 前导。不开的话，帧按 nosplit 核算，超过 792 字节链接器拒绝。 |
-| `GOC_NO_NOSPLIT=1` | 对象元数据写成可分裂，而不是 nosplit。 |
-| `GOC_SPTR_MAPS=1` | 记录栈上 `sptr` 槽，搬栈时能改到。 |
-| `GOC_CRESERVE=32768` | Go→C thunk 留一块固定的、pcsp 能描述的帧。黄金测试用它逼出第一次调用的慢路径。 |
+| `--no-default-ptr-color` | 不给没注解的 `T*` 盖默认色，每个指针各自推断。 |
 
 产物不是系统链接器能吃的 ELF `.o`。`gcc` 链它会失败。旁边的 `goabi.meta.json` 必须留下，打包时要读它。
 
@@ -99,15 +90,17 @@ go tool nm build/p29-goabi/goabi.o | rg 'goabi_add2'
 
 ## 5. 链进 Go 程序
 
-已知能跑的配方就是黄金测试。在 `tests/goabi` 里：
+一条命令完成这件事用 `goc go`，见 [quickstart.md](quickstart.md)。它会写标记汇编、按包路径打包，并带上 `-a`。
+
+下面是不经过 `goc go` 的黄金测试。在 `tests/goabi` 里：
 
 ```bash
 cd tests/goabi
-CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$GOC_ROOT/build/p29-goabi/goabi.o" \
+CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$PWD/../../build/p29-goabi/goabi.o" \
   go build -a \
-  -toolexec "$GOC_ROOT/backend/tools/toolexec_pack_goobj.sh" \
-  -o "$GOC_ROOT/build/p29-goabi/goabi_test" .
-./"$GOC_ROOT/build/p29-goabi/goabi_test"
+  -toolexec "$PWD/../../backend/tools/toolexec_pack_goobj.sh" \
+  -o "$PWD/../../build/p29-goabi/goabi_test" .
+../../build/p29-goabi/goabi_test
 ```
 
 或者直接：
@@ -230,6 +223,8 @@ The language contract is [syntax-guide.md](syntax-guide.md). This page is how to
 
 The arm64 backend is the next version, [todo.md](todo.md). Changing `-march` does nothing today.
 
+From zero, with command-line flags, see [quickstart.md](quickstart.md). Below is compiling one `.c` to a goobj and linking it by hand.
+
 ## 1. Tools
 
 Host compiler: `clang-19`, `clang++-19`, `llc-19`, `llvm-config-19`, `cmake`, `ninja`, `python3`, `rg`. Go 1.24 or newer. The machine is linux/amd64.
@@ -239,7 +234,6 @@ There is no separate install step for `goc`. After cloning, use `./cmd/goc` from
 ```bash
 git clone https://github.com/LoyieKing/goc.git
 cd goc
-export GOC_ROOT="$(pwd)"
 ```
 
 ## 2. Build patched Clang
@@ -260,20 +254,14 @@ cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ASSERTIONS=ON \
   -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_ARCMT=OFF \
   -S "$LLVM_SRC/llvm" \
-  -B "$GOC_ROOT/third_party/llvm-19.1.7-clang-build"
+  -B third_party/llvm-19.1.7-clang-build
 
-ninja -C "$GOC_ROOT/third_party/llvm-19.1.7-clang-build" -j"$(nproc)" clang
-export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
+ninja -C third_party/llvm-19.1.7-clang-build -j"$(nproc)" clang
 ```
 
 A Release build takes tens of minutes. The build directory is under `third_party/` and gitignored. Do not commit the binaries. Details: [clang/README.md](../clang/README.md).
 
-Put both lines in the shell config. Later commands need them:
-
-```bash
-export GOC_ROOT=/path/to/goc
-export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
-```
+The driver finds `third_party/llvm-19.1.7-clang-build/bin/clang`. Pass `--clang` when the binary lives elsewhere.
 
 ## 3. Check the driver
 
@@ -282,26 +270,22 @@ export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
 ./cmd/goc test --p28
 ```
 
-`--p28` needs `GOC_CLANG`. It compiles a small golden set. It does not link a Go program.
+`--p28` uses the Clang built in the repo, or the one named by `--clang`. It compiles a small golden set. It does not link a Go program.
 
-The first `goc build` compiles `frontend/color-escape` itself, with `clang++-19` and `llvm-config-19`, against `libLLVM-19`. If it fails to start because `libLLVM-19.so` is missing, add `llvm-config-19 --libdir` to `LD_LIBRARY_PATH`.
+The first `goc build` compiles `frontend/color-escape` itself, with `clang++-19` and `llvm-config-19`, against `libLLVM-19`. When a pass starts, the driver adds that Clang tree's `lib/` to the process.
 
 ## 4. Compile C to a Go object
 
 ```bash
-export GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 GOC_SPTR_MAPS=1
-export GOC_CRESERVE=32768
-./cmd/goc build tests/goabi/goabi.c -o build/p29-goabi/goabi.o --all --goabi
+./cmd/goc build tests/goabi/goabi.c -o build/p29-goabi/goabi.o --all --goabi \
+  -O0 --no-default-ptr-color
 ```
 
-Those four variables match [scripts/test-p29-goabi.sh](../scripts/test-p29-goabi.sh). Use this set for a first integration:
+That matches [scripts/test-p29-goabi.sh](../scripts/test-p29-goabi.sh). `--goabi` always inserts the morestack prologue and marks the frame splittable. There is no switch. Without the prologue the linker accounts the frame as nosplit and rejects anything over about 792 bytes. amd64 also records sptr maps, so a stack copy can rewrite `sptr` slots. arm64 cannot record those maps. Each Go entry's thunk frame is that signature's stack arguments rounded up to 16, plus 8 bytes for `%rbp` on amd64.
 
-| Variable | Effect |
+| Flag | Effect |
 |---|---|
-| `GOC_MORESTACK=1` | Insert a morestack preamble. Without it, frames are accounted as nosplit and the linker rejects anything over 792 bytes. |
-| `GOC_NO_NOSPLIT=1` | Mark the object splittable instead of nosplit. |
-| `GOC_SPTR_MAPS=1` | Record `sptr` slots so a stack copy can adjust them. |
-| `GOC_CRESERVE=32768` | Give the Go→C thunk a fixed, pcsp-described frame. The golden test uses it to force the slow path on the first call. |
+| `--no-default-ptr-color` | Do not paint unannotated `T*` with one color. Each pointer is inferred. |
 
 The output is not an ELF `.o` the system linker accepts. `gcc` will not link it. Keep the sibling `goabi.meta.json`. The pack step reads it.
 
@@ -321,15 +305,17 @@ The default symbol prefix is `main.`. That matches only a Go `package main`. The
 
 ## 5. Link into a Go program
 
-The known-good recipe is the golden test. From `tests/goabi`:
+`goc go` does this in one command. See [quickstart.md](quickstart.md). It writes the marker assembly, packs the package path, and passes `-a`.
+
+Below is the golden test without `goc go`. From `tests/goabi`:
 
 ```bash
 cd tests/goabi
-CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$GOC_ROOT/build/p29-goabi/goabi.o" \
+CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$PWD/../../build/p29-goabi/goabi.o" \
   go build -a \
-  -toolexec "$GOC_ROOT/backend/tools/toolexec_pack_goobj.sh" \
-  -o "$GOC_ROOT/build/p29-goabi/goabi_test" .
-./"$GOC_ROOT/build/p29-goabi/goabi_test"
+  -toolexec "$PWD/../../backend/tools/toolexec_pack_goobj.sh" \
+  -o "$PWD/../../build/p29-goabi/goabi_test" .
+../../build/p29-goabi/goabi_test
 ```
 
 Or just:

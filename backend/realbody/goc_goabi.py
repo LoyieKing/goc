@@ -428,7 +428,19 @@ def return_assignment(ret):
             "return type %s is outside the supported result subset" % ret)
 
 
-def analyze_signature(d, reserve):
+def outgoing_bytes(stack_size):
+    """Bytes to subtract for this signature's SysV/AAPCS stack arguments.
+
+    Zero when every argument fits in a register. Otherwise the argument area
+    rounded up to 16, so the call keeps the ABI's stack alignment. The saved
+    frame pointer is not included.
+    """
+    if stack_size < 0 or stack_size % 8:
+        raise ValueError("stack argument area %d is not a multiple of 8" % stack_size)
+    return (stack_size + 15) & ~15
+
+
+def analyze_signature(d):
     if d["name"].startswith("llvm."):
         return None, "LLVM intrinsics are not C entrypoints"
     if d["internal"]:
@@ -457,16 +469,10 @@ def analyze_signature(d, reserve):
                     for src, dst in zip(sysv_results, go_results)
                     if src["location"]["register"] != dst["location"]["register"]]
 
-    # amd64: a C body may clobber XMM15, Go's fixed-zero register. A tail
-    # jump has no return edge on which to restore it, so every emitted thunk
-    # uses the fixed CALL frame and clears XMM15 on return. arm64 has no
-    # fixed-zero register; BL clobbers LR, and the thunk always saves X29/X30,
-    # so a zero reserve is legal when nothing is passed on the stack.
-    if ARCH != "arm64" and reserve <= 0:
-        return None, "safe Go return requires a fixed thunk frame; set GOC_CRESERVE"
-    if assigned["sysv_stack_size"] > reserve:
-        return None, ("SysV outgoing stack arguments need %d bytes but GOC_CRESERVE is %d" %
-                      (assigned["sysv_stack_size"], reserve))
+    # amd64 always pushes RBP so the return path can clear XMM15, which SysV
+    # code may clobber and which Go requires to be zero. The outgoing area is
+    # only the stack arguments. arm64 always saves X29/X30 because BL clobbers
+    # LR; a signature with no stack arguments subtracts nothing more.
 
     go_params = [go_param_type(ty, attrs)
                  for ty, attrs in zip(d["params"], d["param_attrs"])]
@@ -503,6 +509,7 @@ def analyze_signature(d, reserve):
         "abi": abi,
         "go_signature": signature,
         "result_moves": result_moves,
+        "outgoing": outgoing_bytes(assigned["sysv_stack_size"]),
     }, None
 
 
@@ -675,8 +682,8 @@ def emit_arm64_register_argument(ty, source, dest):
     return ["\t%s\t%s, %s" % (load, arm64_int_name(dest, size), src)]
 
 
-def emit_arm64_thunks(goabi, reserve):
-    """AAPCS64 thunk. BL clobbers LR, so X29/X30 are saved even if reserve is 0.
+def emit_arm64_thunks(goabi):
+    """AAPCS64 thunk. BL clobbers LR, so X29/X30 are saved even if outgoing is 0.
 
     After `stp x29, x30, [sp, #-16]!` / `mov x29, sp`, x29 is entry-16 and
     the first Go stack argument is at entry+8, i.e. [x29, #24+offset].
@@ -693,6 +700,7 @@ def emit_arm64_thunks(goabi, reserve):
                   "%s:" % d["name"],
                   "\tstp\tx29, x30, [sp, #-16]!",
                   "\tmov\tx29, sp"]
+        reserve = d["_plan"]["outgoing"]
         if reserve > 0:
             lines.append("\tsub\tsp, sp, #%d" % reserve)
         plan = d["_plan"]
@@ -732,18 +740,20 @@ def emit_arm64_thunks(goabi, reserve):
     return lines
 
 
-def emit_thunks(goabi, reserve):
+def emit_thunks(goabi):
     if ARCH == "arm64":
-        return emit_arm64_thunks(goabi, reserve)
+        return emit_arm64_thunks(goabi)
     lines = ["# Go 1.24 ABIInternal -> SysV entry thunks — generated", "\t.text"]
     for d in goabi:
         lines += ["\t.globl\t%s" % d["name"],
                   "\t.type\t%s,@function" % d["name"],
                   "%s:" % d["name"]]
         plan = d["_plan"]
+        # Always a real call frame: the epilogue clears XMM15 before ret.
+        lines += ["\tpushq\t%rbp", "\tmovq\t%rsp, %rbp"]
+        reserve = plan["outgoing"]
         if reserve > 0:
-            lines += ["\tpushq\t%rbp", "\tmovq\t%rsp, %rbp",
-                      "\tsubq\t$%d, %%rsp" % reserve]
+            lines.append("\tsubq\t$%d, %%rsp" % reserve)
 
         reg_moves = []
         float_moves = []
@@ -795,7 +805,6 @@ def main():
     if arch not in ("amd64", "arm64"):
         raise ValueError("GOC_ARCH must be amd64 or arm64, got %s" % arch)
     ARCH = arch
-    reserve = int(os.environ.get("GOC_CRESERVE", "0") or "0")
     if arch == "arm64":
         # Go ABIInternal: X0–X15, V0–V15. AAPCS64 arguments: X0–X7, V0–V7.
         # Results match (X0/X1, V0/V1). Names are the 64-bit forms; the
@@ -806,15 +815,11 @@ def main():
         SYSV_FLOAT_REGS = ["d%d" % i for i in range(8)]
         SYSV_INT_RESULT_REGS = ["x0", "x1"]
         SYSV_FLOAT_RESULT_REGS = ["d0", "d1"]
-        if reserve < 0 or reserve % 16 or reserve > 0x7fffffff:
-            raise ValueError("GOC_CRESERVE must be a 16-byte multiple within signed 32-bit range")
-    elif reserve < 0 or reserve % 8 or reserve > 0x7fffffff:
-        raise ValueError("GOC_CRESERVE must be an 8-byte multiple within signed 32-bit range")
 
     defs = parse_functions(text, "define")
     goabi, skipped, reasons = [], [], {}
     for d in defs:
-        plan, reason = analyze_signature(d, reserve)
+        plan, reason = analyze_signature(d)
         if reason:
             skipped.append(d["name"])
             reasons[d["name"]] = reason
@@ -822,16 +827,17 @@ def main():
         d["_plan"] = plan
         d["abi"] = plan["abi"]
         d["go_signature"] = plan["go_signature"]
+        d["outgoing"] = plan["outgoing"]
         d["impl"] = d["name"] + ".impl"
         goabi.append(d)
 
     # Cross-TU C references use the same .impl symbol as a supported defining
-    # TU. Apply exactly the same signature and reserve constraints to decls.
+    # TU. Apply the same signature constraints to declarations.
     rename_names = {d["name"] for d in goabi}
     for d in parse_functions(text, "declare"):
         if d["name"] in rename_names:
             continue
-        plan, _ = analyze_signature(d, reserve)
+        plan, _ = analyze_signature(d)
         if plan:
             rename_names.add(d["name"])
 
@@ -840,7 +846,7 @@ def main():
                       "@" + name + ".impl", text)
     open(out_ll, "w").write(text)
 
-    lines = emit_thunks(goabi, reserve)
+    lines = emit_thunks(goabi)
     open(out_s, "w").write("\n".join(lines))
 
     # Keep the established top-level schema and function names. Added ABI maps

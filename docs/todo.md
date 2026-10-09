@@ -81,12 +81,7 @@
 
 ## 开箱即用的 goc 编译器
 
-现在要用 goc，得先自己下 LLVM 19.1.7 源码、打补丁、编 Clang（几十分钟），再装好 `llc-19`、`opt-19` 等系统工具，设一串环境变量（`GOC_CLANG`、`GOC_MORESTACK` 等），最后用 `go build -toolexec` 接进 Go 的构建。门槛太高。下一版要做的：
-
-- 发布预编译的 goc 工具链（打过补丁的 Clang、goc 的 LLVM pass、elfpack、运行时），下载解压即可使用，不再要求系统装 LLVM 19。
-- 一个统一的 `goc` 命令接管整条流水线，默认值就是 QuickJS 验证过的那组配置，不需要手设环境变量。
-- 和 Go 构建的集成更简单：普通 Go 包里放 `.c` 文件，一条命令编完，不再需要手写 `.s` 占位文件和 `-toolexec` 参数。
-- 附带最小的端到端示例和安装后的自检命令。
+已落地，见 [quickstart.md](quickstart.md) 和 [toolchain.md](toolchain.md)。`goc go` 用命令行参数给出 QuickJS 那组默认（`-O3`、`--default-ptr-color cptr`），不读环境里的 `GOC_*`。每个 Go 调 C 的 thunk 帧按该函数的栈参数计算。morestack、可分裂帧和 sptr 栈图一定打开，没有开关。`goc check` 跑 `examples/hello`。`goc toolchain pack` 打出可搬的 clang、`libLLVM`、`opt` 和 pass。没有托管的下载地址；解压目录是 `~/.goc/toolchain` 或 `third_party/goc-toolchain`。`goc build` 不带 `--goabi` 时仍不套用这组默认。`goc build --goabi` 会打开 morestack 和可分裂帧；amd64 还会打开 sptr 栈图。
 
 ## 量化 goc 与 Go 互相调用的开销
 

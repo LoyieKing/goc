@@ -38,7 +38,14 @@ fi
 if [[ $ALL -eq 1 && -n "${4:-}" && "$GO_SYM" != *.* ]]; then
   GO_SYM="${4}"   # explicit prefix (no dot): keep as-is
 fi
-PKG="${GO_SYM%%.*}"
+# --all's fourth argument is the full Go package prefix. An import path
+# may contain dots (example.com/foo). A single-function go_sym is main.Name,
+# and the package is the part before the first dot.
+if [[ $ALL -eq 1 ]]; then
+  PKG="$GO_SYM"
+else
+  PKG="${GO_SYM%%.*}"
+fi
 
 CLANG="${GOC_CLANG:-${CLANG:-}}"
 if [[ -z "$CLANG" ]]; then
@@ -834,25 +841,21 @@ mfns = []
 # In --goabi mode the C-side symbols are ABI0 (SysV: C calls them directly,
 # cross-TU refs are ABI0) and only the Go-facing thunks are ABIInternal.
 c_abi = "ABI0" if goabi else ""
-# GOC_CRESERVE reserves C stack inside the thunk. amd64 frame is 8+reserve
-# when the reserve is non-zero (push rbp); a zero reserve emits no frame.
-# arm64 always saves x29/x30 (16 bytes) because BL clobbers LR, then the
-# reserve. elfpack checks this against the prologue's SP delta.
-thunk_reserve = int(os.environ.get("GOC_CRESERVE", "0") or "0")
-if os.environ.get("GOC_ARCH", "amd64") == "arm64":
-    thunk_frame = 16 + thunk_reserve
-else:
-    thunk_frame = (8 + thunk_reserve) if thunk_reserve > 0 else 0
+# Each thunk's outgoing area is that signature's stack arguments, rounded
+# up to 16. amd64 also pushes rbp (frame = 8+outgoing). arm64 always saves
+# x29/x30 (frame = 16+outgoing). elfpack checks this against the prologue.
+arm64_thunk = os.environ.get("GOC_ARCH", "amd64") == "arm64"
 for name in goabi:
+    outgoing = int(goabi[name]["outgoing"])
+    thunk_frame = (16 if arm64_thunk else 8) + outgoing
     spills, stack_ptrs, arg_area = go_args_layout(goabi[name]["abi"]["go"])
     e = entry(name, f"{sym_prefix}.{name}", thunk_frame, "ABIInternal",
               sptr=False, arg_spills=spills, arg_area=arg_area,
               stack_ptr_args=stack_ptrs)
-    # The thunk copies SysV stack arguments to the bottom of its reserve
-    # (RSP = RBP-reserve) before calling X.impl. If X.impl grows the stack in
-    # its prologue, a copied pointer (possibly a Go stack address) must be
-    # adjusted through the thunk's own frame map.
-    e["sptr_slots"] = sorted(thunk_reserve - p["location"]["offset"]
+    # Stack arguments sit at [rsp, #offset] after the subtract, which is
+    # -(outgoing-offset)(%rbp). A copied pointer has to be in this frame's
+    # map so a stack growth inside X.impl can adjust it.
+    e["sptr_slots"] = sorted(outgoing - p["location"]["offset"]
                              for p in goabi[name]["abi"]["sysv"]["params"]
                              if p["location"]["kind"] == "stack" and p["type"] == "ptr")
     mfns.append(e)

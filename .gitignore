@@ -35,6 +35,9 @@ backend/vendor/
 .DS_Store
 Thumbs.db
 
+# Written by `goc go` when a package has no assembly file.
+goc_marker_amd64.s
+
 # Test / pipeline scratch
 *.color.ll
 /build/

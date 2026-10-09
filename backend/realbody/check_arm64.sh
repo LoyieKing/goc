@@ -25,7 +25,7 @@ fail() { echo "FAIL $*" >&2; exit 1; }
 # A caller's environment must not leak into a case.
 clean_env() {
   env -u GOC_ARCH -u GOC_FRAMEADDR_MODE -u GOC_SPTR_MAPS -u GOC_CSR_ADJUST \
-      -u GOC_MORESTACK -u GOC_NO_NOSPLIT -u GOC_CRESERVE -u GOC_KEEP_TMP \
+      -u GOC_MORESTACK -u GOC_NO_NOSPLIT -u GOC_KEEP_TMP \
       -u GOC_FIXED_G "$@"
 }
 
@@ -192,7 +192,7 @@ KEEP="$TMP/goabi-tmp"
 mkdir -p "$KEEP"
 # ABIInternal register arguments need the split stub (same as the amd64
 # goabi build). Stack maps stay off: arm64 has no frame-address repair.
-clean_env GOC_ARCH=arm64 GOC_CRESERVE=16 GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 \
+clean_env GOC_ARCH=arm64 GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 \
   GOC_KEEP_TMP="$KEEP" \
   "$GOC" build "$TMP/sum9.c" -o "$TMP/sum9.o" --all --goabi
 # The thunk is assembled by llvm-mc inside realbody. The x8 store is the

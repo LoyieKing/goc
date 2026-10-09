@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 # P29 golden: clang-compiled C → Go-ABIInternal thunks → goobj → Go binary → run.
 # Covers scalar register and stack ABI cases, mixed floating-point arguments,
-# and two- and three-result mixed-class aggregate returns. GOC_CRESERVE gives
-# the fixed call thunk its PCSP-described frame and C stack reservation.
+# and two- and three-result mixed-class aggregate returns. Each Go→C thunk
+# frame is that signature's stack arguments rounded up to 16.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
-# Larger than a new goroutine's stack: the first Go→C call must enter the
-# morestack slow path, exercising typed argument spill/reload and pointer maps.
-export GOC_CRESERVE="${GOC_CRESERVE:-32768}"
 export GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 GOC_SPTR_MAPS=1
 OUT="$ROOT/build/p29-goabi"
 mkdir -p "$OUT"
