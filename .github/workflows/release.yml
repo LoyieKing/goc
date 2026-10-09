@@ -36,9 +36,12 @@ jobs:
         with:
           go-version: "1.24.4"
 
+      # restore + save, not actions/cache. The combined action only writes
+      # the cache when the whole job succeeds, so a test failure used to
+      # throw away the Clang build.
       - name: Restore patched clang and passes
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             third_party/llvm-19.1.7-clang-build/bin
@@ -59,8 +62,31 @@ jobs:
           ./scripts/build-passes.sh
           ./scripts/slim-clang-build.sh
 
+      - name: Save patched clang and passes
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            third_party/llvm-19.1.7-clang-build/bin
+            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
+            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
+            third_party/llvm-19.1.7-clang-build/lib/clang
+            third_party/llvm-19.1.7-clang-build/lib/Target/X86
+            third_party/llvm-19.1.7-clang-build/x86-src
+            frontend/color-escape/build/goc-color-escape
+            backend/build/pass-out/goc-llc
+            backend/build/pass-out/GocStackMap.so
+          key: goc-clang-19.1.7-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
+
       - name: Test
-        run: ./scripts/ci-test.sh
+        run: |
+          # p27 builds libGocClang.so with the host clang++-19. That package
+          # does not ship llvm-config-19 or the Clang C++ headers.
+          sudo apt-get install -y llvm-19-dev libclang-19-dev
+          command -v llvm-config-19 >/dev/null
+          inc="$(llvm-config-19 --includedir)"
+          test -f "$inc/clang/Frontend/FrontendPluginRegistry.h"
+          ./scripts/ci-test.sh
 
       - name: Pack
         run: |
