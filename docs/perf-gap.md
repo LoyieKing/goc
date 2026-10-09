@@ -5,7 +5,9 @@
 1. 同样是 QuickJS，**Bellard gcc 版、Bellard clang 版、ng clang 版（以及 ng gcc 版）、goc-ng、goc-bellard** 这几种构建，速度差在哪里，各差多少；
 2. goc 编出来的两个版本比原生慢的**每一个**地方，机制是什么、量出来占多少、能不能修。
 
-跑分总表在 [benchmark.md](benchmark.md)；本页是它的“为什么”。所有数据、脚本和原始输出都在仓库里（见文末“原始文件”）。图中文字是英文，正文是中文。
+2026-10-09 的五引擎对照在 [benchmark.md](benchmark.md)（AMD Ryzen 9 7900X，gcc 11.4）：goc-ng / native ng 的 V8 是 0.923，goc-bellard / gcc 版 Bellard 是 0.896。本页的表是 2026-09-27、8 vCPU 虚拟机上的机制研究。28 个构建的开关矩阵没有重跑，数字保持原样。第 5 节的 cgo libm、逐字节 `memcmp`、`malloc_usable_size` 返回申请尺寸，以及第 8 节清单里的前几项，后来已经进了默认构建；那些段落记录的是合入前的机制。
+
+跑分总表以 benchmark.md 为准；本页是那次研究的“为什么”。所有数据、脚本和原始输出都在仓库里（见文末“原始文件”）。图中文字是英文，正文是中文。
 
 读法：每条结论后面标了 **【实测】** 或 **【推测】**。【实测】是有对照构建、计数器或 A/B 计时直接支撑的；【推测】是根据汇编或源码推出来、还没做单独实验验证的。
 
@@ -13,7 +15,7 @@
 
 ## 0. 结论先看
 
-测量时段：北京时间 2026-09-27，同一台 8 vCPU 虚拟机，计时一律 `taskset -c 3` 绑核、多家交替轮换（方法同 `scripts/bench-all.sh`）。除特别注明外，下表数字来自“开关实验”时段（`data/toggles/`，19:53–23:01，28 个构建同一时段交替跑），这是最新、覆盖最全的一次。
+测量时段：北京时间 2026-09-27，同一台 8 vCPU 虚拟机，计时一律 `taskset -c 3` 绑核、多家交替轮换（方法同 `scripts/bench-all.sh`）。除特别注明外，下表数字来自“开关实验”时段（`data/toggles/`，19:53–23:01，28 个构建同一时段交替跑）。这是那次机制研究里覆盖最全的一次，不是当前默认构建的分数。当前五引擎数字在 [benchmark.md](benchmark.md)。
 
 | 指标 | Bellard gcc -O2 | Bellard clang -O3 | goc-bellard | ng clang -O2（native ng） | ng clang -O3 | goc-ng |
 |---|---:|---:|---:|---:|---:|---:|
@@ -24,7 +26,7 @@
 
 ng 的 gcc 版只在主时段（`data/`，16:18–17:41）测过：V8 1020、SunSpider 23.08 ms、microbench 60.1 ns、microcall 13599——**ng 用 gcc 编反而比用 clang 慢**（V8 总分低 15%，SunSpider 慢 45%），和 Bellard 正好相反。
 
-一句话版本：
+一句话版本（当时的默认构建。尾复制、非根槽栈槽共享、每个函数只读一次 `g`、精确 libm、glibc 的 `sin` / `cos` / `exp` / `pow` / `log`、8 字节 `memcmp` 和按容量返回的 `malloc_usable_size` 当时都还没进默认构建）：
 
 - **goc-bellard 对 Bellard gcc 版的差距（V8 0.80 倍）可以拆成两个相乘的因子：编译器 0.86 × goc 自身 0.94。** 编译器那一块几乎全部来自 gcc 对解释器分发跳转做的“尾复制”（第 3 节）；clang 加上同样的尾复制后 V8 从 1321 升到 1469，和 gcc 的 1538 只差 4.5%。【实测】
 - **扣掉编译器之后，两个 goc 版本相对同编译器的原生构建慢得差不多**：V8 goc-bellard/clang-O3 = 1.067、goc-ng/clang-O3 = 1.057（时间比）；SunSpider 1.093 与 1.055；microbench 1.106 与 1.085。【实测】
@@ -32,7 +34,7 @@ ng 的 gcc 版只在主时段（`data/`，16:18–17:41）测过：V8 1020、Sun
 - **SunSpider/microbench 上的大头是几个“运行时服务”**：`Math.sin/exp/pow/floor/sqrt` 走 Go→cgo→glibc 每次多约 50 ns，`Date.now()` 走裸系统调用每次多约 90 ns，字符串比较的 `memcmp` 是逐字节循环（1 KiB 比较慢 8 倍）。这几项在 JS 探针里被单独量出来，也用补丁验证过（第 5 节）。另外 Bellard 独有的 `string_build*` 慢 1.8 倍，原因是 shim 的 `malloc_usable_size` 返回申请尺寸而不是块容量，Bellard 的 `s += "x"` 原地追加因此每次失败、整串重建（callgrind：重建次数 8.6 倍，5.5 节）。【实测】
 - **为什么 Bellard 的差距比 ng 大**：① 原生 Bellard 参照是 gcc 编的，而 gcc 恰好在 Bellard 的解释器上特别占便宜，ng 的原生参照是 clang；② goc 的固定开销（每次 libm 调用、每次取时间多出来的几十纳秒）是绝对值，Bellard 本身更快，同样的纳秒占比就更大；③ goc 的编译参数反而让 Bellard 的 clang 构建变快（gocflags 构建 V8 快 6%），ng 没有这个效果，于是“goc 运行时”那一层在 Bellard 上显得更大。单参数实验表明几乎任何一个参数单独加上都有 2%～5% 的加速，连指令数不变的也一样，所以这更像是 clang-O3 参照二进制的代码布局偏差（第 6.1、7 节）。【实测为主，③ 的布局解释是推测】
 
-优化清单在第 8 节，排第一的是“给 goc 的 llc 打开分发块尾复制”：实测 goc-bellard V8 +7.8%、SunSpider −15%，goc-ng SunSpider −7%，不改语义，只是后端参数。
+优化清单在第 8 节。当时排第一的是“给 goc 的 llc 打开分发块尾复制”：实测 goc-bellard V8 +7.8%、SunSpider −15%，goc-ng SunSpider −7%，不改语义，只是后端参数。这项后来进了默认构建。
 
 ---
 
@@ -507,6 +509,8 @@ goc 的程序不链接 glibc，`memcpy` 等由 `tests/qjs/_qjs_libc_shim.c` 提�
 
 ## 5. 运行时服务：每次调用多几十纳秒
 
+这一节量的是 2026-09-27 合入之前的默认构建。当时 `sin` / `cos` / `exp` / `pow` / `log` 走 Go→cgo→glibc，`memcmp` 是逐字节循环，`goc_malloc_usable_size` 返回申请尺寸。这些后来都进了默认构建（见 [todo.md](todo.md)）：精确函数用 C，超越函数用 glibc 栈上直调，`memcmp` 每步 8 字节，`malloc_usable_size` 返回 `h->capacity`。下面的探针数字没有重测。
+
 goc 版本里，libc 的服务要么由 shim 用 C 实现，要么桥接到 Go。`tests/bench/perfgap-mech.js` 每个循环只压一种服务，三轮取中位数（`data/mech-js/`，ns/op）：
 
 | 探针 | Bellard clang-O3 + goc 参数 | goc-bellard | goc-bellard-fast | ng clang-O3 + goc 参数 | goc-ng | goc-ng-fast |
@@ -529,7 +533,7 @@ goc 版本里，libc 的服务要么由 shim 用 C 实现，要么桥接到 Go�
 
 ### 5.1 libm：Go → cgo → glibc 的往返（每次 +50 ns）【实测】
 
-默认构建里 `sqrt/floor/ceil/trunc/round/sin/exp/pow/...` 都经 `GOC_GO_MATH1/2` 宏桥接到 Go 的 `main.gocGoMath*`，再由 Go 通过 cgo 调 glibc（保证和原生结果逐位一致）。每次调用要切到系统栈、保存全部寄存器，约多 50 ns。
+当时的默认构建里 `sqrt/floor/ceil/trunc/round/sin/exp/pow/...` 都经 `GOC_GO_MATH1/2` 宏桥接到 Go 的 `main.gocGoMath*`，再由 Go 通过 cgo 调 glibc（保证和原生结果逐位一致）。每次调用要切到系统栈、保存全部寄存器，约多 50 ns。
 
 `-fast` 补丁把**结果由 IEEE 754 精确规定**的五个函数（`sqrt`、`floor`、`ceil`、`trunc`、`round`）改成 C 实现（`sqrtsd` 指令和 musl 的整数位运算写法），结果与 glibc 逐位相同；`Math.sqrt` 从 97.7 降到 41.3 ns，和原生一样。`sin/exp/pow` 这类超越函数不是逐位确定的（不同 libm 最后一位可能不同），补丁没动，仍是 100+ ns。
 
@@ -566,7 +570,7 @@ microbench 里 `string_build1`、`string_build1x`、`string_build2c`（循环里
 
 goc 这边的 107,800 次，正好约等于 200 轮 × 每轮越过 512 字节之后的 ~540 次追加，也就是每次都重建。原生只有其八分之一。goc-ng 没有这个问题，因为 ng 的 `+=` 不依赖 `malloc_usable_size`。
 
-**修法（未实施）。** 让 `goc_malloc_usable_size` 返回 `h->capacity`。同时 `goc_realloc` 在搬家时要拷贝 `min(n, capacity)` 而不是 `h->size`，因为调用方按 `usable_size` 的约定可以合法地写到容量末尾，只拷 `size` 会丢掉这部分数据。改动很小，但它改变的是 shim 的行为，合入前要跑一遍 test262/官方测试的对照。
+**修法（当时未实施，后来已进默认构建，见 [todo.md](todo.md)）。** 让 `goc_malloc_usable_size` 返回 `h->capacity`。同时 `goc_realloc` 在搬家时要拷贝 `min(n, capacity)` 而不是 `h->size`，因为调用方按 `usable_size` 的约定可以合法地写到容量末尾，只拷 `size` 会丢掉这部分数据。改动很小，但它改变的是 shim 的行为，合入前要跑一遍 test262/官方测试的对照。
 
 ---
 
@@ -629,7 +633,7 @@ gocpipe → gocpipe-sm 只加了 goc 的 stackmap pass 和 `GocFrameAddrFix`（�
 
 ## 7. 为什么 goc-bellard 对 Bellard 的差距比 goc-ng 对 ng 大
 
-benchmark.md 的主表里，goc-bellard/Bellard 的 V8 是 0.80 倍，goc-ng/ng 是 0.93 倍。把两条链都拆成“编译器 × goc”（开关时段，时间比，>1 表示 goc 慢）：
+2026-09-27 的 benchmark.md 主表里，goc-bellard/Bellard 的 V8 是 0.80 倍，goc-ng/ng 是 0.93 倍。当前主表是 0.896 和 0.923，机器和默认构建都已不同，不要和下面的拆解相减。把两条链都拆成“编译器 × goc”（开关时段，时间比，>1 表示 goc 慢）：
 
 | 套件 | Bellard：goc / gcc | = 编译器（clang-O3 / gcc） | × goc（goc / clang-O3） | ng：goc / clang-O2 | = O3 / O2 | × goc（goc / clang-O3） |
 |---|---:|---:|---:|---:|---:|---:|
@@ -653,6 +657,8 @@ benchmark.md 的主表里，goc-bellard/Bellard 的 V8 是 0.80 倍，goc-ng/ng 
 
 “实测”一列是本次 A/B 计时的结果（开关时段，时间比，<1 表示变快）；“估计”是按 Ir 份额或探针推算的上限，未实测。
 
+这张表是 2026-09-27 的合入建议，收益仍是当时的 A/B 或估计，没有按后来的默认构建重测。1 到 12 后来都进了默认构建，做法和当时的字面不完全相同：5 用的是 glibc 栈上直调，6 是每个函数只读一次 `g`（`GOC_FIXED_G` 仍关），10 只覆盖没有调用且帧不超过 `StackSmall` 的 ABI0 叶子，11 用 SSE2，13 没有开。记录在 [todo.md](todo.md)。
+
 | # | 做法 | 针对 | 实测 / 估计收益 | 风险与代价 |
 |---:|---|---|---|---|
 | 1 | goc 的 llc 默认加 `-tail-dup-pred-size=1000 -tail-dup-succ-size=1000`（或只对含 `indirectbr` 的函数放开） | 第 3 节，分发块共享 | **实测** goc-bellard V8 0.927、SunSpider 0.848、micro 0.894、microcall 0.893；goc-ng V8 0.992、SunSpider 0.929、micro 0.951、microcall 0.940 | 低：只改块布局，不改语义；`JS_CallInternal` 代码变大，Ir +2%～3%。需重跑 test262/官方测试对照和 300 goroutine 栈增长扫描 |
@@ -669,7 +675,7 @@ benchmark.md 的主表里，goc-bellard/Bellard 的 V8 是 0.80 倍，goc-ng/ng 
 | 12 | `goc_malloc_usable_size` 返回 `h->capacity`（同时 `goc_realloc` 按容量拷贝） | 5.5 | **实测机制**：`JS_ConcatString1` 重建次数 8.6 倍、Ir 3.1 倍；**估计**这三项从 1.8 倍回到 ~1.1 倍，Bellard microbench 几何平均约 −2% | 低：几行 shim 改动，需跑正确性对照 |
 | 13 | `-inline-threshold=250` 补回 `default<O3>` 的内联阈值 | 6.2 | **实测** 无稳定收益（Ir 不变） | 低；可以顺手加，但别指望 |
 
-1～4 可以直接合入（1 需要跑一遍正确性对照）；预计合起来 goc-bellard 的 V8 回到 gocflags 的 0.97 左右、SunSpider 回到 ~0.93（看 `goc-bellard-best`：V8 1350、SunSpider 13.15 ms，已经快过 clang -O3 原生构建的 14.52 ms），goc-ng 的 SunSpider 回到和 native ng 持平（`goc-ng-best` 15.53 ms 对 native ng 16.16 ms）。【实测：best 构建的数字】5～9 是真正的“goc 税”，需要后端工作。
+当时的判断是：1～4 可以直接合入（1 需要跑一遍正确性对照）；预计合起来 goc-bellard 的 V8 回到 gocflags 的 0.97 左右、SunSpider 回到 ~0.93（看 `goc-bellard-best`：V8 1350、SunSpider 13.15 ms，已经快过 clang -O3 原生构建的 14.52 ms），goc-ng 的 SunSpider 回到和 native ng 持平（`goc-ng-best` 15.53 ms 对 native ng 16.16 ms）。【实测：best 构建的数字】5～9 在当时被看成真正的“goc 税”。这些数字都是合入前的，不是当前默认构建的重测。
 
 ---
 
@@ -698,7 +704,9 @@ benchmark.md 的主表里，goc-bellard/Bellard 的 V8 是 0.80 倍，goc-ng/ng 
 
 ### 9.3 默认构建没有变
 
-本次提交对构建脚本的改动（`git diff 8973a12..HEAD -- backend/realbody/goc_p28_realbody.sh cmd/goc scripts/qjs-cli-build.sh scripts/bench-all.sh`）只增加了默认为空的开关：`GOC_OPT_EXTRA`（为空时 `opt` 的参数列表不变）、`GOC_LLC_EXTRA`（为空时不追加）、`QJS_OUT_DIR`（为空时输出目录不变）、`ENGINE_MAP` / `MICROCALL_PER_ENGINE`（为空时 bench-all.sh 走原来的分支）。为确认这一点，2026-09-27 用当前 HEAD、不设任何新开关，把两个默认 CLI 重新编到 `/tmp`（`QJS_OUT_DIR` 只改输出目录）。逐字节比较时，`quickjs.o`、`libregexp.o`、`cli_std_os.o` 和 `build/` 下的旧产物有几十到几百字节的差异，但同一个 HEAD 连编两次也有同样量级的差异（例如 `quickjs.o` 两次之间 370 字节，文件大小相同），说明 goc 的构建本身不是逐字节可复现的，这些差异不来自脚本改动；其余目标文件完全相同。于是改为直接跑正确性对照：新编的 goc-ng 为 test262 1502/1526、官方测试 69/77，goc-bellard 为 1501/1526、73/77，和 benchmark.md 的结果一致（`docs/perf-gap/data/parity/`）。默认构建的行为没有变化。
+这一节只记录 2026-09-27 那次提交当时的核对。官方测试 69/77 和 73/77 是那一天、`test_builtin.js` 没有加 `--std` 的计数。当前五引擎对照在 [benchmark.md](benchmark.md)（73/77 与 77/77）。
+
+本次提交对构建脚本的改动（`git diff 8973a12..HEAD -- backend/realbody/goc_p28_realbody.sh cmd/goc scripts/qjs-cli-build.sh scripts/bench-all.sh`）只增加了默认为空的开关：`GOC_OPT_EXTRA`（为空时 `opt` 的参数列表不变）、`GOC_LLC_EXTRA`（为空时不追加）、`QJS_OUT_DIR`（为空时输出目录不变）、`ENGINE_MAP` / `MICROCALL_PER_ENGINE`（为空时 bench-all.sh 走原来的分支）。为确认这一点，2026-09-27 用当前 HEAD、不设任何新开关，把两个默认 CLI 重新编到 `/tmp`（`QJS_OUT_DIR` 只改输出目录）。逐字节比较时，`quickjs.o`、`libregexp.o`、`cli_std_os.o` 和 `build/` 下的旧产物有几十到几百字节的差异，但同一个 HEAD 连编两次也有同样量级的差异（例如 `quickjs.o` 两次之间 370 字节，文件大小相同），说明 goc 的构建本身不是逐字节可复现的，这些差异不来自脚本改动；其余目标文件完全相同。于是改为直接跑正确性对照：新编的 goc-ng 为 test262 1502/1526、官方测试 69/77，goc-bellard 为 1501/1526、73/77，和当时 benchmark.md 的结果一致（`docs/perf-gap/data/parity/`）。那一次默认构建的行为没有变化。
 
 ### 9.4 复现
 

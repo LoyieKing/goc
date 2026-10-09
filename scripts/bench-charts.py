@@ -32,7 +32,7 @@ plt.rcParams.update({
 ENG = ["goc-ng", "goc-bellard", "ng", "bellard", "goja"]
 LABEL = {"goc-ng": "goc-ng", "goc-bellard": "goc-bellard", "ng": "native ng", "bellard": "native Bellard", "goja": "Goja"}
 COLOR = {"goc-ng": "#1d4ed8", "ng": "#93c5fd", "goc-bellard": "#047857", "bellard": "#6ee7b7", "goja": "#94a3b8"}
-DATE = "2026-09-27"
+DATE = "2026-10-09"
 NE = len(ENG)
 LEG = dict(frameon=True, facecolor="white", edgecolor="none", framealpha=1)
 

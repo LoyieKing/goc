@@ -93,8 +93,11 @@ def main():
         name, cmd = spec.split("=", 1)
         cmd = shlex.split(cmd)
         with cf.ThreadPoolExecutor(a.j) as ex:
+            # test_builtin.js matches `qjs --std`. gojacli has no --std and
+            # would treat the flag as a filename, failing every function.
+            use_std = "gojacli" not in os.path.basename(cmd[0])
             futs = {(f, fn): ex.submit(run, cmd, js, a.timeout,
-                                       ["--std"] if f == "test_builtin.js" else [])
+                                       ["--std"] if f == "test_builtin.js" and use_std else [])
                     for f, fn, js in cs}
             res[name] = {"%s:%s" % k: v.result() for k, v in futs.items()}
         r = res[name]

@@ -1,31 +1,15 @@
-goc-ng: 69/77 functions pass
-  test_builtin.js:test_finalization_registry FAIL qjscli:runtime: <t>: ReferenceError: os is not defined
+goc-ng: 73/77 functions pass
   test_builtin.js:test_json FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 
   test_builtin.js:test_line_column_numbers FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2
-  test_builtin.js:test_weak_map FAIL qjscli:runtime: <t>: ReferenceError: std is not defined
-  test_builtin.js:test_weak_map_cycles FAIL qjscli:runtime: <t>: ReferenceError: std is not defined
-  test_builtin.js:test_weak_ref FAIL qjscli:runtime: <t>: ReferenceError: std is not defined
   test_language.js:test_unicode_ident FAIL qjscli:runtime: <t>: Error: assertion failed: got |number|, expected |undefined|
   test_loop.js:test_for_in_proxy FAIL qjscli:runtime: <t>: Error: assertion failed: got |false|, expected |true|
-goc-bellard: 73/77 functions pass
-  test_builtin.js:test_finalization_registry FAIL qjscli:runtime: <t>: ReferenceError: 'os' is not defined
-  test_builtin.js:test_weak_map FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined
-  test_builtin.js:test_weak_map_cycles FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined
-  test_builtin.js:test_weak_ref FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined
-ng: 69/77 functions pass
-  test_builtin.js:test_finalization_registry FAIL ReferenceError: os is not defined
+goc-bellard: 77/77 functions pass
+ng: 73/77 functions pass
   test_builtin.js:test_json FAIL Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 column 5).got |    at
   test_builtin.js:test_line_column_numbers FAIL Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2:8|
-  test_builtin.js:test_weak_map FAIL ReferenceError: std is not defined
-  test_builtin.js:test_weak_map_cycles FAIL ReferenceError: std is not defined
-  test_builtin.js:test_weak_ref FAIL ReferenceError: std is not defined
   test_language.js:test_unicode_ident FAIL Error: assertion failed: got |number|, expected |undefined|
   test_loop.js:test_for_in_proxy FAIL Error: assertion failed: got |false|, expected |true|
-bellard: 73/77 functions pass
-  test_builtin.js:test_finalization_registry FAIL ReferenceError: 'os' is not defined
-  test_builtin.js:test_weak_map FAIL ReferenceError: 'std' is not defined
-  test_builtin.js:test_weak_map_cycles FAIL ReferenceError: 'std' is not defined
-  test_builtin.js:test_weak_ref FAIL ReferenceError: 'std' is not defined
+bellard: 77/77 functions pass
 goja: 58/77 functions pass
   test_bigint.js:test_bigint3 FAIL Error: assertion failed: got |-1|, expected |18446744073709552000| at Error (native)
   test_builtin.js:test_date FAIL Error: assertion failed: got number:|29256|, expected number:|29312| (order of operations / precision in MakeTime) at Er
@@ -57,7 +41,7 @@ bellard vs goc-ng: 4 functions differ
   DIFF test_loop.js:test_for_in_proxy: FAIL qjscli:runtime: <t>: Error: assertion failed: got |false|, expected |true| | pass
   DIFF test_builtin.js:test_json: FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2  | pass
   DIFF test_builtin.js:test_line_column_numbers: FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2 | pass
-goja vs goc-ng: 15 functions differ
+goja vs goc-ng: 19 functions differ
   DIFF test_language.js:test_constructor: pass | FAIL Error: assertion failed: got |Value is not a constructor|, expected |G is not a constructor| at Error (native)
   DIFF test_language.js:test_class: pass | FAIL SyntaxError: SyntaxError: <t>: Line 91:15 Unexpected token = (and 3 more errors)
   DIFF test_language.js:test_argument_scope: pass | FAIL Error: assertion failed: got |undefined|, expected |12| at Error (native)
@@ -73,3 +57,7 @@ goja vs goc-ng: 15 functions differ
   DIFF test_builtin.js:test_typed_array: pass | FAIL ReferenceError: Float16Array is not defined at test_typed_array (<t>:139:13(155))
   DIFF test_builtin.js:test_date: pass | FAIL Error: assertion failed: got number:|29256|, expected number:|29312| (order of operations / precision in MakeTime) at Er
   DIFF test_builtin.js:test_regexp: pass | FAIL SyntaxError: SyntaxError: Invalid flags supplied to RegExp constructor 'gvi' at <t>:165:31
+  DIFF test_builtin.js:test_weak_map: pass | FAIL TypeError: Value is not an object: x1 at set (native)
+  DIFF test_builtin.js:test_weak_map_cycles: pass | FAIL ReferenceError: std is not defined at test_weak_map_cycles (<t>:24:5(15))
+  DIFF test_builtin.js:test_weak_ref: pass | FAIL ReferenceError: WeakRef is not defined at test_weak_ref (<t>:61:18(18))
+  DIFF test_builtin.js:test_finalization_registry: pass | FAIL ReferenceError: FinalizationRegistry is not defined at test_finalization_registry (<t>:57:26(6))

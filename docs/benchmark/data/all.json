@@ -1,32 +1,32 @@
 {
  "env": {
   "env-mem": [
-   "date: 2026-09-27 15:51:53 KST",
-   "host: Linux 6.12.94+ x86_64, 8 vCPU; RSS runs pinned to CPU 3, instance runs not pinned",
-   "goc commit: 208df3b6c481d671c974c9f6b0701d2cf4c0ca31",
+   "date: 2026-10-09 00:19:36 CST",
+   "host: Linux 6.8.0-49-generic x86_64, 24 vCPU; RSS runs pinned to CPU 3, instance runs not pinned",
+   "goc commit: fb30848d072099cf37e4e0d90b0c5a25b14950ef",
    "go: go version go1.24.4 linux/amd64",
    "GOGC=<unset, default 100> GOMEMLIMIT=<unset>",
-   "goc-ng: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=9b0c675097a6c00b",
-   "goc-bellard: /workspace/goc/build/qjs-bellard/qjscli --stack-size 16384  sha256=ff920f74ab585712",
-   "ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f",
-   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
-   "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
-   "harness: build/qjs/qjsmem  sha256=0d91369988198fb2",
-   "harness: build/qjs-bellard/qjsmem  sha256=3e121e88f8b011c8",
-   "harness: build/qjsmem/threads-ng  sha256=61868481f6c03cde",
-   "harness: build/qjsmem/threads-bellard  sha256=0adaa7148bae0150",
-   "harness: build/qjsmem/gojamem  sha256=f092eef2148e2a78",
+   "goc-ng: /home/wangyilei/my_sources/goc/build/qjs/qjscli --stack-size 16384 --script  sha256=2b1c96587af88f4e",
+   "goc-bellard: /home/wangyilei/my_sources/goc/build/qjs-bellard/qjscli --stack-size 16384 --script  sha256=62a98d80b439f078",
+   "ng: /tmp/goc-perf/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=dc515fea77052c5d",
+   "bellard: /tmp/goc-perf/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=bf9721414ae3c5f4",
+   "goja: /tmp/goc-perf/perf-study/goja-cli/gojacli  sha256=67b2c767347b6137",
+   "harness: build/qjs/qjsmem  sha256=3bb0a7acd7eea927",
+   "harness: build/qjs-bellard/qjsmem  sha256=ed81a39c90c5ec61",
+   "harness: build/qjsmem/threads-ng  sha256=7f7d34d9b73efa0b",
+   "harness: build/qjsmem/threads-bellard  sha256=514718bcd3aafaac",
+   "harness: build/qjsmem/gojamem  sha256=b56cb7fe3a48a2db",
    "rounds: 3; N: 0 1 10 100 1000; C harness thread stack: 1024 KiB"
   ],
   "env": [
-   "date: 2026-09-27 15:02:07 KST",
-   "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
-   "goc commit: 208df3b6c481d671c974c9f6b0701d2cf4c0ca31",
-   "goc-ng: /workspace/goc/build/qjs/qjscli --stack-size 16384  sha256=9b0c675097a6c00b",
-   "goc-bellard: /workspace/goc/build/qjs-bellard/qjscli --stack-size 16384  sha256=ff920f74ab585712",
-   "ng: /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=a214d30f8d7d6e0f",
-   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
-   "goja: /workspace/perf-study/goja-cli/gojacli  sha256=800ae9a646ae089b",
+   "date: 2026-10-08 23:19:12 CST",
+   "host: Linux 6.8.0-49-generic x86_64, 24 vCPU, pinned to CPU 3",
+   "goc commit: fb30848d072099cf37e4e0d90b0c5a25b14950ef",
+   "goc-ng: /home/wangyilei/my_sources/goc/build/qjs/qjscli --stack-size 16384 --script  sha256=2b1c96587af88f4e",
+   "goc-bellard: /home/wangyilei/my_sources/goc/build/qjs-bellard/qjscli --stack-size 16384 --script  sha256=62a98d80b439f078",
+   "ng: /tmp/goc-perf/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=dc515fea77052c5d",
+   "bellard: /tmp/goc-perf/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=bf9721414ae3c5f4",
+   "goja: /tmp/goc-perf/perf-study/goja-cli/gojacli  sha256=67b2c767347b6137",
    "rounds: v8=5 ss=3 micro=3 microcall=5"
   ]
  },
@@ -34,392 +34,392 @@
   "rounds": {
    "goc-ng": [
     {
-     "Richards": 700,
-     "DeltaBlue": 724,
-     "Crypto": 872,
-     "RayTrace": 1479,
-     "EarleyBoyer": 2142,
-     "RegExp": 364,
-     "Splay": 2800,
-     "NavierStokes": 1615,
-     "Score": 1110,
-     "wall_s": 38.39
+     "Richards": 1034,
+     "DeltaBlue": 1021,
+     "Crypto": 987,
+     "RayTrace": 2423,
+     "EarleyBoyer": 2882,
+     "RegExp": 496,
+     "Splay": 4372,
+     "NavierStokes": 1948,
+     "Score": 1534,
+     "wall_s": 34.12
     },
     {
-     "Richards": 771,
-     "DeltaBlue": 734,
-     "Crypto": 880,
-     "RayTrace": 1452,
-     "EarleyBoyer": 2076,
-     "RegExp": 356,
-     "Splay": 2838,
-     "NavierStokes": 1625,
-     "Score": 1119,
-     "wall_s": 37.8
+     "Richards": 1040,
+     "DeltaBlue": 1022,
+     "Crypto": 993,
+     "RayTrace": 2378,
+     "EarleyBoyer": 2941,
+     "RegExp": 489,
+     "Splay": 4290,
+     "NavierStokes": 1974,
+     "Score": 1533,
+     "wall_s": 34.11
     },
     {
-     "Richards": 767,
-     "DeltaBlue": 740,
-     "Crypto": 876,
-     "RayTrace": 1478,
-     "EarleyBoyer": 2130,
-     "RegExp": 354,
-     "Splay": 2882,
-     "NavierStokes": 1622,
-     "Score": 1126,
-     "wall_s": 37.96
+     "Richards": 1038,
+     "DeltaBlue": 1022,
+     "Crypto": 940,
+     "RayTrace": 2389,
+     "EarleyBoyer": 2896,
+     "RegExp": 479,
+     "Splay": 4286,
+     "NavierStokes": 1953,
+     "Score": 1515,
+     "wall_s": 34.65
     },
     {
-     "Richards": 777,
-     "DeltaBlue": 743,
-     "Crypto": 883,
-     "RayTrace": 1468,
-     "EarleyBoyer": 2077,
-     "RegExp": 360,
-     "Splay": 2817,
-     "NavierStokes": 1629,
-     "Score": 1125,
-     "wall_s": 37.82
+     "Richards": 1033,
+     "DeltaBlue": 1051,
+     "Crypto": 956,
+     "RayTrace": 2476,
+     "EarleyBoyer": 2989,
+     "RegExp": 507,
+     "Splay": 4433,
+     "NavierStokes": 1978,
+     "Score": 1555,
+     "wall_s": 33.88
     },
     {
-     "Richards": 768,
-     "DeltaBlue": 508,
-     "Crypto": 884,
-     "RayTrace": 1481,
-     "EarleyBoyer": 2076,
-     "RegExp": 364,
-     "Splay": 2825,
-     "NavierStokes": 1604,
-     "Score": 1072,
-     "wall_s": 38.27
+     "Richards": 1033,
+     "DeltaBlue": 1027,
+     "Crypto": 1005,
+     "RayTrace": 2427,
+     "EarleyBoyer": 2922,
+     "RegExp": 493,
+     "Splay": 4307,
+     "NavierStokes": 1962,
+     "Score": 1539,
+     "wall_s": 34.02
     }
    ],
    "goc-bellard": [
     {
-     "Richards": 810,
-     "DeltaBlue": 781,
-     "Crypto": 927,
-     "RayTrace": 1629,
-     "EarleyBoyer": 2311,
-     "RegExp": 447,
-     "Splay": 3240,
-     "NavierStokes": 1761,
-     "Score": 1241,
-     "wall_s": 36.84
+     "Richards": 1097,
+     "DeltaBlue": 1049,
+     "Crypto": 1284,
+     "RayTrace": 2627,
+     "EarleyBoyer": 3059,
+     "RegExp": 622,
+     "Splay": 4860,
+     "NavierStokes": 2587,
+     "Score": 1762,
+     "wall_s": 30.18
     },
     {
-     "Richards": 815,
-     "DeltaBlue": 830,
-     "Crypto": 931,
-     "RayTrace": 1656,
-     "EarleyBoyer": 2346,
-     "RegExp": 443,
-     "Splay": 3278,
-     "NavierStokes": 1759,
-     "Score": 1258,
-     "wall_s": 37.04
+     "Richards": 1130,
+     "DeltaBlue": 1081,
+     "Crypto": 1273,
+     "RayTrace": 2674,
+     "EarleyBoyer": 3017,
+     "RegExp": 596,
+     "Splay": 4787,
+     "NavierStokes": 2577,
+     "Score": 1760,
+     "wall_s": 30.38
     },
     {
-     "Richards": 830,
-     "DeltaBlue": 831,
-     "Crypto": 944,
-     "RayTrace": 1654,
-     "EarleyBoyer": 2289,
-     "RegExp": 430,
-     "Splay": 3147,
-     "NavierStokes": 1759,
-     "Score": 1247,
-     "wall_s": 37.22
+     "Richards": 1124,
+     "DeltaBlue": 1083,
+     "Crypto": 1303,
+     "RayTrace": 2692,
+     "EarleyBoyer": 3102,
+     "RegExp": 628,
+     "Splay": 4950,
+     "NavierStokes": 2647,
+     "Score": 1798,
+     "wall_s": 29.92
     },
     {
-     "Richards": 821,
-     "DeltaBlue": 820,
-     "Crypto": 917,
-     "RayTrace": 1644,
-     "EarleyBoyer": 2300,
-     "RegExp": 442,
-     "Splay": 3269,
-     "NavierStokes": 1741,
-     "Score": 1248,
-     "wall_s": 36.98
+     "Richards": 1145,
+     "DeltaBlue": 1107,
+     "Crypto": 1300,
+     "RayTrace": 2627,
+     "EarleyBoyer": 3103,
+     "RegExp": 616,
+     "Splay": 4751,
+     "NavierStokes": 2646,
+     "Score": 1787,
+     "wall_s": 30.09
     },
     {
-     "Richards": 792,
-     "DeltaBlue": 831,
-     "Crypto": 932,
-     "RayTrace": 1686,
-     "EarleyBoyer": 2355,
-     "RegExp": 426,
-     "Splay": 3219,
-     "NavierStokes": 1750,
-     "Score": 1247,
-     "wall_s": 37.05
+     "Richards": 1121,
+     "DeltaBlue": 1087,
+     "Crypto": 1273,
+     "RayTrace": 2585,
+     "EarleyBoyer": 3029,
+     "RegExp": 629,
+     "Splay": 4917,
+     "NavierStokes": 2693,
+     "Score": 1781,
+     "wall_s": 30.05
     }
    ],
    "ng": [
     {
-     "Richards": 794,
-     "DeltaBlue": 807,
-     "Crypto": 865,
-     "RayTrace": 1798,
-     "EarleyBoyer": 2270,
-     "RegExp": 399,
-     "Splay": 3162,
-     "NavierStokes": 1590,
-     "Score": 1208,
-     "wall_s": 37.6
+     "Richards": 1094,
+     "DeltaBlue": 1096,
+     "Crypto": 1060,
+     "RayTrace": 2776,
+     "EarleyBoyer": 3213,
+     "RegExp": 548,
+     "Splay": 4987,
+     "NavierStokes": 1987,
+     "Score": 1674,
+     "wall_s": 33.27
     },
     {
-     "Richards": 799,
-     "DeltaBlue": 777,
-     "Crypto": 847,
-     "RayTrace": 1762,
-     "EarleyBoyer": 2262,
-     "RegExp": 409,
-     "Splay": 3097,
-     "NavierStokes": 1564,
-     "Score": 1195,
-     "wall_s": 37.43
+     "Richards": 1085,
+     "DeltaBlue": 1063,
+     "Crypto": 1029,
+     "RayTrace": 2703,
+     "EarleyBoyer": 3145,
+     "RegExp": 538,
+     "Splay": 4819,
+     "NavierStokes": 1959,
+     "Score": 1636,
+     "wall_s": 33.24
     },
     {
-     "Richards": 755,
-     "DeltaBlue": 786,
-     "Crypto": 819,
-     "RayTrace": 1787,
-     "EarleyBoyer": 2195,
-     "RegExp": 409,
-     "Splay": 3216,
-     "NavierStokes": 1598,
-     "Score": 1189,
-     "wall_s": 38.61
+     "Richards": 1101,
+     "DeltaBlue": 1104,
+     "Crypto": 1064,
+     "RayTrace": 2824,
+     "EarleyBoyer": 3281,
+     "RegExp": 558,
+     "Splay": 4982,
+     "NavierStokes": 2036,
+     "Score": 1694,
+     "wall_s": 33.04
     },
     {
-     "Richards": 796,
-     "DeltaBlue": 800,
-     "Crypto": 854,
-     "RayTrace": 1784,
-     "EarleyBoyer": 2298,
-     "RegExp": 391,
-     "Splay": 3180,
-     "NavierStokes": 1594,
-     "Score": 1204,
-     "wall_s": 37.65
+     "Richards": 1072,
+     "DeltaBlue": 1086,
+     "Crypto": 1036,
+     "RayTrace": 2743,
+     "EarleyBoyer": 3215,
+     "RegExp": 517,
+     "Splay": 4889,
+     "NavierStokes": 1876,
+     "Score": 1632,
+     "wall_s": 33.6
     },
     {
-     "Richards": 798,
-     "DeltaBlue": 789,
-     "Crypto": 850,
-     "RayTrace": 1791,
-     "EarleyBoyer": 2296,
-     "RegExp": 400,
-     "Splay": 3129,
-     "NavierStokes": 1593,
-     "Score": 1203,
-     "wall_s": 37.68
+     "Richards": 1088,
+     "DeltaBlue": 1106,
+     "Crypto": 1049,
+     "RayTrace": 2790,
+     "EarleyBoyer": 3169,
+     "RegExp": 556,
+     "Splay": 4808,
+     "NavierStokes": 1953,
+     "Score": 1662,
+     "wall_s": 33.42
     }
    ],
    "bellard": [
     {
-     "Richards": 1029,
-     "DeltaBlue": 947,
-     "Crypto": 1386,
-     "RayTrace": 1957,
-     "EarleyBoyer": 2510,
-     "RegExp": 537,
-     "Splay": 3537,
-     "NavierStokes": 2828,
-     "Score": 1563,
-     "wall_s": 33.74
+     "Richards": 1349,
+     "DeltaBlue": 1268,
+     "Crypto": 1436,
+     "RayTrace": 2948,
+     "EarleyBoyer": 3537,
+     "RegExp": 648,
+     "Splay": 5454,
+     "NavierStokes": 2702,
+     "Score": 1988,
+     "wall_s": 29.56
     },
     {
-     "Richards": 1026,
-     "DeltaBlue": 947,
-     "Crypto": 1367,
-     "RayTrace": 2017,
-     "EarleyBoyer": 2525,
-     "RegExp": 548,
-     "Splay": 3366,
-     "NavierStokes": 2775,
-     "Score": 1558,
-     "wall_s": 32.01
+     "Richards": 1354,
+     "DeltaBlue": 1276,
+     "Crypto": 1420,
+     "RayTrace": 2948,
+     "EarleyBoyer": 3632,
+     "RegExp": 643,
+     "Splay": 5582,
+     "NavierStokes": 2827,
+     "Score": 2010,
+     "wall_s": 30.46
     },
     {
-     "Richards": 1043,
-     "DeltaBlue": 951,
-     "Crypto": 1377,
-     "RayTrace": 1943,
-     "EarleyBoyer": 2555,
-     "RegExp": 551,
-     "Splay": 3484,
-     "NavierStokes": 2815,
-     "Score": 1569,
-     "wall_s": 32.04
+     "Richards": 1334,
+     "DeltaBlue": 1221,
+     "Crypto": 1378,
+     "RayTrace": 2931,
+     "EarleyBoyer": 3574,
+     "RegExp": 677,
+     "Splay": 5528,
+     "NavierStokes": 2588,
+     "Score": 1971,
+     "wall_s": 29.39
     },
     {
-     "Richards": 1040,
-     "DeltaBlue": 885,
-     "Crypto": 1388,
-     "RayTrace": 1936,
-     "EarleyBoyer": 2544,
-     "RegExp": 539,
-     "Splay": 3574,
-     "NavierStokes": 2820,
-     "Score": 1555,
-     "wall_s": 32.66
+     "Richards": 1340,
+     "DeltaBlue": 1242,
+     "Crypto": 1410,
+     "RayTrace": 2866,
+     "EarleyBoyer": 3536,
+     "RegExp": 659,
+     "Splay": 5378,
+     "NavierStokes": 2680,
+     "Score": 1969,
+     "wall_s": 29.47
     },
     {
-     "Richards": 1023,
-     "DeltaBlue": 931,
-     "Crypto": 1369,
-     "RayTrace": 1856,
-     "EarleyBoyer": 2439,
-     "RegExp": 547,
-     "Splay": 3435,
-     "NavierStokes": 2817,
-     "Score": 1538,
-     "wall_s": 32.39
+     "Richards": 1361,
+     "DeltaBlue": 1272,
+     "Crypto": 1427,
+     "RayTrace": 3031,
+     "EarleyBoyer": 3650,
+     "RegExp": 673,
+     "Splay": 5566,
+     "NavierStokes": 2882,
+     "Score": 2036,
+     "wall_s": 29.23
     }
    ],
    "goja": [
     {
-     "Richards": 261,
-     "DeltaBlue": 266,
-     "Crypto": 118,
-     "RayTrace": 246,
-     "EarleyBoyer": 423,
-     "RegExp": 196,
-     "Splay": 290,
-     "NavierStokes": 190,
-     "Score": 235,
-     "wall_s": 124.64
+     "Richards": 365,
+     "DeltaBlue": 370,
+     "Crypto": 170,
+     "RayTrace": 379,
+     "EarleyBoyer": 641,
+     "RegExp": 317,
+     "Splay": 772,
+     "NavierStokes": 262,
+     "Score": 371,
+     "wall_s": 89.31
     },
     {
-     "Richards": 269,
-     "DeltaBlue": 276,
-     "Crypto": 118,
-     "RayTrace": 246,
-     "EarleyBoyer": 428,
-     "RegExp": 198,
-     "Splay": 366,
-     "NavierStokes": 185,
-     "Score": 244,
-     "wall_s": 123.9
+     "Richards": 364,
+     "DeltaBlue": 374,
+     "Crypto": 173,
+     "RayTrace": 390,
+     "EarleyBoyer": 665,
+     "RegExp": 324,
+     "Splay": 789,
+     "NavierStokes": 263,
+     "Score": 377,
+     "wall_s": 87.83
     },
     {
-     "Richards": 265,
-     "DeltaBlue": 286,
-     "Crypto": 118,
-     "RayTrace": 245,
-     "EarleyBoyer": 427,
-     "RegExp": 196,
-     "Splay": 738,
-     "NavierStokes": 185,
-     "Score": 266,
-     "wall_s": 124.58
+     "Richards": 357,
+     "DeltaBlue": 368,
+     "Crypto": 170,
+     "RayTrace": 381,
+     "EarleyBoyer": 652,
+     "RegExp": 322,
+     "Splay": 853,
+     "NavierStokes": 267,
+     "Score": 377,
+     "wall_s": 88.61
     },
     {
-     "Richards": 266,
-     "DeltaBlue": 280,
-     "Crypto": 117,
-     "RayTrace": 238,
-     "EarleyBoyer": 429,
-     "RegExp": 197,
-     "Splay": 657,
-     "NavierStokes": 185,
-     "Score": 261,
-     "wall_s": 124.57
+     "Richards": 367,
+     "DeltaBlue": 376,
+     "Crypto": 173,
+     "RayTrace": 385,
+     "EarleyBoyer": 653,
+     "RegExp": 322,
+     "Splay": 866,
+     "NavierStokes": 271,
+     "Score": 382,
+     "wall_s": 88.02
     },
     {
-     "Richards": 265,
-     "DeltaBlue": 270,
-     "Crypto": 118,
-     "RayTrace": 245,
-     "EarleyBoyer": 426,
-     "RegExp": 195,
-     "Splay": 438,
-     "NavierStokes": 184,
-     "Score": 247,
-     "wall_s": 124.66
+     "Richards": 363,
+     "DeltaBlue": 374,
+     "Crypto": 173,
+     "RayTrace": 390,
+     "EarleyBoyer": 662,
+     "RegExp": 322,
+     "Splay": 782,
+     "NavierStokes": 274,
+     "Score": 378,
+     "wall_s": 87.89
     }
    ]
   },
   "median": {
    "goc-ng": {
-    "Richards": 768,
-    "DeltaBlue": 734,
-    "Crypto": 880,
-    "RayTrace": 1478,
-    "EarleyBoyer": 2077,
-    "RegExp": 360,
-    "Splay": 2825,
-    "NavierStokes": 1622,
-    "Score": 1119
+    "Richards": 1034,
+    "DeltaBlue": 1022,
+    "Crypto": 987,
+    "RayTrace": 2423,
+    "EarleyBoyer": 2922,
+    "RegExp": 493,
+    "Splay": 4307,
+    "NavierStokes": 1962,
+    "Score": 1534
    },
    "goc-bellard": {
-    "Richards": 815,
-    "DeltaBlue": 830,
-    "Crypto": 931,
-    "RayTrace": 1654,
-    "EarleyBoyer": 2311,
-    "RegExp": 442,
-    "Splay": 3240,
-    "NavierStokes": 1759,
-    "Score": 1247
+    "Richards": 1124,
+    "DeltaBlue": 1083,
+    "Crypto": 1284,
+    "RayTrace": 2627,
+    "EarleyBoyer": 3059,
+    "RegExp": 622,
+    "Splay": 4860,
+    "NavierStokes": 2646,
+    "Score": 1781
    },
    "ng": {
-    "Richards": 796,
-    "DeltaBlue": 789,
-    "Crypto": 850,
-    "RayTrace": 1787,
-    "EarleyBoyer": 2270,
-    "RegExp": 400,
-    "Splay": 3162,
-    "NavierStokes": 1593,
-    "Score": 1203
+    "Richards": 1088,
+    "DeltaBlue": 1096,
+    "Crypto": 1049,
+    "RayTrace": 2776,
+    "EarleyBoyer": 3213,
+    "RegExp": 548,
+    "Splay": 4889,
+    "NavierStokes": 1959,
+    "Score": 1662
    },
    "bellard": {
-    "Richards": 1029,
-    "DeltaBlue": 947,
-    "Crypto": 1377,
-    "RayTrace": 1943,
-    "EarleyBoyer": 2525,
-    "RegExp": 547,
-    "Splay": 3484,
-    "NavierStokes": 2817,
-    "Score": 1558
+    "Richards": 1349,
+    "DeltaBlue": 1268,
+    "Crypto": 1420,
+    "RayTrace": 2948,
+    "EarleyBoyer": 3574,
+    "RegExp": 659,
+    "Splay": 5528,
+    "NavierStokes": 2702,
+    "Score": 1988
    },
    "goja": {
-    "Richards": 265,
-    "DeltaBlue": 276,
-    "Crypto": 118,
-    "RayTrace": 245,
-    "EarleyBoyer": 427,
-    "RegExp": 196,
-    "Splay": 438,
-    "NavierStokes": 185,
-    "Score": 247
+    "Richards": 364,
+    "DeltaBlue": 374,
+    "Crypto": 173,
+    "RayTrace": 385,
+    "EarleyBoyer": 653,
+    "RegExp": 322,
+    "Splay": 789,
+    "NavierStokes": 267,
+    "Score": 377
    }
   },
   "score_min": {
-   "goc-ng": 1072,
-   "goc-bellard": 1241,
-   "ng": 1189,
-   "bellard": 1538,
-   "goja": 235
+   "goc-ng": 1515,
+   "goc-bellard": 1760,
+   "ng": 1632,
+   "bellard": 1969,
+   "goja": 371
   },
   "score_max": {
-   "goc-ng": 1126,
-   "goc-bellard": 1258,
-   "ng": 1208,
-   "bellard": 1569,
-   "goja": 266
+   "goc-ng": 1555,
+   "goc-bellard": 1798,
+   "ng": 1694,
+   "bellard": 2036,
+   "goja": 382
   },
   "wall_s_median": {
-   "goc-ng": 37.96,
-   "goc-bellard": 37.04,
-   "ng": 37.65,
-   "bellard": 32.39,
-   "goja": 124.58
+   "goc-ng": 34.11,
+   "goc-bellard": 30.09,
+   "ng": 33.27,
+   "bellard": 29.47,
+   "goja": 88.02
   }
  },
  "sunspider": {
@@ -432,144 +432,144 @@
   },
   "ms": {
    "goc-ng": {
-    "3d-cube": 27.8333,
-    "3d-morph": 32.2,
-    "3d-raytrace": 2.5,
-    "access-binary-trees": 13.6364,
-    "access-fannkuch": 73.5,
-    "access-nbody": 18.5,
-    "access-nsieve": 34.8,
-    "bitops-3bit-bits-in-byte": 10.6667,
-    "bitops-bits-in-byte": 24.6667,
-    "bitops-bitwise-and": 12.4167,
-    "bitops-nsieve-bits": 20.375,
-    "controlflow-recursive": 7.7,
-    "crypto-aes": 23.5714,
-    "crypto-md5": 7.5,
-    "crypto-sha1": 7.3684,
-    "date-format-tofte": 6.8,
-    "date-format-xparb": 2.375,
-    "math-cordic": 27.3333,
-    "math-partial-sums": 20.375,
-    "math-spectral-norm": 9.5,
-    "regexp-dna": 48.0,
-    "string-base64": 14.9,
-    "string-fasta": 54.6667,
-    "string-tagcloud": 34.2,
-    "string-unpack-code": 52.0,
-    "string-validate-input": 17.3333
+    "3d-cube": 21.125,
+    "3d-morph": 15.7,
+    "3d-raytrace": 1.1818,
+    "access-binary-trees": 10.7143,
+    "access-fannkuch": 56.3333,
+    "access-nbody": 13.1667,
+    "access-nsieve": 26.8333,
+    "bitops-3bit-bits-in-byte": 7.4,
+    "bitops-bits-in-byte": 13.25,
+    "bitops-bitwise-and": 8.6667,
+    "bitops-nsieve-bits": 13.5833,
+    "controlflow-recursive": 6.04,
+    "crypto-aes": 18.2222,
+    "crypto-md5": 6.16,
+    "crypto-sha1": 6.04,
+    "date-format-tofte": 4.1667,
+    "date-format-xparb": 1.0833,
+    "math-cordic": 18.1111,
+    "math-partial-sums": 9.875,
+    "math-spectral-norm": 8.2105,
+    "regexp-dna": 22.6667,
+    "string-base64": 12.8333,
+    "string-fasta": 41.75,
+    "string-tagcloud": 24.6667,
+    "string-unpack-code": 40.5,
+    "string-validate-input": 10.7143
    },
    "goc-bellard": {
-    "3d-cube": 26.1667,
-    "3d-morph": 27.0,
-    "3d-raytrace": 2.375,
-    "access-binary-trees": 13.1667,
-    "access-fannkuch": 45.0,
-    "access-nbody": 20.5,
-    "access-nsieve": 23.2857,
-    "bitops-3bit-bits-in-byte": 12.75,
-    "bitops-bits-in-byte": 27.8,
-    "bitops-bitwise-and": 14.9091,
-    "bitops-nsieve-bits": 21.8571,
-    "controlflow-recursive": 8.6667,
-    "crypto-aes": 16.8889,
-    "crypto-md5": 8.5,
-    "crypto-sha1": 8.2778,
-    "date-format-tofte": 6.6,
-    "date-format-xparb": 1.7778,
-    "math-cordic": 32.6,
-    "math-partial-sums": 19.875,
-    "math-spectral-norm": 10.4286,
-    "regexp-dna": 49.0,
-    "string-base64": 14.0909,
-    "string-fasta": 26.0,
-    "string-tagcloud": 27.6667,
-    "string-unpack-code": 43.5,
-    "string-validate-input": 15.5
+    "3d-cube": 18.3333,
+    "3d-morph": 11.6154,
+    "3d-raytrace": 0.9231,
+    "access-binary-trees": 9.8125,
+    "access-fannkuch": 30.4,
+    "access-nbody": 12.75,
+    "access-nsieve": 15.6,
+    "bitops-3bit-bits-in-byte": 7.55,
+    "bitops-bits-in-byte": 12.6667,
+    "bitops-bitwise-and": 6.375,
+    "bitops-nsieve-bits": 13.0,
+    "controlflow-recursive": 6.16,
+    "crypto-aes": 12.3077,
+    "crypto-md5": 5.6667,
+    "crypto-sha1": 5.4815,
+    "date-format-tofte": 3.1429,
+    "date-format-xparb": 1.1818,
+    "math-cordic": 18.1111,
+    "math-partial-sums": 8.9412,
+    "math-spectral-norm": 10.2667,
+    "regexp-dna": 20.0,
+    "string-base64": 12.75,
+    "string-fasta": 18.1111,
+    "string-tagcloud": 19.25,
+    "string-unpack-code": 35.4,
+    "string-validate-input": 8.8824
    },
    "ng": {
-    "3d-cube": 26.8333,
-    "3d-morph": 21.5714,
-    "3d-raytrace": 2.375,
-    "access-binary-trees": 12.9167,
-    "access-fannkuch": 66.3333,
-    "access-nbody": 16.6667,
-    "access-nsieve": 35.8,
-    "bitops-3bit-bits-in-byte": 11.6429,
-    "bitops-bits-in-byte": 25.3333,
-    "bitops-bitwise-and": 15.1,
-    "bitops-nsieve-bits": 21.2857,
-    "controlflow-recursive": 7.4286,
-    "crypto-aes": 22.3333,
-    "crypto-md5": 8.1053,
-    "crypto-sha1": 8.0,
-    "date-format-tofte": 5.8,
-    "date-format-xparb": 3.0,
-    "math-cordic": 27.5,
-    "math-partial-sums": 13.3636,
-    "math-spectral-norm": 9.5,
-    "regexp-dna": 43.0,
-    "string-base64": 14.0909,
-    "string-fasta": 50.0,
-    "string-tagcloud": 29.8,
-    "string-unpack-code": 48.0,
-    "string-validate-input": 13.3333
+    "3d-cube": 19.875,
+    "3d-morph": 16.2,
+    "3d-raytrace": 1.0833,
+    "access-binary-trees": 9.9333,
+    "access-fannkuch": 55.0,
+    "access-nbody": 13.9091,
+    "access-nsieve": 27.1667,
+    "bitops-3bit-bits-in-byte": 8.7778,
+    "bitops-bits-in-byte": 15.8,
+    "bitops-bitwise-and": 10.0,
+    "bitops-nsieve-bits": 16.3,
+    "controlflow-recursive": 5.6296,
+    "crypto-aes": 17.3333,
+    "crypto-md5": 6.08,
+    "crypto-sha1": 6.2,
+    "date-format-tofte": 3.1429,
+    "date-format-xparb": 1.5,
+    "math-cordic": 18.4444,
+    "math-partial-sums": 9.1765,
+    "math-spectral-norm": 7.55,
+    "regexp-dna": 22.0,
+    "string-base64": 11.2143,
+    "string-fasta": 35.8,
+    "string-tagcloud": 21.2857,
+    "string-unpack-code": 33.8,
+    "string-validate-input": 9.1765
    },
    "bellard": {
-    "3d-cube": 18.125,
-    "3d-morph": 13.0833,
-    "3d-raytrace": 1.2727,
-    "access-binary-trees": 10.3571,
-    "access-fannkuch": 30.4,
-    "access-nbody": 12.5833,
-    "access-nsieve": 17.0,
-    "bitops-3bit-bits-in-byte": 7.7895,
-    "bitops-bits-in-byte": 20.125,
-    "bitops-bitwise-and": 7.6316,
-    "bitops-nsieve-bits": 13.4545,
-    "controlflow-recursive": 5.4444,
-    "crypto-aes": 12.3846,
-    "crypto-md5": 5.5926,
-    "crypto-sha1": 5.2143,
-    "date-format-tofte": 4.1667,
-    "date-format-xparb": 2.375,
-    "math-cordic": 22.5,
-    "math-partial-sums": 9.4375,
-    "math-spectral-norm": 7.2,
-    "regexp-dna": 36.5,
-    "string-base64": 11.8333,
-    "string-fasta": 22.4286,
-    "string-tagcloud": 21.4286,
-    "string-unpack-code": 39.0,
-    "string-validate-input": 10.8571
+    "3d-cube": 14.9091,
+    "3d-morph": 11.1429,
+    "3d-raytrace": 0.7857,
+    "access-binary-trees": 8.5882,
+    "access-fannkuch": 28.5,
+    "access-nbody": 11.5385,
+    "access-nsieve": 13.4167,
+    "bitops-3bit-bits-in-byte": 7.25,
+    "bitops-bits-in-byte": 12.5,
+    "bitops-bitwise-and": 5.6154,
+    "bitops-nsieve-bits": 11.2143,
+    "controlflow-recursive": 5.2759,
+    "crypto-aes": 11.5385,
+    "crypto-md5": 5.4286,
+    "crypto-sha1": 5.1379,
+    "date-format-tofte": 2.5,
+    "date-format-xparb": 1.2727,
+    "math-cordic": 17.4444,
+    "math-partial-sums": 8.0526,
+    "math-spectral-norm": 6.3913,
+    "regexp-dna": 12.25,
+    "string-base64": 10.7143,
+    "string-fasta": 18.0,
+    "string-tagcloud": 15.9,
+    "string-unpack-code": 29.6,
+    "string-validate-input": 7.7
    },
    "goja": {
     "3d-cube": null,
-    "3d-morph": 143.5,
-    "3d-raytrace": 62.0,
-    "access-binary-trees": 59.3333,
-    "access-fannkuch": 160.0,
-    "access-nbody": 154.0,
-    "access-nsieve": 107.0,
-    "bitops-3bit-bits-in-byte": 79.0,
-    "bitops-bits-in-byte": 99.0,
-    "bitops-bitwise-and": 138.0,
-    "bitops-nsieve-bits": 218.0,
-    "controlflow-recursive": 23.6667,
-    "crypto-aes": 92.5,
-    "crypto-md5": 71.3333,
-    "crypto-sha1": 68.6667,
-    "date-format-tofte": 37.0,
-    "date-format-xparb": 10.75,
-    "math-cordic": 149.0,
-    "math-partial-sums": 119.5,
-    "math-spectral-norm": 61.0,
-    "regexp-dna": 185.0,
-    "string-base64": 155.0,
-    "string-fasta": 143.0,
-    "string-tagcloud": 259.0,
-    "string-unpack-code": 75.0,
-    "string-validate-input": 414.0
+    "3d-morph": 98.5,
+    "3d-raytrace": 39.5,
+    "access-binary-trees": 38.0,
+    "access-fannkuch": 123.5,
+    "access-nbody": 104.0,
+    "access-nsieve": 80.0,
+    "bitops-3bit-bits-in-byte": 56.0,
+    "bitops-bits-in-byte": 75.0,
+    "bitops-bitwise-and": 88.0,
+    "bitops-nsieve-bits": 149.0,
+    "controlflow-recursive": 19.25,
+    "crypto-aes": 66.0,
+    "crypto-md5": 52.6667,
+    "crypto-sha1": 48.5,
+    "date-format-tofte": 17.0,
+    "date-format-xparb": 4.8333,
+    "math-cordic": 99.5,
+    "math-partial-sums": 73.6667,
+    "math-spectral-norm": 41.0,
+    "regexp-dna": 60.0,
+    "string-base64": 89.5,
+    "string-fasta": 91.5,
+    "string-tagcloud": 140.0,
+    "string-unpack-code": 54.0,
+    "string-validate-input": 211.0
    }
   },
   "fail": {
@@ -578,7 +578,7 @@
    "ng": {},
    "bellard": {},
    "goja": {
-    "3d-cube": "Error: bad vector sum for CubeSize = 20; expected 2889.0000000000045 but got 2889.0000000000086 at Init (/workspace/perf-study/ss/w/3d-cube.js:343:5(507))"
+    "3d-cube": "Error: bad vector sum for CubeSize = 20; expected 2889.0000000000045 but got 2889.0000000000086 at Init (/tmp/goc-perf/perf-study/ss/w/3d-cube.js:343:5(507))"
    }
   },
   "tests": [
@@ -665,43 +665,43 @@
    "string-validate-input"
   ],
   "geomean_all": {
-   "goc-ng": 16.6768281033775,
-   "goc-bellard": 15.499599604025367,
-   "ng": 15.808105876779683,
-   "bellard": 10.640420674040419,
-   "goja": 97.26735272280534
+   "goc-ng": 11.176032321247273,
+   "goc-bellard": 9.385718037976563,
+   "ng": 10.98966394573806,
+   "bellard": 8.237978778819265,
+   "goja": 61.492469783420006
   },
   "geomean_nogoja": {
-   "goc-ng": 17.008627484763863,
-   "goc-bellard": 15.814946547906445,
-   "ng": 16.133109310183194,
-   "bellard": 10.860646827385223
+   "goc-ng": 11.453088412114452,
+   "goc-bellard": 9.630549893443929,
+   "ng": 11.242980053481629,
+   "bellard": 8.428097366742037
   },
   "geomean_all_by_round": {
    "goc-ng": [
-    16.729550571100855,
-    17.229775181768662,
-    16.67500253064836
+    11.226089527756255,
+    11.309256328965153,
+    11.122438840101387
    ],
    "goc-bellard": [
-    15.25234861846219,
-    15.619926317719084,
-    16.082909889946652
+    9.460910638712614,
+    9.360273100577379,
+    9.363758048984527
    ],
    "ng": [
-    15.6528360340734,
-    15.795952372194439,
-    15.940742177559839
+    11.119737851191477,
+    11.010313884940885,
+    10.996788254368408
    ],
    "bellard": [
-    10.683820314594263,
-    10.714694679125895,
-    10.607006815130854
+    8.359806674639039,
+    8.222957947416486,
+    8.23346690880607
    ],
    "goja": [
-    98.54124879135605,
-    96.5881898348258,
-    97.23685619243949
+    61.43061521104938,
+    61.51366760406854,
+    61.292114632324484
    ]
   }
  },
@@ -715,382 +715,382 @@
   },
   "ns": {
    "goc-ng": {
-    "empty_loop": 16.16,
-    "empty_down_loop": 18.42,
-    "empty_down_loop2": 22.98,
-    "empty_do_loop": 18.88,
-    "date_now": 158.32,
-    "date_parse": 845.55,
-    "prop_read": 11.87,
-    "prop_write": 18.56,
-    "prop_update": 19.0,
-    "prop_create": 61.15,
-    "prop_clone": 53.0,
-    "prop_delete": 88.32,
-    "array_read": 11.12,
-    "array_write": 28.63,
-    "array_update": 12.79,
-    "array_prop_create": 32.51,
-    "array_slice": 18.11,
-    "array_length_read": 11.25,
-    "array_length_decr": 49.93,
-    "array_hole_length_decr": 69.57,
-    "array_push": 35.49,
-    "array_pop": 72.73,
-    "typed_array_read": 12.99,
-    "typed_array_write": 30.16,
-    "arguments_read": 160.63,
-    "arguments_strict_read": 130.96,
-    "global_read": 9.75,
-    "global_write": 11.75,
-    "global_write_strict": 11.73,
-    "local_destruct": 28.73,
-    "global_destruct": 41.56,
-    "global_destruct_strict": 42.45,
-    "global_func_call": 27.66,
-    "func_call": 24.63,
-    "func_closure_call": 29.83,
-    "int_arith": 18.27,
-    "float_arith": 26.22,
-    "map_set_string": 196.36,
-    "map_set_int": 3701.1,
-    "map_set_bigint": 3304.93,
-    "map_delete": 195.51,
-    "weak_map_set": 153.52,
-    "weak_map_delete": 281.43,
-    "array_for": 18.65,
-    "array_for_in": 60.32,
-    "array_for_of": 21.96,
-    "math_min": 34.72,
-    "regexp_ascii": 215.94,
-    "regexp_utf16": 228.49,
-    "regexp_replace": 2007.31,
-    "string_length": 14.09,
-    "string_build1": 50.44,
-    "string_build1x": 50.29,
-    "string_build2c": 56.42,
-    "string_build2": 54.9,
-    "string_build3": 49.08,
-    "string_build4": 52.28,
-    "string_build_large1": 67.57,
-    "string_build_large2": 61.84,
-    "int_to_string": 38.44,
-    "int_toString": 50.51,
-    "float_to_string": 221.56,
-    "float_toString": 232.07,
-    "float_toFixed": 104.22,
-    "float_toPrecision": 120.09,
-    "float_toExponential": 118.29,
-    "string_to_int": 86.8,
-    "string_to_float": 106.33,
-    "bigint32_arith": 41.55,
-    "bigint64_arith": 55.69,
-    "bigint256_arith": 102.05,
-    "sort_bench": 22.58
+    "empty_loop": 12.75,
+    "empty_down_loop": 13.37,
+    "empty_down_loop2": 16.25,
+    "empty_do_loop": 12.25,
+    "date_now": 70.43,
+    "date_parse": 428.87,
+    "prop_read": 9.84,
+    "prop_write": 14.17,
+    "prop_update": 15.4,
+    "prop_create": 55.95,
+    "prop_clone": 45.91,
+    "prop_delete": 72.54,
+    "array_read": 10.24,
+    "array_write": 27.24,
+    "array_update": 13.58,
+    "array_prop_create": 31.0,
+    "array_slice": 14.37,
+    "array_length_read": 10.13,
+    "array_length_decr": 38.24,
+    "array_hole_length_decr": 52.69,
+    "array_push": 32.23,
+    "array_pop": 66.05,
+    "typed_array_read": 11.43,
+    "typed_array_write": 29.28,
+    "arguments_read": 149.83,
+    "arguments_strict_read": 119.73,
+    "global_read": 8.81,
+    "global_write": 8.45,
+    "global_write_strict": 8.82,
+    "local_destruct": 26.48,
+    "global_destruct": 36.44,
+    "global_destruct_strict": 36.6,
+    "global_func_call": 26.05,
+    "func_call": 22.39,
+    "func_closure_call": 23.85,
+    "int_arith": 15.85,
+    "float_arith": 22.32,
+    "map_set_string": 183.74,
+    "map_set_int": 2625.11,
+    "map_set_bigint": 3222.01,
+    "map_delete": 181.22,
+    "weak_map_set": 120.32,
+    "weak_map_delete": 250.92,
+    "array_for": 15.84,
+    "array_for_in": 53.29,
+    "array_for_of": 19.56,
+    "math_min": 30.78,
+    "regexp_ascii": 210.63,
+    "regexp_utf16": 227.07,
+    "regexp_replace": 1469.16,
+    "string_length": 11.07,
+    "string_build1": 41.68,
+    "string_build1x": 40.9,
+    "string_build2c": 48.25,
+    "string_build2": 44.53,
+    "string_build3": 43.32,
+    "string_build4": 44.25,
+    "string_build_large1": 57.44,
+    "string_build_large2": 52.31,
+    "int_to_string": 36.05,
+    "int_toString": 49.98,
+    "float_to_string": 174.53,
+    "float_toString": 186.92,
+    "float_toFixed": 90.44,
+    "float_toPrecision": 99.39,
+    "float_toExponential": 103.04,
+    "string_to_int": 68.13,
+    "string_to_float": 89.08,
+    "bigint32_arith": 36.75,
+    "bigint64_arith": 51.62,
+    "bigint256_arith": 97.88,
+    "sort_bench": 16.84
    },
    "goc-bellard": {
-    "empty_loop": 18.64,
-    "empty_down_loop": 20.43,
-    "empty_down_loop2": 23.5,
-    "empty_do_loop": 20.9,
-    "date_now": 151.75,
-    "date_parse": 792.75,
-    "prop_read": 12.86,
-    "prop_write": 16.67,
-    "prop_update": 16.09,
-    "prop_create": 47.0,
-    "prop_clone": 45.74,
-    "prop_delete": 81.33,
-    "array_read": 10.19,
-    "array_write": 8.49,
-    "array_update": 12.02,
-    "array_prop_create": 20.62,
-    "array_slice": 22.33,
-    "array_length_read": 12.25,
-    "array_length_decr": 51.85,
-    "array_hole_length_decr": 61.61,
-    "array_push": 39.17,
-    "array_pop": 73.86,
-    "typed_array_read": 13.42,
-    "typed_array_write": 12.22,
-    "arguments_read": 121.29,
-    "arguments_strict_read": 105.75,
-    "global_read": 10.68,
-    "global_write": 12.44,
-    "global_write_strict": 12.2,
-    "local_destruct": 26.05,
-    "global_destruct": 34.57,
-    "global_destruct_strict": 35.99,
-    "global_func_call": 26.97,
-    "func_call": 26.39,
-    "func_closure_call": 28.25,
-    "int_arith": 20.53,
-    "float_arith": 27.76,
-    "map_set_string": 195.57,
-    "map_set_int": 111.54,
-    "map_set_bigint": 136.81,
-    "map_delete": 198.65,
-    "weak_map_set": 72.4,
-    "weak_map_delete": 170.91,
-    "array_for": 21.91,
-    "array_for_in": 58.28,
-    "array_for_of": 19.84,
-    "math_min": 32.59,
-    "regexp_ascii": 156.73,
-    "regexp_utf16": 161.98,
-    "regexp_replace": 859.93,
-    "string_length": 15.57,
-    "string_build1": 42.1,
-    "string_build1x": 41.72,
-    "string_build2c": 53.72,
-    "string_build2": 46.34,
-    "string_build3": 42.34,
-    "string_build4": 49.53,
-    "string_build_large1": 60.34,
-    "string_build_large2": 52.52,
-    "int_to_string": 37.35,
-    "int_toString": 47.42,
-    "float_to_string": 227.19,
-    "float_toString": 234.86,
-    "float_toFixed": 93.2,
-    "float_toPrecision": 110.93,
-    "float_toExponential": 110.51,
-    "string_to_int": 92.08,
-    "string_to_float": 112.72,
-    "bigint32_arith": 37.49,
-    "bigint64_arith": 45.36,
-    "bigint256_arith": 97.46,
-    "sort_bench": 20.28
+    "empty_loop": 11.7,
+    "empty_down_loop": 14.32,
+    "empty_down_loop2": 17.5,
+    "empty_do_loop": 13.76,
+    "date_now": 66.17,
+    "date_parse": 410.55,
+    "prop_read": 9.34,
+    "prop_write": 13.65,
+    "prop_update": 14.94,
+    "prop_create": 42.95,
+    "prop_clone": 40.54,
+    "prop_delete": 66.23,
+    "array_read": 9.35,
+    "array_write": 7.04,
+    "array_update": 9.71,
+    "array_prop_create": 14.95,
+    "array_slice": 16.86,
+    "array_length_read": 9.95,
+    "array_length_decr": 40.14,
+    "array_hole_length_decr": 46.89,
+    "array_push": 33.88,
+    "array_pop": 68.22,
+    "typed_array_read": 13.98,
+    "typed_array_write": 11.6,
+    "arguments_read": 116.6,
+    "arguments_strict_read": 91.88,
+    "global_read": 7.16,
+    "global_write": 7.55,
+    "global_write_strict": 7.59,
+    "local_destruct": 23.0,
+    "global_destruct": 31.07,
+    "global_destruct_strict": 31.15,
+    "global_func_call": 23.26,
+    "func_call": 22.36,
+    "func_closure_call": 23.55,
+    "int_arith": 14.39,
+    "float_arith": 18.76,
+    "map_set_string": 176.99,
+    "map_set_int": 94.89,
+    "map_set_bigint": 127.2,
+    "map_delete": 184.57,
+    "weak_map_set": 66.11,
+    "weak_map_delete": 157.89,
+    "array_for": 17.06,
+    "array_for_in": 41.58,
+    "array_for_of": 17.76,
+    "math_min": 29.17,
+    "regexp_ascii": 158.22,
+    "regexp_utf16": 169.57,
+    "regexp_replace": 560.02,
+    "string_length": 10.88,
+    "string_build1": 19.02,
+    "string_build1x": 18.89,
+    "string_build2c": 22.16,
+    "string_build2": 39.69,
+    "string_build3": 35.36,
+    "string_build4": 43.33,
+    "string_build_large1": 46.93,
+    "string_build_large2": 40.66,
+    "int_to_string": 30.02,
+    "int_toString": 46.26,
+    "float_to_string": 165.2,
+    "float_toString": 180.5,
+    "float_toFixed": 82.77,
+    "float_toPrecision": 91.92,
+    "float_toExponential": 96.53,
+    "string_to_int": 64.36,
+    "string_to_float": 86.09,
+    "bigint32_arith": 26.39,
+    "bigint64_arith": 34.35,
+    "bigint256_arith": 76.28,
+    "sort_bench": 16.34
    },
    "ng": {
-    "empty_loop": 16.37,
-    "empty_down_loop": 18.23,
-    "empty_down_loop2": 22.01,
-    "empty_do_loop": 18.74,
-    "date_now": 68.89,
-    "date_parse": 538.78,
-    "prop_read": 12.32,
-    "prop_write": 18.32,
-    "prop_update": 17.42,
-    "prop_create": 58.09,
-    "prop_clone": 46.31,
-    "prop_delete": 77.63,
-    "array_read": 11.5,
-    "array_write": 28.84,
-    "array_update": 14.27,
-    "array_prop_create": 33.71,
-    "array_slice": 16.06,
-    "array_length_read": 11.7,
-    "array_length_decr": 46.2,
-    "array_hole_length_decr": 65.04,
-    "array_push": 34.21,
-    "array_pop": 66.08,
-    "typed_array_read": 12.47,
-    "typed_array_write": 31.56,
-    "arguments_read": 142.59,
-    "arguments_strict_read": 117.26,
-    "global_read": 10.41,
-    "global_write": 12.99,
-    "global_write_strict": 12.39,
-    "local_destruct": 28.61,
-    "global_destruct": 39.77,
-    "global_destruct_strict": 39.46,
-    "global_func_call": 23.54,
-    "func_call": 21.92,
-    "func_closure_call": 28.01,
-    "int_arith": 19.73,
-    "float_arith": 26.05,
-    "map_set_string": 176.04,
-    "map_set_int": 4261.2,
-    "map_set_bigint": 4403.93,
-    "map_delete": 174.15,
-    "weak_map_set": 152.01,
-    "weak_map_delete": 271.17,
-    "array_for": 19.17,
-    "array_for_in": 57.21,
-    "array_for_of": 21.17,
-    "math_min": 32.26,
-    "regexp_ascii": 209.6,
-    "regexp_utf16": 228.35,
-    "regexp_replace": 1688.0,
-    "string_length": 13.85,
-    "string_build1": 42.85,
-    "string_build1x": 43.11,
-    "string_build2c": 59.5,
-    "string_build2": 48.19,
-    "string_build3": 44.16,
-    "string_build4": 45.85,
-    "string_build_large1": 56.78,
-    "string_build_large2": 55.3,
-    "int_to_string": 35.91,
-    "int_toString": 42.83,
-    "float_to_string": 213.86,
-    "float_toString": 225.31,
-    "float_toFixed": 90.67,
-    "float_toPrecision": 108.87,
-    "float_toExponential": 106.5,
-    "string_to_int": 83.21,
-    "string_to_float": 102.83,
-    "bigint32_arith": 39.77,
-    "bigint64_arith": 53.7,
-    "bigint256_arith": 103.81,
-    "sort_bench": 19.43
+    "empty_loop": 11.97,
+    "empty_down_loop": 14.0,
+    "empty_down_loop2": 16.01,
+    "empty_do_loop": 13.8,
+    "date_now": 46.0,
+    "date_parse": 403.46,
+    "prop_read": 10.74,
+    "prop_write": 14.31,
+    "prop_update": 15.16,
+    "prop_create": 51.19,
+    "prop_clone": 37.86,
+    "prop_delete": 65.25,
+    "array_read": 10.14,
+    "array_write": 26.33,
+    "array_update": 15.14,
+    "array_prop_create": 31.02,
+    "array_slice": 11.66,
+    "array_length_read": 10.65,
+    "array_length_decr": 33.51,
+    "array_hole_length_decr": 44.11,
+    "array_push": 30.41,
+    "array_pop": 58.6,
+    "typed_array_read": 11.08,
+    "typed_array_write": 28.95,
+    "arguments_read": 133.89,
+    "arguments_strict_read": 105.7,
+    "global_read": 9.16,
+    "global_write": 8.92,
+    "global_write_strict": 8.85,
+    "local_destruct": 22.47,
+    "global_destruct": 31.3,
+    "global_destruct_strict": 31.4,
+    "global_func_call": 22.26,
+    "func_call": 18.22,
+    "func_closure_call": 20.39,
+    "int_arith": 17.3,
+    "float_arith": 23.42,
+    "map_set_string": 151.72,
+    "map_set_int": 2603.69,
+    "map_set_bigint": 2807.38,
+    "map_delete": 153.71,
+    "weak_map_set": 109.15,
+    "weak_map_delete": 224.1,
+    "array_for": 16.49,
+    "array_for_in": 46.05,
+    "array_for_of": 18.55,
+    "math_min": 30.0,
+    "regexp_ascii": 176.13,
+    "regexp_utf16": 180.45,
+    "regexp_replace": 1199.47,
+    "string_length": 12.36,
+    "string_build1": 37.9,
+    "string_build1x": 37.21,
+    "string_build2c": 49.23,
+    "string_build2": 40.87,
+    "string_build3": 39.41,
+    "string_build4": 41.3,
+    "string_build_large1": 48.8,
+    "string_build_large2": 46.3,
+    "int_to_string": 31.56,
+    "int_toString": 38.2,
+    "float_to_string": 155.04,
+    "float_toString": 166.95,
+    "float_toFixed": 78.85,
+    "float_toPrecision": 87.81,
+    "float_toExponential": 87.91,
+    "string_to_int": 61.91,
+    "string_to_float": 82.29,
+    "bigint32_arith": 36.97,
+    "bigint64_arith": 49.85,
+    "bigint256_arith": 87.75,
+    "sort_bench": 12.96
    },
    "bellard": {
-    "empty_loop": 10.14,
-    "empty_down_loop": 15.57,
-    "empty_down_loop2": 21.06,
-    "empty_do_loop": 14.57,
-    "date_now": 56.19,
-    "date_parse": 516.86,
-    "prop_read": 7.44,
-    "prop_write": 7.9,
-    "prop_update": 10.2,
-    "prop_create": 39.01,
-    "prop_clone": 44.67,
-    "prop_delete": 71.02,
-    "array_read": 6.4,
-    "array_write": 7.11,
-    "array_update": 8.61,
-    "array_prop_create": 13.71,
-    "array_slice": 13.12,
-    "array_length_read": 7.17,
-    "array_length_decr": 35.78,
-    "array_hole_length_decr": 49.58,
-    "array_push": 27.43,
-    "array_pop": 59.98,
-    "typed_array_read": 8.4,
-    "typed_array_write": 7.63,
-    "arguments_read": 101.92,
-    "arguments_strict_read": 79.44,
-    "global_read": 5.64,
-    "global_write": 7.79,
-    "global_write_strict": 8.28,
-    "local_destruct": 22.67,
-    "global_destruct": 31.08,
-    "global_destruct_strict": 31.1,
-    "global_func_call": 17.21,
-    "func_call": 16.3,
-    "func_closure_call": 20.14,
-    "int_arith": 12.16,
-    "float_arith": 16.73,
-    "map_set_string": 171.93,
-    "map_set_int": 83.54,
-    "map_set_bigint": 112.28,
-    "map_delete": 165.68,
-    "weak_map_set": 58.79,
-    "weak_map_delete": 147.51,
-    "array_for": 12.32,
-    "array_for_in": 40.65,
-    "array_for_of": 19.3,
-    "math_min": 22.75,
-    "regexp_ascii": 142.95,
-    "regexp_utf16": 147.91,
-    "regexp_replace": 623.51,
-    "string_length": 9.03,
-    "string_build1": 19.51,
-    "string_build1x": 19.84,
-    "string_build2c": 25.54,
-    "string_build2": 34.7,
-    "string_build3": 32.84,
-    "string_build4": 36.68,
-    "string_build_large1": 42.44,
-    "string_build_large2": 41.45,
-    "int_to_string": 28.38,
-    "int_toString": 35.78,
-    "float_to_string": 213.77,
-    "float_toString": 218.67,
-    "float_toFixed": 82.1,
-    "float_toPrecision": 95.23,
-    "float_toExponential": 93.77,
-    "string_to_int": 72.75,
-    "string_to_float": 95.15,
-    "bigint32_arith": 21.8,
-    "bigint64_arith": 28.81,
-    "bigint256_arith": 73.62,
-    "sort_bench": 14.64
+    "empty_loop": 9.5,
+    "empty_down_loop": 12.92,
+    "empty_down_loop2": 15.76,
+    "empty_do_loop": 12.87,
+    "date_now": 39.67,
+    "date_parse": 414.73,
+    "prop_read": 8.59,
+    "prop_write": 6.47,
+    "prop_update": 9.96,
+    "prop_create": 35.65,
+    "prop_clone": 38.03,
+    "prop_delete": 61.71,
+    "array_read": 8.63,
+    "array_write": 7.04,
+    "array_update": 9.84,
+    "array_prop_create": 13.99,
+    "array_slice": 13.8,
+    "array_length_read": 9.54,
+    "array_length_decr": 34.14,
+    "array_hole_length_decr": 35.27,
+    "array_push": 29.83,
+    "array_pop": 60.11,
+    "typed_array_read": 11.02,
+    "typed_array_write": 10.11,
+    "arguments_read": 107.83,
+    "arguments_strict_read": 83.62,
+    "global_read": 7.06,
+    "global_write": 6.67,
+    "global_write_strict": 6.75,
+    "local_destruct": 21.37,
+    "global_destruct": 29.05,
+    "global_destruct_strict": 29.08,
+    "global_func_call": 21.05,
+    "func_call": 19.93,
+    "func_closure_call": 20.97,
+    "int_arith": 14.26,
+    "float_arith": 18.26,
+    "map_set_string": 156.45,
+    "map_set_int": 86.11,
+    "map_set_bigint": 111.37,
+    "map_delete": 152.12,
+    "weak_map_set": 55.81,
+    "weak_map_delete": 141.04,
+    "array_for": 15.36,
+    "array_for_in": 39.81,
+    "array_for_of": 18.01,
+    "math_min": 26.46,
+    "regexp_ascii": 127.95,
+    "regexp_utf16": 132.88,
+    "regexp_replace": 461.26,
+    "string_length": 10.47,
+    "string_build1": 18.58,
+    "string_build1x": 18.58,
+    "string_build2c": 21.86,
+    "string_build2": 33.95,
+    "string_build3": 32.65,
+    "string_build4": 35.94,
+    "string_build_large1": 38.29,
+    "string_build_large2": 39.83,
+    "int_to_string": 29.92,
+    "int_toString": 38.29,
+    "float_to_string": 159.17,
+    "float_toString": 171.88,
+    "float_toFixed": 74.53,
+    "float_toPrecision": 84.1,
+    "float_toExponential": 82.79,
+    "string_to_int": 60.64,
+    "string_to_float": 83.72,
+    "bigint32_arith": 22.51,
+    "bigint64_arith": 30.41,
+    "bigint256_arith": 77.15,
+    "sort_bench": 11.95
    },
    "goja": {
-    "empty_loop": 47.01,
-    "empty_down_loop": 45.75,
-    "empty_down_loop2": 54.59,
-    "empty_do_loop": 51.9,
-    "date_now": 176.45,
-    "date_parse": 839.71,
-    "prop_read": 54.49,
-    "prop_write": 42.48,
-    "prop_update": 73.81,
-    "prop_create": 138.61,
-    "prop_clone": 270.23,
-    "prop_delete": 388.29,
-    "array_read": 47.52,
-    "array_write": 28.43,
-    "array_update": 67.07,
-    "array_prop_create": 155.31,
-    "array_slice": 82.09,
-    "array_length_read": 53.93,
-    "array_length_decr": 167.81,
-    "array_hole_length_decr": 163.66,
-    "array_push": 245.06,
-    "array_pop": 215.1,
-    "typed_array_read": 49.42,
-    "typed_array_write": 44.66,
-    "arguments_read": 1092.73,
-    "arguments_strict_read": 1069.47,
-    "global_read": 53.43,
-    "global_write": 75.39,
-    "global_write_strict": 97.15,
-    "local_destruct": 225.13,
-    "global_destruct": 408.54,
-    "global_destruct_strict": 425.54,
-    "global_func_call": 90.63,
-    "func_call": 73.91,
-    "func_closure_call": 71.83,
-    "int_arith": 95.4,
-    "float_arith": 172.19,
-    "map_set_string": 549.26,
-    "map_set_int": 332.19,
-    "map_set_bigint": 602.56,
-    "map_delete": 595.95,
-    "weak_map_set": 257.33,
-    "weak_map_delete": 802.32,
-    "array_for": 82.83,
-    "array_for_in": 334.01,
-    "array_for_of": 405.35,
-    "math_min": 135.84,
-    "regexp_ascii": 1150.64,
-    "regexp_utf16": 1785.44,
-    "regexp_replace": 1350.34,
-    "string_length": 112.9,
-    "string_build1": 171.98,
-    "string_build1x": 167.01,
-    "string_build2c": 217.54,
-    "string_build2": 170.11,
-    "string_build3": 166.62,
-    "string_build4": 181.18,
-    "string_build_large1": 9924.79,
-    "string_build_large2": 9649.34,
-    "int_to_string": 100.36,
-    "int_toString": 157.08,
-    "float_to_string": 197.47,
-    "float_toString": 209.83,
-    "float_toFixed": 544.93,
-    "float_toPrecision": 287.66,
-    "float_toExponential": 271.43,
-    "string_to_int": 151.18,
-    "string_to_float": 232.79,
-    "bigint32_arith": 232.89,
-    "bigint64_arith": 220.56,
-    "bigint256_arith": 243.7,
-    "sort_bench": 62.03
+    "empty_loop": 43.03,
+    "empty_down_loop": 42.36,
+    "empty_down_loop2": 51.15,
+    "empty_do_loop": 47.23,
+    "date_now": 125.93,
+    "date_parse": 635.55,
+    "prop_read": 50.0,
+    "prop_write": 39.27,
+    "prop_update": 70.23,
+    "prop_create": 106.2,
+    "prop_clone": 203.39,
+    "prop_delete": 285.15,
+    "array_read": 44.27,
+    "array_write": 27.56,
+    "array_update": 60.84,
+    "array_prop_create": 121.01,
+    "array_slice": 59.2,
+    "array_length_read": 48.39,
+    "array_length_decr": 136.89,
+    "array_hole_length_decr": 124.41,
+    "array_push": 179.19,
+    "array_pop": 159.99,
+    "typed_array_read": 45.65,
+    "typed_array_write": 42.21,
+    "arguments_read": 801.44,
+    "arguments_strict_read": 764.7,
+    "global_read": 43.15,
+    "global_write": 59.19,
+    "global_write_strict": 81.15,
+    "local_destruct": 153.82,
+    "global_destruct": 268.29,
+    "global_destruct_strict": 291.08,
+    "global_func_call": 76.39,
+    "func_call": 68.6,
+    "func_closure_call": 69.77,
+    "int_arith": 87.56,
+    "float_arith": 143.16,
+    "map_set_string": 442.08,
+    "map_set_int": 271.48,
+    "map_set_bigint": 448.93,
+    "map_delete": 475.96,
+    "weak_map_set": 198.02,
+    "weak_map_delete": 592.53,
+    "array_for": 79.56,
+    "array_for_in": 259.66,
+    "array_for_of": 272.5,
+    "math_min": 114.46,
+    "regexp_ascii": 796.71,
+    "regexp_utf16": 1177.51,
+    "regexp_replace": 956.77,
+    "string_length": 88.65,
+    "string_build1": 105.25,
+    "string_build1x": 111.02,
+    "string_build2c": 199.26,
+    "string_build2": 110.74,
+    "string_build3": 110.51,
+    "string_build4": 118.23,
+    "string_build_large1": 4906.94,
+    "string_build_large2": 5040.0,
+    "int_to_string": 75.16,
+    "int_toString": 120.21,
+    "float_to_string": 154.79,
+    "float_toString": 166.08,
+    "float_toFixed": 419.64,
+    "float_toPrecision": 208.97,
+    "float_toExponential": 192.91,
+    "string_to_int": 118.25,
+    "string_to_float": 156.86,
+    "bigint32_arith": 176.55,
+    "bigint64_arith": 177.23,
+    "bigint256_arith": 193.26,
+    "sort_bench": 45.76
    }
   },
   "total_median": {
-   "goc-ng": 14451.59,
-   "goc-bellard": 5934.73,
-   "ng": 15168.2,
-   "bellard": 4508.64,
-   "goja": 39427.91
+   "goc-ng": 11694.54,
+   "goc-bellard": 4502.32,
+   "ng": 10534.58,
+   "bellard": 4010.5,
+   "goja": 24741.56
   },
   "missing": {
    "goc-ng": [],
@@ -1248,11 +1248,11 @@
    "weak_map_set"
   ],
   "geomean": {
-   "goc-ng": 55.53698872543485,
-   "goc-bellard": 45.42027454778796,
-   "ng": 52.30025356165546,
-   "bellard": 32.36057372646263,
-   "goja": 195.59955409499062
+   "goc-ng": 46.68195577565984,
+   "goc-bellard": 35.46233272049538,
+   "ng": 42.917229214726966,
+   "bellard": 31.407555451566743,
+   "goja": 152.12493791300446
   },
   "groups": {
    "loop": [
@@ -1354,88 +1354,88 @@
   },
   "group_geomean": {
    "loop": {
-    "goc-ng": 18.95704972058131,
-    "goc-bellard": 20.79610999096903,
-    "ng": 18.73079644742942,
-    "bellard": 14.8358051764572,
-    "goja": 49.683873852425634
+    "goc-ng": 13.572434720825722,
+    "goc-bellard": 14.172495917986076,
+    "ng": 13.871491212822786,
+    "bellard": 12.561173657585178,
+    "goja": 45.80867396049837
    },
    "prop": {
-    "goc-ng": 32.59009405630609,
-    "goc-bellard": 29.066733837770954,
-    "ng": 30.60072236202214,
-    "bellard": 20.498816836121485,
-    "goja": 116.38137270083806
+    "goc-ng": 27.145328442532964,
+    "goc-bellard": 24.56340857446999,
+    "ng": 25.795754115539943,
+    "bellard": 18.950312008217647,
+    "goja": 97.31508743155845
    },
    "var": {
-    "goc-ng": 33.07686456004806,
-    "goc-bellard": 30.100119771956013,
-    "ng": 32.54243787556765,
-    "bellard": 22.450695963729864,
-    "goja": 255.0374412752416
+    "goc-ng": 28.339034497045223,
+    "goc-bellard": 23.649314314972933,
+    "ng": 26.258080366163508,
+    "bellard": 21.83879351916241,
+    "goja": 187.47297810442936
    },
    "call": {
-    "goc-ng": 27.289146134137553,
-    "goc-bellard": 27.19232003430117,
-    "ng": 24.358658813152225,
-    "bellard": 17.810494610882422,
-    "goja": 78.35986568379217
+    "goc-ng": 24.050091602528557,
+    "goc-bellard": 23.051055003526017,
+    "ng": 20.22228621247088,
+    "bellard": 20.643624134036425,
+    "goja": 71.50610400428681
    },
    "array": {
-    "goc-ng": 26.31413172086877,
-    "goc-bellard": 22.58024345062725,
-    "ng": 25.697093252648575,
-    "bellard": 15.681712426149442,
-    "goja": 102.05539469427252
+    "goc-ng": 23.15375549438392,
+    "goc-bellard": 18.74714373750856,
+    "ng": 21.6911389335905,
+    "bellard": 16.64919166842138,
+    "goja": 84.07800819383473
    },
    "string": {
-    "goc-ng": 53.81134370402272,
-    "goc-bellard": 49.822936597945485,
-    "ng": 49.091165737417576,
-    "bellard": 32.6821118458559,
-    "goja": 357.54952904077555
+    "goc-ng": 44.682088639812115,
+    "goc-bellard": 33.292495438075996,
+    "ng": 41.66614901503603,
+    "bellard": 30.8827355006301,
+    "goja": 237.7193873348844
    },
    "numconv": {
-    "goc-ng": 105.74006640627863,
-    "goc-bellard": 101.10195676328664,
-    "ng": 96.49694520571117,
-    "bellard": 86.00227412668146,
-    "goja": 223.42543554951683
+    "goc-ng": 91.68042955569459,
+    "goc-bellard": 84.36257644065576,
+    "ng": 78.87600900629076,
+    "bellard": 77.1471324572611,
+    "goja": 168.949766271298
    },
    "arith": {
-    "goc-ng": 25.526052046172676,
-    "goc-bellard": 26.48282173831805,
-    "ng": 25.499581841150093,
-    "bellard": 16.664935571315866,
-    "goja": 130.67564664763964
+    "goc-ng": 22.164810576178446,
+    "goc-bellard": 19.89497292106861,
+    "ng": 22.99242346538591,
+    "bellard": 19.028448515096464,
+    "goja": 112.78735050295921
    },
    "bigint": {
-    "goc-ng": 61.80928954233429,
-    "goc-bellard": 54.929413817982265,
-    "ng": 60.52335893664902,
-    "bellard": 35.892071287982596,
-    "goja": 232.19046131474357
+    "goc-ng": 57.05010325297782,
+    "goc-bellard": 41.04487512098435,
+    "ng": 54.48210925543329,
+    "bellard": 37.51825364726723,
+    "goja": 182.18627020076258
    },
    "map": {
-    "goc-ng": 522.2459403806399,
-    "goc-bellard": 139.3929753080494,
-    "ng": 536.0066289116918,
-    "bellard": 115.03339159337605,
-    "goja": 488.1299417733239
+    "goc-ng": 451.7791893038511,
+    "goc-bellard": 126.59207840333805,
+    "ng": 401.1900668122934,
+    "bellard": 110.25704171259268,
+    "goja": 379.95707177879416
    },
    "regexp": {
-    "goc-ng": 462.6702563700484,
-    "goc-bellard": 279.48523936937386,
-    "ng": 432.3029961682817,
-    "bellard": 236.23362086815084,
-    "goja": 1405.1066421440544
+    "goc-ng": 412.65111958206836,
+    "goc-bellard": 246.75804031102246,
+    "ng": 336.55796309256067,
+    "bellard": 198.67744582143257,
+    "goja": 964.6226914505052
    },
    "date": {
-    "goc-ng": 365.8790455874727,
-    "goc-bellard": 346.8426336251069,
-    "ng": 192.65657061206088,
-    "bellard": 170.41820149268085,
-    "goja": 384.92444648268315
+    "goc-ng": 173.7967609019225,
+    "goc-bellard": 164.82139879275385,
+    "ng": 136.23200798637595,
+    "bellard": 128.26667182085916,
+    "goja": 282.9042444008218
    }
   }
  },
@@ -1443,13 +1443,13 @@
   "rounds": [
    {
     "goc-ng": {
-     "score": 21906,
+     "score": 27942,
      "calls": 14000000,
-     "ms": 657,
+     "ms": 505,
      "cases": [
       {
        "name": "arith",
-       "ms": 74,
+       "ms": 47,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1458,7 +1458,7 @@
       },
       {
        "name": "propget",
-       "ms": 77,
+       "ms": 63,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1467,95 +1467,95 @@
       },
       {
        "name": "empty",
-       "ms": 66,
+       "ms": 56,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 33,
+       "ns": 28,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 71,
+       "ms": 59,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 35.5,
+       "ns": 29.5,
        "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 61,
+       "ms": 45,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 61,
+       "ns": 45,
        "control": false,
        "sink": 500014500000
       },
       {
        "name": "eight",
-       "ms": 70,
+       "ms": 50,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 70,
+       "ns": 50,
        "control": false,
        "sink": 500027500000
       },
       {
        "name": "method",
-       "ms": 70,
+       "ms": 64,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 70,
+       "ns": 64,
        "control": false,
        "sink": 4500065500000
       },
       {
        "name": "depth4",
-       "ms": 53,
+       "ms": 40,
        "n": 500000,
        "calls": 2000000,
-       "ns": 26.5,
+       "ns": 20,
        "control": false,
        "sink": 500000
       },
       {
        "name": "closure",
-       "ms": 37,
+       "ms": 32,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 37,
+       "ns": 32,
        "control": false,
        "sink": 4500064500000
       },
       {
        "name": "mutual",
-       "ms": 59,
+       "ms": 44,
        "n": 400000,
        "calls": 2000000,
-       "ns": 29.5,
+       "ns": 22,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 170,
+       "ms": 115,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 85,
+       "ns": 57.5,
        "control": false,
        "sink": 1500000
       }
      ]
     },
     "ng": {
-     "score": 23599,
+     "score": 29096,
      "calls": 14000000,
-     "ms": 597,
+     "ms": 496,
      "cases": [
       {
        "name": "arith",
-       "ms": 76,
+       "ms": 45,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1564,7 +1564,7 @@
       },
       {
        "name": "propget",
-       "ms": 77,
+       "ms": 64,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1573,46 +1573,152 @@
       },
       {
        "name": "empty",
-       "ms": 60,
+       "ms": 49,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 30,
+       "ns": 24.5,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 69,
+       "ms": 52,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 34.5,
+       "ns": 26,
        "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 61,
+       "ms": 47,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 61,
+       "ns": 47,
        "control": false,
        "sink": 500014500000
       },
       {
        "name": "eight",
-       "ms": 71,
+       "ms": 65,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 71,
+       "ns": 65,
        "control": false,
        "sink": 500027500000
       },
       {
        "name": "method",
-       "ms": 68,
+       "ms": 57,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 68,
+       "ns": 57,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 122,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 27657,
+     "calls": 14000000,
+     "ms": 511,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 54,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
        "control": false,
        "sink": 4500065500000
       },
@@ -1627,41 +1733,41 @@
       },
       {
        "name": "closure",
-       "ms": 37,
+       "ms": 32,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 37,
+       "ns": 32,
        "control": false,
        "sink": 4500064500000
       },
       {
        "name": "mutual",
-       "ms": 53,
+       "ms": 46,
        "n": 400000,
        "calls": 2000000,
-       "ns": 26.5,
+       "ns": 23,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 134,
+       "ms": 121,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 67,
+       "ns": 60.5,
        "control": false,
        "sink": 1500000
       }
      ]
     },
-    "goc-bellard": {
-     "score": 20988,
+    "bellard": {
+     "score": 31270,
      "calls": 14000000,
-     "ms": 660,
+     "ms": 448,
      "cases": [
       {
        "name": "arith",
-       "ms": 94,
+       "ms": 39,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1670,7 +1776,7 @@
       },
       {
        "name": "propget",
-       "ms": 88,
+       "ms": 53,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1679,91 +1785,411 @@
       },
       {
        "name": "empty",
-       "ms": 70,
+       "ms": 51,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 35,
+       "ns": 25.5,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 82,
+       "ms": 51,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 41,
+       "ns": 25.5,
        "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 70,
+       "ms": 43,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 70,
+       "ns": 43,
        "control": false,
        "sink": 500014500000
       },
       {
        "name": "eight",
-       "ms": 82,
+       "ms": 53,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 82,
+       "ns": 53,
        "control": false,
        "sink": 500027500000
       },
       {
        "name": "method",
-       "ms": 70,
+       "ms": 49,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 70,
+       "ns": 49,
        "control": false,
        "sink": 4500065500000
       },
       {
        "name": "depth4",
-       "ms": 47,
+       "ms": 33,
        "n": 500000,
        "calls": 2000000,
-       "ns": 23.5,
+       "ns": 16.5,
        "control": false,
        "sink": 500000
       },
       {
        "name": "closure",
-       "ms": 46,
+       "ms": 28,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 46,
+       "ns": 28,
        "control": false,
        "sink": 4500064500000
       },
       {
        "name": "mutual",
-       "ms": 62,
+       "ms": 43,
        "n": 400000,
        "calls": 2000000,
-       "ns": 31,
+       "ns": 21.5,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 131,
+       "ms": 97,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 65.5,
+       "ns": 48.5,
        "control": false,
        "sink": 1500000
       }
      ]
     },
-    "bellard": {
-     "score": 31217,
+    "goja": {
+     "score": 6620,
      "calls": 14000000,
-     "ms": 454,
+     "ms": 2099,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 422,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 332,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 247,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 123.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 257,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 128.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 267,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 267,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 328,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 328,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 195,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 195,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 128,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 144,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 144,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 193,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 340,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 170,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc-ng": {
+     "score": 27312,
+     "calls": 14000000,
+     "ms": 517,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 44,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 62,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 61,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 40,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 20,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 32,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 32,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 118,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 59,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 28471,
+     "calls": 14000000,
+     "ms": 507,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 47,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 69,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 48,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 48,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 65,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 65,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 125,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 62.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 26782,
+     "calls": 14000000,
+     "ms": 526,
      "cases": [
       {
        "name": "arith",
@@ -1776,7 +2202,7 @@
       },
       {
        "name": "propget",
-       "ms": 47,
+       "ms": 57,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1785,19 +2211,19 @@
       },
       {
        "name": "empty",
-       "ms": 46,
+       "ms": 57,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 23,
+       "ns": 28.5,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 48,
+       "ms": 59,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 24,
+       "ns": 29.5,
        "control": false,
        "sink": 1999999000000
       },
@@ -1821,19 +2247,125 @@
       },
       {
        "name": "method",
-       "ms": 56,
+       "ms": 61,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 56,
+       "ns": 61,
        "control": false,
        "sink": 4500065500000
       },
       {
        "name": "depth4",
-       "ms": 30,
+       "ms": 45,
        "n": 500000,
        "calls": 2000000,
-       "ns": 15,
+       "ns": 22.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 33,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 33,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 48,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 24,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 122,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31221,
+     "calls": 14000000,
+     "ms": 449,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 37,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 52,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 51,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 51,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 49,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 49,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 33,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16.5,
        "control": false,
        "sink": 500000
       },
@@ -1843,6 +2375,538 @@
        "n": 1000000,
        "calls": 1000000,
        "ns": 28,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 43,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 98,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 49,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6710,
+     "calls": 14000000,
+     "ms": 2070,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 425,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 350,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 235,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 117.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 267,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 133.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 269,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 269,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 315,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 315,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 192,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 192,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 128,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 139,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 139,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 192,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 333,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 166.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc-ng": {
+     "score": 27957,
+     "calls": 14000000,
+     "ms": 507,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 46,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 62,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 60,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 54,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 54,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 39,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 19.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 115,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 57.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 28588,
+     "calls": 14000000,
+     "ms": 506,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 48,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 67,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 48,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 24,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 49,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 49,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 45,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 124,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 62,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 27772,
+     "calls": 14000000,
+     "ms": 509,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 52,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 54,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 52,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 52,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 32,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 32,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 121,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 60.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31277,
+     "calls": 14000000,
+     "ms": 451,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 39,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 42,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 42,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 50,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 50,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
        "control": false,
        "sink": 4500064500000
       },
@@ -1867,13 +2931,13 @@
      ]
     },
     "goja": {
-     "score": 4983,
+     "score": 6882,
      "calls": 14000000,
-     "ms": 2811,
+     "ms": 2011,
      "cases": [
       {
        "name": "arith",
-       "ms": 565,
+       "ms": 419,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1882,7 +2946,7 @@
       },
       {
        "name": "propget",
-       "ms": 439,
+       "ms": 337,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1891,82 +2955,82 @@
       },
       {
        "name": "empty",
-       "ms": 332,
+       "ms": 233,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 166,
+       "ns": 116.5,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 374,
+       "ms": 239,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 187,
+       "ns": 119.5,
        "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 359,
+       "ms": 255,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 359,
+       "ns": 255,
        "control": false,
        "sink": 500014500000
       },
       {
        "name": "eight",
-       "ms": 421,
+       "ms": 306,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 421,
+       "ns": 306,
        "control": false,
        "sink": 500027500000
       },
       {
        "name": "method",
-       "ms": 273,
+       "ms": 193,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 273,
+       "ns": 193,
        "control": false,
        "sink": 4500065500000
       },
       {
        "name": "depth4",
-       "ms": 155,
+       "ms": 128,
        "n": 500000,
        "calls": 2000000,
-       "ns": 77.5,
+       "ns": 64,
        "control": false,
        "sink": 500000
       },
       {
        "name": "closure",
-       "ms": 177,
+       "ms": 139,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 177,
+       "ns": 139,
        "control": false,
        "sink": 4500064500000
       },
       {
        "name": "mutual",
-       "ms": 263,
+       "ms": 187,
        "n": 400000,
        "calls": 2000000,
-       "ns": 131.5,
+       "ns": 93.5,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 457,
+       "ms": 331,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 228.5,
+       "ns": 165.5,
        "control": false,
        "sink": 1500000
       }
@@ -1975,13 +3039,13 @@
    },
    {
     "goc-ng": {
-     "score": 21406,
+     "score": 27907,
      "calls": 14000000,
-     "ms": 668,
+     "ms": 507,
      "cases": [
       {
        "name": "arith",
-       "ms": 74,
+       "ms": 48,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -1990,7 +3054,7 @@
       },
       {
        "name": "propget",
-       "ms": 76,
+       "ms": 62,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -1999,382 +3063,64 @@
       },
       {
        "name": "empty",
-       "ms": 67,
+       "ms": 55,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 33.5,
+       "ns": 27.5,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 72,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 36,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 62,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 62,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 70,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 70,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 72,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 72,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 56,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 28,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 37,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 37,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 65,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 32.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 167,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 83.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "ng": {
-     "score": 23337,
-     "calls": 14000000,
-     "ms": 603,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 77,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 79,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
        "ms": 61,
        "n": 2000000,
        "calls": 2000000,
        "ns": 30.5,
        "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 68,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 34,
-       "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 62,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 62,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 70,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 70,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 70,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 70,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 44,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 22,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 39,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 39,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 53,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 26.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 136,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 68,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "goc-bellard": {
-     "score": 20995,
-     "calls": 14000000,
-     "ms": 660,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 93,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 87,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 71,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35.5,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 81,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 40.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 81,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 81,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
        "ms": 47,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 23.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 46,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 46,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 62,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 31,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 132,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 66,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "bellard": {
-     "score": 31562,
-     "calls": 14000000,
-     "ms": 449,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 51,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 48,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 46,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 23,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 47,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 23.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 46,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 46,
+       "ns": 47,
        "control": false,
        "sink": 500014500000
       },
       {
        "name": "eight",
-       "ms": 54,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 54,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
        "ms": 53,
        "n": 1000000,
        "calls": 1000000,
        "ns": 53,
        "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 63,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 63,
+       "control": false,
        "sink": 4500065500000
       },
       {
        "name": "depth4",
-       "ms": 31,
+       "ms": 39,
        "n": 500000,
        "calls": 2000000,
-       "ns": 15.5,
+       "ns": 19.5,
        "control": false,
        "sink": 500000
       },
       {
        "name": "closure",
-       "ms": 26,
+       "ms": 30,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 26,
+       "ns": 30,
        "control": false,
        "sink": 4500064500000
       },
@@ -2389,23 +3135,23 @@
       },
       {
        "name": "sched",
-       "ms": 102,
+       "ms": 115,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 51,
+       "ns": 57.5,
        "control": false,
        "sink": 1500000
       }
      ]
     },
-    "goja": {
-     "score": 5126,
+    "ng": {
+     "score": 29549,
      "calls": 14000000,
-     "ms": 2729,
+     "ms": 491,
      "cases": [
       {
        "name": "arith",
-       "ms": 554,
+       "ms": 45,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -2414,7 +3160,7 @@
       },
       {
        "name": "propget",
-       "ms": 416,
+       "ms": 65,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -2423,1536 +3169,46 @@
       },
       {
        "name": "empty",
-       "ms": 311,
+       "ms": 47,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 155.5,
+       "ns": 23.5,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 324,
+       "ms": 51,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 162,
+       "ns": 25.5,
        "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 358,
+       "ms": 45,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 358,
+       "ns": 45,
        "control": false,
        "sink": 500014500000
       },
       {
        "name": "eight",
-       "ms": 419,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 419,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 269,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 269,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 154,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 77,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 174,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 174,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 263,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 131.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 457,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 228.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    }
-   },
-   {
-    "goc-ng": {
-     "score": 21305,
-     "calls": 14000000,
-     "ms": 670,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 76,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 77,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 70,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 74,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 37,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
        "ms": 64,
        "n": 1000000,
        "calls": 1000000,
        "ns": 64,
        "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 70,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 70,
-       "control": false,
        "sink": 500027500000
       },
       {
        "name": "method",
-       "ms": 74,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 74,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 53,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 26.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 38,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 38,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 62,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 31,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 165,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 82.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "ng": {
-     "score": 22742,
-     "calls": 14000000,
-     "ms": 616,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 77,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 79,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 62,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 31,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 70,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 62,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 62,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 51,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 25.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 40,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 40,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 53,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 26.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 138,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 69,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "goc-bellard": {
-     "score": 18317,
-     "calls": 14000000,
-     "ms": 747,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 95,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 90,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 74,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 37,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 83,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 41.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 86,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 86,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 72,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 72,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 76,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 38,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 65,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 65,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 68,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 34,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 152,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 76,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "bellard": {
-     "score": 30464,
-     "calls": 14000000,
-     "ms": 465,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 54,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 51,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 48,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 24,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 48,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 24,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 48,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 48,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 56,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 56,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 56,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 56,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 32,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 16,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 27,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 27,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 45,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 22.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 105,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 52.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "goja": {
-     "score": 5106,
-     "calls": 14000000,
-     "ms": 2733,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 561,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 413,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 315,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 157.5,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 323,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 161.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 360,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 360,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 429,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 429,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 275,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 275,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 155,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 77.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 180,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 180,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 255,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 127.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 441,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 220.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    }
-   },
-   {
-    "goc-ng": {
-     "score": 21596,
-     "calls": 14000000,
-     "ms": 666,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 74,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 73,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 67,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 33.5,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 71,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 61,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 61,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 68,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 68,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 54,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 27,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 39,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 39,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 61,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 30.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 174,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 87,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "ng": {
-     "score": 22974,
-     "calls": 14000000,
-     "ms": 613,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 79,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 80,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 63,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 31.5,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 69,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 34.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 62,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 62,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 72,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 72,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 70,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 70,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 45,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 22.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 38,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 38,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 56,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 28,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 138,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 69,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "goc-bellard": {
-     "score": 20343,
-     "calls": 14000000,
-     "ms": 684,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 94,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 89,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 72,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 36,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 86,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 43,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 72,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 72,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 83,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 83,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 47,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 23.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 47,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 47,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 66,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 33,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 140,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 70,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "bellard": {
-     "score": 30436,
-     "calls": 14000000,
-     "ms": 467,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 56,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 49,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 46,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 23,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 48,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 24,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 47,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 47,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
        "ms": 57,
        "n": 1000000,
        "calls": 1000000,
        "ns": 57,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 55,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 55,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 31,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 15.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 27,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 27,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 49,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 24.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 107,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 53.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "goja": {
-     "score": 5048,
-     "calls": 14000000,
-     "ms": 2759,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 582,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 428,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 330,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 165,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 332,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 166,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 369,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 369,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 422,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 422,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 278,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 278,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 159,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 79.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 178,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 178,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 260,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 130,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 431,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 215.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    }
-   },
-   {
-    "goc-ng": {
-     "score": 21695,
-     "calls": 14000000,
-     "ms": 663,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 73,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 77,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 68,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 34,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 71,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 63,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 63,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 70,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 70,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 53,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 26.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 37,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 37,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 61,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 30.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 171,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 85.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "ng": {
-     "score": 23553,
-     "calls": 14000000,
-     "ms": 598,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 78,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 79,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 60,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 30,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 68,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 34,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 61,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 61,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 72,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 72,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 69,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 69,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 45,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 22.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 37,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 37,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 52,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 26,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 134,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 67,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "goc-bellard": {
-     "score": 20781,
-     "calls": 14000000,
-     "ms": 666,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 92,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 87,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 70,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 35,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 82,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 41,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 81,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 81,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 71,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 71,
-       "control": false,
-       "sink": 4500065500000
-      },
-      {
-       "name": "depth4",
-       "ms": 49,
-       "n": 500000,
-       "calls": 2000000,
-       "ns": 24.5,
-       "control": false,
-       "sink": 500000
-      },
-      {
-       "name": "closure",
-       "ms": 46,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 46,
-       "control": false,
-       "sink": 4500064500000
-      },
-      {
-       "name": "mutual",
-       "ms": 63,
-       "n": 400000,
-       "calls": 2000000,
-       "ns": 31.5,
-       "control": false,
-       "sink": 0
-      },
-      {
-       "name": "sched",
-       "ms": 133,
-       "n": 1000000,
-       "calls": 2000000,
-       "ns": 66.5,
-       "control": false,
-       "sink": 1500000
-      }
-     ]
-    },
-    "bellard": {
-     "score": 30784,
-     "calls": 14000000,
-     "ms": 461,
-     "cases": [
-      {
-       "name": "arith",
-       "ms": 52,
-       "n": 4000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": -1526072448
-      },
-      {
-       "name": "propget",
-       "ms": 47,
-       "n": 2000000,
-       "calls": 0,
-       "ns": 0,
-       "control": true,
-       "sink": 148000000
-      },
-      {
-       "name": "empty",
-       "ms": 47,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 23.5,
-       "control": false,
-       "sink": 2000000
-      },
-      {
-       "name": "id",
-       "ms": 47,
-       "n": 2000000,
-       "calls": 2000000,
-       "ns": 23.5,
-       "control": false,
-       "sink": 1999999000000
-      },
-      {
-       "name": "six",
-       "ms": 47,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 47,
-       "control": false,
-       "sink": 500014500000
-      },
-      {
-       "name": "eight",
-       "ms": 54,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 54,
-       "control": false,
-       "sink": 500027500000
-      },
-      {
-       "name": "method",
-       "ms": 55,
-       "n": 1000000,
-       "calls": 1000000,
-       "ns": 55,
        "control": false,
        "sink": 4500065500000
       },
@@ -3976,32 +3232,32 @@
       },
       {
        "name": "mutual",
-       "ms": 45,
+       "ms": 44,
        "n": 400000,
        "calls": 2000000,
-       "ns": 22.5,
+       "ns": 22,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 107,
+       "ms": 124,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 53.5,
+       "ns": 62,
        "control": false,
        "sink": 1500000
       }
      ]
     },
-    "goja": {
-     "score": 5163,
+    "goc-bellard": {
+     "score": 27867,
      "calls": 14000000,
-     "ms": 2698,
+     "ms": 511,
      "cases": [
       {
        "name": "arith",
-       "ms": 577,
+       "ms": 51,
        "n": 4000000,
        "calls": 0,
        "ns": 0,
@@ -4010,7 +3266,7 @@
       },
       {
        "name": "propget",
-       "ms": 426,
+       "ms": 56,
        "n": 2000000,
        "calls": 0,
        "ns": 0,
@@ -4019,82 +3275,826 @@
       },
       {
        "name": "empty",
-       "ms": 317,
+       "ms": 54,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 158.5,
+       "ns": 27,
        "control": false,
        "sink": 2000000
       },
       {
        "name": "id",
-       "ms": 319,
+       "ms": 55,
        "n": 2000000,
        "calls": 2000000,
-       "ns": 159.5,
+       "ns": 27.5,
        "control": false,
        "sink": 1999999000000
       },
       {
        "name": "six",
-       "ms": 347,
+       "ms": 44,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 347,
+       "ns": 44,
        "control": false,
        "sink": 500014500000
       },
       {
        "name": "eight",
-       "ms": 418,
+       "ms": 53,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 418,
+       "ns": 53,
        "control": false,
        "sink": 500027500000
       },
       {
        "name": "method",
-       "ms": 269,
+       "ms": 59,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 269,
+       "ns": 59,
        "control": false,
        "sink": 4500065500000
       },
       {
        "name": "depth4",
-       "ms": 153,
+       "ms": 43,
        "n": 500000,
        "calls": 2000000,
-       "ns": 76.5,
+       "ns": 21.5,
        "control": false,
        "sink": 500000
       },
       {
        "name": "closure",
-       "ms": 179,
+       "ms": 31,
        "n": 1000000,
        "calls": 1000000,
-       "ns": 179,
+       "ns": 31,
        "control": false,
        "sink": 4500064500000
       },
       {
        "name": "mutual",
-       "ms": 261,
+       "ms": 46,
        "n": 400000,
        "calls": 2000000,
-       "ns": 130.5,
+       "ns": 23,
        "control": false,
        "sink": 0
       },
       {
        "name": "sched",
-       "ms": 435,
+       "ms": 126,
        "n": 1000000,
        "calls": 2000000,
-       "ns": 217.5,
+       "ns": 63,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31643,
+     "calls": 14000000,
+     "ms": 445,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 39,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 52,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 52,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 48,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 48,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 27,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 27,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 42,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 99,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 49.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6828,
+     "calls": 14000000,
+     "ms": 2032,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 420,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 338,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 234,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 117,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 247,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 123.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 259,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 259,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 316,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 316,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 189,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 189,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 126,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 63,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 139,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 139,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 192,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 330,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 165,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc-ng": {
+     "score": 27695,
+     "calls": 14000000,
+     "ms": 511,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 47,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 62,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 61,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 54,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 54,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 63,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 63,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 39,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 19.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 31,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 31,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 117,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 58.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 29325,
+     "calls": 14000000,
+     "ms": 493,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 44,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 65,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 52,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 46,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 46,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 57,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 57,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 123,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 27788,
+     "calls": 14000000,
+     "ms": 510,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 54,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 54,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 60,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 60,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 31,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 31,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 122,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31998,
+     "calls": 14000000,
+     "ms": 438,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 38,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 49,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 24.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 42,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 42,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 50,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 50,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 48,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 48,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 28,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 28,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 42,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 96,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 48,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6840,
+     "calls": 14000000,
+     "ms": 2024,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 418,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 335,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 229,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 114.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 240,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 120,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 257,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 257,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 314,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 314,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 191,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 191,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 128,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 141,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 141,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 193,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 331,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 165.5,
        "control": false,
        "sink": 1500000
       }
@@ -4110,103 +4110,103 @@
    "goja"
   ],
   "score_median": {
-   "goc-ng": 21596,
-   "goc-bellard": 20781,
-   "ng": 23337,
-   "bellard": 30784,
-   "goja": 5106
+   "goc-ng": 27907,
+   "goc-bellard": 27772,
+   "ng": 29096,
+   "bellard": 31277,
+   "goja": 6828
   },
   "score_min": {
-   "goc-ng": 21305,
-   "goc-bellard": 18317,
-   "ng": 22742,
-   "bellard": 30436,
-   "goja": 4983
+   "goc-ng": 27312,
+   "goc-bellard": 26782,
+   "ng": 28471,
+   "bellard": 31221,
+   "goja": 6620
   },
   "score_max": {
-   "goc-ng": 21906,
-   "goc-bellard": 20995,
-   "ng": 23599,
-   "bellard": 31562,
-   "goja": 5163
+   "goc-ng": 27957,
+   "goc-bellard": 27867,
+   "ng": 29549,
+   "bellard": 31998,
+   "goja": 6882
   },
   "case_ms_median": {
    "arith": {
-    "goc-ng": 74,
-    "goc-bellard": 94,
-    "ng": 77,
-    "bellard": 52,
-    "goja": 565
+    "goc-ng": 47,
+    "goc-bellard": 52,
+    "ng": 45,
+    "bellard": 39,
+    "goja": 420
    },
    "propget": {
-    "goc-ng": 77,
-    "goc-bellard": 88,
-    "ng": 79,
-    "bellard": 48,
-    "goja": 426
+    "goc-ng": 62,
+    "goc-bellard": 56,
+    "ng": 65,
+    "bellard": 53,
+    "goja": 337
    },
    "empty": {
-    "goc-ng": 67,
-    "goc-bellard": 71,
-    "ng": 61,
-    "bellard": 46,
-    "goja": 317
+    "goc-ng": 55,
+    "goc-bellard": 54,
+    "ng": 48,
+    "bellard": 50,
+    "goja": 234
    },
    "id": {
-    "goc-ng": 71,
-    "goc-bellard": 82,
-    "ng": 69,
-    "bellard": 48,
-    "goja": 324
+    "goc-ng": 61,
+    "goc-bellard": 57,
+    "ng": 52,
+    "bellard": 51,
+    "goja": 247
    },
    "six": {
-    "goc-ng": 62,
-    "goc-bellard": 71,
-    "ng": 62,
-    "bellard": 47,
-    "goja": 359
+    "goc-ng": 47,
+    "goc-bellard": 44,
+    "ng": 47,
+    "bellard": 43,
+    "goja": 259
    },
    "eight": {
-    "goc-ng": 70,
-    "goc-bellard": 82,
-    "ng": 71,
-    "bellard": 55,
-    "goja": 421
+    "goc-ng": 53,
+    "goc-bellard": 53,
+    "ng": 65,
+    "bellard": 51,
+    "goja": 315
    },
    "method": {
-    "goc-ng": 71,
-    "goc-bellard": 71,
-    "ng": 69,
-    "bellard": 55,
-    "goja": 273
+    "goc-ng": 64,
+    "goc-bellard": 59,
+    "ng": 57,
+    "bellard": 49,
+    "goja": 192
    },
    "depth4": {
-    "goc-ng": 53,
-    "goc-bellard": 47,
-    "ng": 45,
-    "bellard": 31,
-    "goja": 155
+    "goc-ng": 39,
+    "goc-bellard": 44,
+    "ng": 31,
+    "bellard": 32,
+    "goja": 128
    },
    "closure": {
-    "goc-ng": 37,
-    "goc-bellard": 46,
-    "ng": 38,
-    "bellard": 27,
-    "goja": 178
+    "goc-ng": 31,
+    "goc-bellard": 32,
+    "ng": 29,
+    "bellard": 28,
+    "goja": 139
    },
    "mutual": {
-    "goc-ng": 61,
-    "goc-bellard": 63,
-    "ng": 53,
-    "bellard": 45,
-    "goja": 261
+    "goc-ng": 44,
+    "goc-bellard": 46,
+    "ng": 44,
+    "bellard": 42,
+    "goja": 192
    },
    "sched": {
-    "goc-ng": 170,
-    "goc-bellard": 133,
-    "ng": 136,
-    "bellard": 105,
-    "goja": 441
+    "goc-ng": 115,
+    "goc-bellard": 122,
+    "ng": 124,
+    "bellard": 98,
+    "goja": 331
    }
   }
  },
@@ -4658,10 +4658,10 @@
  "qjs_tests": {
   "total": 77,
   "pass": {
-   "goc-ng": 69,
-   "goc-bellard": 73,
-   "ng": 69,
-   "bellard": 73,
+   "goc-ng": 73,
+   "goc-bellard": 77,
+   "ng": 73,
+   "bellard": 77,
    "goja": 58
   },
   "files": {
@@ -4699,10 +4699,10 @@
    },
    "test_builtin.js": {
     "n": 21,
-    "goc-ng": 15,
-    "goc-bellard": 17,
-    "ng": 15,
-    "bellard": 17,
+    "goc-ng": 19,
+    "goc-bellard": 21,
+    "ng": 19,
+    "bellard": 21,
     "goja": 9
    }
   },
@@ -4778,10 +4778,10 @@
     "test_builtin.js:test_regexp": "pass",
     "test_builtin.js:test_symbol": "pass",
     "test_builtin.js:test_map": "pass",
-    "test_builtin.js:test_weak_map": "FAIL qjscli:runtime: <t>: ReferenceError: std is not defined",
-    "test_builtin.js:test_weak_map_cycles": "FAIL qjscli:runtime: <t>: ReferenceError: std is not defined",
-    "test_builtin.js:test_weak_ref": "FAIL qjscli:runtime: <t>: ReferenceError: std is not defined",
-    "test_builtin.js:test_finalization_registry": "FAIL qjscli:runtime: <t>: ReferenceError: os is not defined",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
     "test_builtin.js:test_generator": "pass",
     "test_builtin.js:test_rope": "pass",
     "test_builtin.js:test_line_column_numbers": "FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2"
@@ -4857,10 +4857,10 @@
     "test_builtin.js:test_regexp": "pass",
     "test_builtin.js:test_symbol": "pass",
     "test_builtin.js:test_map": "pass",
-    "test_builtin.js:test_weak_map": "FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined",
-    "test_builtin.js:test_weak_map_cycles": "FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined",
-    "test_builtin.js:test_weak_ref": "FAIL qjscli:runtime: <t>: ReferenceError: 'std' is not defined",
-    "test_builtin.js:test_finalization_registry": "FAIL qjscli:runtime: <t>: ReferenceError: 'os' is not defined",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
     "test_builtin.js:test_generator": "pass",
     "test_builtin.js:test_rope": "pass",
     "test_builtin.js:test_line_column_numbers": "pass"
@@ -4936,10 +4936,10 @@
     "test_builtin.js:test_regexp": "pass",
     "test_builtin.js:test_symbol": "pass",
     "test_builtin.js:test_map": "pass",
-    "test_builtin.js:test_weak_map": "FAIL ReferenceError: std is not defined",
-    "test_builtin.js:test_weak_map_cycles": "FAIL ReferenceError: std is not defined",
-    "test_builtin.js:test_weak_ref": "FAIL ReferenceError: std is not defined",
-    "test_builtin.js:test_finalization_registry": "FAIL ReferenceError: os is not defined",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
     "test_builtin.js:test_generator": "pass",
     "test_builtin.js:test_rope": "pass",
     "test_builtin.js:test_line_column_numbers": "FAIL Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2:8|"
@@ -5015,10 +5015,10 @@
     "test_builtin.js:test_regexp": "pass",
     "test_builtin.js:test_symbol": "pass",
     "test_builtin.js:test_map": "pass",
-    "test_builtin.js:test_weak_map": "FAIL ReferenceError: 'std' is not defined",
-    "test_builtin.js:test_weak_map_cycles": "FAIL ReferenceError: 'std' is not defined",
-    "test_builtin.js:test_weak_ref": "FAIL ReferenceError: 'std' is not defined",
-    "test_builtin.js:test_finalization_registry": "FAIL ReferenceError: 'os' is not defined",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
     "test_builtin.js:test_generator": "pass",
     "test_builtin.js:test_rope": "pass",
     "test_builtin.js:test_line_column_numbers": "pass"
@@ -5119,213 +5119,203 @@
  "memory": {
   "rss_kb": {
    "goc-ng": {
-    "empty": 8688,
-    "v8-Richards": 12704,
-    "v8-DeltaBlue": 13000,
-    "v8-Crypto": 12428,
-    "v8-RayTrace": 12432,
-    "v8-EarleyBoyer": 24796,
-    "v8-RegExp": 14808,
-    "v8-Splay": 168176,
-    "v8-NavierStokes": 14756,
-    "v8-all": 168588,
-    "ss-3d-cube": 9528,
-    "ss-3d-morph": 11536,
-    "ss-3d-raytrace": 9632,
-    "ss-access-binary-trees": 9200,
-    "ss-access-fannkuch": 8888,
-    "ss-access-nbody": 9144,
-    "ss-access-nsieve": 14120,
-    "ss-bitops-3bit-bits-in-byte": 8896,
-    "ss-bitops-bits-in-byte": 8944,
-    "ss-bitops-bitwise-and": 8864,
-    "ss-bitops-nsieve-bits": 9152,
-    "ss-controlflow-recursive": 8992,
-    "ss-crypto-aes": 9352,
-    "ss-crypto-md5": 9352,
-    "ss-crypto-sha1": 9200,
-    "ss-date-format-tofte": 9256,
-    "ss-date-format-xparb": 9352,
-    "ss-math-cordic": 9004,
-    "ss-math-partial-sums": 9260,
-    "ss-math-spectral-norm": 8896,
-    "ss-regexp-dna": 11676,
-    "ss-string-base64": 9232,
-    "ss-string-fasta": 9096,
-    "ss-string-tagcloud": 15144,
-    "ss-string-unpack-code": 14872,
-    "ss-string-validate-input": 9968,
-    "micro": 11340,
-    "alloc": 8888,
-    "mapset": 18744,
-    "ss-max": 15144
+    "empty": 8448,
+    "v8-Richards": 12672,
+    "v8-DeltaBlue": 12864,
+    "v8-Crypto": 12288,
+    "v8-RayTrace": 12288,
+    "v8-EarleyBoyer": 24768,
+    "v8-RegExp": 14784,
+    "v8-Splay": 168192,
+    "v8-NavierStokes": 14592,
+    "v8-all": 168384,
+    "ss-3d-cube": 9408,
+    "ss-3d-morph": 11328,
+    "ss-3d-raytrace": 9600,
+    "ss-access-binary-trees": 9024,
+    "ss-access-fannkuch": 8832,
+    "ss-access-nbody": 8832,
+    "ss-access-nsieve": 14208,
+    "ss-bitops-3bit-bits-in-byte": 8640,
+    "ss-bitops-bits-in-byte": 8640,
+    "ss-bitops-bitwise-and": 8640,
+    "ss-bitops-nsieve-bits": 9024,
+    "ss-controlflow-recursive": 8832,
+    "ss-crypto-aes": 9216,
+    "ss-crypto-md5": 9216,
+    "ss-crypto-sha1": 8832,
+    "ss-date-format-tofte": 9216,
+    "ss-date-format-xparb": 9216,
+    "ss-math-cordic": 8832,
+    "ss-math-partial-sums": 9216,
+    "ss-math-spectral-norm": 8640,
+    "ss-regexp-dna": 11328,
+    "ss-string-base64": 9024,
+    "ss-string-fasta": 8832,
+    "ss-string-tagcloud": 14976,
+    "ss-string-unpack-code": 14592,
+    "ss-string-validate-input": 9600,
+    "micro": 10944,
+    "ss-max": 14976
    },
    "goc-bellard": {
-    "empty": 8676,
-    "v8-Richards": 12508,
-    "v8-DeltaBlue": 12876,
-    "v8-Crypto": 11840,
-    "v8-RayTrace": 11784,
-    "v8-EarleyBoyer": 24692,
-    "v8-RegExp": 14840,
-    "v8-Splay": 161780,
-    "v8-NavierStokes": 14164,
-    "v8-all": 159640,
-    "ss-3d-cube": 9084,
-    "ss-3d-morph": 11140,
-    "ss-3d-raytrace": 9324,
-    "ss-access-binary-trees": 8924,
-    "ss-access-fannkuch": 8788,
-    "ss-access-nbody": 8916,
-    "ss-access-nsieve": 13916,
-    "ss-bitops-3bit-bits-in-byte": 8788,
-    "ss-bitops-bits-in-byte": 8784,
-    "ss-bitops-bitwise-and": 8812,
-    "ss-bitops-nsieve-bits": 9052,
-    "ss-controlflow-recursive": 8900,
-    "ss-crypto-aes": 9052,
-    "ss-crypto-md5": 9140,
-    "ss-crypto-sha1": 9016,
-    "ss-date-format-tofte": 8924,
-    "ss-date-format-xparb": 9020,
-    "ss-math-cordic": 8748,
-    "ss-math-partial-sums": 9036,
-    "ss-math-spectral-norm": 8780,
-    "ss-regexp-dna": 12284,
-    "ss-string-base64": 8924,
-    "ss-string-fasta": 8808,
-    "ss-string-tagcloud": 16208,
-    "ss-string-unpack-code": 14172,
-    "ss-string-validate-input": 10748,
-    "micro": 11128,
-    "alloc": 8628,
-    "mapset": 16592,
-    "ss-max": 16208
+    "empty": 8256,
+    "v8-Richards": 12480,
+    "v8-DeltaBlue": 12864,
+    "v8-Crypto": 11712,
+    "v8-RayTrace": 11712,
+    "v8-EarleyBoyer": 24576,
+    "v8-RegExp": 14400,
+    "v8-Splay": 174144,
+    "v8-NavierStokes": 14208,
+    "v8-all": 159552,
+    "ss-3d-cube": 9024,
+    "ss-3d-morph": 10944,
+    "ss-3d-raytrace": 9216,
+    "ss-access-binary-trees": 8832,
+    "ss-access-fannkuch": 8448,
+    "ss-access-nbody": 8832,
+    "ss-access-nsieve": 13824,
+    "ss-bitops-3bit-bits-in-byte": 8448,
+    "ss-bitops-bits-in-byte": 8448,
+    "ss-bitops-bitwise-and": 8448,
+    "ss-bitops-nsieve-bits": 8640,
+    "ss-controlflow-recursive": 8640,
+    "ss-crypto-aes": 9024,
+    "ss-crypto-md5": 8832,
+    "ss-crypto-sha1": 8832,
+    "ss-date-format-tofte": 9024,
+    "ss-date-format-xparb": 9024,
+    "ss-math-cordic": 8640,
+    "ss-math-partial-sums": 9024,
+    "ss-math-spectral-norm": 8448,
+    "ss-regexp-dna": 11712,
+    "ss-string-base64": 8832,
+    "ss-string-fasta": 8640,
+    "ss-string-tagcloud": 15744,
+    "ss-string-unpack-code": 14016,
+    "ss-string-validate-input": 10368,
+    "micro": 10752,
+    "ss-max": 15744
    },
    "ng": {
-    "empty": 3104,
-    "v8-Richards": 6936,
-    "v8-DeltaBlue": 7088,
-    "v8-Crypto": 5944,
-    "v8-RayTrace": 5980,
-    "v8-EarleyBoyer": 19152,
-    "v8-RegExp": 8748,
-    "v8-Splay": 158436,
-    "v8-NavierStokes": 8280,
-    "v8-all": 159244,
-    "ss-3d-cube": 3684,
-    "ss-3d-morph": 4152,
-    "ss-3d-raytrace": 3584,
-    "ss-access-binary-trees": 3336,
-    "ss-access-fannkuch": 3260,
-    "ss-access-nbody": 3344,
-    "ss-access-nsieve": 6600,
-    "ss-bitops-3bit-bits-in-byte": 3216,
-    "ss-bitops-bits-in-byte": 3184,
-    "ss-bitops-bitwise-and": 3160,
-    "ss-bitops-nsieve-bits": 3276,
-    "ss-controlflow-recursive": 3484,
-    "ss-crypto-aes": 3588,
-    "ss-crypto-md5": 3668,
-    "ss-crypto-sha1": 3464,
-    "ss-date-format-tofte": 3520,
-    "ss-date-format-xparb": 3468,
-    "ss-math-cordic": 3232,
-    "ss-math-partial-sums": 3444,
-    "ss-math-spectral-norm": 3276,
-    "ss-regexp-dna": 5252,
-    "ss-string-base64": 3400,
-    "ss-string-fasta": 3196,
-    "ss-string-tagcloud": 7100,
-    "ss-string-unpack-code": 8280,
-    "ss-string-validate-input": 3944,
-    "micro": 4656,
-    "alloc": 3144,
-    "mapset": 12904,
-    "ss-max": 8280
+    "empty": 2880,
+    "v8-Richards": 6844,
+    "v8-DeltaBlue": 7104,
+    "v8-Crypto": 6144,
+    "v8-RayTrace": 6144,
+    "v8-EarleyBoyer": 19300,
+    "v8-RegExp": 8832,
+    "v8-Splay": 158592,
+    "v8-NavierStokes": 8192,
+    "v8-all": 159380,
+    "ss-3d-cube": 3648,
+    "ss-3d-morph": 4224,
+    "ss-3d-raytrace": 3648,
+    "ss-access-binary-trees": 3264,
+    "ss-access-fannkuch": 3072,
+    "ss-access-nbody": 3264,
+    "ss-access-nsieve": 6596,
+    "ss-bitops-3bit-bits-in-byte": 3072,
+    "ss-bitops-bits-in-byte": 3072,
+    "ss-bitops-bitwise-and": 3072,
+    "ss-bitops-nsieve-bits": 3264,
+    "ss-controlflow-recursive": 3456,
+    "ss-crypto-aes": 3456,
+    "ss-crypto-md5": 3456,
+    "ss-crypto-sha1": 3264,
+    "ss-date-format-tofte": 3456,
+    "ss-date-format-xparb": 3456,
+    "ss-math-cordic": 3072,
+    "ss-math-partial-sums": 3456,
+    "ss-math-spectral-norm": 3072,
+    "ss-regexp-dna": 5324,
+    "ss-string-base64": 3264,
+    "ss-string-fasta": 3072,
+    "ss-string-tagcloud": 7160,
+    "ss-string-unpack-code": 8216,
+    "ss-string-validate-input": 3840,
+    "micro": 4608,
+    "ss-max": 8216
    },
    "bellard": {
-    "empty": 2904,
-    "v8-Richards": 6780,
-    "v8-DeltaBlue": 7052,
-    "v8-Crypto": 5816,
-    "v8-RayTrace": 5756,
-    "v8-EarleyBoyer": 18852,
-    "v8-RegExp": 8508,
-    "v8-Splay": 149968,
-    "v8-NavierStokes": 7968,
-    "v8-all": 150532,
-    "ss-3d-cube": 3412,
-    "ss-3d-morph": 3888,
-    "ss-3d-raytrace": 3540,
-    "ss-access-binary-trees": 3088,
-    "ss-access-fannkuch": 2912,
-    "ss-access-nbody": 3192,
-    "ss-access-nsieve": 6292,
-    "ss-bitops-3bit-bits-in-byte": 2932,
-    "ss-bitops-bits-in-byte": 2896,
-    "ss-bitops-bitwise-and": 3008,
-    "ss-bitops-nsieve-bits": 3088,
-    "ss-controlflow-recursive": 3144,
-    "ss-crypto-aes": 3436,
-    "ss-crypto-md5": 3288,
-    "ss-crypto-sha1": 3224,
-    "ss-date-format-tofte": 3268,
-    "ss-date-format-xparb": 3144,
-    "ss-math-cordic": 3016,
-    "ss-math-partial-sums": 3152,
-    "ss-math-spectral-norm": 2916,
-    "ss-regexp-dna": 5976,
-    "ss-string-base64": 3032,
-    "ss-string-fasta": 3100,
-    "ss-string-tagcloud": 6724,
-    "ss-string-unpack-code": 7644,
-    "ss-string-validate-input": 3660,
-    "micro": 4468,
-    "alloc": 2916,
-    "mapset": 10592,
-    "ss-max": 7644
+    "empty": 2880,
+    "v8-Richards": 6720,
+    "v8-DeltaBlue": 7068,
+    "v8-Crypto": 5760,
+    "v8-RayTrace": 5952,
+    "v8-EarleyBoyer": 18944,
+    "v8-RegExp": 8448,
+    "v8-Splay": 149760,
+    "v8-NavierStokes": 8020,
+    "v8-all": 150420,
+    "ss-3d-cube": 3648,
+    "ss-3d-morph": 4032,
+    "ss-3d-raytrace": 3456,
+    "ss-access-binary-trees": 3072,
+    "ss-access-fannkuch": 2880,
+    "ss-access-nbody": 3072,
+    "ss-access-nsieve": 6380,
+    "ss-bitops-3bit-bits-in-byte": 2880,
+    "ss-bitops-bits-in-byte": 2880,
+    "ss-bitops-bitwise-and": 2880,
+    "ss-bitops-nsieve-bits": 3072,
+    "ss-controlflow-recursive": 3264,
+    "ss-crypto-aes": 3456,
+    "ss-crypto-md5": 3264,
+    "ss-crypto-sha1": 3072,
+    "ss-date-format-tofte": 3264,
+    "ss-date-format-xparb": 3264,
+    "ss-math-cordic": 2880,
+    "ss-math-partial-sums": 3264,
+    "ss-math-spectral-norm": 2880,
+    "ss-regexp-dna": 5952,
+    "ss-string-base64": 3072,
+    "ss-string-fasta": 2880,
+    "ss-string-tagcloud": 6552,
+    "ss-string-unpack-code": 7552,
+    "ss-string-validate-input": 3648,
+    "micro": 4416,
+    "ss-max": 7552
    },
    "goja": {
-    "empty": 6064,
-    "v8-Richards": 22804,
-    "v8-DeltaBlue": 22936,
-    "v8-Crypto": 26204,
-    "v8-RayTrace": 25864,
-    "v8-EarleyBoyer": 120624,
-    "v8-RegExp": 38968,
-    "v8-Splay": 1227368,
-    "v8-NavierStokes": 31252,
-    "v8-all": 1248196,
-    "ss-3d-morph": 15308,
-    "ss-3d-raytrace": 17320,
-    "ss-access-binary-trees": 12864,
-    "ss-access-fannkuch": 7960,
-    "ss-access-nbody": 12952,
-    "ss-access-nsieve": 18528,
-    "ss-bitops-3bit-bits-in-byte": 12568,
-    "ss-bitops-bits-in-byte": 12568,
-    "ss-bitops-bitwise-and": 15684,
-    "ss-bitops-nsieve-bits": 13336,
-    "ss-controlflow-recursive": 7960,
-    "ss-crypto-aes": 13808,
-    "ss-crypto-md5": 13716,
-    "ss-crypto-sha1": 13440,
-    "ss-date-format-tofte": 13804,
-    "ss-date-format-xparb": 13452,
-    "ss-math-cordic": 12568,
-    "ss-math-partial-sums": 14744,
-    "ss-math-spectral-norm": 12952,
-    "ss-regexp-dna": 14348,
-    "ss-string-base64": 15176,
-    "ss-string-fasta": 13204,
-    "ss-string-tagcloud": 22020,
-    "ss-string-unpack-code": 16648,
-    "ss-string-validate-input": 14904,
-    "micro": 390844,
-    "alloc": 18236,
-    "mapset": 36580,
-    "ss-max": 22296
+    "empty": 5760,
+    "v8-Richards": 23616,
+    "v8-DeltaBlue": 24576,
+    "v8-Crypto": 25184,
+    "v8-RayTrace": 28148,
+    "v8-EarleyBoyer": 130444,
+    "v8-RegExp": 39052,
+    "v8-Splay": 1497320,
+    "v8-NavierStokes": 34388,
+    "v8-all": 1505972,
+    "ss-3d-morph": 15440,
+    "ss-3d-raytrace": 17260,
+    "ss-access-binary-trees": 12860,
+    "ss-access-fannkuch": 7872,
+    "ss-access-nbody": 12672,
+    "ss-access-nsieve": 18268,
+    "ss-bitops-3bit-bits-in-byte": 12864,
+    "ss-bitops-bits-in-byte": 12480,
+    "ss-bitops-bitwise-and": 12288,
+    "ss-bitops-nsieve-bits": 13388,
+    "ss-controlflow-recursive": 7872,
+    "ss-crypto-aes": 13780,
+    "ss-crypto-md5": 13532,
+    "ss-crypto-sha1": 13384,
+    "ss-date-format-tofte": 13356,
+    "ss-date-format-xparb": 13392,
+    "ss-math-cordic": 12672,
+    "ss-math-partial-sums": 14592,
+    "ss-math-spectral-norm": 12480,
+    "ss-regexp-dna": 14008,
+    "ss-string-base64": 15184,
+    "ss-string-fasta": 17172,
+    "ss-string-tagcloud": 23532,
+    "ss-string-unpack-code": 19884,
+    "ss-string-validate-input": 14464,
+    "micro": 580892,
+    "ss-max": 23532
    }
   },
   "rss_rounds": {
@@ -5382,8 +5372,6 @@
    "ss-string-unpack-code",
    "ss-string-validate-input",
    "micro",
-   "alloc",
-   "mapset",
    "ss-max"
   ],
   "instances": {
@@ -5403,19 +5391,19 @@
      "1000": 3
     },
     "live_rss_kb": {
-     "0": 4936,
-     "1": 6672,
-     "10": 8664,
-     "100": 28444,
-     "1000": 231308
+     "0": 4800,
+     "1": 6144,
+     "10": 8064,
+     "100": 27840,
+     "1000": 230400
     },
     "after_kind": "after_gc",
     "after_rss_kb": {
-     "0": 5244,
-     "1": 6956,
-     "10": 8812,
-     "100": 27632,
-     "1000": 219396
+     "0": 5184,
+     "1": 6528,
+     "10": 8404,
+     "100": 26976,
+     "1000": 218788
     },
     "live_HeapSys": {
      "0": 3866624,
@@ -5425,25 +5413,25 @@
      "1000": 4653056
     },
     "after_HeapSys": {
-     "0": 3735552,
-     "1": 3702784,
-     "10": 3604480,
-     "100": 6946816,
-     "1000": 45711360
+     "0": 3637248,
+     "1": 3670016,
+     "10": 3538944,
+     "100": 6750208,
+     "1000": 49184768
     },
     "live_HeapInuse": {
-     "0": 417792,
-     "1": 466944,
-     "10": 573440,
-     "100": 606208,
-     "1000": 1572864
+     "0": 573440,
+     "1": 630784,
+     "10": 712704,
+     "100": 794624,
+     "1000": 1728512
     },
     "after_HeapInuse": {
-     "0": 409600,
-     "1": 417792,
-     "10": 475136,
-     "100": 507904,
-     "1000": 1073152
+     "0": 548864,
+     "1": 557056,
+     "10": 565248,
+     "100": 712704,
+     "1000": 1744896
     },
     "live_StackSys": {
      "0": 327680,
@@ -5453,11 +5441,11 @@
      "1000": 33095680
     },
     "after_StackSys": {
-     "0": 458752,
-     "1": 491520,
-     "10": 589824,
-     "100": 1441792,
-     "1000": 8814592
+     "0": 557056,
+     "1": 524288,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9535488
     },
     "live_StackInuse": {
      "0": 327680,
@@ -5467,11 +5455,11 @@
      "1000": 33095680
     },
     "after_StackInuse": {
-     "0": 458752,
-     "1": 491520,
-     "10": 589824,
-     "100": 1441792,
-     "1000": 8814592
+     "0": 557056,
+     "1": 524288,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9535488
     },
     "live_Sys": {
      "0": 6380560,
@@ -5481,21 +5469,21 @@
      "1000": 40459280
     },
     "after_Sys": {
-     "0": 7035920,
-     "1": 7035920,
-     "10": 7035920,
-     "100": 11754512,
-     "1000": 58416144
+     "0": 7298064,
+     "1": 7298064,
+     "10": 7560208,
+     "100": 12278800,
+     "1000": 65559568
     },
     "per_instance_kb": {
-     "1": 1736.0,
-     "10": 372.8,
-     "100": 235.08,
-     "1000": 226.372
+     "1": 1344.0,
+     "10": 326.4,
+     "100": 230.4,
+     "1000": 225.6
     },
-    "slope_1_1000_kb": 224.86086086086087,
-    "slope_1_1000_after_kb": 212.65265265265265,
-    "slope_lsq_kb": 224.99693701148541,
+    "slope_1_1000_kb": 224.48048048048048,
+    "slope_1_1000_after_kb": 212.47247247247248,
+    "slope_lsq_kb": 224.65244541946907,
     "stack_per_goroutine_b": {
      "1": 32768.0,
      "10": 32768.0,
@@ -5503,10 +5491,10 @@
      "1000": 32768.0
     },
     "stack_per_goroutine_after_gc_b": {
-     "1": 32768.0,
-     "10": 13107.2,
-     "100": 9830.4,
-     "1000": 8355.84
+     "1": -32768.0,
+     "10": 9830.4,
+     "100": 10813.44,
+     "1000": 8978.432
     }
    },
    "goc-bellard": {
@@ -5525,19 +5513,19 @@
      "1000": 3
     },
     "live_rss_kb": {
-     "0": 5004,
-     "1": 6548,
-     "10": 8316,
-     "100": 25692,
-     "1000": 205840
+     "0": 4608,
+     "1": 5952,
+     "10": 7872,
+     "100": 25152,
+     "1000": 204672
     },
     "after_kind": "after_gc",
     "after_rss_kb": {
-     "0": 5376,
-     "1": 6860,
-     "10": 8512,
-     "100": 25004,
-     "1000": 194016
+     "0": 4992,
+     "1": 6336,
+     "10": 8044,
+     "100": 24328,
+     "1000": 193716
     },
     "live_HeapSys": {
      "0": 3866624,
@@ -5547,25 +5535,25 @@
      "1000": 4653056
     },
     "after_HeapSys": {
-     "0": 3702784,
-     "1": 3735552,
-     "10": 3604480,
-     "100": 6946816,
-     "1000": 45711360
+     "0": 3670016,
+     "1": 3637248,
+     "10": 3538944,
+     "100": 6750208,
+     "1000": 49217536
     },
     "live_HeapInuse": {
-     "0": 425984,
-     "1": 516096,
-     "10": 548864,
-     "100": 679936,
-     "1000": 1572864
+     "0": 573440,
+     "1": 630784,
+     "10": 712704,
+     "100": 819200,
+     "1000": 1736704
     },
     "after_HeapInuse": {
-     "0": 417792,
-     "1": 458752,
-     "10": 434176,
-     "100": 565248,
-     "1000": 1073152
+     "0": 540672,
+     "1": 557056,
+     "10": 565248,
+     "100": 745472,
+     "1000": 1736704
     },
     "live_StackSys": {
      "0": 327680,
@@ -5575,11 +5563,11 @@
      "1000": 33095680
     },
     "after_StackSys": {
-     "0": 491520,
-     "1": 458752,
-     "10": 589824,
-     "100": 1441792,
-     "1000": 8814592
+     "0": 524288,
+     "1": 557056,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9502720
     },
     "live_StackInuse": {
      "0": 327680,
@@ -5589,35 +5577,35 @@
      "1000": 33095680
     },
     "after_StackInuse": {
-     "0": 491520,
-     "1": 458752,
-     "10": 589824,
-     "100": 1441792,
-     "1000": 8814592
+     "0": 524288,
+     "1": 557056,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9502720
     },
     "live_Sys": {
      "0": 6380560,
-     "1": 6642704,
+     "1": 6380560,
      "10": 6642704,
      "100": 10837008,
      "1000": 40459280
     },
     "after_Sys": {
-     "0": 7363600,
-     "1": 7035920,
-     "10": 7035920,
-     "100": 11754512,
-     "1000": 58154000
+     "0": 7298064,
+     "1": 7298064,
+     "10": 7298064,
+     "100": 12016656,
+     "1000": 65297424
     },
     "per_instance_kb": {
-     "1": 1544.0,
-     "10": 331.2,
-     "100": 206.88,
-     "1000": 200.836
+     "1": 1344.0,
+     "10": 326.4,
+     "100": 205.44,
+     "1000": 200.064
     },
-    "slope_1_1000_kb": 199.4914914914915,
-    "slope_1_1000_after_kb": 187.34334334334335,
-    "slope_lsq_kb": 199.6554186030848,
+    "slope_1_1000_kb": 198.9189189189189,
+    "slope_1_1000_after_kb": 187.56756756756758,
+    "slope_lsq_kb": 198.99431342551165,
     "stack_per_goroutine_b": {
      "1": 32768.0,
      "10": 32768.0,
@@ -5625,10 +5613,10 @@
      "1000": 32768.0
     },
     "stack_per_goroutine_after_gc_b": {
-     "1": -32768.0,
-     "10": 9830.4,
-     "100": 9502.72,
-     "1000": 8323.072
+     "1": 32768.0,
+     "10": 13107.2,
+     "100": 11141.12,
+     "1000": 8978.432
     }
    },
    "ng": {
@@ -5647,29 +5635,29 @@
      "1000": 3
     },
     "live_rss_kb": {
-     "0": 2116,
-     "1": 3152,
-     "10": 5100,
-     "100": 24336,
-     "1000": 213912
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 22464,
+     "1000": 211776
     },
     "after_kind": "after_trim",
     "after_rss_kb": {
-     "0": 2116,
-     "1": 3152,
-     "10": 5100,
-     "100": 24336,
-     "1000": 213912
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 22464,
+     "1000": 211776
     },
     "per_instance_kb": {
-     "1": 1036.0,
-     "10": 298.4,
-     "100": 222.2,
-     "1000": 211.796
+     "1": 960.0,
+     "10": 268.8,
+     "100": 207.36,
+     "1000": 210.048
     },
-    "slope_1_1000_kb": 210.97097097097097,
-    "slope_1_1000_after_kb": 210.97097097097097,
-    "slope_lsq_kb": 210.8766946665512
+    "slope_1_1000_kb": 209.2972972972973,
+    "slope_1_1000_after_kb": 209.2972972972973,
+    "slope_lsq_kb": 209.59601266249075
    },
    "ng-arena1": {
     "n": [
@@ -5687,29 +5675,29 @@
      "1000": 3
     },
     "live_rss_kb": {
-     "0": 2076,
-     "1": 3152,
-     "10": 5036,
-     "100": 23972,
-     "1000": 213272
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 21888,
+     "1000": 210816
     },
     "after_kind": "after_trim",
     "after_rss_kb": {
-     "0": 2076,
-     "1": 3152,
-     "10": 5036,
-     "100": 23972,
-     "1000": 213272
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 21888,
+     "1000": 210816
     },
     "per_instance_kb": {
-     "1": 1076.0,
-     "10": 296.0,
-     "100": 218.96,
-     "1000": 211.196
+     "1": 960.0,
+     "10": 268.8,
+     "100": 201.6,
+     "1000": 209.088
     },
-    "slope_1_1000_kb": 210.33033033033033,
-    "slope_1_1000_after_kb": 210.33033033033033,
-    "slope_lsq_kb": 210.33443985797996
+    "slope_1_1000_kb": 208.33633633633633,
+    "slope_1_1000_after_kb": 208.33633633633633,
+    "slope_lsq_kb": 208.75359139412484
    },
    "bellard": {
     "n": [
@@ -5727,29 +5715,29 @@
      "1000": 3
     },
     "live_rss_kb": {
-     "0": 2092,
-     "1": 3044,
-     "10": 4824,
-     "100": 22248,
-     "1000": 192588
+     "0": 1728,
+     "1": 2496,
+     "10": 4224,
+     "100": 21504,
+     "1000": 191424
     },
     "after_kind": "after_trim",
     "after_rss_kb": {
-     "0": 2092,
-     "1": 3044,
-     "10": 4824,
-     "100": 22248,
-     "1000": 192588
+     "0": 1728,
+     "1": 2496,
+     "10": 4224,
+     "100": 21504,
+     "1000": 191424
     },
     "per_instance_kb": {
-     "1": 952.0,
-     "10": 273.2,
-     "100": 201.56,
-     "1000": 190.496
+     "1": 768.0,
+     "10": 249.6,
+     "100": 197.76,
+     "1000": 189.696
     },
-    "slope_1_1000_kb": 189.73373373373374,
-    "slope_1_1000_after_kb": 189.73373373373374,
-    "slope_lsq_kb": 189.59959202917375
+    "slope_1_1000_kb": 189.11711711711712,
+    "slope_1_1000_after_kb": 189.11711711711712,
+    "slope_lsq_kb": 189.03489882515947
    },
    "goja": {
     "n": [
@@ -5767,110 +5755,110 @@
      "1000": 3
     },
     "live_rss_kb": {
-     "0": 5908,
-     "1": 8184,
-     "10": 10300,
-     "100": 18968,
-     "1000": 110116
+     "0": 5952,
+     "1": 7872,
+     "10": 9984,
+     "100": 18432,
+     "1000": 112320
     },
     "after_kind": "after_gc",
     "after_rss_kb": {
-     "0": 6356,
-     "1": 8464,
-     "10": 9636,
-     "100": 17452,
-     "1000": 93260
+     "0": 6336,
+     "1": 8256,
+     "10": 9664,
+     "100": 16444,
+     "1000": 92652
     },
     "live_HeapSys": {
-     "0": 3932160,
+     "0": 3899392,
      "1": 3866624,
      "10": 7929856,
-     "100": 11403264,
-     "1000": 97943552
+     "100": 14581760,
+     "1000": 109936640
     },
     "after_HeapSys": {
-     "0": 3702784,
-     "1": 3801088,
-     "10": 7700480,
-     "100": 15695872,
-     "1000": 100073472
+     "0": 3670016,
+     "1": 3571712,
+     "10": 7438336,
+     "100": 14843904,
+     "1000": 111706112
     },
     "live_HeapInuse": {
-     "0": 966656,
-     "1": 1228800,
-     "10": 3145728,
-     "100": 9289728,
-     "1000": 84221952
+     "0": 1130496,
+     "1": 1343488,
+     "10": 3260416,
+     "100": 10829824,
+     "1000": 82493440
     },
     "after_HeapInuse": {
-     "0": 892928,
-     "1": 991232,
-     "10": 1933312,
-     "100": 8822784,
-     "1000": 79929344
+     "0": 1007616,
+     "1": 1138688,
+     "10": 2088960,
+     "100": 9224192,
+     "1000": 80871424
     },
     "live_StackSys": {
-     "0": 262144,
+     "0": 294912,
      "1": 327680,
      "10": 458752,
-     "100": 1179648,
-     "1000": 6914048
+     "100": 2195456,
+     "1000": 7503872
     },
     "after_StackSys": {
-     "0": 491520,
-     "1": 393216,
-     "10": 688128,
-     "100": 1081344,
-     "1000": 4849664
+     "0": 524288,
+     "1": 622592,
+     "10": 950272,
+     "100": 1966080,
+     "1000": 5865472
     },
     "live_StackInuse": {
-     "0": 262144,
+     "0": 294912,
      "1": 327680,
      "10": 458752,
-     "100": 1179648,
-     "1000": 6914048
+     "100": 2195456,
+     "1000": 7503872
     },
     "after_StackInuse": {
-     "0": 491520,
-     "1": 393216,
-     "10": 688128,
-     "100": 1081344,
-     "1000": 4849664
+     "0": 524288,
+     "1": 622592,
+     "10": 950272,
+     "100": 1966080,
+     "1000": 5865472
     },
     "live_Sys": {
-     "0": 6380560,
-     "1": 6642704,
-     "10": 11361296,
-     "100": 16735248,
-     "1000": 112322592
+     "0": 6642704,
+     "1": 6904848,
+     "10": 11099152,
+     "100": 24075280,
+     "1000": 127248416
     },
     "after_Sys": {
-     "0": 7560208,
-     "1": 7363600,
-     "10": 12278800,
-     "100": 20929552,
-     "1000": 112322592
+     "0": 7822352,
+     "1": 8084496,
+     "10": 13327376,
+     "100": 24075280,
+     "1000": 127510560
     },
     "per_instance_kb": {
-     "1": 2276.0,
-     "10": 439.2,
-     "100": 130.6,
-     "1000": 104.208
+     "1": 1920.0,
+     "10": 403.2,
+     "100": 124.8,
+     "1000": 106.368
     },
-    "slope_1_1000_kb": 102.03403403403404,
-    "slope_1_1000_after_kb": 84.88088088088088,
-    "slope_lsq_kb": 101.40394564237765,
+    "slope_1_1000_kb": 104.55255255255256,
+    "slope_1_1000_after_kb": 84.48048048048048,
+    "slope_lsq_kb": 104.05257435364528,
     "stack_per_goroutine_b": {
-     "1": 65536.0,
-     "10": 19660.8,
-     "100": 9175.04,
-     "1000": 6651.904
+     "1": 32768.0,
+     "10": 16384.0,
+     "100": 19005.44,
+     "1000": 7208.96
     },
     "stack_per_goroutine_after_gc_b": {
-     "1": -98304.0,
-     "10": 19660.8,
-     "100": 5898.24,
-     "1000": 4358.144
+     "1": 98304.0,
+     "10": 42598.4,
+     "100": 14417.92,
+     "1000": 5341.184
     }
    }
   }
@@ -5882,81 +5870,81 @@
    "goc-bellard"
   ],
   "env": [
-   "date: 2026-09-27 16:46:59 KST",
-   "host: Linux 6.12.94+ x86_64, 8 vCPU, pinned to CPU 3",
-   "goc commit: 208df3b6c481d671c974c9f6b0701d2cf4c0ca31",
-   "bellard-clang: /workspace/perf-study/bellard/clang-O2/qjs --stack-size 16M  sha256=d9d6b42df26072c9",
-   "bellard: /workspace/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=a3d523c5339272e6",
-   "goc-bellard: /workspace/goc/build/qjs-bellard/qjscli --stack-size 16384  sha256=ff920f74ab585712",
+   "date: 2026-10-08 23:59:05 CST",
+   "host: Linux 6.8.0-49-generic x86_64, 24 vCPU, pinned to CPU 3",
+   "goc commit: fb30848d072099cf37e4e0d90b0c5a25b14950ef",
+   "bellard-clang: /tmp/goc-perf/perf-study/bellard/clang-O2/qjs --stack-size 16M  sha256=333f46fdf7769710",
+   "bellard: /tmp/goc-perf/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=bf9721414ae3c5f4",
+   "goc-bellard: /home/wangyilei/my_sources/goc/build/qjs-bellard/qjscli --stack-size 16384 --script  sha256=62a98d80b439f078",
    "rounds: v8=5 ss=3 micro=3 microcall=5"
   ],
   "v8_median": {
    "bellard-clang": {
-    "Richards": 874,
-    "DeltaBlue": 866,
-    "Crypto": 988,
-    "RayTrace": 1844,
-    "EarleyBoyer": 2420,
-    "RegExp": 437,
-    "Splay": 3463,
-    "NavierStokes": 1902,
-    "Score": 1327
+    "Richards": 1198,
+    "DeltaBlue": 1194,
+    "Crypto": 1259,
+    "RayTrace": 3004,
+    "EarleyBoyer": 3636,
+    "RegExp": 581,
+    "Splay": 5623,
+    "NavierStokes": 2432,
+    "Score": 1883
    },
    "bellard": {
-    "Richards": 1023,
-    "DeltaBlue": 945,
-    "Crypto": 1351,
-    "RayTrace": 1950,
-    "EarleyBoyer": 2528,
-    "RegExp": 539,
-    "Splay": 3509,
-    "NavierStokes": 2803,
-    "Score": 1544
+    "Richards": 1354,
+    "DeltaBlue": 1264,
+    "Crypto": 1426,
+    "RayTrace": 2974,
+    "EarleyBoyer": 3636,
+    "RegExp": 662,
+    "Splay": 5452,
+    "NavierStokes": 2699,
+    "Score": 2008
    },
    "goc-bellard": {
-    "Richards": 809,
-    "DeltaBlue": 826,
-    "Crypto": 939,
-    "RayTrace": 1660,
-    "EarleyBoyer": 2331,
-    "RegExp": 439,
-    "Splay": 3216,
-    "NavierStokes": 1753,
-    "Score": 1248
+    "Richards": 1139,
+    "DeltaBlue": 1104,
+    "Crypto": 1293,
+    "RayTrace": 2659,
+    "EarleyBoyer": 3091,
+    "RegExp": 628,
+    "Splay": 4963,
+    "NavierStokes": 2612,
+    "Score": 1793
    }
   },
   "v8_rounds": {
    "bellard-clang": [
-    1327,
-    1331,
-    1322,
-    1324,
-    1341
+    1886,
+    1884,
+    1865,
+    1852,
+    1883
    ],
    "bellard": [
-    1544,
-    1533,
-    1552,
-    1546,
-    1533
+    2008,
+    1965,
+    2019,
+    2015,
+    2003
    ],
    "goc-bellard": [
-    1248,
-    1245,
-    1232,
-    1253,
-    1255
+    1786,
+    1793,
+    1808,
+    1808,
+    1754
    ]
   },
   "ss_geomean": {
-   "bellard-clang": 13.69534831595767,
-   "bellard": 10.654969585918277,
-   "goc-bellard": 15.55764794931357
+   "bellard-clang": 9.217976037459895,
+   "bellard": 8.397141422572373,
+   "goc-bellard": 9.40408517177762
   },
   "micro_geomean": {
-   "bellard-clang": 40.4393540159243,
-   "bellard": 32.713953407201856,
-   "goc-bellard": 46.13147062176897
+   "bellard-clang": 32.98931189204362,
+   "bellard": 31.168019929059373,
+   "goc-bellard": 35.73408974207909
   }
  }
 }

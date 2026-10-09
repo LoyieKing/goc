@@ -50,8 +50,8 @@ skip() { [[ " $SKIP " == *" $1 "* ]]; }
 
 cmd() {  # same command lines as scripts/bench-all.sh
   case "$1" in
-    goc-ng)  echo "$GOC --stack-size 16384" ;;
-    goc-bellard) echo "$GOCB --stack-size 16384" ;;
+    goc-ng)  echo "$GOC --stack-size 16384 --script" ;;
+    goc-bellard) echo "$GOCB --stack-size 16384 --script" ;;
     ng)      echo "$NG -C --stack-size 16384" ;;
     bellard) echo "$BELLARD --stack-size 16M" ;;
     goja)    if [[ "${2:-}" == micro ]]; then echo "$GOJA --micro"; else echo "$GOJA"; fi ;;
@@ -64,7 +64,10 @@ order() { local r=$1 n=${#ENGINES[@]} i; for ((i = 0; i < n; i++)); do echo "${E
 V8SUITES=(Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp Splay NavierStokes)
 for s in "${V8SUITES[@]}"; do
   # Same file, but only suite $s runs (the other suites are still parsed).
-  awk -v s="$s" 'NR == 1 { print "globalThis.__ONLY = \"" s "\";" }
+  # Keep a leading "use strict" as the first statement. Putting __ONLY
+  # above it would turn the directive into a no-op string.
+  awk -v s="$s" 'NR == 1 && $0 == "\"use strict\";" { print; print "globalThis.__ONLY = \"" s "\";"; next }
+    NR == 1 { print "globalThis.__ONLY = \"" s "\";" }
     /^try \{$/ && !done { print "BenchmarkSuite.suites = BenchmarkSuite.suites.filter(function (x) { return x.name === __ONLY; });"; done = 1 }
     { print }' "$V8JS" > "$HB/v8-$s.js"
 done
@@ -125,8 +128,10 @@ if ! skip rss; then
       measure "$f" v8-all "$HB" $c "$V8JS"
       for js in "$SSDIR"/*.js; do measure "$f" "ss-$(basename "$js" .js)" "$SSDIR" $c "$js"; done
       measure "$f" micro "$HB" $(cmd $e micro) "$MB"
-      measure "$f" alloc "$HB" $c "$ALLOCJS"
-      measure "$f" mapset "$HB" $c "$MAPSETJS"
+      # alloc.js and mapset.js are not in the repo. Skip a missing file
+      # instead of recording a failed open as a workload.
+      if [[ -f "$ALLOCJS" ]]; then measure "$f" alloc "$HB" $c "$ALLOCJS"; fi
+      if [[ -f "$MAPSETJS" ]]; then measure "$f" mapset "$HB" $c "$MAPSETJS"; fi
       echo "rss r$r $e: $(awk '$1=="empty"||$1=="v8-all"||$1=="micro"{printf "%s=%s ", $1, $2}' "$f")"
     done
   done

@@ -1,84 +1,84 @@
 === goc ===
-arith ms=76 ns/call=0 sink=-1526072448
-propget ms=77 ns/call=0 sink=148000000
-empty ms=70 ns/call=35 sink=2000000
-id ms=74 ns/call=37 sink=1999999000000
-six ms=64 ns/call=64 sink=500014500000
-eight ms=70 ns/call=70 sink=500027500000
-method ms=74 ns/call=74 sink=4500065500000
-depth4 ms=53 ns/call=26 sink=500000
-closure ms=38 ns/call=38 sink=4500064500000
-mutual ms=62 ns/call=31 sink=0
-sched ms=165 ns/call=82 sink=1500000
-MICROCALL {"score":21305,"calls":14000000,"ms":670,"cases":[{"name":"arith","ms":76,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":77,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":70,"n":2000000,"calls":2000000,"ns":35,"control":false,"sink":2000000},{"name":"id","ms":74,"n":2000000,"calls":2000000,"ns":37,"control":false,"sink":1999999000000},{"name":"six","ms":64,"n":1000000,"calls":1000000,"ns":64,"control":false,"sink":500014500000},{"name":"eight","ms":70,"n":1000000,"calls":1000000,"ns":70,"control":false,"sink":500027500000},{"name":"method","ms":74,"n":1000000,"calls":1000000,"ns":74,"control":false,"sink":4500065500000},{"name":"depth4","ms":53,"n":500000,"calls":2000000,"ns":26.5,"control":false,"sink":500000},{"name":"closure","ms":38,"n":1000000,"calls":1000000,"ns":38,"control":false,"sink":4500064500000},{"name":"mutual","ms":62,"n":400000,"calls":2000000,"ns":31,"control":false,"sink":0},{"name":"sched","ms":165,"n":1000000,"calls":2000000,"ns":82.5,"control":false,"sink":1500000}]}
+arith ms=46 ns/call=0 sink=-1526072448
+propget ms=62 ns/call=0 sink=148000000
+empty ms=55 ns/call=27 sink=2000000
+id ms=60 ns/call=30 sink=1999999000000
+six ms=47 ns/call=47 sink=500014500000
+eight ms=54 ns/call=54 sink=500027500000
+method ms=64 ns/call=64 sink=4500065500000
+depth4 ms=39 ns/call=19 sink=500000
+closure ms=29 ns/call=29 sink=4500064500000
+mutual ms=44 ns/call=22 sink=0
+sched ms=115 ns/call=57 sink=1500000
+MICROCALL {"score":27957,"calls":14000000,"ms":507,"cases":[{"name":"arith","ms":46,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":62,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":55,"n":2000000,"calls":2000000,"ns":27.5,"control":false,"sink":2000000},{"name":"id","ms":60,"n":2000000,"calls":2000000,"ns":30,"control":false,"sink":1999999000000},{"name":"six","ms":47,"n":1000000,"calls":1000000,"ns":47,"control":false,"sink":500014500000},{"name":"eight","ms":54,"n":1000000,"calls":1000000,"ns":54,"control":false,"sink":500027500000},{"name":"method","ms":64,"n":1000000,"calls":1000000,"ns":64,"control":false,"sink":4500065500000},{"name":"depth4","ms":39,"n":500000,"calls":2000000,"ns":19.5,"control":false,"sink":500000},{"name":"closure","ms":29,"n":1000000,"calls":1000000,"ns":29,"control":false,"sink":4500064500000},{"name":"mutual","ms":44,"n":400000,"calls":2000000,"ns":22,"control":false,"sink":0},{"name":"sched","ms":115,"n":1000000,"calls":2000000,"ns":57.5,"control":false,"sink":1500000}]}
 
 === native ===
-arith ms=77 ns/call=0 sink=-1526072448
-propget ms=79 ns/call=0 sink=148000000
-empty ms=62 ns/call=31 sink=2000000
-id ms=70 ns/call=35 sink=1999999000000
-six ms=62 ns/call=62 sink=500014500000
-eight ms=71 ns/call=71 sink=500027500000
-method ms=69 ns/call=69 sink=4500065500000
-depth4 ms=51 ns/call=25 sink=500000
-closure ms=40 ns/call=40 sink=4500064500000
-mutual ms=53 ns/call=26 sink=0
-sched ms=138 ns/call=69 sink=1500000
-MICROCALL {"score":22742,"calls":14000000,"ms":616,"cases":[{"name":"arith","ms":77,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":79,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":62,"n":2000000,"calls":2000000,"ns":31,"control":false,"sink":2000000},{"name":"id","ms":70,"n":2000000,"calls":2000000,"ns":35,"control":false,"sink":1999999000000},{"name":"six","ms":62,"n":1000000,"calls":1000000,"ns":62,"control":false,"sink":500014500000},{"name":"eight","ms":71,"n":1000000,"calls":1000000,"ns":71,"control":false,"sink":500027500000},{"name":"method","ms":69,"n":1000000,"calls":1000000,"ns":69,"control":false,"sink":4500065500000},{"name":"depth4","ms":51,"n":500000,"calls":2000000,"ns":25.5,"control":false,"sink":500000},{"name":"closure","ms":40,"n":1000000,"calls":1000000,"ns":40,"control":false,"sink":4500064500000},{"name":"mutual","ms":53,"n":400000,"calls":2000000,"ns":26.5,"control":false,"sink":0},{"name":"sched","ms":138,"n":1000000,"calls":2000000,"ns":69,"control":false,"sink":1500000}]}
+arith ms=48 ns/call=0 sink=-1526072448
+propget ms=67 ns/call=0 sink=148000000
+empty ms=48 ns/call=24 sink=2000000
+id ms=53 ns/call=26 sink=1999999000000
+six ms=49 ns/call=49 sink=500014500000
+eight ms=68 ns/call=68 sink=500027500000
+method ms=59 ns/call=59 sink=4500065500000
+depth4 ms=31 ns/call=15 sink=500000
+closure ms=29 ns/call=29 sink=4500064500000
+mutual ms=45 ns/call=22 sink=0
+sched ms=124 ns/call=62 sink=1500000
+MICROCALL {"score":28588,"calls":14000000,"ms":506,"cases":[{"name":"arith","ms":48,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":67,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":48,"n":2000000,"calls":2000000,"ns":24,"control":false,"sink":2000000},{"name":"id","ms":53,"n":2000000,"calls":2000000,"ns":26.5,"control":false,"sink":1999999000000},{"name":"six","ms":49,"n":1000000,"calls":1000000,"ns":49,"control":false,"sink":500014500000},{"name":"eight","ms":68,"n":1000000,"calls":1000000,"ns":68,"control":false,"sink":500027500000},{"name":"method","ms":59,"n":1000000,"calls":1000000,"ns":59,"control":false,"sink":4500065500000},{"name":"depth4","ms":31,"n":500000,"calls":2000000,"ns":15.5,"control":false,"sink":500000},{"name":"closure","ms":29,"n":1000000,"calls":1000000,"ns":29,"control":false,"sink":4500064500000},{"name":"mutual","ms":45,"n":400000,"calls":2000000,"ns":22.5,"control":false,"sink":0},{"name":"sched","ms":124,"n":1000000,"calls":2000000,"ns":62,"control":false,"sink":1500000}]}
 
 === goc-bellard ===
-arith ms=95 ns/call=0 sink=-1526072448
-propget ms=90 ns/call=0 sink=148000000
-empty ms=74 ns/call=37 sink=2000000
-id ms=83 ns/call=41 sink=1999999000000
-six ms=71 ns/call=71 sink=500014500000
-eight ms=86 ns/call=86 sink=500027500000
-method ms=72 ns/call=72 sink=4500065500000
-depth4 ms=76 ns/call=38 sink=500000
-closure ms=65 ns/call=65 sink=4500064500000
-mutual ms=68 ns/call=34 sink=0
-sched ms=152 ns/call=76 sink=1500000
-MICROCALL {"score":18317,"calls":14000000,"ms":747,"cases":[{"name":"arith","ms":95,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":90,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":74,"n":2000000,"calls":2000000,"ns":37,"control":false,"sink":2000000},{"name":"id","ms":83,"n":2000000,"calls":2000000,"ns":41.5,"control":false,"sink":1999999000000},{"name":"six","ms":71,"n":1000000,"calls":1000000,"ns":71,"control":false,"sink":500014500000},{"name":"eight","ms":86,"n":1000000,"calls":1000000,"ns":86,"control":false,"sink":500027500000},{"name":"method","ms":72,"n":1000000,"calls":1000000,"ns":72,"control":false,"sink":4500065500000},{"name":"depth4","ms":76,"n":500000,"calls":2000000,"ns":38,"control":false,"sink":500000},{"name":"closure","ms":65,"n":1000000,"calls":1000000,"ns":65,"control":false,"sink":4500064500000},{"name":"mutual","ms":68,"n":400000,"calls":2000000,"ns":34,"control":false,"sink":0},{"name":"sched","ms":152,"n":1000000,"calls":2000000,"ns":76,"control":false,"sink":1500000}]}
+arith ms=52 ns/call=0 sink=-1526072448
+propget ms=56 ns/call=0 sink=148000000
+empty ms=54 ns/call=27 sink=2000000
+id ms=57 ns/call=28 sink=1999999000000
+six ms=44 ns/call=44 sink=500014500000
+eight ms=52 ns/call=52 sink=500027500000
+method ms=59 ns/call=59 sink=4500065500000
+depth4 ms=44 ns/call=22 sink=500000
+closure ms=32 ns/call=32 sink=4500064500000
+mutual ms=46 ns/call=23 sink=0
+sched ms=121 ns/call=60 sink=1500000
+MICROCALL {"score":27772,"calls":14000000,"ms":509,"cases":[{"name":"arith","ms":52,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":56,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":54,"n":2000000,"calls":2000000,"ns":27,"control":false,"sink":2000000},{"name":"id","ms":57,"n":2000000,"calls":2000000,"ns":28.5,"control":false,"sink":1999999000000},{"name":"six","ms":44,"n":1000000,"calls":1000000,"ns":44,"control":false,"sink":500014500000},{"name":"eight","ms":52,"n":1000000,"calls":1000000,"ns":52,"control":false,"sink":500027500000},{"name":"method","ms":59,"n":1000000,"calls":1000000,"ns":59,"control":false,"sink":4500065500000},{"name":"depth4","ms":44,"n":500000,"calls":2000000,"ns":22,"control":false,"sink":500000},{"name":"closure","ms":32,"n":1000000,"calls":1000000,"ns":32,"control":false,"sink":4500064500000},{"name":"mutual","ms":46,"n":400000,"calls":2000000,"ns":23,"control":false,"sink":0},{"name":"sched","ms":121,"n":1000000,"calls":2000000,"ns":60.5,"control":false,"sink":1500000}]}
 
 === bellard ===
-arith ms=54 ns/call=0 sink=-1526072448
-propget ms=51 ns/call=0 sink=148000000
-empty ms=48 ns/call=24 sink=2000000
-id ms=48 ns/call=24 sink=1999999000000
-six ms=48 ns/call=48 sink=500014500000
-eight ms=56 ns/call=56 sink=500027500000
-method ms=56 ns/call=56 sink=4500065500000
+arith ms=39 ns/call=0 sink=-1526072448
+propget ms=53 ns/call=0 sink=148000000
+empty ms=50 ns/call=25 sink=2000000
+id ms=50 ns/call=25 sink=1999999000000
+six ms=42 ns/call=42 sink=500014500000
+eight ms=50 ns/call=50 sink=500027500000
+method ms=53 ns/call=53 sink=4500065500000
 depth4 ms=32 ns/call=16 sink=500000
-closure ms=27 ns/call=27 sink=4500064500000
-mutual ms=45 ns/call=22 sink=0
-sched ms=105 ns/call=52 sink=1500000
-MICROCALL {"score":30464,"calls":14000000,"ms":465,"cases":[{"name":"arith","ms":54,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":51,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":48,"n":2000000,"calls":2000000,"ns":24,"control":false,"sink":2000000},{"name":"id","ms":48,"n":2000000,"calls":2000000,"ns":24,"control":false,"sink":1999999000000},{"name":"six","ms":48,"n":1000000,"calls":1000000,"ns":48,"control":false,"sink":500014500000},{"name":"eight","ms":56,"n":1000000,"calls":1000000,"ns":56,"control":false,"sink":500027500000},{"name":"method","ms":56,"n":1000000,"calls":1000000,"ns":56,"control":false,"sink":4500065500000},{"name":"depth4","ms":32,"n":500000,"calls":2000000,"ns":16,"control":false,"sink":500000},{"name":"closure","ms":27,"n":1000000,"calls":1000000,"ns":27,"control":false,"sink":4500064500000},{"name":"mutual","ms":45,"n":400000,"calls":2000000,"ns":22.5,"control":false,"sink":0},{"name":"sched","ms":105,"n":1000000,"calls":2000000,"ns":52.5,"control":false,"sink":1500000}]}
+closure ms=29 ns/call=29 sink=4500064500000
+mutual ms=42 ns/call=21 sink=0
+sched ms=103 ns/call=51 sink=1500000
+MICROCALL {"score":31277,"calls":14000000,"ms":451,"cases":[{"name":"arith","ms":39,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":53,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":50,"n":2000000,"calls":2000000,"ns":25,"control":false,"sink":2000000},{"name":"id","ms":50,"n":2000000,"calls":2000000,"ns":25,"control":false,"sink":1999999000000},{"name":"six","ms":42,"n":1000000,"calls":1000000,"ns":42,"control":false,"sink":500014500000},{"name":"eight","ms":50,"n":1000000,"calls":1000000,"ns":50,"control":false,"sink":500027500000},{"name":"method","ms":53,"n":1000000,"calls":1000000,"ns":53,"control":false,"sink":4500065500000},{"name":"depth4","ms":32,"n":500000,"calls":2000000,"ns":16,"control":false,"sink":500000},{"name":"closure","ms":29,"n":1000000,"calls":1000000,"ns":29,"control":false,"sink":4500064500000},{"name":"mutual","ms":42,"n":400000,"calls":2000000,"ns":21,"control":false,"sink":0},{"name":"sched","ms":103,"n":1000000,"calls":2000000,"ns":51.5,"control":false,"sink":1500000}]}
 
 === goja ===
-arith ms=561 ns/call=0 sink=-1526072448
-propget ms=413 ns/call=0 sink=148000000
-empty ms=315 ns/call=157 sink=2000000
-id ms=323 ns/call=161 sink=1999999000000
-six ms=360 ns/call=360 sink=500014500000
-eight ms=429 ns/call=429 sink=500027500000
-method ms=275 ns/call=275 sink=4500065500000
-depth4 ms=155 ns/call=77 sink=500000
-closure ms=180 ns/call=180 sink=4500064500000
-mutual ms=255 ns/call=127 sink=0
-sched ms=441 ns/call=220 sink=1500000
-MICROCALL {"score":5106,"calls":14000000,"ms":2733,"cases":[{"name":"arith","ms":561,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":413,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":315,"n":2000000,"calls":2000000,"ns":157.5,"control":false,"sink":2000000},{"name":"id","ms":323,"n":2000000,"calls":2000000,"ns":161.5,"control":false,"sink":1999999000000},{"name":"six","ms":360,"n":1000000,"calls":1000000,"ns":360,"control":false,"sink":500014500000},{"name":"eight","ms":429,"n":1000000,"calls":1000000,"ns":429,"control":false,"sink":500027500000},{"name":"method","ms":275,"n":1000000,"calls":1000000,"ns":275,"control":false,"sink":4500065500000},{"name":"depth4","ms":155,"n":500000,"calls":2000000,"ns":77.5,"control":false,"sink":500000},{"name":"closure","ms":180,"n":1000000,"calls":1000000,"ns":180,"control":false,"sink":4500064500000},{"name":"mutual","ms":255,"n":400000,"calls":2000000,"ns":127.5,"control":false,"sink":0},{"name":"sched","ms":441,"n":1000000,"calls":2000000,"ns":220.5,"control":false,"sink":1500000}]}
+arith ms=419 ns/call=0 sink=-1526072448
+propget ms=337 ns/call=0 sink=148000000
+empty ms=233 ns/call=116 sink=2000000
+id ms=239 ns/call=119 sink=1999999000000
+six ms=255 ns/call=255 sink=500014500000
+eight ms=306 ns/call=306 sink=500027500000
+method ms=193 ns/call=193 sink=4500065500000
+depth4 ms=128 ns/call=64 sink=500000
+closure ms=139 ns/call=139 sink=4500064500000
+mutual ms=187 ns/call=93 sink=0
+sched ms=331 ns/call=165 sink=1500000
+MICROCALL {"score":6882,"calls":14000000,"ms":2011,"cases":[{"name":"arith","ms":419,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":337,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":233,"n":2000000,"calls":2000000,"ns":116.5,"control":false,"sink":2000000},{"name":"id","ms":239,"n":2000000,"calls":2000000,"ns":119.5,"control":false,"sink":1999999000000},{"name":"six","ms":255,"n":1000000,"calls":1000000,"ns":255,"control":false,"sink":500014500000},{"name":"eight","ms":306,"n":1000000,"calls":1000000,"ns":306,"control":false,"sink":500027500000},{"name":"method","ms":193,"n":1000000,"calls":1000000,"ns":193,"control":false,"sink":4500065500000},{"name":"depth4","ms":128,"n":500000,"calls":2000000,"ns":64,"control":false,"sink":500000},{"name":"closure","ms":139,"n":1000000,"calls":1000000,"ns":139,"control":false,"sink":4500064500000},{"name":"mutual","ms":187,"n":400000,"calls":2000000,"ns":93.5,"control":false,"sink":0},{"name":"sched","ms":331,"n":1000000,"calls":2000000,"ns":165.5,"control":false,"sink":1500000}]}
 
 case           goc ms  native msgoc-bellard ms bellard ms    goja ms   goc/nat
-arith              76         77         95         54        561      0.99
-propget            77         79         90         51        413      0.97
-empty              70         62         74         48        315      1.13
-id                 74         70         83         48        323      1.06
-six                64         62         71         48        360      1.03
-eight              70         71         86         56        429      0.99
-method             74         69         72         56        275      1.07
-depth4             53         51         76         32        155      1.04
-closure            38         40         65         27        180      0.95
-mutual             62         53         68         45        255      1.17
-sched             165        138        152        105        441      1.20
-score           21305      22742      18317      30464       5106      1.07
+arith              46         48         52         39        419      0.96
+propget            62         67         56         53        337      0.93
+empty              55         48         54         50        233      1.15
+id                 60         53         57         50        239      1.13
+six                47         49         44         42        255      0.96
+eight              54         68         52         50        306      0.79
+method             64         59         59         53        193      1.08
+depth4             39         31         44         32        128      1.26
+closure            29         29         32         29        139      1.00
+mutual             44         45         46         42        187      0.98
+sched             115        124        121        103        331      0.93
+score           27957      28588      27772      31277       6882      1.02
 score is calls/ms, geometric mean of the call cases; goc/nat > 1 means goc is slower

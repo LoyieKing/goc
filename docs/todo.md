@@ -106,12 +106,13 @@
 - goc-ng：test262 1502/1526，栈增长扫描 300/300。`tests.conf` 套件 116/116。`quickjs.ll` 里没有函数读 `g` 超过一次，`JS_CallInternal` 是 1 次。
 - goc-bellard：test262 1501/1526，栈增长扫描 300/300。Bellard `tests/` 按函数 77/77，`make test` 的整文件（含 `test_builtin.js --std`、`test_std.js`、`test_rw_handler.js`）通过。同样每个函数最多一次 `g` 读取。
 - 两边 CLI：`Math.sin(1).toString()` 为 `0.8414709848078965`。
+- 五引擎对照（[benchmark.md](benchmark.md)，2026-10-09）里，同一套 Bellard `tests/test_*.js` 按函数计是 goc-ng 73/77（与 native ng 相同）、goc-bellard 77/77（与 native Bellard 相同）。上面的 `tests.conf` 116/116 是另一套。
 - Bellard 和 ng 的 `libregexp`：隐式 uptr 存储 2，解码指针加载 0。
 - `backend/realbody/check_arm64.sh` 通过。arm64 ELF 没有在 qemu 里执行。
 
 ### RegExp（V8 里差距最大的子项）
 
-同样的编译参数下，goc 的 RegExp 多执行 36% 的指令，耗时是原生的 1.24 到 1.28 倍。原因见 perf-gap.md 第 4.4 和 4.5 节。
+2026-09-27 的指令计数里，同样的编译参数下 goc 的 RegExp 多执行 36% 的指令，耗时是原生的 1.24 到 1.28 倍（见 perf-gap.md 第 4.4 和 4.5 节）。2026-10-09 的 V8 RegExp 分数比是 goc-ng/ng 0.90、goc-bellard/Bellard 0.94。这次没有重测指令数。
 
 - **恢复回溯栈时不再解码（E1）。** 已进两份 `scripts/qjs-gstack*.patch`。`pc` / `cptr` / `capture` 用 `(uint8_t *)(uintptr_t)(elem).val`。`next_sp` 仍走 `goc_regexp_restore_stackptr`（`goc_uptr_decode`）：它保存的是真栈地址。标成 `cptr` 的做法（E2）没有采用。
   - 收益：合入前只编译未运行。`lre_exec` 的 `FS:-8` 读取 29 → 0，TU 隐式 uptr 存储 12 → 2，`lre_exec` spill 根槽 12 → 7、根重载 52 → 12。按指令份额估计 RegExp 指令数少约 15 个点。这次默认构建上 Bellard 和 ng 的 `libregexp` 都是隐式 uptr 存储 2、解码加载 0。

@@ -10,6 +10,9 @@
 # Inputs (override with env):
 #   GOC      build/qjs/qjscli          (goc-ng: scripts/qjs-cli-build.sh, O3 + NDEBUG)
 #   GOCB     build/qjs-bellard/qjscli  (goc-bellard: QJS_FLAVOR=bellard scripts/qjs-cli-build.sh)
+# goc commands pass --script. qjscli follows quickjs-ng's JS_DetectModule,
+# which treats any source that compiles as a module as a module. These
+# benchmarks are classic scripts, same as native ng's -C.
 #   NG       native QuickJS-ng 0.17.0 qjs (CMake Release, clang-19 -O2 -DNDEBUG)
 #   BELLARD  Bellard QuickJS 2026-06-04 qjs (upstream Makefile, gcc -O2)
 #   BELLARD_CLANG  same Bellard sources, upstream Makefile with CONFIG_CLANG=y CC=clang-19 (-O2), reference only
@@ -56,8 +59,8 @@ cmd() {  # cmd ENGINE [micro] -> command prefix (file appended by caller)
     if [[ -n "$line" ]]; then echo "$line"; return; fi
   fi
   case "$1" in
-    goc-ng)  echo "$GOC --stack-size 16384" ;;
-    goc-bellard) echo "$GOCB --stack-size 16384" ;;
+    goc-ng)  echo "$GOC --stack-size 16384 --script" ;;
+    goc-bellard) echo "$GOCB --stack-size 16384 --script" ;;
     ng)      echo "$NG -C --stack-size 16384" ;;
     bellard) echo "$BELLARD --stack-size 16M" ;;
     bellard-clang) echo "$BELLARD_CLANG --stack-size 16M" ;;

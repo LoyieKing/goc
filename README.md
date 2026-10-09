@@ -80,11 +80,11 @@ The full rules are in [docs/syntax-guide.md](docs/syntax-guide.md) (Chinese).
 
 #### Compilation
 
-The goc compiler is a modified Clang/LLVM: the frontend checks and infers pointer colors, the backend emits machine code that follows Go's stack rules, and the output is an object file the Go toolchain links directly. goc therefore interoperates seamlessly with Go while the C code still gets LLVM's full optimizer, keeping production-grade C performance: the same QuickJS compiled with goc reaches about 93% of the native build on the V8 benchmark, and 4.5× Goja, a pure-Go JS engine (see Benchmarks).
+The goc compiler is a modified Clang/LLVM: the frontend checks and infers pointer colors, the backend emits machine code that follows Go's stack rules, and the output is an object file the Go toolchain links directly. goc therefore interoperates seamlessly with Go while the C code still gets LLVM's full optimizer, keeping production-grade C performance: on the V8 benchmark, goc-ng reaches about 92% of native QuickJS-ng and about 4.1× Goja, and goc-bellard reaches about 90% of the gcc Bellard build and about 4.7× Goja (see Benchmarks).
 
 ## Benchmarks
 
-QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's original QuickJS. The five JS engines below were measured on the same machine in the same session (2026-09-27):
+QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's original QuickJS. The five JS engines below were measured on the same machine in the same session (2026-10-09, AMD Ryzen 9 7900X):
 
 | Engine | Description |
 |---|---|
@@ -98,12 +98,12 @@ QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's orig
 
 | Suite | goc-ng | goc-bellard | native ng | native Bellard | Goja | How to read |
 |---|---:|---:|---:|---:|---:|---|
-| V8-v7 total | 1119 | 1247 | 1203 | 1558 | 247 | score, higher is faster |
-| SunSpider geomean (ms) | 16.68 | 15.50 | 15.81 | 10.64 | 97.27 | time, lower is faster |
-| microbench geomean (ns) | 55.5 | 45.4 | 52.3 | 32.4 | 195.6 | time, lower is faster |
-| Call microbenchmark (calls/ms) | 21596 | 20781 | 23337 | 30784 | 5106 | score, higher is faster |
+| V8-v7 total | 1534 | 1781 | 1662 | 1988 | 377 | score, higher is faster |
+| SunSpider geomean (ms) | 11.18 | 9.39 | 10.99 | 8.24 | 61.49 | time, lower is faster |
+| microbench geomean (ns) | 46.7 | 35.5 | 42.9 | 31.4 | 152.1 | time, lower is faster |
+| Call microbenchmark (calls/ms) | 27907 | 27772 | 29096 | 31277 | 6828 | score, higher is faster |
 | test262 sample passed | 1502/1526 | 1501/1526 | 1502/1526 | 1501/1526 | 1453/1526 | |
-| QuickJS official tests | 69/77 | 73/77 | 69/77 | 73/77 | 58/77 | |
+| QuickJS official tests | 73/77 | 77/77 | 73/77 | 77/77 | 58/77 | |
 
 **Correctness:** both goc builds match their native counterparts test for test.
 
@@ -115,15 +115,15 @@ QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's orig
 
 | Test | goc-ng | goc-bellard | native ng | native Bellard | Goja |
 |---|---:|---:|---:|---:|---:|
-| Richards | 768 | 815 | 796 | 1029 | 265 |
-| DeltaBlue | 734 | 830 | 789 | 947 | 276 |
-| Crypto | 880 | 931 | 850 | 1377 | 118 |
-| RayTrace | 1478 | 1654 | 1787 | 1943 | 245 |
-| EarleyBoyer | 2077 | 2311 | 2270 | 2525 | 427 |
-| RegExp | 360 | 442 | 400 | 547 | 196 |
-| Splay | 2825 | 3240 | 3162 | 3484 | 438 |
-| NavierStokes | 1622 | 1759 | 1593 | 2817 | 185 |
-| **Total** | **1119** | **1247** | **1203** | **1558** | **247** |
+| Richards | 1034 | 1124 | 1088 | 1349 | 364 |
+| DeltaBlue | 1022 | 1083 | 1096 | 1268 | 374 |
+| Crypto | 987 | 1284 | 1049 | 1420 | 173 |
+| RayTrace | 2423 | 2627 | 2776 | 2948 | 385 |
+| EarleyBoyer | 2922 | 3059 | 3213 | 3574 | 653 |
+| RegExp | 493 | 622 | 548 | 659 | 322 |
+| Splay | 4307 | 4860 | 4889 | 5528 | 789 |
+| NavierStokes | 1962 | 2646 | 1959 | 2702 | 267 |
+| **Total** | **1534** | **1781** | **1662** | **1988** | **377** |
 
 **SunSpider and microbench:**
 
@@ -141,17 +141,17 @@ QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's orig
 
 | Workload | goc-ng | goc-bellard | native ng | native Bellard | Goja |
 |---|---:|---:|---:|---:|---:|
-| Empty script | 8.5 | 8.5 | 3.0 | 2.8 | 5.9 |
-| Full V8-v7 | 164.6 | 155.9 | 155.5 | 147.0 | 1218.9 |
-| SunSpider (max) | 14.8 | 15.8 | 8.1 | 7.5 | 21.8 |
-| microbench | 11.1 | 10.9 | 4.5 | 4.4 | 381.7 |
-| Per extra runtime (KiB) | 225 | 199 | 211 | 190 | 102 |
+| Empty script | 8.2 | 8.1 | 2.8 | 2.8 | 5.6 |
+| Full V8-v7 | 164.4 | 155.8 | 155.6 | 146.9 | 1470.7 |
+| SunSpider (max) | 14.6 | 15.4 | 8.0 | 7.4 | 23.0 |
+| microbench | 10.7 | 10.5 | 4.5 | 4.3 | 567.3 |
+| Per extra runtime (KiB) | 224 | 199 | 209 | 189 | 105 |
 
 ![Multiple instances](docs/benchmark/charts/mem-scaling.png)
 
-goc builds carry a fixed overhead of about 6 to 9 MiB over native (mostly the Go runtime itself), which matters less as the workload grows.
+goc builds carry a fixed overhead of about 5.3 to 5.4 MiB over native when idle. On the full V8 suite the ratio falls to 1.06.
 
-Where goc is slower than native, the cost comes mainly from the extra work needed to follow Go's stack rules: stack checks, pointer encoding and decoding, and pointer records on the stack. goc-bellard trails native Bellard by more mainly because the native build uses gcc; against a clang build of the same source the gap is 6 to 7%, the same as for ng. The detailed analysis is in [docs/perf-gap.md](docs/perf-gap.md); all data and methodology are in [docs/benchmark.md](docs/benchmark.md) (both in Chinese).
+Where goc is slower than native, the cost comes mainly from the extra work needed to follow Go's stack rules: stack checks, pointer encoding and decoding, and pointer records on the stack. Against a clang -O2 build of the same Bellard source, goc-bellard reaches 95% of that build on V8, and is 2% slower on SunSpider and 8% slower on microbench. The 2026-09-27 mechanism study is in [docs/perf-gap.md](docs/perf-gap.md). Current scores, charts, and methodology are in [docs/benchmark.md](docs/benchmark.md) (both in Chinese).
 
 ## Architecture
 
