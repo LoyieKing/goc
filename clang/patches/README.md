@@ -1,25 +1,14 @@
-# Clang in-tree patches (P27)
+# Clang in-tree patches
 
-These patches document the **intended** in-tree Clang modification. The working
-frontend today is the out-of-tree plugin `../plugin/GocClangPlugin.cpp` loaded
-with `clang-19 -fplugin=libGocClang.so` (same attribute spellings + Sema escape).
+`scripts/apply-patches.sh` applies these to an LLVM 19.1.7 tree. `scripts/build-clang.sh` does that before configuring. A patch that does not apply stops the build.
 
-| Patch | Target | Status |
-|-------|--------|--------|
-| `0001-Attr.td-goc-colors.patch` | `Attr.td` — `GocCPtr/SPtr/UPtr/AutoPtr/GPtr` | Applied under `_deps/llvm-project-19.1.7/clang/` |
-| `0002-SemaGocColors-stub.patch` | `Sema/SemaGocColors.cpp` stub | Applied (placeholder until rebuild) |
+| Patch | Target |
+|-------|--------|
+| `0001-Attr.td-goc-colors.patch` | `Attr.td` — `GocCPtr/SPtr/UPtr/AutoPtr/GPtr` |
+| `../sema/SemaGocColors.cpp` | Copied to `lib/Sema/SemaGocColors.cpp` |
+| `0003-mirror-goc-colors-before-codegen.patch` | `ParseAST.cpp` mirrors colors before CodeGen |
+| `0004-wire-sema-goc-colors.patch` | `CMakeLists.txt`, `Sema.h`, end-of-TU call in `Sema.cpp` |
 
-## Rebuild clang with in-tree attrs (optional, long)
+`0001-SemaGocColors-real.patch` and `0002-SemaGocColors-stub.patch` are earlier snapshots. The build copies `clang/sema/SemaGocColors.cpp` instead of applying them.
 
-```bash
-# from goc-docs/_deps
-cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DLLVM_TARGETS_TO_BUILD=X86 \
-  -DLLVM_ENABLE_PROJECTS=clang \
-  -DLLVM_INCLUDE_TESTS=OFF \
-  -S llvm-project-19.1.7/llvm -B llvm-19.1.7-clang-build
-ninja -C llvm-19.1.7-clang-build -j8 clang
-# expect: tens of minutes – hours depending on machine
-```
-
-Until that binary exists, `bin/goc build` uses system `clang-19` + `libGocClang.so`.
+The out-of-tree plugin `../plugin/GocClangPlugin.cpp` is only for `goc test --p27`.

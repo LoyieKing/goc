@@ -1,0 +1,35 @@
+--- a/lib/Sema/CMakeLists.txt
++++ b/lib/Sema/CMakeLists.txt
+@@ -55,6 +55,7 @@
+   SemaExprMember.cpp
+   SemaExprObjC.cpp
+   SemaFixItUtils.cpp
++  SemaGocColors.cpp
+   SemaHLSL.cpp
+   SemaHexagon.cpp
+   SemaInit.cpp
+--- a/include/clang/Sema/Sema.h
++++ b/include/clang/Sema/Sema.h
+@@ -703,6 +703,10 @@
+   void ActOnEndOfTranslationUnit();
+   void ActOnEndOfTranslationUnitFragment(TUFragmentKind Kind);
+ 
++  /// DiagnoseGocColorEscapes - goc P28: mirror Goc* attrs to AnnotateAttr and
++  /// diagnose sptr escape (store to non-stack / return).
++  void DiagnoseGocColorEscapes();
++
+   /// Determines the active Scope associated with the given declaration
+   /// context.
+   ///
+--- a/lib/Sema/Sema.cpp
++++ b/lib/Sema/Sema.cpp
+@@ -1517,6 +1517,9 @@
+ 
+   if (!PP.isIncrementalProcessingEnabled())
+     TUScope = nullptr;
++
++  // goc P28: mirror Goc* attrs to AnnotateAttr and reject sptr escape.
++  DiagnoseGocColorEscapes();
+ }
+ 
+ 

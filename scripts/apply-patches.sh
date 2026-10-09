@@ -14,9 +14,10 @@ Or set LLVM_SRC. Expected layout:
 
 Patches applied (in order):
   1. clang/patches/0001-Attr.td-goc-colors.patch
-  2. clang/patches/0001-SemaGocColors-real.patch  (P28 real Sema)
-  3. Copy clang/sema/SemaGocColors.cpp over clang/lib/Sema/SemaGocColors.cpp
-  4. clang/patches/0003-mirror-goc-colors-before-codegen.patch
+  2. Copy clang/sema/SemaGocColors.cpp over clang/lib/Sema/SemaGocColors.cpp
+  3. clang/patches/0003-mirror-goc-colors-before-codegen.patch
+  4. clang/patches/0004-wire-sema-goc-colors.patch
+     (CMakeLists.txt, Sema.h, Sema.cpp)
 
 See clang/README.md for cmake/ninja build instructions.
 HINT
@@ -31,7 +32,6 @@ if [[ ! -f "$CLANG_ROOT/include/clang/Basic/Attr.td" ]]; then
 fi
 
 ATTR_PATCH="$ROOT/clang/patches/0001-Attr.td-goc-colors.patch"
-SEMA_PATCH="$ROOT/clang/patches/0001-SemaGocColors-real.patch"
 
 echo "=== Applying Attr.td goc colors ==="
 # Patches may be written against clang/ relative or repo-relative paths.
@@ -56,13 +56,8 @@ apply_flex() {
 }
 
 if ! apply_flex "$ATTR_PATCH" "$CLANG_ROOT"; then
-  echo "warning: Attr.td patch failed to apply cleanly — inspect clang/patches/" >&2
-  echo "         You may need to merge Attr.td.goc-excerpt.txt manually." >&2
-fi
-
-echo "=== Applying SemaGocColors real patch ==="
-if ! apply_flex "$SEMA_PATCH" "$CLANG_ROOT"; then
-  echo "warning: Sema patch failed — installing SemaGocColors.cpp manually" >&2
+  echo "error: Attr.td patch failed to apply ($ATTR_PATCH)" >&2
+  exit 1
 fi
 
 echo "=== Installing clang/sema/SemaGocColors.cpp ==="
@@ -71,10 +66,18 @@ cp -a "$ROOT/clang/sema/SemaGocColors.cpp" "$CLANG_ROOT/lib/Sema/SemaGocColors.c
 echo "=== Applying early goc color mirror ==="
 MIRROR_PATCH="$ROOT/clang/patches/0003-mirror-goc-colors-before-codegen.patch"
 if ! apply_flex "$MIRROR_PATCH" "$CLANG_ROOT"; then
-  echo "warning: early-mirror patch failed — ParseAST.cpp may already mirror" >&2
+  echo "error: early-mirror patch failed ($MIRROR_PATCH)" >&2
+  exit 1
 fi
 
-echo "Patches applied (or best-effort). Next:"
+echo "=== Wiring SemaGocColors into the Clang build ==="
+WIRE_PATCH="$ROOT/clang/patches/0004-wire-sema-goc-colors.patch"
+if ! apply_flex "$WIRE_PATCH" "$CLANG_ROOT"; then
+  echo "error: Sema wiring patch failed ($WIRE_PATCH)" >&2
+  exit 1
+fi
+
+echo "Patches applied. Next:"
 echo "  ./scripts/build-clang.sh"
 echo "  The driver finds third_party/llvm-19.1.7-clang-build/bin/clang."
 echo "  See docs/build-from-source.md"

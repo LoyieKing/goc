@@ -40,11 +40,10 @@ loaded with `-fplugin=libGocClang.so`.
 | Path | Contents |
 |------|----------|
 | `patches/0001-Attr.td-goc-colors.patch` | Attr.td delta |
-| `patches/Attr.td.goc-excerpt.txt` | Human-readable Attr excerpt |
-| `patches/0001-SemaGocColors-real.patch` | Sema wiring |
-| `patches/0002-SemaGocColors-stub.patch` | Stub, superseded by the real patch |
+| `patches/0003-mirror-goc-colors-before-codegen.patch` | Mirror colors in ParseAST before CodeGen |
+| `patches/0004-wire-sema-goc-colors.patch` | CMakeLists.txt, Sema.h, and the end-of-TU call |
 | `sema/SemaGocColors.cpp` | Drop-in Sema source |
-| `plugin/GocClangPlugin.cpp` | Out-of-tree plugin |
+| `plugin/GocClangPlugin.cpp` | Out-of-tree plugin (`goc test --p27`) |
 
 ## Third-party notice
 
