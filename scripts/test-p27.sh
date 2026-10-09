@@ -3,6 +3,28 @@
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
+# Host clang-19 links the distro libLLVM and initializes every target,
+# including AMDGPU. `goc test` prepends this tree's libLLVM.so.19.1, which
+# is built for X86 and AArch64 only, and the host compiler then fails to
+# start. Drop that directory for the plugin build and the clang-19 load.
+if [[ -n "${LD_LIBRARY_PATH:-}" ]]; then
+  _p27_kept=()
+  IFS=':' read -ra _p27_parts <<<"$LD_LIBRARY_PATH"
+  for _p27_dir in "${_p27_parts[@]}"; do
+    [[ -n "$_p27_dir" ]] || continue
+    if [[ "$_p27_dir" == "$ROOT/"* && -e "$_p27_dir/libLLVM.so.19.1" ]]; then
+      continue
+    fi
+    _p27_kept+=("$_p27_dir")
+  done
+  if [[ ${#_p27_kept[@]} -eq 0 ]]; then
+    unset LD_LIBRARY_PATH
+  else
+    LD_LIBRARY_PATH="$(IFS=:; printf '%s' "${_p27_kept[*]}")"
+    export LD_LIBRARY_PATH
+  fi
+  unset _p27_kept _p27_parts _p27_dir
+fi
 OUT="$ROOT/build/p27-out"
 INC="$ROOT/include"
 CLANG="${CLANG_FALLBACK:-${CLANG:-clang-19}}"
