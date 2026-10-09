@@ -97,7 +97,7 @@ E1 成立的条件（**没有运行验证**）：压进回溯栈的指针，在�
 
 ## 7. 复现
 
-在仓库根目录执行（`build/` 已被 gitignore）。前提：QuickJS 源码在 `third_party/` 下且打过 gstack 补丁（`scripts/qjs-build.sh` 会打），`GOC_CLANG` 或树内 clang、`opt-19`、`frontend/color-escape/build/goc-color-escape`、`backend/build/pass-out/GocStackMap.so` 都已就绪。
+在仓库根目录执行（`build/` 已被 gitignore）。前提：QuickJS 源码在 `third_party/` 下且打过 gstack 补丁（`scripts/qjs-build.sh` 会打），打过补丁的 clang、它旁边的 `opt`、`frontend/color-escape/build/goc-color-escape`、`backend/build/pass-out/GocStackMap.so` 都已就绪。
 
 ```bash
 R=build/regexp-colors

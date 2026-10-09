@@ -75,6 +75,6 @@ if ! apply_flex "$MIRROR_PATCH" "$CLANG_ROOT"; then
 fi
 
 echo "Patches applied (or best-effort). Next:"
-echo "  cmake/ninja build — see clang/README.md"
+echo "  ./scripts/build-clang.sh"
 echo "  The driver finds third_party/llvm-19.1.7-clang-build/bin/clang."
-echo "  Elsewhere: ./cmd/goc go --clang \$BUILD/bin/clang"
+echo "  See docs/build-from-source.md"

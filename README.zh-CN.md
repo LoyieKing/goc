@@ -180,46 +180,30 @@ flowchart LR
 
 ## 使用方法
 
-**依赖**：linux/amd64；LLVM 19 工具链（`clang-19`、`opt-19`、`llc-19` 等）、`cmake`、`ninja`、Go 1.24+、`python3`。
+**依赖**：linux/amd64、Go 1.24+、`python3`、`rg`。发布包里已经带了打过补丁的 Clang。
 
-从零开始的步骤、命令行参数和最小例子在 [docs/quickstart.md](docs/quickstart.md)。仓库里已经有打过补丁的 Clang 时：
+下载和最小例子在 [docs/quickstart.md](docs/quickstart.md)。
 
 ```bash
-./cmd/goc check
-./cmd/goc go examples/hello
-./examples/hello/hello
+tar -xzf goc-0.0.1-linux-amd64.tar.gz
+cd goc-0.0.1-linux-amd64
+export PATH="$PWD/bin:$PATH"
+goc check
+goc go examples/hello -o /tmp/hello
+/tmp/hello
 ```
 
-**1. 编译 goc 使用的 Clang**（约几十分钟，细节见 [clang/README.md](clang/README.md)）：
+从这个仓库编出那个包见 [docs/build-from-source.md](docs/build-from-source.md)：
 
 ```bash
 git clone https://github.com/LoyieKing/goc.git
 cd goc
-
-mkdir -p "$HOME/src"
-curl -L -o /tmp/llvmorg-19.1.7.tar.gz \
-  https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.7.tar.gz
-tar -C "$HOME/src" -xf /tmp/llvmorg-19.1.7.tar.gz
-LLVM_SRC="$HOME/src/llvm-project-llvmorg-19.1.7"
-./scripts/apply-patches.sh "$LLVM_SRC"
-
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19 \
-  -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_ENABLE_PROJECTS=clang \
-  -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ASSERTIONS=ON \
-  -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_ARCMT=OFF \
-  -S "$LLVM_SRC/llvm" -B third_party/llvm-19.1.7-clang-build
-ninja -C third_party/llvm-19.1.7-clang-build -j"$(nproc)" clang
-```
-
-**2. 确认能用**：
-
-```bash
+./scripts/build-clang.sh
+./scripts/build-passes.sh
 ./cmd/goc check
-./cmd/goc go examples/hello
 ```
 
-**3. 从 Go 调用 goc**：最小例子是 `examples/hello`。黄金测试在 `tests/goabi`：
+**从 Go 调用 goc**：最小例子是 `examples/hello`。黄金测试在 `tests/goabi`：
 
 ```bash
 ./scripts/test-p29-goabi.sh
@@ -237,7 +221,7 @@ int goabi_add2(int a, int b) { return a + b; }
 func goabi_add2(a, b int32) int32
 ```
 
-**4. 编译 QuickJS**：
+**编译 QuickJS**：
 
 ```bash
 git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng
@@ -257,7 +241,7 @@ Bellard 版 QuickJS 放到 `third_party/quickjs-bellard` 后，用 `QJS_FLAVOR=b
 
 详见 [docs/todo.md](docs/todo.md)：
 
-- **开箱即用的 goc 编译器**：`goc go` 和 `goc check` 用命令行参数（[docs/quickstart.md](docs/quickstart.md)）。`goc toolchain pack` 打出可搬的 clang 和 pass。还没有托管的下载地址。
+- **开箱即用的 goc 编译器**：发布包是 goc 加打过补丁的 Clang（[docs/quickstart.md](docs/quickstart.md)）。`goc go` 和 `goc check` 用命令行参数。没有传入 clang 路径的参数。
 - **量化 goc 与 Go 互相调用的开销**：测出 Go 调 goc、goc 调 Go 每次调用的开销，并和 Go 调 Go、cgo 对比。
 - **支持 linux/arm64。**
 - **goc 调用 Go**：像 Go 调用 goc 一样，只写声明就能调用。
@@ -269,9 +253,10 @@ Bellard 版 QuickJS 放到 `third_party/quickjs-bellard` 后，用 `QJS_FLAVOR=b
 
 | 文档 | |
 |---|---|
-| [docs/quickstart.md](docs/quickstart.md) | 从零开始：克隆、Clang、`goc go` |
+| [docs/quickstart.md](docs/quickstart.md) | 下载发布包，直接用 `goc` |
+| [docs/build-from-source.md](docs/build-from-source.md) | 从仓库编出发布包 |
 | [docs/guide.md](docs/guide.md) | 使用指南 |
-| [docs/toolchain.md](docs/toolchain.md) | `goc go` 的参数和工具链打包 |
+| [docs/toolchain.md](docs/toolchain.md) | `goc go` 的参数，以及 clang 放在哪 |
 | [docs/syntax-guide.md](docs/syntax-guide.md) | 语言规则 |
 | [docs/architecture.md](docs/architecture.md) | 编译流程 |
 | [docs/benchmark.md](docs/benchmark.md) | 跑分 |

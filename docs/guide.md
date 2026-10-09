@@ -6,58 +6,38 @@
 
 下一版要做的 arm64 后端见 [todo.md](todo.md)。现在换 `-march` 没有用。
 
-从零开始、并且用命令行参数配置，见 [quickstart.md](quickstart.md)。下面是手动把单个 `.c` 编成 goobj 再链进 Go 的路径。
+下载即用见 [quickstart.md](quickstart.md)。从仓库编出完整的包见 [build-from-source.md](build-from-source.md)。下面是在仓库里手动把单个 `.c` 编成 goobj 再链进 Go 的路径。
 
 ---
 
 ## 1. 要装什么
 
-宿主编译器：`clang-19`、`clang++-19`、`llc-19`、`llvm-config-19`、`cmake`、`ninja`、`python3`、`rg`。Go 1.24 或更新。系统是 linux/amd64。
+只用编译器：下载发布包，见 [quickstart.md](quickstart.md)。需要 Go 1.24 或更新、`python3`、`rg`。系统是 linux/amd64。
 
-`goc` 自己没有单独的安装步骤。克隆仓库后，用仓库里的 `./cmd/goc`。
+在仓库里开发时还要 `cmake`、`ninja` 和宿主 `clang-19`，用来编打过补丁的 Clang。步骤在 [build-from-source.md](build-from-source.md)。
 
-```bash
-git clone https://github.com/LoyieKing/goc.git
-cd goc
-```
-
-## 2. 编打过补丁的 Clang
+## 2. 打过补丁的 Clang
 
 产品前端是 Clang 19.1.7，加上指针色的 Sema。系统自带的 `clang-19` 不够。没有这个编译器，`goc build` 不能做链接用的对象文件。插件路径 `goc test --p27` 只做颜色检查，不产出可链接的 goobj。
 
 ```bash
-curl -L -o /tmp/llvmorg-19.1.7.tar.gz \
-  https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.7.tar.gz
-tar -C "$HOME/src" -xf /tmp/llvmorg-19.1.7.tar.gz
-export LLVM_SRC="$HOME/src/llvm-project-llvmorg-19.1.7"
-
-./scripts/apply-patches.sh "$LLVM_SRC"
-
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19 \
-  -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_ENABLE_PROJECTS=clang \
-  -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ASSERTIONS=ON \
-  -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_ARCMT=OFF \
-  -S "$LLVM_SRC/llvm" \
-  -B third_party/llvm-19.1.7-clang-build
-
-ninja -C third_party/llvm-19.1.7-clang-build -j"$(nproc)" clang
+./scripts/build-clang.sh
+./scripts/build-passes.sh
 ```
 
-Release 构建大约要几十分钟。构建目录在 `third_party/` 下，已被 gitignore，不要提交二进制。细节见 [clang/README.md](../clang/README.md)。
-
-驱动会找到 `third_party/llvm-19.1.7-clang-build/bin/clang`。Clang 在别的路径时给命令加 `--clang`。
+驱动在 `bin/clang` 或 `third_party/llvm-19.1.7-clang-build/bin/clang` 找到它。没有传入路径的参数。
 
 ## 3. 确认驱动能用
 
 ```bash
 ./cmd/goc version
+./cmd/goc check
 ./cmd/goc test --p28
 ```
 
-`--p28` 使用仓库里编出来的 Clang，或 `--clang` 指到的那一个。它编译一小批黄金样例，不链接 Go 程序。
+`--p28` 使用上面那个 Clang。它编译一小批黄金样例，不链接 Go 程序。
 
-`goc build` 第一次会自己编 `frontend/color-escape`。那一步用 `clang++-19` 和 `llvm-config-19` 链 `libLLVM-19`。运行 pass 时，驱动把 clang 那棵树的 `lib/` 加进本次进程。
+运行 pass 时，驱动把 clang 那棵树的 `lib/` 加进本次进程，用来加载 `libLLVM.so.19.1`。
 
 ## 4. 把 C 编成 Go 对象
 
@@ -223,56 +203,36 @@ The language contract is [syntax-guide.md](syntax-guide.md). This page is how to
 
 The arm64 backend is the next version, [todo.md](todo.md). Changing `-march` does nothing today.
 
-From zero, with command-line flags, see [quickstart.md](quickstart.md). Below is compiling one `.c` to a goobj and linking it by hand.
+To download and run, see [quickstart.md](quickstart.md). To build the package from this repo, see [build-from-source.md](build-from-source.md). Below is compiling one `.c` to a goobj and linking it by hand inside a checkout.
 
 ## 1. Tools
 
-Host compiler: `clang-19`, `clang++-19`, `llc-19`, `llvm-config-19`, `cmake`, `ninja`, `python3`, `rg`. Go 1.24 or newer. The machine is linux/amd64.
+To use the compiler, download a release. See [quickstart.md](quickstart.md). You need Go 1.24 or newer, `python3`, and `rg`. The machine is linux/amd64.
 
-There is no separate install step for `goc`. After cloning, use `./cmd/goc` from the repo.
-
-```bash
-git clone https://github.com/LoyieKing/goc.git
-cd goc
-```
+Developing in the checkout also needs `cmake`, `ninja`, and a host `clang-19` to build the patched Clang. The steps are in [build-from-source.md](build-from-source.md).
 
 ## 2. Build patched Clang
 
 The product frontend is Clang 19.1.7 plus the pointer-color Sema. A distro `clang-19` is not enough. Without this compiler, `goc build` cannot emit an object the Go linker accepts. `goc test --p27` is the plugin path: color checks only, no linkable goobj.
 
 ```bash
-curl -L -o /tmp/llvmorg-19.1.7.tar.gz \
-  https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.7.tar.gz
-tar -C "$HOME/src" -xf /tmp/llvmorg-19.1.7.tar.gz
-export LLVM_SRC="$HOME/src/llvm-project-llvmorg-19.1.7"
-
-./scripts/apply-patches.sh "$LLVM_SRC"
-
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19 \
-  -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_ENABLE_PROJECTS=clang \
-  -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ASSERTIONS=ON \
-  -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_ARCMT=OFF \
-  -S "$LLVM_SRC/llvm" \
-  -B third_party/llvm-19.1.7-clang-build
-
-ninja -C third_party/llvm-19.1.7-clang-build -j"$(nproc)" clang
+./scripts/build-clang.sh
+./scripts/build-passes.sh
 ```
 
-A Release build takes tens of minutes. The build directory is under `third_party/` and gitignored. Do not commit the binaries. Details: [clang/README.md](../clang/README.md).
-
-The driver finds `third_party/llvm-19.1.7-clang-build/bin/clang`. Pass `--clang` when the binary lives elsewhere.
+The driver finds `bin/clang` or `third_party/llvm-19.1.7-clang-build/bin/clang`. There is no flag for a path. Details: [build-from-source.md](build-from-source.md).
 
 ## 3. Check the driver
 
 ```bash
 ./cmd/goc version
+./cmd/goc check
 ./cmd/goc test --p28
 ```
 
-`--p28` uses the Clang built in the repo, or the one named by `--clang`. It compiles a small golden set. It does not link a Go program.
+`--p28` uses that Clang. It compiles a small golden set. It does not link a Go program.
 
-The first `goc build` compiles `frontend/color-escape` itself, with `clang++-19` and `llvm-config-19`, against `libLLVM-19`. When a pass starts, the driver adds that Clang tree's `lib/` to the process.
+When a pass starts, the driver adds that Clang tree's `lib/` to the process so `libLLVM.so.19.1` loads.
 
 ## 4. Compile C to a Go object
 

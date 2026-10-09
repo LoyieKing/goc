@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # quickjs-ng via goc: color, compile to goobj, link, run the goroutine-stack smoke.
 #
-# Prereqs: third_party/quickjs-ng, patched clang (GOC_CLANG),
-#          llc-19 / llvm-objdump-19 / ld.lld-19, Go 1.24+.
+# Prereqs: third_party/quickjs-ng, the patched clang next to goc
+#          (bin/clang or third_party/llvm-19.1.7-clang-build), Go 1.24+.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
@@ -35,18 +35,9 @@ esac
 export QJS_FLAVOR
 mkdir -p "$OUT"
 
-CLANG="${GOC_CLANG:-}"
-if [[ -z "$CLANG" ]]; then
-  for c in "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang" \
-           "$ROOT/third_party/llvm-clang-build/bin/clang"; do
-    [[ -x "$c" ]] && CLANG="$c" && break
-  done
-fi
-if [[ -z "$CLANG" || ! -x "$CLANG" ]]; then
-  echo "FAIL: set GOC_CLANG to the patched clang-19" >&2
-  exit 1
-fi
-export GOC_CLANG="$CLANG"
+# shellcheck source=goc-product-lib.sh
+source "$ROOT/scripts/goc-product-lib.sh"
+goc_resolve_clang >/dev/null
 export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
 [[ -d "$QJS" ]] || { echo "FAIL: fetch QuickJS ($QJS_FLAVOR) to ${QJS#$ROOT/}, see third_party/README.md" >&2; exit 1; }
 # `patch -R --dry-run --batch` succeeds on an *unpatched* tree too ("Unreversed

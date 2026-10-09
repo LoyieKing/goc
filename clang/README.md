@@ -7,26 +7,15 @@ goc’s product frontend is **Clang 19.1.7** with:
 
 ## Option A — in-tree (recommended)
 
+The supported build is one script. It downloads LLVM 19.1.7, applies the patches, and writes `third_party/llvm-19.1.7-clang-build`. The driver finds `bin/clang` there. There is no path to pass.
+
 ```bash
-# Fetch LLVM 19.1.7 (see ../third_party/README.md)
-export LLVM_SRC=$HOME/src/llvm-project-19.1.7
-export GOC_ROOT=/path/to/goc
-
-./scripts/apply-patches.sh "$LLVM_SRC"
-
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19 \
-  -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_ENABLE_PROJECTS=clang \
-  -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ASSERTIONS=ON \
-  -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_ARCMT=OFF \
-  -S "$LLVM_SRC/llvm" \
-  -B "$GOC_ROOT/third_party/llvm-19.1.7-clang-build"
-
-ninja -C "$GOC_ROOT/third_party/llvm-19.1.7-clang-build" -j$(nproc) clang
-
-export GOC_CLANG="$GOC_ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
+./scripts/build-clang.sh
+./scripts/build-passes.sh
 ./cmd/goc test --p28
 ```
+
+The whole release archive (goc plus this Clang) is `scripts/pack-release.sh`. See [docs/build-from-source.md](../docs/build-from-source.md).
 
 **Notes:**
 

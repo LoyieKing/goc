@@ -13,6 +13,8 @@ SELF="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${GOC_ROOT:-$(cd "$SELF/../.." && pwd)}"
 export GOC_ROOT="$ROOT"
 P5="$ROOT/backend"
+# shellcheck source=scripts/goc-product-lib.sh
+source "$ROOT/scripts/goc-product-lib.sh"
 
 ALL=0
 GOABI=0
@@ -47,15 +49,8 @@ else
   PKG="${GO_SYM%%.*}"
 fi
 
-CLANG="${GOC_CLANG:-${CLANG:-}}"
-if [[ -z "$CLANG" ]]; then
-  for c in \
-    "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang" \
-    "$ROOT/third_party/llvm-clang-build/bin/clang"; do
-    if [[ -x "$c" ]]; then CLANG="$c"; break; fi
-  done
-  [[ -n "$CLANG" ]] || CLANG="${CLANG_FALLBACK:-clang-19}"
-fi
+CLANG="$(goc_resolve_clang)"
+goc_prepend_lib "$(goc_clang_libdir "$CLANG")"
 # Default stays linux/amd64. arm64 is a separate ISel, not a -march switch.
 # gep remat is unsafe on arm64 until GocFrameAddrFix is ported, and the x86
 # leaq asm does not assemble, so arm64 forces the stock-llc path and refuses
@@ -73,7 +68,16 @@ if [[ "$GOC_ARCH" == arm64 ]]; then
     exit 1
   fi
   case "${LLC:-}" in
-    *goc-llc*|"") LLC=llc-19 ;;
+    *goc-llc*|"")
+      LLC="$(goc_beside llc 2>/dev/null || true)"
+      if [[ -z "$LLC" ]]; then
+        LLC="$(command -v llc-19 || command -v llc || true)"
+      fi
+      [[ -n "$LLC" && -x "$LLC" ]] || {
+        echo "realbody: FATAL no llc with an AArch64 target beside the patched clang" >&2
+        exit 1
+      }
+      ;;
   esac
   echo "realbody: GOC_ARCH=arm64 llc=$LLC (x28 reserved; frame-address repair not ported)" >&2
 fi
@@ -81,7 +85,11 @@ fi
 # addresses as plain GEPs, which is only safe with goc-llc's post-RA
 # GocFrameAddrFix pass (backend/pass/goc_llc.cpp). asm: the old opaque leaq
 # per use; stock llc is enough.
-GOC_LLC_BIN="$ROOT/backend/build/pass-out/goc-llc"
+if [[ -x "$ROOT/passes/goc-llc" ]]; then
+  GOC_LLC_BIN="$ROOT/passes/goc-llc"
+else
+  GOC_LLC_BIN="$ROOT/backend/build/pass-out/goc-llc"
+fi
 if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
   if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
     make -C "$ROOT/backend/pass" "$GOC_LLC_BIN" >&2 || true
@@ -93,7 +101,11 @@ if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
   fi
   LLC="${LLC:-$GOC_LLC_BIN}"
 else
-  LLC="${LLC:-llc-19}"
+  if [[ -z "${LLC:-}" ]]; then
+    LLC="$(goc_beside llc 2>/dev/null || true)"
+    [[ -n "$LLC" ]] || LLC="$(command -v llc-19 || command -v llc || true)"
+  fi
+  [[ -n "${LLC:-}" ]] || { echo "realbody: FATAL llc missing" >&2; exit 1; }
 fi
 # gep remat is a plain GEP. Stock llc CSEs it into a callee-saved register
 # and keeps that register across the call; tail duplication makes that
@@ -105,11 +117,47 @@ if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
     exit 1
   fi
 fi
-MC="${LLVM_MC:-llvm-mc-19}"
-OBJDUMP="${OBJDUMP:-llvm-objdump-19}"
-OPT="${OPT:-opt-19}"
-command -v "$OPT" >/dev/null 2>&1 || OPT="$HOME/tools/LLVM-19.1.7-Linux-X64/bin/opt"
-LDLLD="${LDLLD:-ld.lld-19}"
+if [[ -z "${LLVM_MC:-}" || ! -x "${LLVM_MC:-}" ]]; then
+  LLVM_MC="$(goc_beside llvm-mc 2>/dev/null || true)"
+  if [[ -z "$LLVM_MC" ]]; then
+    LLVM_MC="$(command -v llvm-mc-19 || command -v llvm-mc || true)"
+  fi
+fi
+[[ -n "${LLVM_MC:-}" && -x "$LLVM_MC" ]] || {
+  echo "realbody: FATAL llvm-mc missing. See docs/build-from-source.md" >&2
+  exit 1
+}
+MC="$LLVM_MC"
+if [[ -z "${OBJDUMP:-}" || ! -x "${OBJDUMP:-}" ]]; then
+  OBJDUMP="$(goc_beside llvm-objdump 2>/dev/null || true)"
+  if [[ -z "$OBJDUMP" ]]; then
+    OBJDUMP="$(command -v llvm-objdump-19 || command -v llvm-objdump || true)"
+  fi
+fi
+[[ -n "${OBJDUMP:-}" && -x "$OBJDUMP" ]] || {
+  echo "realbody: FATAL llvm-objdump missing. See docs/build-from-source.md" >&2
+  exit 1
+}
+if [[ -z "${OPT:-}" || ! -x "${OPT:-}" ]]; then
+  OPT="$(goc_beside opt 2>/dev/null || true)"
+  if [[ -z "$OPT" ]]; then
+    OPT="$(command -v opt-19 || command -v opt || true)"
+  fi
+fi
+[[ -n "${OPT:-}" && -x "$OPT" ]] || {
+  echo "realbody: FATAL opt missing. See docs/build-from-source.md" >&2
+  exit 1
+}
+if [[ -z "${LDLLD:-}" || ! -x "${LDLLD:-}" ]]; then
+  LDLLD="$(goc_beside ld.lld 2>/dev/null || true)"
+  if [[ -z "$LDLLD" ]]; then
+    LDLLD="$(command -v ld.lld-19 || command -v ld.lld || command -v ld || true)"
+  fi
+fi
+[[ -n "${LDLLD:-}" && -x "$LDLLD" ]] || {
+  echo "realbody: FATAL need ld.lld or ld to merge the Go thunk. See docs/build-from-source.md" >&2
+  exit 1
+}
 INC="$ROOT/include"
 OPT_LEVEL="${GOC_OPT_LEVEL:-0}"
 case "$OPT_LEVEL" in
@@ -224,7 +272,13 @@ GOABI_JSON="$TMP/goabi.json"
 if [[ "$IN" != *.ll && "$OPT_LEVEL" != 0 ]]; then
   # Same contract as cmd/goc: inline first, record maps after. Strip the two
   # passes that rewrite internal SysV calls before those maps are taken.
-  SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+  if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
+    SMPASS="$GOC_STACKMAP"
+  elif [[ -f "$ROOT/passes/GocStackMap.so" ]]; then
+    SMPASS="$ROOT/passes/GocStackMap.so"
+  else
+    SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+  fi
   [[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
   "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate -S "$LL" -o "$TMP/body.gate.ll"
   cp "$TMP/body.gate.ll" "$LL"
@@ -249,7 +303,13 @@ fi
 # register allocation; silently continuing without real locations is unsafe.
 if [[ $ALL -eq 1 && "${GOC_SPTR_MAPS:-0}" == "1" &&
       "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
-  SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+  if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
+    SMPASS="$GOC_STACKMAP"
+  elif [[ -f "$ROOT/passes/GocStackMap.so" ]]; then
+    SMPASS="$ROOT/passes/GocStackMap.so"
+  else
+    SMPASS="$ROOT/backend/build/pass-out/GocStackMap.so"
+  fi
   [[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
   "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap -S "$LL" \
     -o "$TMP/body.sm.ll"
@@ -975,10 +1035,16 @@ if rg -q 'attrs→seedMIR|seedMIR→Spill' "$TMP/meta.json"; then
   exit 1
 fi
 
-( cd "$P5" && go build -o "$TMP/elfpack" ./goobj/elfpack/ )
+# A release ships bin/elfpack. A checkout builds it from backend/goobj.
+if [[ -x "$ROOT/bin/elfpack" ]]; then
+  ELFPACK="$ROOT/bin/elfpack"
+else
+  ( cd "$P5" && go build -o "$TMP/elfpack" ./goobj/elfpack/ )
+  ELFPACK="$TMP/elfpack"
+fi
 # HeaderString follows GOARCH, not the host. An explicit amd64 must override
 # a user's GOARCH too. The elfpack binary itself stays a host (amd64) tool.
-GOARCH="$GOC_ARCH" "$TMP/elfpack" -elf "$ELF" -meta "$TMP/meta.json" \
+GOARCH="$GOC_ARCH" "$ELFPACK" -elf "$ELF" -meta "$TMP/meta.json" \
   -maps "$TMP/maps" -out-o "$OUT_O" -p "$PKG"
 
 if [[ $MAGIC_OK -eq 1 ]]; then

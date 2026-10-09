@@ -1,4 +1,4 @@
-# Shared by goc go / goc check / goc toolchain.
+# Shared by goc go / goc check / goc toolchain, and by cmd/goc.
 # Source this file. Caller sets ROOT and exports GOC_ROOT.
 # Product defaults and flag parsing live in goc-flags.sh.
 
@@ -13,23 +13,15 @@ goc_prepend_lib() {
   esac
 }
 
-# Print the patched clang. Do not fall back to system clang-19: it has no
-# goc Sema. Order: GOC_CLANG, GOC_TOOLCHAIN, the in-tree clang build, then
-# an unpacked toolchain next to the repo or under ~/.goc.
+# Patched Clang that ships with this tree. There is no flag and no
+# environment variable to point at another one. A release archive has
+# bin/clang. A checkout that built from source has the third_party tree.
 goc_resolve_clang() {
   local c
-  if [[ -n "${GOC_CLANG:-}" ]]; then
-    [[ -x "$GOC_CLANG" ]] || goc_die "GOC_CLANG is not executable: $GOC_CLANG"
-    echo "$GOC_CLANG"
-    return 0
-  fi
-  local candidates=()
-  [[ -n "${GOC_TOOLCHAIN:-}" ]] && candidates+=("$GOC_TOOLCHAIN/bin/clang")
-  candidates+=(
+  local candidates=(
+    "$ROOT/bin/clang"
     "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
     "$ROOT/third_party/llvm-clang-build/bin/clang"
-    "$ROOT/third_party/goc-toolchain/bin/clang"
-    "$HOME/.goc/toolchain/bin/clang"
   )
   for c in "${candidates[@]}"; do
     if [[ -x "$c" ]]; then
@@ -37,7 +29,9 @@ goc_resolve_clang() {
       return 0
     fi
   done
-  goc_die "no patched clang. Build third_party/llvm-19.1.7-clang-build (docs/guide.md) or unpack a toolchain (docs/toolchain.md)."
+  goc_die "no patched clang next to goc.
+Download a release: https://github.com/LoyieKing/goc/releases
+Or build the package: docs/build-from-source.md"
 }
 
 goc_clang_libdir() {
@@ -57,15 +51,22 @@ goc_first_exec() {
   return 1
 }
 
-# Fill GOC_CLANG, LD_LIBRARY_PATH, OPT, LLC, GOC_COLOR_ESCAPE, GOC_STACKMAP.
+# A tool installed next to the patched clang (opt, llc, llvm-mc, ...).
+goc_beside() {
+  local name="$1" clang bin
+  clang="$(goc_resolve_clang)"
+  bin="$(dirname "$(readlink -f "$clang")")"
+  goc_first_exec "$bin/$name" "$ROOT/bin/$name"
+}
+
+# Fill LD_LIBRARY_PATH, OPT, LLC, GOC_COLOR_ESCAPE, GOC_STACKMAP.
+# Clang itself is found by goc_resolve_clang. Callers do not export a path.
 goc_export_tools() {
   local clang libdir toolroot=""
   clang="$(goc_resolve_clang)"
-  export GOC_CLANG="$clang"
   libdir="$(goc_clang_libdir "$clang")"
   goc_prepend_lib "$libdir"
-  # A packed toolchain keeps passes next to bin/. An in-tree clang uses the
-  # repo build outputs.
+  # A release keeps passes next to bin/. A checkout uses the repo build outputs.
   toolroot="$(cd "$(dirname "$(readlink -f "$clang")")/.." && pwd)"
   if [[ -x "$toolroot/passes/goc-llc" ]]; then
     export LLC="${LLC:-$toolroot/passes/goc-llc}"
@@ -73,25 +74,39 @@ goc_export_tools() {
     export GOC_STACKMAP="${GOC_STACKMAP:-$toolroot/passes/GocStackMap.so}"
     export OPT="${OPT:-$toolroot/bin/opt}"
   fi
+  if [[ -z "${LLC:-}" && -x "$ROOT/passes/goc-llc" ]]; then
+    export LLC="$ROOT/passes/goc-llc"
+  fi
   export LLC="${LLC:-$ROOT/backend/build/pass-out/goc-llc}"
+  if [[ -z "${GOC_STACKMAP:-}" && -f "$ROOT/passes/GocStackMap.so" ]]; then
+    export GOC_STACKMAP="$ROOT/passes/GocStackMap.so"
+  fi
   export GOC_STACKMAP="${GOC_STACKMAP:-$ROOT/backend/build/pass-out/GocStackMap.so}"
   # Leave GOC_COLOR_ESCAPE unset when the repo pass is not built yet.
   # `goc build` compiles that pass on first use. A packed pass is exported above.
+  if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/passes/goc-color-escape" ]]; then
+    export GOC_COLOR_ESCAPE="$ROOT/passes/goc-color-escape"
+  fi
   if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/frontend/color-escape/build/goc-color-escape" ]]; then
     export GOC_COLOR_ESCAPE="$ROOT/frontend/color-escape/build/goc-color-escape"
   fi
   if [[ -z "${OPT:-}" || ! -x "${OPT:-}" ]]; then
-    OPT="$(command -v opt-19 || true)"
+    OPT="$(goc_beside opt 2>/dev/null || true)"
+    if [[ -z "$OPT" ]]; then
+      OPT="$(command -v opt-19 || command -v opt || true)"
+    fi
     export OPT
   fi
 }
 
 goc_require_tools() {
+  local clang
   goc_export_tools
-  [[ -x "$GOC_CLANG" ]] || goc_die "clang missing"
-  [[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). Build the backend passes or unpack a toolchain."
+  clang="$(goc_resolve_clang)"
+  [[ -x "$clang" ]] || goc_die "clang missing"
+  [[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). See docs/build-from-source.md."
   [[ -f "$GOC_STACKMAP" ]] || goc_die "GocStackMap.so missing ($GOC_STACKMAP)."
-  [[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. Put opt-19 on PATH or unpack a toolchain with bin/opt."
+  [[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. See docs/build-from-source.md."
   if [[ -n "${GOC_COLOR_ESCAPE:-}" && ! -x "$GOC_COLOR_ESCAPE" ]]; then
     goc_die "goc-color-escape missing ($GOC_COLOR_ESCAPE)."
   fi
@@ -99,7 +114,6 @@ goc_require_tools() {
   [[ -n "${GOC_COLOR_ESCAPE:-}" && -x "$GOC_COLOR_ESCAPE" ]] && ldd_args+=("$GOC_COLOR_ESCAPE")
   missing="$(ldd "${ldd_args[@]}" 2>/dev/null | awk '/not found/{print $1}' | sort -u)"
   if [[ -n "$missing" ]]; then
-    goc_die "LLVM libraries not loaded ($missing). The clang lib dir was prepended to LD_LIBRARY_PATH; the toolchain libLLVM does not match these passes."
+    goc_die "LLVM libraries not loaded ($missing). The clang lib dir was prepended to LD_LIBRARY_PATH; libLLVM does not match these passes."
   fi
 }
-

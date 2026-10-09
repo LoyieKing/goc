@@ -10,18 +10,10 @@ export GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 GOC_SPTR_MAPS=1
 OUT="$ROOT/build/p29-goabi"
 mkdir -p "$OUT"
 
-CLANG="${GOC_CLANG:-}"
-if [[ -z "$CLANG" ]]; then
-  for c in "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang" \
-           "$ROOT/third_party/llvm-clang-build/bin/clang"; do
-    [[ -x "$c" ]] && CLANG="$c" && break
-  done
-fi
-if [[ -z "$CLANG" || ! -x "$CLANG" ]]; then
-  echo "FAIL: set GOC_CLANG to a patched clang-19 (in-tree Sema required)" >&2
-  exit 1
-fi
-export GOC_CLANG="$CLANG"
+# shellcheck source=goc-product-lib.sh
+source "$ROOT/scripts/goc-product-lib.sh"
+goc_resolve_clang >/dev/null
+goc_prepend_lib "$(goc_clang_libdir "$(goc_resolve_clang)")"
 
 echo "=== P29-goabi: C → goobj (Go ABIInternal entry thunks) ==="
 env -u GOC_DEFAULT_PTR_COLOR "$ROOT/cmd/goc" build \

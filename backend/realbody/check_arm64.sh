@@ -14,8 +14,6 @@ set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 export GOC_ROOT="$ROOT"
 GOC="$ROOT/cmd/goc"
-export PATH="${HOME}/tools/LLVM-19.1.7-Linux-X64/bin:${PATH}"
-export LD_LIBRARY_PATH="$(llvm-config-19 --libdir)${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT

@@ -51,8 +51,10 @@ Go link
 | `backend/goobj/elfpack` | ELF bytes and relocations → goobj |
 | `runtime/uptr` | MSB encode/decode; `g` from `FS:-8`; `goc_dynalloc` / `goc_dynrelease` |
 
-Drivers pick clang via `GOC_CLANG`, then
-`third_party/llvm-*-clang-build`, then system `clang-19` plus the plugin.
+Drivers pick the patched clang at `bin/clang`, then
+`third_party/llvm-19.1.7-clang-build/bin/clang`. There is no path flag.
+System `clang-19` is only the host used to build that Clang, and the
+plugin path exercised by `goc test --p27`.
 
 ## uptr
 

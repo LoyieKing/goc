@@ -25,7 +25,6 @@ BIN="${QJSCLI_OUT:-$OUT/qjscli}"
 # This checks the engine object and its moving-stack smoke before installing a
 # command that will run arbitrary input. The upstream QuickJS tree is untouched.
 "$ROOT/scripts/qjs-build.sh"
-export GOC_CLANG="${GOC_CLANG:-$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang}"
 export GOC_DEFAULT_PTR_COLOR=cptr GOC_NO_NOSPLIT=1 GOC_MORESTACK=1
 export GOC_SPTR_MAPS=1 GOC_INLINE_DYNALLOC=1
 

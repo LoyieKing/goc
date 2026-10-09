@@ -2,7 +2,7 @@
 
 linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就是 QuickJS 验证过的那组配置，写在命令行参数里。指针色、单字 `uptr`、默认架构都不改。`--fixed-g` 和 `--opt-extra=-inline-threshold=250` 仍然关着。
 
-从零开始的步骤在 [quickstart.md](quickstart.md)。
+下载即用见 [quickstart.md](quickstart.md)。从仓库编出发布包见 [build-from-source.md](build-from-source.md)。
 
 ## 命令
 
@@ -46,26 +46,25 @@ morestack 前导、可分裂帧、sptr 栈图在 `goc go` 上一定打开，没�
 
 全部参数见 `./cmd/goc go --help`。
 
-## 工具链放哪
+## Clang 放哪
 
 按这个顺序找打过补丁的 clang，找不到就停，不用系统 `clang-19`：
 
-1. `--clang PATH`
-2. `--toolchain DIR` 的 `bin/clang`
-3. `third_party/llvm-19.1.7-clang-build/bin/clang`（在仓库里编出来的）
-4. `third_party/goc-toolchain/bin/clang`
-5. `~/.goc/toolchain/bin/clang`
+1. `bin/clang`（发布包）
+2. `third_party/llvm-19.1.7-clang-build/bin/clang`（在仓库里编出来的）
+3. `third_party/llvm-clang-build/bin/clang`
 
-`opt` 用工具链里的 `bin/opt`，否则用 `PATH` 上的 `opt-19`。pass 优先用工具链的 `passes/`，否则用仓库里已编好的 `backend/build/pass-out` 和 `frontend/color-escape/build`。
+没有 `--clang`，也没有 `--toolchain`。
 
-打包（本机已有 clang 构建和 pass 时）：
+`opt`、`llc`、`llvm-mc`、`llvm-objdump` 用 clang 旁边的同名文件。pass 在发布包的 `passes/`，在仓库里则是已编好的 `backend/build/pass-out` 和 `frontend/color-escape/build`。
+
+打包（本机已经编好 clang 和 pass 时）打出的是完整的 goc，不是单独的 clang 目录：
 
 ```bash
-./cmd/goc toolchain pack "$HOME/goc-toolchain"
-# 或 ./cmd/goc toolchain pack "$HOME/goc-toolchain.tar.gz"
+./cmd/goc toolchain pack dist/goc-linux-amd64.tar.gz
 ```
 
-目录里是 `bin/clang`、`bin/opt`、`lib/libLLVM.so.19.1`、`lib/clang/`、`passes/`。解压到 `~/.goc/toolchain` 或 `third_party/goc-toolchain`。仓库本身仍要有：驱动、realbody 脚本、`include/goc.h`。这一步不把二进制提交进 git，也没有托管的下载地址。
+和 `scripts/pack-release.sh` 是同一个脚本。二进制不进 git。用户下载的是 GitHub Release 上的那个压缩包。
 
 ## 例子
 

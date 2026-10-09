@@ -11,6 +11,8 @@ fi
 export GOC_ROOT="$ROOT"
 # shellcheck source=scripts/goc-flags.sh
 source "$ROOT/scripts/goc-flags.sh"
+# shellcheck source=scripts/goc-product-lib.sh
+source "$ROOT/scripts/goc-product-lib.sh"
 
 usage() {
   cat <<'USAGE'
@@ -22,12 +24,12 @@ Usage:
   goc check [flags]
       Toolchain self-check: build and run examples/hello
   goc toolchain status|pack DEST [flags]
-      Resolve or pack the relocatable toolchain
+      Show the tools in this tree, or pack a full release
   goc build foo.c -o foo.o [flags] [-- …]
-      In-tree Clang Sema → real-body goobj (P28). Default -O0.
-  goc cc [--clang PATH] [clang-args…]
-      Invoke resolved clang with goc include/attrs
-  goc test [--clang PATH] [--p27|--p28]
+      Patched Clang Sema → real-body goobj (P28). Default -O0.
+  goc cc [clang-args…]
+      Invoke the shipped clang with goc include/attrs
+  goc test [--p27|--p28]
       Run curated golden tests
   goc version
   goc help | -h | --help
@@ -42,48 +44,23 @@ Usage:
 also records sptr maps. arm64 cannot. `goc build` without `--goabi` stays at
 -O0. A flag wins over an inherited variable.
 
-From-zero instructions: docs/quickstart.md
+Download and use: docs/quickstart.md
+Build the package: docs/build-from-source.md
 USAGE
   echo
   goc_flags_help
 }
 
 cmd_version() {
-  echo "goc experimental P28 (2026-09-22) — C-on-Go-stacks research compiler"
+  local ver="unknown"
+  [[ -f "$ROOT/VERSION" ]] && ver="$(tr -d '[:space:]' <"$ROOT/VERSION")"
+  echo "goc $ver"
 }
 
-resolve_clang() {
-  local clang=""
-  local intree_candidates=(
-    "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
-    "$ROOT/third_party/llvm-clang-build/bin/clang"
-  )
-  if [[ -n "${GOC_CLANG:-}" ]]; then
-    clang="$GOC_CLANG"
-  else
-    local c
-    for c in "${intree_candidates[@]}"; do
-      if [[ -x "$c" ]]; then clang="$c"; break; fi
-    done
-    if [[ -z "$clang" ]]; then
-      clang="${CLANG_FALLBACK:-clang-19}"
-    fi
-  fi
-  echo "$clang"
-}
+resolve_clang() { goc_resolve_clang; }
 
-is_intree_clang() {
-  local clang="$1"
-  # Heuristic: user-built tree under third_party, or GOC_CLANG explicitly set
-  # with GOC_USE_INTREE preference. Prefer intree attrs when GOC_CLANG is set
-  # or path contains llvm-*-clang-build.
-  if [[ -n "${GOC_CLANG:-}" ]]; then return 0; fi
-  case "$clang" in
-    *llvm*clang-build*) return 0 ;;
-    *third_party*) return 0 ;;
-  esac
-  return 1
-}
+# Every clang this driver runs is the patched one next to goc.
+is_intree_clang() { return 0; }
 
 # In-tree and packed clangs need their own libLLVM. Prepend that lib dir so
 # goc-llc and goc-color-escape start without a hand-set LD_LIBRARY_PATH.
@@ -229,20 +206,36 @@ cmd_build() {
     USE_PLUGIN=1
   fi
   local INC="$ROOT/include"
-  local COLOR_ESC="${GOC_COLOR_ESCAPE:-$ROOT/frontend/color-escape/build/goc-color-escape}"
+  local COLOR_ESC="${GOC_COLOR_ESCAPE:-}"
+  if [[ -z "$COLOR_ESC" && -x "$ROOT/passes/goc-color-escape" ]]; then
+    COLOR_ESC="$ROOT/passes/goc-color-escape"
+  fi
+  COLOR_ESC="${COLOR_ESC:-$ROOT/frontend/color-escape/build/goc-color-escape}"
   # amd64 gep remat is only safe with goc-llc's GocFrameAddrFix. Passing
   # stock llc-19 here used to skip realbody's missing-binary check, so tail
   # duplication kept frame addresses in callee-saved registers across calls.
   local LLC="${LLC:-}"
   if [[ "$GOC_ARCH" == arm64 ]]; then
-    # goc-llc is the X86-only in-tree backend. arm64 ISel is system llc-19.
+    # goc-llc is the X86-only backend. arm64 ISel is the llc that ships
+    # beside the patched clang (it must include the AArch64 target).
     case "$LLC" in
-      *goc-llc*|"") LLC=llc-19 ;;
+      *goc-llc*|"")
+        LLC="$(goc_beside llc 2>/dev/null || true)"
+        if [[ -z "$LLC" ]]; then
+          LLC="$(command -v llc-19 || command -v llc || true)"
+        fi
+        [[ -n "$LLC" ]] || { echo "goc build: no llc for arm64" >&2; exit 1; }
+        ;;
     esac
   elif [[ -z "$LLC" && "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
-    LLC="$ROOT/backend/build/pass-out/goc-llc"
+    if [[ -x "$ROOT/passes/goc-llc" ]]; then
+      LLC="$ROOT/passes/goc-llc"
+    else
+      LLC="$ROOT/backend/build/pass-out/goc-llc"
+    fi
   elif [[ -z "$LLC" ]]; then
-    LLC=llc-19
+    LLC="$(goc_beside llc 2>/dev/null || true)"
+    [[ -n "$LLC" ]] || LLC="$(command -v llc-19 || true)"
   fi
   local REALBODY="$ROOT/backend/realbody/goc_p28_realbody.sh"
   local PLUGIN="$ROOT/build/libGocClang.so"
@@ -329,11 +322,16 @@ cmd_build() {
     exit 1
   fi
   local BODY_LL="$TMP/a.color.ll"
+  local OPT="${OPT:-}"
+  if [[ -z "$OPT" || ! -x "$OPT" ]]; then
+    OPT="$(goc_beside opt 2>/dev/null || true)"
+    [[ -n "$OPT" ]] || OPT="$(command -v opt-19 || command -v opt || true)"
+  fi
   if [[ "${GOC_COLOR_REPORT:-}" == 1 ]]; then
     # The report already ran inside the pass. -g leaves !dbg on the define
     # line, and realbody appends "no-realign-stack" after that attachment,
     # which llc rejects. Drop debug only. Keep names and !goc.color.
-    local STRIP="${OPT:-opt-19}"
+    local STRIP="$OPT"
     if ! "$STRIP" --strip-debug -S "$BODY_LL" -o "$TMP/a.color.nodbg.ll"; then
       echo "goc build: failed to strip debug info after color report for $SRC" >&2
       cleanup_build_tmp
@@ -343,8 +341,12 @@ cmd_build() {
   fi
   local STACKMAP_PREPARED=0
   if [[ "$OPT_LEVEL" != 0 ]]; then
-    local OPT="${OPT:-opt-19}"
-    local SMPASS="${GOC_STACKMAP:-$ROOT/backend/build/pass-out/GocStackMap.so}"
+    [[ -n "$OPT" && -x "$OPT" ]] || { echo "goc build: opt missing" >&2; cleanup_build_tmp; exit 1; }
+    local SMPASS="${GOC_STACKMAP:-}"
+    if [[ -z "$SMPASS" && -f "$ROOT/passes/GocStackMap.so" ]]; then
+      SMPASS="$ROOT/passes/GocStackMap.so"
+    fi
+    SMPASS="${SMPASS:-$ROOT/backend/build/pass-out/GocStackMap.so}"
     [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
     # goc-inline-gate is a no-op: call-bearing functions may inline. Maps are
     # recorded after O3 on the merged frame. Stack-pointer arguments and slots
@@ -381,7 +383,11 @@ cmd_build() {
     # Integer fragments stay in registers; the copier copies those spills
     # verbatim.
     if [[ $ALL -eq 1 && "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
-      local SMPASS="${GOC_STACKMAP:-$ROOT/backend/build/pass-out/GocStackMap.so}"
+      local SMPASS="${GOC_STACKMAP:-}"
+      if [[ -z "$SMPASS" && -f "$ROOT/passes/GocStackMap.so" ]]; then
+        SMPASS="$ROOT/passes/GocStackMap.so"
+      fi
+      SMPASS="${SMPASS:-$ROOT/backend/build/pass-out/GocStackMap.so}"
       [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
       if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap \
           -S "$BODY_LL" -o "$TMP/a.sm.ll"; then
@@ -411,8 +417,8 @@ cmd_build() {
     if [[ -n "${GOC_PKG:-}" ]]; then RB_ARGS+=("_" "$GOC_PKG"); fi
     if [[ $GOABI -eq 1 ]]; then RB_ARGS+=(--goabi); fi
     if [[ $ABI0 -eq 1 ]]; then RB_ARGS+=(--abi0); fi
-    if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" GOC_OPT_LEVEL="$OPT_LEVEL" \
-        GOC_ARCH="$GOC_ARCH" LLC="$LLC" \
+    if GOC_ROOT="$ROOT" GOC_OPT_LEVEL="$OPT_LEVEL" \
+        GOC_ARCH="$GOC_ARCH" LLC="$LLC" OPT="${OPT:-}" \
         GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
         "$REALBODY" "${RB_ARGS[@]}"; then
       echo "goc build: wrote multi-function real-body goobj $OUT_O (all fns; not seedMIR)"
@@ -431,8 +437,8 @@ cmd_build() {
       p21_sptr_across_call) GOSYM="main.P21SptrAcrossCall" ;;
       p21_gptr_store) GOSYM="main.P21GptrStoreWB" ;;
     esac
-    if GOC_ROOT="$ROOT" GOC_CLANG="$CLANG" GOC_OPT_LEVEL="$OPT_LEVEL" \
-        GOC_ARCH="$GOC_ARCH" LLC="$LLC" \
+    if GOC_ROOT="$ROOT" GOC_OPT_LEVEL="$OPT_LEVEL" \
+        GOC_ARCH="$GOC_ARCH" LLC="$LLC" OPT="${OPT:-}" \
         GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
         "$REALBODY" "$BODY_LL" "$OUT_O" "$FN" "$GOSYM"; then
       echo "goc build: wrote real-body goobj $OUT_O (fn=$FN; not seedMIR)"

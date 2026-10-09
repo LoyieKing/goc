@@ -8,8 +8,9 @@ Usage (from the repo root; build/ is gitignored):
   scripts/goc-color-report.py diff DIR_A DIR_B
   (build: --src FILE --cflags "-I..." for another TU, --no-g, --opt-level N)
 
-Needs: clang 19 (GOC_CLANG, else the in-tree build under third_party/, else
-clang-19), opt-19 (OPT), frontend/color-escape/build/goc-color-escape (built
+Needs: the patched clang next to goc (bin/clang, else
+third_party/llvm-19.1.7-clang-build/bin/clang), opt beside that clang or
+opt-19 (OPT), frontend/color-escape/build/goc-color-escape (built
 with make if missing) and backend/build/pass-out/GocStackMap.so (from
 backend/build.sh).  The QuickJS tree (third_party/quickjs-bellard or
 quickjs-ng, gitignored) must exist with scripts/qjs-gstack*.patch applied;
@@ -81,14 +82,14 @@ def shim_defs(flavor):
 
 
 def resolve_clang():
-    """Same order as cmd/goc resolve_clang; returns (path, is_intree)."""
-    if os.environ.get("GOC_CLANG"):
-        return os.environ["GOC_CLANG"], True
-    for c in ("third_party/llvm-19.1.7-clang-build/bin/clang", "third_party/llvm-clang-build/bin/clang"):
+    """Same order as goc_resolve_clang. The patched clang is always in-tree."""
+    for c in ("bin/clang",
+              "third_party/llvm-19.1.7-clang-build/bin/clang",
+              "third_party/llvm-clang-build/bin/clang"):
         c = os.path.join(ROOT, c)
         if os.access(c, os.X_OK):
             return c, True
-    return os.environ.get("CLANG_FALLBACK", "clang-19"), False
+    sys.exit("no patched clang next to goc. See docs/build-from-source.md")
 
 
 def cmd_build(a):
@@ -107,7 +108,7 @@ def cmd_build(a):
     opt = os.environ.get("OPT", "opt-19")
     for tool in (clang, opt):
         if not shutil.which(tool):
-            sys.exit("missing %s (set GOC_CLANG / OPT)" % tool)
+            sys.exit("missing %s (patched clang and opt ship with goc; see docs/build-from-source.md)" % tool)
     lvl = str(a.opt_level)
     # scripts/qjs-build.sh QJS_DEFS + FLAVOR_DEFS
     if flavor == "ng":

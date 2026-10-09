@@ -2,7 +2,8 @@
 # Source this file. Each recognized flag exports the value the passes,
 # realbody, and elfpack already read. A flag overrides an inherited value.
 #
-# GOC_FLAG_MODE=driver accepts only --clang / --toolchain / --root.
+# GOC_FLAG_MODE=driver accepts only --root. --clang and --toolchain are
+# rejected in every mode: the patched clang ships next to goc.
 # GOC_FLAG_MODE=all (default) accepts every switch below.
 # On success GOC_FLAG_SHIFT is 1 or 2. On an unknown flag the function
 # returns 1 and shifts nothing.
@@ -24,7 +25,7 @@ goc_isolate_product_env() {
     GOC_SPTR_MAPS GOC_INLINE_DYNALLOC GOC_FIXED_G GOC_OPT_EXTRA \
     GOC_LLC_EXTRA GOC_COLOR_REPORT GOC_CSR_ADJUST GOC_FRAMEADDR_MODE \
     GOC_ARCH GOC_LLC_OPT GOC_IR_RENAMES GOC_LIBCALL_IMPL GOC_KEEP_TMP \
-    GOC_CLANG GOC_TOOLCHAIN LLC OPT GOC_COLOR_ESCAPE GOC_STACKMAP GOC_PKG
+    LLC OPT GOC_COLOR_ESCAPE GOC_STACKMAP GOC_PKG
 }
 
 goc_need_arg() {
@@ -114,35 +115,8 @@ goc_consume_flag() {
       goc_flag_mark arch
       GOC_FLAG_SHIFT=1
       ;;
-    --clang)
-      local p
-      p="$(goc_need_arg --clang "${2:-}")"
-      [[ -x "$p" ]] || goc_die "--clang is not executable: $p"
-      export GOC_CLANG="$p"
-      goc_flag_mark clang
-      GOC_FLAG_SHIFT=2
-      ;;
-    --clang=*)
-      local p="${1#--clang=}"
-      [[ -x "$p" ]] || goc_die "--clang is not executable: $p"
-      export GOC_CLANG="$p"
-      goc_flag_mark clang
-      GOC_FLAG_SHIFT=1
-      ;;
-    --toolchain)
-      local p
-      p="$(goc_need_arg --toolchain "${2:-}")"
-      [[ -d "$p" ]] || goc_die "--toolchain is not a directory: $p"
-      export GOC_TOOLCHAIN="$p"
-      goc_flag_mark toolchain
-      GOC_FLAG_SHIFT=2
-      ;;
-    --toolchain=*)
-      local p="${1#--toolchain=}"
-      [[ -d "$p" ]] || goc_die "--toolchain is not a directory: $p"
-      export GOC_TOOLCHAIN="$p"
-      goc_flag_mark toolchain
-      GOC_FLAG_SHIFT=1
+    --clang|--clang=*|--toolchain|--toolchain=*)
+      goc_die "goc ships its patched clang. There is no --clang or --toolchain."
       ;;
     --root)
       local p
@@ -364,8 +338,6 @@ goc_append_resolved_flags() {
   else
     _dest+=(--no-fast-stack-alloca)
   fi
-  [[ -n "${GOC_CLANG:-}" ]] && _dest+=(--clang "$GOC_CLANG")
-  [[ -n "${GOC_TOOLCHAIN:-}" ]] && _dest+=(--toolchain "$GOC_TOOLCHAIN")
   [[ -n "${LLC:-}" ]] && _dest+=(--llc "$LLC")
   [[ -n "${OPT:-}" ]] && _dest+=(--opt-bin "$OPT")
   [[ -n "${GOC_COLOR_ESCAPE:-}" ]] && _dest+=(--color-escape "$GOC_COLOR_ESCAPE")
@@ -392,9 +364,10 @@ goc_append_resolved_flags() {
 goc_flags_help() {
   cat <<'EOF'
 Flags (a flag overrides a same-named environment variable on `goc build`):
-  --clang PATH           Patched clang-19
-  --toolchain DIR        Directory with bin/clang (and optionally passes/)
-  --root DIR             Repository root
+  --root DIR             Repository or release root
+The patched clang is bin/clang in a release, or
+third_party/llvm-19.1.7-clang-build/bin/clang in a checkout.
+There is no --clang and no --toolchain.
   -O0|-O1|-O2|-O3        LLVM IR optimization level
   --default-ptr-color COLOR
                          Color of an unannotated T* (cptr, sptr, uptr, gptr)

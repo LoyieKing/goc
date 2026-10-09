@@ -11,16 +11,15 @@ patches are preferred over large refactors.
 
 ## Development setup
 
-See [README.md](README.md) Quick start and [clang/README.md](clang/README.md).
+See [docs/build-from-source.md](docs/build-from-source.md).
 
-Build dependencies: `clang-19` / `clang++-19`, `llc-19`, `cmake`, `ninja`,
-Go 1.22+, `python3`, `rg` (ripgrep).
+Build dependencies: `clang-19` / `clang++-19`, `cmake`, `ninja`,
+Go 1.24+, `python3`, `rg` (ripgrep).
 
 ```bash
-export GOC_ROOT="$(pwd)"
-export GOC_CLANG=/path/to/patched/clang   # after applying in-tree patches
-./scripts/apply-patches.sh               # against your LLVM 19.1.7 checkout
-./cmd/goc test --p28                     # requires patched clang
+./scripts/build-clang.sh
+./scripts/build-passes.sh
+./cmd/goc test --p28
 ```
 
 ## Pull requests
@@ -29,7 +28,7 @@ export GOC_CLANG=/path/to/patched/clang   # after applying in-tree patches
 - Add or extend golden tests under `tests/`
 - Do not commit `_deps/`, `build/`, `*.o`, clang binaries, or a full
   `quickjs-ng` tree
-- Do not hardcode absolute machine paths; use `$GOC_ROOT` / `$GOC_CLANG`
+- Do not hardcode absolute machine paths; use `$GOC_ROOT`. The driver finds clang itself
 
 ## Code style
 

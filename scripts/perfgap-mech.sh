@@ -10,7 +10,6 @@ OUT="${OUT:-$ROOT/build/perfgap-mech}"
 CPU="${CPU:-3}"
 ROUNDS="${ROUNDS:-5}"
 mkdir -p "$OUT"
-export GOC_CLANG="${GOC_CLANG:-$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang}"
 export GOC_OPT_LEVEL=3 GOC_DEFAULT_PTR_COLOR=cptr GOC_NO_NOSPLIT=1 GOC_MORESTACK=1
 export GOC_SPTR_MAPS=1 GOC_INLINE_DYNALLOC=1
 SRC="$ROOT/tests/perfgap"

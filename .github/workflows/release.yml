@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL || true
+          df -h
+
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build python3 \
+            ripgrep curl ca-certificates xz-utils patchelf pkg-config \
+            zlib1g-dev lld
+          if ! command -v clang-19 >/dev/null 2>&1; then
+            wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+            chmod +x /tmp/llvm.sh
+            sudo /tmp/llvm.sh 19
+          fi
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.4"
+
+      - name: Restore patched clang and passes
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/llvm-19.1.7-clang-build/bin
+            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
+            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
+            third_party/llvm-19.1.7-clang-build/lib/clang
+            third_party/llvm-19.1.7-clang-build/lib/Target/X86
+            third_party/llvm-19.1.7-clang-build/x86-src
+            frontend/color-escape/build/goc-color-escape
+            backend/build/pass-out/goc-llc
+            backend/build/pass-out/GocStackMap.so
+          key: goc-clang-19.1.7-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
+
+      - name: Build clang and passes
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          ./scripts/build-clang.sh
+          ./scripts/build-passes.sh
+          ./scripts/slim-clang-build.sh
+
+      - name: Test
+        run: ./scripts/ci-test.sh
+
+      - name: Pack
+        run: |
+          ver="$(tr -d '[:space:]' < VERSION)"
+          tag="${GITHUB_REF_NAME#v}"
+          [[ "$ver" == "$tag" ]] || {
+            echo "VERSION ($ver) does not match tag ($GITHUB_REF_NAME)" >&2
+            exit 1
+          }
+          ./scripts/pack-release.sh "goc-${ver}-linux-amd64.tar.gz"
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver="$(tr -d '[:space:]' < VERSION)"
+          asset="goc-${ver}-linux-amd64.tar.gz"
+          notes="$(mktemp)"
+          cat >"$notes" <<EOF
+          goc ${ver} for linux/amd64.
+
+          The archive contains goc and the patched Clang. Unpack it, put \`bin\` on \`PATH\`, and run \`goc check\`.
+
+          You need Go 1.24+, python3, and rg. See docs/quickstart.md.
+          EOF
+          if gh release view "v${ver}" >/dev/null 2>&1; then
+            gh release upload "v${ver}" "$asset" --clobber
+          else
+            gh release create "v${ver}" "$asset" \
+              --title "goc ${ver}" \
+              --notes-file "$notes"
+          fi

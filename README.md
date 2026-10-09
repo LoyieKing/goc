@@ -180,46 +180,30 @@ More detail in [docs/architecture.md](docs/architecture.md).
 
 ## Usage
 
-**Requirements:** linux/amd64; the LLVM 19 toolchain (`clang-19`, `opt-19`, `llc-19`, and so on), `cmake`, `ninja`, Go 1.24+, `python3`.
+**Requirements:** linux/amd64, Go 1.24+, `python3`, `rg`. The release archive already contains the patched Clang.
 
-From-zero steps, flags, and the smallest program are in [docs/quickstart.md](docs/quickstart.md). When this checkout already has a patched Clang:
+Download and the smallest program: [docs/quickstart.md](docs/quickstart.md).
 
 ```bash
-./cmd/goc check
-./cmd/goc go examples/hello
-./examples/hello/hello
+tar -xzf goc-0.0.1-linux-amd64.tar.gz
+cd goc-0.0.1-linux-amd64
+export PATH="$PWD/bin:$PATH"
+goc check
+goc go examples/hello -o /tmp/hello
+/tmp/hello
 ```
 
-**1. Build the Clang used by goc** (tens of minutes; see [clang/README.md](clang/README.md)):
+Building that archive from this repository is [docs/build-from-source.md](docs/build-from-source.md):
 
 ```bash
 git clone https://github.com/LoyieKing/goc.git
 cd goc
-
-mkdir -p "$HOME/src"
-curl -L -o /tmp/llvmorg-19.1.7.tar.gz \
-  https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.7.tar.gz
-tar -C "$HOME/src" -xf /tmp/llvmorg-19.1.7.tar.gz
-LLVM_SRC="$HOME/src/llvm-project-llvmorg-19.1.7"
-./scripts/apply-patches.sh "$LLVM_SRC"
-
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19 \
-  -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_ENABLE_PROJECTS=clang \
-  -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_ASSERTIONS=ON \
-  -DCLANG_ENABLE_STATIC_ANALYZER=OFF -DCLANG_ENABLE_ARCMT=OFF \
-  -S "$LLVM_SRC/llvm" -B third_party/llvm-19.1.7-clang-build
-ninja -C third_party/llvm-19.1.7-clang-build -j"$(nproc)" clang
-```
-
-**2. Check that it works:**
-
-```bash
+./scripts/build-clang.sh
+./scripts/build-passes.sh
 ./cmd/goc check
-./cmd/goc go examples/hello
 ```
 
-**3. Call goc from Go.** The smallest program is `examples/hello`. The golden test is `tests/goabi`:
+**Call goc from Go.** The smallest program is `examples/hello`. The golden test is `tests/goabi`:
 
 ```bash
 ./scripts/test-p29-goabi.sh
@@ -237,7 +221,7 @@ int goabi_add2(int a, int b) { return a + b; }
 func goabi_add2(a, b int32) int32
 ```
 
-**4. Build QuickJS:**
+**Build QuickJS:**
 
 ```bash
 git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng
@@ -257,7 +241,7 @@ For Bellard's QuickJS, put it in `third_party/quickjs-bellard` and run `QJS_FLAV
 
 See [docs/todo.md](docs/todo.md) (Chinese):
 
-- **An out-of-the-box goc compiler:** `goc go` and `goc check` take flags ([docs/quickstart.md](docs/quickstart.md)). `goc toolchain pack` writes a relocatable clang and the passes. A hosted download is not published.
+- **An out-of-the-box goc compiler:** the release archive is goc plus the patched Clang ([docs/quickstart.md](docs/quickstart.md)). `goc go` and `goc check` take flags. There is no clang path to pass.
 - **Measure the cost of calls between goc and Go:** per-call cost of Go calling goc and goc calling Go, compared with Go calling Go and cgo.
 - **linux/arm64 support.**
 - **goc calling Go:** call Go with just a declaration, the same way Go calls goc.
@@ -269,9 +253,10 @@ See [docs/todo.md](docs/todo.md) (Chinese):
 
 | Document | |
 |---|---|
-| [docs/quickstart.md](docs/quickstart.md) | From zero: clone, Clang, `goc go` |
+| [docs/quickstart.md](docs/quickstart.md) | Download the release and run `goc` |
+| [docs/build-from-source.md](docs/build-from-source.md) | Build the release archive from a checkout |
 | [docs/guide.md](docs/guide.md) | User guide (Chinese / English) |
-| [docs/toolchain.md](docs/toolchain.md) | `goc go` flags and toolchain pack |
+| [docs/toolchain.md](docs/toolchain.md) | `goc go` flags and where clang lives |
 | [docs/syntax-guide.md](docs/syntax-guide.md) | Language rules (Chinese) |
 | [docs/architecture.md](docs/architecture.md) | Compilation pipeline |
 | [docs/benchmark.md](docs/benchmark.md) | Benchmarks (Chinese) |

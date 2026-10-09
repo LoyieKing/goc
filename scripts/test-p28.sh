@@ -10,20 +10,10 @@ PASS_FILE="$OUT/PASS_LINES.txt"
 : > "$PASS_FILE"
 pass() { echo "$*" | tee -a "$PASS_FILE"; }
 
-CLANG="${GOC_CLANG:-}"
-if [[ -z "$CLANG" ]]; then
-  for c in \
-    "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang" \
-    "$ROOT/third_party/llvm-clang-build/bin/clang"; do
-    [[ -x "$c" ]] && CLANG="$c" && break
-  done
-fi
-if [[ -z "$CLANG" || ! -x "$CLANG" ]]; then
-  echo "FAIL: set GOC_CLANG to a patched clang-19 (in-tree Sema required for --p28)" >&2
-  echo "See clang/README.md and scripts/apply-patches.sh" >&2
-  exit 1
-fi
-LLC="${LLC:-llc-19}"
+# shellcheck source=goc-product-lib.sh
+source "$ROOT/scripts/goc-product-lib.sh"
+CLANG="$(goc_resolve_clang)"
+goc_prepend_lib "$(goc_clang_libdir "$CLANG")"
 
 echo "=== P28: using Clang: $CLANG ==="
 "$CLANG" --version | head -2
@@ -54,7 +44,7 @@ test -f "$OUT/p28_real.meta.json"
 rg -q 'clang-real-isel' "$OUT/p28_real.meta.json"
 rg -q 'magic 0x28C0DE42|P28-proof' "$OUT/realbody.log"
 pass "PASS P28-realbody-goobj (Clang .c → real ISel body → goobj; not seedMIR)"
-pass "PASS P28-driver-clang (GOC_CLANG set for goc build/cc)"
+pass "PASS P28-driver-clang (patched clang next to goc)"
 
 {
   echo "P28 results ($(date '+%Y-%m-%d %H:%M %Z'))"

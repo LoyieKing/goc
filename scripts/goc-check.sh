@@ -7,7 +7,7 @@ export GOC_ROOT="$ROOT"
 # shellcheck source=goc-flags.sh
 source "$SELF/goc-flags.sh"
 
-# Reject a package path. A flag's value (the path after --clang) is not one.
+# Reject a package path. A flag's value (the path after --arch, for example) is not one.
 scan=("$@")
 while [[ ${#scan[@]} -gt 0 ]]; do
   if goc_consume_flag "${scan[0]}" "${scan[1]:-}"; then
