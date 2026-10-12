@@ -26,7 +26,7 @@ Go 1.24+. Packing a release also uses `python3`. Repository tests also use `pyth
 
 - One concern per PR when practical
 - Add or extend golden tests under `tests/`
-- Do not commit `_deps/`, `build/`, `*.o`, clang binaries, or a full
+- Do not commit `_deps/`, `build/`, `*.o`, `*.goobj`, clang binaries, or a full
   `quickjs-ng` tree
 - Do not hardcode absolute machine paths; use `$GOC_ROOT`. The driver finds clang itself
 

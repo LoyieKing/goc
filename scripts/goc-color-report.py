@@ -14,7 +14,7 @@ opt-19 (OPT), frontend/color-escape/build/goc-color-escape (built
 with make if missing) and backend/build/pass-out/GocStackMap.so (from
 backend/build.sh).  The QuickJS tree (third_party/quickjs-bellard or
 quickjs-ng, gitignored) must exist with scripts/qjs-gstack*.patch applied;
-scripts/qjs-build.sh applies it.  build/qjs*/shim.o is optional (shim -D
+scripts/qjs-build.sh applies it.  build/qjs*/shim.goobj is optional (shim -D
 redirects).
 
 Reads the IR that the goc pipeline produces (see `build`) compiled with -g and
@@ -65,7 +65,7 @@ def sh(cmd, env=None, **kw):
 
 
 def shim_defs(flavor):
-    out = os.path.join(ROOT, "build", "qjs" if flavor == "ng" else "qjs-bellard", "shim.o")
+    out = os.path.join(ROOT, "build", "qjs" if flavor == "ng" else "qjs-bellard", "shim.goobj")
     if not os.path.exists(out):
         print("note: %s missing; building without shim -D redirects" % out, file=sys.stderr)
         return []

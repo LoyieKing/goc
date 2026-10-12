@@ -978,7 +978,7 @@ func WriteMeta(llPath, asmPath, disPath, outPath, symPrefix, goabiPath, abi0Arg,
 		framesLog += fmt.Sprintf("'%s': %d", f.MIRName, f.Frame)
 	}
 	framesLog += "}"
-	fmt.Printf("realbody --all: %d TEXT entries; frames=%s\n", len(mfns), framesLog)
+	fmt.Printf("realbody: %d TEXT entries; frames=%s\n", len(mfns), framesLog)
 	return nil
 }
 

@@ -14,15 +14,15 @@ export GOC_OPT_LEVEL=3 GOC_DEFAULT_PTR_COLOR=cptr GOC_NO_NOSPLIT=1 GOC_MORESTACK
 export GOC_SPTR_MAPS=1 GOC_INLINE_DYNALLOC=1
 SRC="$ROOT/tests/perfgap"
 if [[ "${BUILD:-1}" == 1 ]]; then
-  env -u GOC_PKG "$ROOT/cmd/goc" build "$SRC/mech.c" -o "$OUT/mech.o" --all --goabi -DNDEBUG
-  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/mech.o" \
-    go build -a -toolexec "$ROOT/backend/tools/toolexec_pack_goobj.sh" -o "$OUT/mech-goc" . )
+  env -u GOC_PKG "$ROOT/cmd/goc" build "$SRC/mech.c" -o "$OUT/mech.goobj" -DNDEBUG
+  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/mech.goobj" \
+    go build -a -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" -o "$OUT/mech-goc" . )
   # goc with LLVM's tail duplication limits raised (computed-goto dispatch)
   mkdir -p "$OUT/td"
   env -u GOC_PKG GOC_LLC_EXTRA="-tail-dup-pred-size=1000 -tail-dup-succ-size=1000" \
-    "$ROOT/cmd/goc" build "$SRC/mech.c" -o "$OUT/td/mech.o" --all --goabi -DNDEBUG
-  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/td/mech.o" \
-    go build -a -toolexec "$ROOT/backend/tools/toolexec_pack_goobj.sh" -o "$OUT/mech-goc-taildup" . )
+    "$ROOT/cmd/goc" build "$SRC/mech.c" -o "$OUT/td/mech.goobj" -DNDEBUG
+  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/td/mech.goobj" \
+    go build -a -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" -o "$OUT/mech-goc-taildup" . )
   GF_FULL="-fwrapv -fno-strict-aliasing -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
 -fno-optimize-sibling-calls -mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables \
 -mstack-alignment=8 -mllvm -no-stack-slot-sharing -mllvm -enable-shrink-wrap=false \

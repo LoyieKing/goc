@@ -25,7 +25,7 @@ Usage:
       Toolchain self-check: build and run examples/hello
   goc toolchain status|pack DEST [flags]
       Show the tools in this tree, or pack a full release
-  goc build foo.c -o foo.o [flags] [-- …]
+  goc build foo.c -o foo.goobj [flags] [-- …]
       Patched Clang Sema → real-body goobj (P28). Default -O0.
   goc cc [clang-args…]
       Invoke the shipped clang with goc include/attrs
@@ -40,9 +40,10 @@ Usage:
   pool cursor is process-global, so concurrent calls are not thread-safe.
   Morestack, splittable frames, and sptr maps are always on.
   linux/amd64. --fixed-g and --opt-extra=-inline-threshold=250 stay off.
-`goc build --goabi` turns on morestack and splittable frames as well. amd64
-also records sptr maps. arm64 cannot. `goc build` without `--goabi` stays at
--O0. A flag wins over an inherited variable.
+`goc build` emits every defined function and a Go entry for each. It stays
+at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
+frames, and amd64 sptr maps are always on. arm64 cannot record sptr maps.
+There is no --all or --goabi.
 
 Download and use: docs/quickstart.md
 Build the package: docs/build-from-source.md
@@ -120,7 +121,7 @@ cmd_build() {
   if [[ $# -eq 0 ]]; then
     exec bash "$ROOT/scripts/test-p28.sh"
   fi
-  local SRC="" OUT_O="" EXTRA=() ALL=0 GOABI=0 ABI0=0
+  local SRC="" OUT_O="" EXTRA=() ABI0=0
   while [[ $# -gt 0 ]]; do
     if goc_consume_flag "$1" "${2:-}"; then
       shift "$GOC_FLAG_SHIFT"
@@ -128,16 +129,16 @@ cmd_build() {
     fi
     case "$1" in
       -o) OUT_O="$2"; shift 2 ;;
-      --all) ALL=1; shift ;;
-      --goabi) GOABI=1; ALL=1; shift ;;
-      --abi0) ABI0=1; ALL=1; shift ;;
+      --all|--goabi|--all=*|--goabi=*)
+        echo "goc build: every defined function is emitted, with a Go entry. There is no --all or --goabi." >&2
+        exit 2
+        ;;
+      --abi0) ABI0=1; shift ;;
       --) shift; EXTRA+=("$@"); break ;;
       -h|--help)
-        echo "usage: goc build [foo.c -o foo.o] [flags] [-- clang-args]"
+        echo "usage: goc build [foo.c -o foo.goobj] [flags] [-- clang-args]"
         echo "       goc build            # P28 test suite"
-        echo "  --all: emit TEXT for every defined function (P29 multi-function)"
-        echo "  --goabi: Go ABIInternal entry thunks (amd64 SysV, or arm64 AAPCS64)"
-        echo "  --abi0:  emit ABI0 TEXT (C-side SysV entry points, e.g. libc shim)"
+        echo "  --abi0: mark the object ABI0 (C-side platform entries, e.g. a libc shim)"
         echo
         goc_flags_help
         exit 0
@@ -158,8 +159,11 @@ cmd_build() {
     exec bash "$ROOT/scripts/test-p28.sh"
   fi
   if [[ -z "$OUT_O" ]]; then
-    OUT_O="${SRC%.c}.o"
-    OUT_O="${OUT_O%.goc}.o"
+    case "$SRC" in
+      *.c) OUT_O="${SRC%.c}.goobj" ;;
+      *.goc) OUT_O="${SRC%.goc}.goobj" ;;
+      *) OUT_O="${SRC}.goobj" ;;
+    esac
   fi
 
   # Default stays linux/amd64. arm64 is a separate backend, not -march.
@@ -191,12 +195,11 @@ cmd_build() {
 
   # Go linking needs a splittable frame and a morestack prologue. amd64 also
   # records sptr maps. arm64 has no frame-address repair, so maps stay off.
-  if [[ $GOABI -eq 1 ]]; then
-    export GOC_MORESTACK=1
-    export GOC_NO_NOSPLIT=1
-    if [[ "$GOC_ARCH" == amd64 ]]; then
-      export GOC_SPTR_MAPS=1
-    fi
+  # Set these after the arm64 refusal above.
+  export GOC_MORESTACK=1
+  export GOC_NO_NOSPLIT=1
+  if [[ "$GOC_ARCH" == amd64 ]]; then
+    export GOC_SPTR_MAPS=1
   fi
 
   local CLANG USE_PLUGIN=0
@@ -382,7 +385,7 @@ cmd_build() {
     # hoisted g value lives in a callee-saved register, not a colored spill.
     # Integer fragments stay in registers; the copier copies those spills
     # verbatim.
-    if [[ $ALL -eq 1 && "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
+    if [[ "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
       local SMPASS="${GOC_STACKMAP:-}"
       if [[ -z "$SMPASS" && -f "$ROOT/passes/GocStackMap.so" ]]; then
         SMPASS="$ROOT/passes/GocStackMap.so"
@@ -411,47 +414,24 @@ cmd_build() {
   if [[ -z "$FN" ]]; then
     FN="$("$LOWER" fnname "$TMP/a.ll" 2>/dev/null || true)"
   fi
-  if [[ $ALL -eq 1 ]]; then
-    [[ -x "$REALBODY" ]] || { echo "goc build: missing real-body goobj builder" >&2; cleanup_build_tmp; exit 1; }
-    local RB_ARGS=("$BODY_LL" "$OUT_O" --all)
-    # 4th positional is the go_sym prefix; 3rd is the (unused) fn name.
-    if [[ -n "${GOC_PKG:-}" ]]; then RB_ARGS+=("_" "$GOC_PKG"); fi
-    if [[ $GOABI -eq 1 ]]; then RB_ARGS+=(--goabi); fi
-    if [[ $ABI0 -eq 1 ]]; then RB_ARGS+=(--abi0); fi
-    if GOC_ROOT="$ROOT" GOC_OPT_LEVEL="$OPT_LEVEL" \
-        GOC_ARCH="$GOC_ARCH" LLC="$LLC" OPT="${OPT:-}" \
-        GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
-        "$REALBODY" "${RB_ARGS[@]}"; then
-      echo "goc build: wrote multi-function real-body goobj $OUT_O (all fns; not seedMIR)"
-      cleanup_build_tmp
-      return 0
-    fi
-    echo "goc build: multi-function real-body lower failed; no object emitted" >&2
+  if [[ -z "$FN" ]]; then
+    echo "goc build: no defined function in $SRC; refusing a non-goobj LLVM object" >&2
     cleanup_build_tmp
     exit 1
   fi
-  if [[ -n "$FN" ]]; then
-    [[ -x "$REALBODY" ]] || { echo "goc build: missing real-body goobj builder" >&2; cleanup_build_tmp; exit 1; }
-    local GOSYM="main.${FN}"
-    case "$FN" in
-      p28_real_body) GOSYM="main.P28RealBody" ;;
-      p21_sptr_across_call) GOSYM="main.P21SptrAcrossCall" ;;
-      p21_gptr_store) GOSYM="main.P21GptrStoreWB" ;;
-    esac
-    if GOC_ROOT="$ROOT" GOC_OPT_LEVEL="$OPT_LEVEL" \
-        GOC_ARCH="$GOC_ARCH" LLC="$LLC" OPT="${OPT:-}" \
-        GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
-        "$REALBODY" "$BODY_LL" "$OUT_O" "$FN" "$GOSYM"; then
-      echo "goc build: wrote real-body goobj $OUT_O (fn=$FN; not seedMIR)"
-      cleanup_build_tmp
-      return 0
-    fi
-    echo "goc build: real-body lower failed for $FN; no object emitted" >&2
+  [[ -x "$REALBODY" ]] || { echo "goc build: missing real-body goobj builder" >&2; cleanup_build_tmp; exit 1; }
+  local RB_ARGS=("$BODY_LL" "$OUT_O")
+  if [[ -n "${GOC_PKG:-}" ]]; then RB_ARGS+=("$GOC_PKG"); fi
+  if [[ $ABI0 -eq 1 ]]; then RB_ARGS+=(--abi0); fi
+  if GOC_ROOT="$ROOT" GOC_OPT_LEVEL="$OPT_LEVEL" \
+      GOC_ARCH="$GOC_ARCH" LLC="$LLC" OPT="${OPT:-}" \
+      GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
+      "$REALBODY" "${RB_ARGS[@]}"; then
+    echo "goc build: wrote $OUT_O"
     cleanup_build_tmp
-    exit 1
+    return 0
   fi
-
-  echo "goc build: no defined function in $SRC; refusing a non-goobj LLVM object" >&2
+  echo "goc build: real-body lower failed; no object emitted" >&2
   cleanup_build_tmp
   exit 1
 }

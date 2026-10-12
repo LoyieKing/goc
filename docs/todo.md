@@ -55,7 +55,7 @@
 
 ## goc 调用 Go
 
-现在没有完善的方案。能工作的只有手写调用，见 [guide.md §8](guide.md)：C 侧自己把参数放进 Go ABI 寄存器，恢复 R14 里的 `g`，清零 `xmm15`，再 `call main.函数名.goabi`。QuickJS 的数学桥和 `localtime` 桥就是这么写的。问题有这些：
+现在没有完善的方案。能工作的只有手写调用，见 [guide.md](guide.md) 的「C 调用 Go」：C 侧自己把参数放进 Go ABI 寄存器，恢复 R14 里的 `g`，清零 `xmm15`，再 `call main.函数名.goabi`。QuickJS 的数学桥和 `localtime` 桥就是这么写的。问题有这些：
 
 - 没有导入语法。`goc_goimport` 只是占位名，没有实现。每个 Go 函数都要手写汇编式的调用。
 - 参数溢出区靠调用方手留。Go 被调方会把寄存器参数溢出到返回地址上方，C 调用方没有这块区域，现在靠 `call` 前后各留 64 字节顶着。签名大了就可能盖掉 C 帧。
@@ -81,7 +81,7 @@
 
 ## 开箱即用的 goc 编译器
 
-已落地。发布包是 goc 加打过补丁的 Clang，下载见 [quickstart.md](quickstart.md)，从仓库编这个包见 [build-from-source.md](build-from-source.md)。`goc go` 用命令行参数给出 QuickJS 那组默认（`-O3`、`--default-ptr-color cptr`、`--fast-stack-alloca`），不读环境里的 `GOC_*`。没有 `--clang` 和 `--toolchain`。每个 Go 调 C 的 thunk 帧按该函数的栈参数计算。morestack、可分裂帧和 sptr 栈图一定打开，没有开关。`goc check` 跑 `examples/hello`。`goc toolchain pack` 打出完整发布包。`goc build` 不带 `--goabi` 时仍不套用这组默认。`goc build --goabi` 会打开 morestack 和可分裂帧；amd64 还会打开 sptr 栈图。
+已落地。发布包是 goc 加打过补丁的 Clang，下载见 [quickstart.md](quickstart.md)，从仓库编这个包见 [build-from-source.md](build-from-source.md)。`goc go` 用命令行参数给出 QuickJS 那组默认（`-O3`、`--default-ptr-color cptr`、`--fast-stack-alloca`），不读环境里的 `GOC_*`。没有 `--clang` 和 `--toolchain`。每个 Go 调 C 的 thunk 帧按该函数的栈参数计算。morestack、可分裂帧和 sptr 栈图一定打开，没有开关。`goc check` 跑 `examples/hello`。`goc toolchain pack` 打出完整发布包。`goc build` 仍是 `-O0`，不套用 `goc go` 的优化默认。它同样总是发出每个函数并带 Go 入口；morestack、可分裂帧和 amd64 的 sptr 栈图一定打开。
 
 ## 量化 goc 与 Go 互相调用的开销
 

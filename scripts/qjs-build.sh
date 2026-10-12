@@ -75,22 +75,22 @@ echo "=== [1/4] freestanding libc shim + uptr runtime → goobj ==="
 # Same mode as the QJS TUs, so cross-TU C references agree on names
 # (main.goc_abort.impl etc.). The ABIInternal thunks are dead weight here.
 env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_libc_shim.c" \
-  -o "$OUT/shim.o" --all --goabi "${QJS_DEFS[@]}"
-echo "  shim: $(go tool nm "$OUT/shim.o" | grep -c ' T ') TEXT"
+  -o "$OUT/shim.goobj" "${QJS_DEFS[@]}"
+echo "  shim: $(go tool nm "$OUT/shim.goobj" | grep -c ' T ') TEXT"
 env -u GOC_PKG -u GOC_DEFAULT_PTR_COLOR -u GOC_IR_RENAMES \
   "$ROOT/cmd/goc" build "$ROOT/runtime/uptr/goc_uptr_runtime.c" \
-  -o "$OUT/uptr.o" --all --goabi -I "$ROOT/runtime" "${UPTR_DEFS[@]}"
-echo "  uptr runtime: $(go tool nm "$OUT/uptr.o" | grep -c ' T ') TEXT"
+  -o "$OUT/uptr.goobj" -I "$ROOT/runtime" "${UPTR_DEFS[@]}"
+echo "  uptr runtime: $(go tool nm "$OUT/uptr.goobj" | grep -c ' T ') TEXT"
 
 # Redirect QJS's libc references to the shim's goc_-prefixed symbols: -D for
 # source-level names, GOC_IR_RENAMES for compiler-emitted libcalls.
-SHIM_NAMES=$(go tool nm "$OUT/shim.o" | awk '$2=="T"{print $3}' \
+SHIM_NAMES=$(go tool nm "$OUT/shim.goobj" | awk '$2=="T"{print $3}' \
   | sed 's/^.*\.//; s/\.impl$//' | grep '^goc_' | sed 's/^goc_//' | sort -u \
   | grep -v -x -e memcpy -e memmove -e memset | tr '\n' ' ')
 # LLVM lowers some intrinsics (e.g. floor/trunc) to bare libcalls *after* the
 # Go ABI IR rename. Bind only names the shim actually defined as ABI0 .impl
 # bodies; varargs and other skipped functions retain their plain names.
-GOC_LIBCALL_IMPL=$(go tool nm "$OUT/shim.o" | awk '
+GOC_LIBCALL_IMPL=$(go tool nm "$OUT/shim.goobj" | awk '
   $2 == "T" && $3 ~ /^main\.[A-Za-z_][A-Za-z0-9_]*\.impl$/ {
     sub(/^main\./, "", $3); sub(/\.impl$/, "", $3); print $3
   }' | sort -u | tr '\n' ' ')
@@ -104,13 +104,13 @@ done
 export GOC_IR_RENAMES="$IR_RENAMES"
 echo "  shim redirects: $(echo $SHIM_NAMES | wc -w) symbols"
 env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_promise_probe.c" \
-  -o "$OUT/promise_probe.o" --all --goabi "${QJS_DEFS[@]}"
+  -o "$OUT/promise_probe.goobj" "${QJS_DEFS[@]}"
 EXTRA_OBJS=""
 if [[ "$QJS_FLAVOR" == bellard ]]; then
   # Exported JS_FreeValue & co. (static inline in Bellard's quickjs.h).
   env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_bellard_api.c" \
-    -o "$OUT/bellard_api.o" --all --goabi "${QJS_DEFS[@]}" $SHIM_DEFS
-  EXTRA_OBJS=" $OUT/bellard_api.o"
+    -o "$OUT/bellard_api.goobj" "${QJS_DEFS[@]}" $SHIM_DEFS
+  EXTRA_OBJS=" $OUT/bellard_api.goobj"
 fi
 
 echo "=== [2/4] QuickJS ($QJS_FLAVOR) TUs → goobj (colored, Go-ABI thunks) ==="
@@ -120,9 +120,9 @@ for src in "${QJS_TUS[@]}"; do
   # emulated ng runtime finalizers first); quickjs.c's own one is renamed.
   [[ "$QJS_FLAVOR" == bellard && "$src" == quickjs ]] && \
     TU_DEFS=(-DJS_FreeRuntime=goc_bellard_JS_FreeRuntime)
-  env -u GOC_PKG "$ROOT/cmd/goc" build "$QJS/$src.c" -o "$OUT/$src.o" \
-    --all --goabi "${QJS_DEFS[@]}" "${TU_DEFS[@]}" $SHIM_DEFS
-  echo "  $src: $(go tool nm "$OUT/$src.o" | grep -c ' T ') TEXT"
+  env -u GOC_PKG "$ROOT/cmd/goc" build "$QJS/$src.c" -o "$OUT/$src.goobj" \
+    "${QJS_DEFS[@]}" "${TU_DEFS[@]}" $SHIM_DEFS
+  echo "  $src: $(go tool nm "$OUT/$src.goobj" | grep -c ' T ') TEXT"
 done
 
 echo "=== [3/4] link Go caller (toolexec packs goobjs; -lm via extld) ==="
@@ -133,12 +133,12 @@ echo "=== [3/4] link Go caller (toolexec packs goobjs; -lm via extld) ==="
 gcc -c -o "$ROOT/tests/qjs/goc_libm_glibc.syso" "$ROOT/tests/qjs/asm/goc_libm_glibc.S"
 cp -f "$ROOT/tests/qjs/goc_libm_glibc.syso" "$ROOT/tests/qjscli/goc_libm_glibc.syso"
 BINOBJ=""
-for src in "${QJS_TUS[@]}"; do BINOBJ="$BINOBJ $OUT/$src.o"; done
-BINOBJ="${BINOBJ# } $OUT/shim.o $OUT/uptr.o $OUT/promise_probe.o$EXTRA_OBJS"
+for src in "${QJS_TUS[@]}"; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
+BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/uptr.goobj $OUT/promise_probe.goobj$EXTRA_OBJS"
 ( cd "$ROOT/tests/qjs" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
   go build -a -ldflags="-extldflags=-lm" \
-    -toolexec "$ROOT/backend/tools/toolexec_pack_goobj.sh" \
+    -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" \
     -o "$OUT/qjs_test" . )
 
 echo "=== [4/4] run on the goroutine stack ==="

@@ -402,11 +402,10 @@ There is no --clang and no --toolchain.
   -O3 --default-ptr-color cptr --fast-stack-alloca
 Each Go→C thunk frame is that signature's stack arguments, rounded up to 16,
 plus the saved frame pointer.
-Morestack, splittable frames, and sptr maps are always on for `goc go`.
-`goc build --goabi` turns on morestack and splittable frames. amd64 also
-records sptr maps. There is no flag to disable them. arm64 cannot record
-sptr maps. `goc build` without `--goabi` stays at -O0 with those three off,
-unless an inherited variable sets them.
+`goc build` emits every defined function and a Go entry for each. It stays
+at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
+frames, and amd64 sptr maps are always on for `goc go` and `goc build`.
+arm64 cannot record sptr maps. There is no --all or --goabi.
 Clang arguments go after `--`.
 EOF
 }

@@ -10,7 +10,7 @@ Color checks only. Linking into Go is [docs/quickstart.md](../docs/quickstart.md
 
 ```bash
 ./cmd/goc cc -emit-llvm -S -o /tmp/hello.ll examples/hello_colors.c
-./cmd/goc build examples/hello_colors.c -o /tmp/hello.o
+./cmd/goc build examples/hello_colors.c -o /tmp/hello.goobj
 # Expect failure:
 ./cmd/goc cc -c examples/sptr_escape_bad.c
 ```

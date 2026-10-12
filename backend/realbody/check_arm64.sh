@@ -6,8 +6,8 @@
 #   2. callit → leaf, the call reloc resolves
 #   3. return of &global (ADRP+ADD or ADRP+LDR)
 #   4. morestack prologue (ldr from x28, cmp, b.ls)
-#   5. --goabi 9-int thunk stores x8, llvm-mc assembles it, link if it can
-#      (MORESTACK + NO_NOSPLIT; stack maps stay off)
+#   5. 9-int Go entry stores x8, llvm-mc assembles it, link if it can
+#      (morestack is always on; stack maps stay off on arm64)
 #   6. default amd64 goc build of a tiny C file still works
 #   plus: a linux/amd64 host TU is refused; runtime/uptr is compiled for arm64
 set -euo pipefail
@@ -76,10 +76,20 @@ link_arm64() {
   fi
   GOARCH=arm64 GOOS=linux go tool compile -p main -o "$dir/main.o" "$dir/main.go"
   cp "$dir/main.o" "$dir/combined.a"
-  local obj
+  # The linker skips a short archive member unless its name ends in .o.
+  # goc's file on disk is .goobj; the member it loads is .o.
+  local obj base stage
+  stage="$(mktemp -d)"
+  trap 'rm -rf "$stage"' RETURN
   for obj in "$@"; do
-    go tool pack r "$dir/combined.a" "$obj"
+    base="$(basename "$obj")"
+    case "$base" in
+      *.goobj) base="${base%.goobj}.o" ;;
+    esac
+    cp "$obj" "$stage/$base"
+    go tool pack r "$dir/combined.a" "$stage/$base"
   done
+  rm -rf "$stage"
   GOARCH=arm64 GOOS=linux GOROOT="$(go env GOROOT)" \
     "$(go env GOTOOLDIR)/link" \
     -o "$elf" -importcfg "$TMP/importcfg.link" -buildmode=exe -extld=gcc \
@@ -108,18 +118,18 @@ func main() {
 EOF
 
 echo "== amd64 regression =="
-clean_env "$GOC" build "$TMP/leaf.c" -o "$TMP/add_amd64.o" --all
-header_has "$TMP/add_amd64.o" "linux amd64"
-go tool nm "$TMP/add_amd64.o" | rg -q 'main\.add' || fail "amd64 object has no main.add"
+clean_env "$GOC" build "$TMP/leaf.c" -o "$TMP/add_amd64.goobj"
+header_has "$TMP/add_amd64.goobj" "linux amd64"
+go tool nm "$TMP/add_amd64.goobj" | rg -q 'main\.add' || fail "amd64 object has no main.add"
 pass "amd64 goc build (header linux amd64, main.add)"
 
 echo "== arm64 leaf + call + &global =="
-clean_env GOC_ARCH=arm64 "$GOC" build "$TMP/leaf.c" -o "$TMP/leaf_arm.o" --all
-header_has "$TMP/leaf_arm.o" "linux arm64"
-go tool nm "$TMP/leaf_arm.o" | rg -q 'main\.add' || fail "arm64 object has no main.add"
-go tool nm "$TMP/leaf_arm.o" | rg -q 'main\.callit' || fail "arm64 object has no main.callit"
-go tool nm "$TMP/leaf_arm.o" | rg -q 'main\.aglob' || fail "arm64 object has no main.aglob"
-link_arm64 "$TMP/caller.go" "$TMP/leaf.elf" "$TMP/leaf_arm.o"
+clean_env GOC_ARCH=arm64 "$GOC" build "$TMP/leaf.c" -o "$TMP/leaf_arm.goobj"
+header_has "$TMP/leaf_arm.goobj" "linux arm64"
+go tool nm "$TMP/leaf_arm.goobj" | rg -q 'main\.add' || fail "arm64 object has no main.add"
+go tool nm "$TMP/leaf_arm.goobj" | rg -q 'main\.callit' || fail "arm64 object has no main.callit"
+go tool nm "$TMP/leaf_arm.goobj" | rg -q 'main\.aglob' || fail "arm64 object has no main.aglob"
+link_arm64 "$TMP/caller.go" "$TMP/leaf.elf" "$TMP/leaf_arm.goobj"
 GOARCH=arm64 go tool objdump "$TMP/leaf.elf" >"$TMP/leaf.dis"
 # Go's objdump prints Plan 9 syntax. The body and the resolved call both
 # have to show up; a zero reloc would not name the callee.
@@ -135,21 +145,22 @@ bodies = {}
 for chunk in text[1:]:
     name, _, rest = chunk.partition("\n")
     bodies[name.split("(")[0].strip()] = rest
-callit = bodies.get("main.callit", "")
+# The Go entry is the thunk. The C call and the ADRP live in the .impl body.
+callit = bodies.get("main.callit.impl", "")
 if "main.add" not in callit and "add(" not in callit:
-    sys.exit("callit disassembly does not name add:\n" + callit[:800])
-aglob = bodies.get("main.aglob", "")
+    sys.exit("callit.impl disassembly does not name add:\n" + callit[:800])
+aglob = bodies.get("main.aglob.impl", "")
 low = aglob.lower()
 if "adrp" not in low and "adr " not in low:
-    sys.exit("aglob disassembly has no ADRP:\n" + aglob[:800])
-print("callit names add; aglob has adrp")
+    sys.exit("aglob.impl disassembly has no ADRP:\n" + aglob[:800])
+print("callit.impl names add; aglob.impl has adrp")
 PY
 pass "arm64 leaf linked; callit→add resolved; aglob has ADRP"
 
 echo "== arm64 morestack prologue =="
 clean_env GOC_ARCH=arm64 GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 \
-  "$GOC" build "$TMP/leaf.c" -o "$TMP/ms.o" --all
-link_arm64 "$TMP/caller.go" "$TMP/ms.elf" "$TMP/ms.o"
+  "$GOC" build "$TMP/leaf.c" -o "$TMP/ms.goobj"
+link_arm64 "$TMP/caller.go" "$TMP/ms.elf" "$TMP/ms.goobj"
 GOARCH=arm64 go tool objdump "$TMP/ms.elf" >"$TMP/ms.dis"
 python3 - "$TMP/ms.dis" <<'PY'
 import sys
@@ -157,7 +168,8 @@ text = open(sys.argv[1]).read().split("TEXT ")
 body = ""
 for chunk in text[1:]:
     name, _, rest = chunk.partition("\n")
-    if name.split("(")[0].strip() == "main.callit":
+    # The C body carries the morestack prologue. The thunk starts with stp.
+    if name.split("(")[0].strip() == "main.callit.impl":
         body = rest
         break
 head = "\n".join(body.splitlines()[:12])
@@ -188,11 +200,11 @@ func main() {
 EOF
 KEEP="$TMP/goabi-tmp"
 mkdir -p "$KEEP"
-# ABIInternal register arguments need the split stub (same as the amd64
-# goabi build). Stack maps stay off: arm64 has no frame-address repair.
+# The 9th Go argument moves through x8 into the AAPCS stack slot.
+# Stack maps stay off: arm64 has no frame-address repair.
 clean_env GOC_ARCH=arm64 GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 \
   GOC_KEEP_TMP="$KEEP" \
-  "$GOC" build "$TMP/sum9.c" -o "$TMP/sum9.o" --all --goabi
+  "$GOC" build "$TMP/sum9.c" -o "$TMP/sum9.goobj"
 # The thunk is assembled by llvm-mc inside realbody. The x8 store is the
 # 9th Go argument (X8) moving to the AAPCS stack.
 thunk="$(find "$KEEP" -name 'thunks.s' -print -quit)"
@@ -200,7 +212,7 @@ thunk="$(find "$KEEP" -name 'thunks.s' -print -quit)"
 rg -n 'str[[:space:]]+x8' "$thunk" || fail "thunk does not store x8"
 echo "thunk store:"
 rg -n 'x8|stp|bl' "$thunk"
-link_arm64 "$TMP/sum9.go" "$TMP/sum9.elf" "$TMP/sum9.o"
+link_arm64 "$TMP/sum9.go" "$TMP/sum9.elf" "$TMP/sum9.goobj"
 # nm of a linked ELF is large. rg -q would SIGPIPE it, and pipefail would
 # turn that into a false failure.
 GOARCH=arm64 go tool nm "$TMP/sum9.elf" >"$TMP/sum9.nm"
@@ -209,7 +221,7 @@ pass "arm64 goabi thunk stores x8, assembled, linked"
 
 echo "== refuse an unported amd64 host =="
 if clean_env GOC_ARCH=arm64 "$GOC" build "$ROOT/tests/qjs/_qjs_cli_host.c" \
-    -o "$TMP/host.o" --all >"$TMP/host.log" 2>&1; then
+    -o "$TMP/host.goobj" >"$TMP/host.log" 2>&1; then
   fail "arm64 build of the QuickJS host should have been refused"
 fi
 rg -q 'not ported' "$TMP/host.log" || { cat "$TMP/host.log" >&2; fail "refusal did not say the TU is not ported"; }
@@ -220,14 +232,15 @@ echo "== runtime/uptr for aarch64 =="
 # has no glibc multiarch headers on this amd64 host, and this TU does not
 # use libc.
 clean_env GOC_ARCH=arm64 "$GOC" build "$ROOT/runtime/uptr/goc_uptr_runtime.c" \
-  -o "$TMP/uptr.o" --all -ffreestanding \
+  -o "$TMP/uptr.goobj" -ffreestanding \
   -DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS -I"$ROOT/runtime/uptr"
-header_has "$TMP/uptr.o" "linux arm64"
-go tool nm "$TMP/uptr.o" | rg -q 'goc_runtime_getg' || fail "uptr object has no goc_runtime_getg"
-# The body must read x28, not the amd64 FS load. Check the kept assembly via objdump of the goobj text.
-GOARCH=arm64 go tool objdump "$TMP/uptr.o" >"$TMP/uptr.dis" || true
-if rg -q 'fs:-8|FS' "$TMP/uptr.dis"; then
-  fail "uptr disassembly still mentions FS"
+header_has "$TMP/uptr.goobj" "linux arm64"
+go tool nm "$TMP/uptr.goobj" | rg -q 'goc_runtime_getg' || fail "uptr object has no goc_runtime_getg"
+# The body must read x28, not the amd64 FS load. Go's objdump spells an
+# arm64 float-pair store FSTPQ; that is not the segment register.
+GOARCH=arm64 go tool objdump "$TMP/uptr.goobj" >"$TMP/uptr.dis" || true
+if rg -q 'fs:-8|\bFS\b' "$TMP/uptr.dis"; then
+  fail "uptr disassembly still mentions the amd64 FS segment"
 fi
 if ! rg -qi 'r28|x28' "$TMP/uptr.dis"; then
   echo "uptr disassembly (first 80 lines):" >&2

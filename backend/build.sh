@@ -296,7 +296,7 @@ echo "harness isolation OK: stubs helpers only; goc TEXT+leaf from binary goc_fu
 echo "==> [5/6] CGO_ENABLED=0 go build -a + toolexec (symabis ABIInternal + pack binary goobj)"
 export GOC_BINOBJ="$ROOT/build/goobj/goc_funcs.o"
 ( cd harness && CGO_ENABLED=0 go build -a \
-  -toolexec "$ROOT/tools/toolexec_pack_goobj.sh" \
+  -toolexec "$ROOT/tools/toolexec_recognize_goobj.sh" \
   -o ../build/p5_machinepass_goobj . )
 echo "built build/p5_machinepass_goobj"
 

@@ -10,8 +10,8 @@
  * Unsupported I/O deliberately traps instead of faking values.
  * Pthread operations below are single-thread-only shims, not concurrency.
  *
- * Compiled with --goabi: QJS's SysV calls bind to the .impl bodies; Go uses
- * the separate ABIInternal entry thunks.
+ * QJS's SysV calls bind to the .impl bodies. Go uses the separate
+ * ABIInternal entry thunks.
  */
 #include <stdarg.h>
 #include <stddef.h>

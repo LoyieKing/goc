@@ -54,8 +54,8 @@ cp -a "$ROOT/backend/realbody/goc_p28_realbody.sh" \
   "$ROOT/backend/realbody/locals_map.bin" \
   "$stage/backend/realbody/"
 chmod a+rx "$stage/backend/realbody/goc_p28_realbody.sh"
-cp -a "$ROOT/backend/tools/toolexec_pack_goobj.sh" "$stage/backend/tools/"
-chmod a+rx "$stage/backend/tools/toolexec_pack_goobj.sh"
+cp -a "$ROOT/backend/tools/toolexec_recognize_goobj.sh" "$stage/backend/tools/"
+chmod a+rx "$stage/backend/tools/toolexec_recognize_goobj.sh"
 
 cp -a "$(readlink -f "$clang")" "$stage/bin/clang-19"
 ln -sfn clang-19 "$stage/bin/clang"

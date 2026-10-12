@@ -3,6 +3,7 @@ build/
 **/build/
 clang-build/
 *.o
+*.goobj
 *.a
 *.so
 *.dylib

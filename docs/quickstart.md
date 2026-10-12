@@ -1,16 +1,10 @@
 # 下载即用
 
-在 linux/amd64 上下载一个包。包里已经有 `goc` 和打过补丁的 Clang。不用再装 LLVM，也不用把编译器路径传给 `goc`。
+下载一个包就能用。包里有 `goc`，也有配套的 Clang。系统是 linux/amd64，还需要 Go 1.24 或更新（`go version`）。
 
-实验性编译器。这条路径是内部链接：C 里不能调用 libc。语言规则见 [syntax-guide.md](syntax-guide.md)。自己把仓库编成这个包见 [build-from-source.md](build-from-source.md)。
+C 写函数体，Go 来调用。C 里不要调用 `printf`、`malloc`。要输出，用 Go 的 `fmt`。
 
-## 1. 安装
-
-系统是 linux/amd64。需要：
-
-- Go 1.24 或更新（`go version`）
-
-## 2. 下载
+## 1. 下载
 
 发布页：<https://github.com/LoyieKing/goc/releases>
 
@@ -21,30 +15,30 @@ export PATH="$PWD/bin:$PATH"
 goc version
 ```
 
-`bin/goc` 会用同一个目录里的 `bin/clang`。换一台机器就把整个目录拷走。
+换一台机器时，把整个目录拷走。
 
-## 3. 自检
+## 2. 确认能用
 
 ```bash
 goc check
 ```
 
-通过时打印 `PASS goc check`。它编译包里 `examples/hello` 的一份副本并运行，输出必须是：
+通过时打印 `PASS goc check`，程序输出是：
 
 ```text
 hello 42
 ```
 
-## 4. 跑包里的例子
+## 3. 跑包里的例子
 
 ```bash
 goc go examples/hello -o /tmp/hello
 /tmp/hello
 ```
 
-`/tmp/hello` 打印 `hello 42`。C 函数是 `int hello_add(int, int)`，Go 侧是没有函数体的 `func hello_add(a, b int32) int32`。
+`/tmp/hello` 打印 `hello 42`。
 
-## 5. 写自己的程序
+## 4. 写自己的程序
 
 ```bash
 mkdir -p "$HOME/src/goc-hello"
@@ -86,83 +80,41 @@ goc go "$HOME/src/goc-hello"
 "$HOME/src/goc-hello/goc-hello"
 ```
 
-`package main` 的默认产物是 `<目录>/<目录名>`。指定路径：
+程序打印 `hello 42`。默认文件名是目录名。要换路径：
 
 ```bash
 goc go "$HOME/src/goc-hello" -o "$HOME/src/goc-hello/hello"
 ```
 
-驱动会做这几件事：
+`main` 是 Go。`hello_add` 的函数体是 C，C 的 `int` 写成 Go 的 `int32`。`goc go` 做三件事：
 
-- 只编译该目录下的 `*.c`，不进入子目录。
-- `CGO_ENABLED=0`，所以 Go 不会把这些 `.c` 交给系统 cc。
-- 包里没有 `.s` 时写入 `goc_marker_amd64.s`。这是占位，函数体在打进去的 goobj 里。把这个文件加入 `.gitignore`。
-- Go 里仍要写同名、无函数体的声明。C 的 `int` 对应 Go 的 `int32`。
-- 其它包（不是 `package main`）只做类型检查并打进构建缓存，不能加 `-o`。
+1. 用 goc 编译 `add.c`，得到 Go 可以直接调用的 `hello_add`。
+2. 用 Go 编译器编译 `main.go`。`hello_add(20, 22)` 就是一次普通的函数调用。
+3. 两份结果放进同一个包，由 Go 链接器接上。运行得到的程序即可。
 
-给这个包额外传 Clang 参数时，写在 `--` 后面：
+第一次编译时，目录里会多出 `goc_marker_amd64.s`。`.c` 由 goc 编译，Go 看不见，包里只剩 `.go` 时，没有函数体的声明会被拒绝。这个空汇编文件就是为了让 `func hello_add(a, b int32) int32` 能通过编译，函数体仍在 `add.c` 里。把它加入 `.gitignore`。目录里已经有别的 `.s` 时，goc 不会再写它。
 
-```bash
-goc go "$HOME/src/goc-hello" -- -DNAME=value
-```
+只编译这个目录下的 `*.c`。给 Clang 的额外参数写在 `--` 后面，例如 `goc go . -- -DNAME=value`。
 
-## 6. 要改默认时加参数
+## 5. 先不要假设这些能用
 
-`goc go` 和 `goc check` 不读环境里已经导出的 `GOC_*`。默认是 QuickJS 验证过的那一组：
+- C 里调用 `printf`、`malloc`、`memcpy`。
+- 把一份现成的 C 工程丢进目录就链进 Go。参数目前只支持整数、指针、浮点和很小的结构体。
+- 把栈上的指针交给别的 goroutine。
+- 多线程同时调用 `alloca`。默认实现更快，只适合单线程。要关掉，加 `--no-fast-stack-alloca`。
+- linux/arm64。
 
-```text
--O3 --default-ptr-color cptr --fast-stack-alloca
-```
-
-和 Go 一起跑时，morestack 前导、可分裂帧、sptr 栈图一定打开，没有参数可以关掉。没有前导时，帧按 nosplit 核算，超过约 792 字节链接器会拒绝。栈图用来在搬栈时改写栈上的 `sptr`。每个 Go 调 C 的 thunk 帧由编译器按这个函数的栈参数计算，再向上取整到 16，amd64 另外加上保存的 `%rbp`。
-
-举例：
-
-```bash
-goc go "$HOME/src/goc-hello" -O2
-goc build add.c -o add.o --all --goabi -O3 --default-ptr-color cptr
-```
-
-| 参数 | `goc go` 的默认 | 作用 |
-|---|---|---|
-| `-O0` … `-O3` | `-O3` | LLVM IR 优化级别 |
-| `--default-ptr-color cptr` | `cptr` | 没写颜色的 `T*` 用这个颜色 |
-| `--no-default-ptr-color` | 关 | 不盖默认色，每个指针各自推断 |
-| `--fast-stack-alloca` | 开 | 把 `alloca` 的池推进内联到调用点。快很多。游标是进程全局的，只能单线程用；多线程同时调用有线程安全问题 |
-| `--color-report` | 关 | 打印每个指针的颜色，不改变编译结果 |
-| `--arch amd64` | `amd64` | `goc go` 只接受 amd64 |
-
-全部参数：`goc go --help`。
-
-`goc build` 不带 `--goabi` 时仍是 `-O0`，那三项也关着，除非环境变量打开了它们。P28 黄金测试依赖这一点。`goc build --goabi` 会打开 morestack 和可分裂帧；amd64 还会打开 sptr 栈图，arm64 记不了。要和 `goc go` 一样，再加上 `-O3 --default-ptr-color cptr --fast-stack-alloca`。仓库里的 QuickJS 脚本还在用同名环境变量调用 `goc build`；同一项两边都有时，命令行优先。
-
-`--fixed-g` 和 `--opt-extra=-inline-threshold=250` 默认关着。
-
-## 7. 现在不要假设能用
-
-- 在这条路径里调用 libc，包括 `printf`、`malloc`、`memcpy`。输出用 Go 的 `fmt`。需要 libc 的是 QuickJS 那条构建（`scripts/qjs-cli-build.sh`，在仓库里）。
-- 把任意第三方 C 工程丢进目录就链进 Go。签名限于整数、指针、浮点和很小的结构体。
-- 把栈指针交给别的 goroutine。
-- linux/arm64。`--arch arm64` 可以编 goobj，`goc go` 不链接它。
-- 变参、x87、异常、AVX 的 Go 可调用入口。
-
-下一步：指针色见 [syntax-guide.md](syntax-guide.md)。
+指针颜色见 [syntax-guide.md](syntax-guide.md)。从源码编出这个包见 [build-from-source.md](build-from-source.md)。想自己用 `go build` 编译和链接，见 [guide.md](guide.md)。全部参数：`goc go --help`。
 
 ---
 
 # Download and run
 
-On linux/amd64, download one archive. It already contains `goc` and the patched Clang. There is no LLVM package to install and no compiler path to pass.
+Download one archive and use it. The archive contains `goc` and the Clang that goes with it. The system is linux/amd64. You also need Go 1.24 or newer (`go version`).
 
-This compiler is experimental. The path below is internal linking: the C cannot call libc. The language rules are in [syntax-guide.md](syntax-guide.md). Building this archive from a git checkout is [build-from-source.md](build-from-source.md).
+Write the function body in C and call it from Go. Do not call `printf` or `malloc` from C. Print with Go's `fmt`.
 
-## 1. Install
-
-linux/amd64. You need:
-
-- Go 1.24 or newer (`go version`)
-
-## 2. Download
+## 1. Download
 
 Releases: <https://github.com/LoyieKing/goc/releases>
 
@@ -173,30 +125,30 @@ export PATH="$PWD/bin:$PATH"
 goc version
 ```
 
-`bin/goc` uses the `bin/clang` in that same directory. Copy the whole directory to move it to another machine.
+To move it to another machine, copy the whole directory.
 
-## 3. Self-check
+## 2. Check that it works
 
 ```bash
 goc check
 ```
 
-Success prints `PASS goc check`. It compiles a copy of `examples/hello` from the archive and runs it. The output has to be:
+Success prints `PASS goc check`. The program prints:
 
 ```text
 hello 42
 ```
 
-## 4. Run the bundled example
+## 3. Run the bundled example
 
 ```bash
 goc go examples/hello -o /tmp/hello
 /tmp/hello
 ```
 
-`/tmp/hello` prints `hello 42`. The C function is `int hello_add(int, int)`. The Go side is a body-less `func hello_add(a, b int32) int32`.
+`/tmp/hello` prints `hello 42`.
 
-## 5. Write a program
+## 4. Write a program
 
 ```bash
 mkdir -p "$HOME/src/goc-hello"
@@ -238,64 +190,28 @@ goc go "$HOME/src/goc-hello"
 "$HOME/src/goc-hello/goc-hello"
 ```
 
-For `package main` the default output is `<dir>/<dirname>`. Pick a path:
+The program prints `hello 42`. The default file name is the directory name. To pick a path:
 
 ```bash
 goc go "$HOME/src/goc-hello" -o "$HOME/src/goc-hello/hello"
 ```
 
-What the driver does:
+`main` is Go. The body of `hello_add` is C. Write C `int` as Go `int32`. `goc go` does three things:
 
-- Compiles every `*.c` in that directory, and does not recurse.
-- Sets `CGO_ENABLED=0`, so Go does not hand those `.c` files to the system cc.
-- Writes `goc_marker_amd64.s` when the package has no `.s` file. It is a placeholder. The function body is in the packed goobj. Add the file to `.gitignore`.
-- The Go file still needs a body-less declaration of the same name. C `int` is Go `int32`.
-- Any package other than `package main` is type-checked and packed into the build cache. `-o` is refused.
+1. goc compiles `add.c` and turns `hello_add` into a function Go can call directly.
+2. The Go compiler compiles `main.go`. `hello_add(20, 22)` is an ordinary function call.
+3. Both results go into the same package, and the Go linker connects the call. Run the program it produces.
 
-Extra Clang arguments go after `--`:
+The first build writes `goc_marker_amd64.s` into the directory. goc compiles the `.c` files, so Go does not see them. A package that contains only `.go` files cannot declare a function with no body. This empty assembly file lets `func hello_add(a, b int32) int32` compile. The body stays in `add.c`. Add the file to `.gitignore`. If the directory already has another `.s` file, goc does not write it.
 
-```bash
-goc go "$HOME/src/goc-hello" -- -DNAME=value
-```
+Only the `*.c` files in this directory are compiled. Extra arguments for Clang go after `--`, for example `goc go . -- -DNAME=value`.
 
-## 6. Change a default with a flag
+## 5. Do not assume these work yet
 
-`goc go` and `goc check` ignore `GOC_*` variables already in the environment. The defaults are the set QuickJS was verified with:
+- Calling `printf`, `malloc`, or `memcpy` from C.
+- Dropping an existing C project into the directory and linking it into Go. Arguments are integers, pointers, floats, and very small structs.
+- Handing a pointer to stack data to another goroutine.
+- Calling `alloca` from several threads at once. The default is faster and is for one thread. Turn it off with `--no-fast-stack-alloca`.
+- linux/arm64.
 
-```text
--O3 --default-ptr-color cptr --fast-stack-alloca
-```
-
-On a Go stack, the morestack prologue, splittable frames, and sptr maps are always on. There is no flag to turn them off. Without the prologue the linker accounts the frame as nosplit and rejects anything over about 792 bytes. The maps rewrite `sptr` slots when the stack is copied. Each Go-to-C thunk frame is that function's stack arguments rounded up to 16, plus the saved `%rbp` on amd64.
-
-Examples:
-
-```bash
-goc go "$HOME/src/goc-hello" -O2
-goc build add.c -o add.o --all --goabi -O3 --default-ptr-color cptr
-```
-
-| Flag | `goc go` default | Effect |
-|---|---|---|
-| `-O0` … `-O3` | `-O3` | LLVM IR optimization level |
-| `--default-ptr-color cptr` | `cptr` | Color of an unannotated `T*` |
-| `--no-default-ptr-color` | off | Do not paint one default; each pointer is inferred |
-| `--fast-stack-alloca` | on | Inline the alloca pool bump. Much faster. The cursor is process-global, so this is single-threaded only. Concurrent calls are not thread-safe |
-| `--color-report` | off | Print each pointer's color. Does not change the compile |
-| `--arch amd64` | `amd64` | `goc go` accepts amd64 only |
-
-Every flag: `goc go --help`.
-
-`goc build` without `--goabi` stays at `-O0`, and those three stay off unless an environment variable turns them on. The P28 goldens depend on that. `goc build --goabi` turns on morestack and splittable frames; amd64 also records sptr maps, and arm64 cannot. To match `goc go`, add `-O3 --default-ptr-color cptr --fast-stack-alloca`. Repository QuickJS scripts still call `goc build` with the same environment variables; a flag wins when both are present.
-
-`--fixed-g` and `--opt-extra=-inline-threshold=250` stay off.
-
-## 7. Do not assume these work yet
-
-- Calling libc on this path, including `printf`, `malloc`, and `memcpy`. Print with Go's `fmt`. The QuickJS build (`scripts/qjs-cli-build.sh`, in the repository) is the one that needs libc.
-- Dropping an arbitrary third-party C project into the directory and linking it into Go. Signatures are integers, pointers, floats, and very small structs.
-- Handing a stack pointer to another goroutine.
-- linux/arm64. `--arch arm64` can emit a goobj. `goc go` does not link it.
-- A Go-callable entry for varargs, x87, exceptions, or AVX.
-
-Next: pointer colors are in [syntax-guide.md](syntax-guide.md).
+Pointer colors are in [syntax-guide.md](syntax-guide.md). Building this archive from source is [build-from-source.md](build-from-source.md). To compile and link with `go build` yourself, see [guide.md](guide.md). Every flag: `goc go --help`.

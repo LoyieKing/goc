@@ -13,7 +13,7 @@ case "$QJS_FLAVOR" in
            ENGINE_TUS="quickjs libregexp libunicode dtoa"; EXTRA_OBJS="" ;;
   bellard) OUT="${QJS_OUT_DIR:-$ROOT/build/qjs-bellard}"; HOST_DEFS=(-DGOC_QJS_BELLARD=1)
            ENGINE_TUS="quickjs libregexp libunicode dtoa cutils"
-           EXTRA_OBJS=" $OUT/bellard_api.o" ;;
+           EXTRA_OBJS=" $OUT/bellard_api.goobj" ;;
   *) echo "FAIL: QJS_FLAVOR must be ng or bellard" >&2; exit 1 ;;
 esac
 export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
@@ -29,21 +29,21 @@ export GOC_DEFAULT_PTR_COLOR=cptr GOC_NO_NOSPLIT=1 GOC_MORESTACK=1
 export GOC_SPTR_MAPS=1 GOC_INLINE_DYNALLOC=1
 
 "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_host.c" \
-  -o "$OUT/cli_host.o" --all --goabi "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
+  -o "$OUT/cli_host.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
 "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_std_os.c" \
-  -o "$OUT/cli_std_os.o" --all --goabi "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
+  -o "$OUT/cli_std_os.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
 "$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_worker.c" \
-  -o "$OUT/cli_worker.o" --all --goabi "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
+  -o "$OUT/cli_worker.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
 
 LDX=""  # tests/qjscli/mem_instances.go labels its JSON by flavor
 [[ "$QJS_FLAVOR" == bellard ]] && LDX=" -X main.qjsFlavor=bellard"
 BINOBJ=""
-for src in $ENGINE_TUS; do BINOBJ="$BINOBJ $OUT/$src.o"; done
-BINOBJ="${BINOBJ# } $OUT/shim.o $OUT/uptr.o $OUT/cli_host.o $OUT/cli_std_os.o $OUT/cli_worker.o$EXTRA_OBJS"
+for src in $ENGINE_TUS; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
+BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/uptr.goobj $OUT/cli_host.goobj $OUT/cli_std_os.goobj $OUT/cli_worker.goobj$EXTRA_OBJS"
 ( cd "$ROOT/tests/qjscli" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
   go build -a -tags "$TAGS" -ldflags="-extldflags=-lm$LDX" \
-    -toolexec "$ROOT/backend/tools/toolexec_pack_goobj.sh" \
+    -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" \
     -o "$BIN" . )
 echo "CLI ready: $BIN"
 "$BIN" -e '

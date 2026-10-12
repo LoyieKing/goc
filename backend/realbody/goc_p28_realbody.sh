@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
-# P28/P29: real Clang IR body → llc ISel → elfpack goobj (NO P21 seedMIR).
-# Usage: goc_p28_realbody.sh <input.ll|.c> <out.goobj.o> [fn_name] [go_sym] [--all] [--goabi]
-#   --all:   emit TEXT for every defined function in the TU (multi-function, P29);
-#            frames derived from each llc prologue, per-function CALL lists.
-#            Real-MF pointer maps are not available yet → stackmap_index=-1.
-#   --goabi: Go ABIInternal entry thunks for the three call paths that exist
-#            today (Go→C thunk, C→C on the platform ABI, C→Go .goabi).
-#            GOC_ARCH=amd64 (default): SysV rdi/rsi/...  arm64: AAPCS64 x0–x7.
-#            Each eligible F is renamed F.impl and gains a thunk F.
+# Real Clang IR body → llc ISel → elfpack goobj (NO P21 seedMIR).
+# Every defined function is emitted. Each eligible function is renamed F.impl
+# and gains a Go ABIInternal entry F (Go→C thunk, C→C on the platform ABI,
+# C→Go .goabi). amd64 uses SysV; arm64 uses AAPCS64.
+# Usage: goc_p28_realbody.sh <input.ll|.c> <out.goobj> [pkg_prefix] [--abi0]
+#   pkg_prefix defaults to main. An import path may contain dots.
+#   --abi0: mark the object ABI0 (C-side platform entries, e.g. a libc shim).
 set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${GOC_ROOT:-$(cd "$SELF/../.." && pwd)}"
@@ -16,38 +14,31 @@ P5="$ROOT/backend"
 # shellcheck source=scripts/goc-product-lib.sh
 source "$ROOT/scripts/goc-product-lib.sh"
 
-ALL=0
-GOABI=0
 ABI0=0
 POS=()
 for a in "$@"; do
   case "$a" in
-    --all) ALL=1 ;;
-    --goabi) GOABI=1; ALL=1 ;;
+    --all|--goabi|--all=*|--goabi=*)
+      echo "realbody: every defined function is emitted, with a Go entry. There is no --all or --goabi." >&2
+      exit 2
+      ;;
     --abi0) ABI0=1 ;;
+    --*)
+      echo "realbody: unknown flag $a" >&2
+      exit 2
+      ;;
     *) POS+=("$a") ;;
   esac
 done
 set -- ${POS[@]+"${POS[@]}"}
 
 IN="${1:?input .ll or .c}"
-OUT_O="${2:?output .o}"
-FN_NAME="${3:-p28_real_body}"
-GO_SYM="${4:-main.P28RealBody}"
-if [[ $ALL -eq 1 && -z "${4:-}" ]]; then
-  GO_SYM="main"   # --all: GO_SYM is the go_sym prefix for every function
+OUT_O="${2:?output .goobj}"
+if [[ $# -gt 3 ]]; then
+  echo "realbody: usage: goc_p28_realbody.sh <input.ll|.c> <out.goobj> [pkg_prefix] [--abi0]" >&2
+  exit 2
 fi
-if [[ $ALL -eq 1 && -n "${4:-}" && "$GO_SYM" != *.* ]]; then
-  GO_SYM="${4}"   # explicit prefix (no dot): keep as-is
-fi
-# --all's fourth argument is the full Go package prefix. An import path
-# may contain dots (example.com/foo). A single-function go_sym is main.Name,
-# and the package is the part before the first dot.
-if [[ $ALL -eq 1 ]]; then
-  PKG="$GO_SYM"
-else
-  PKG="${GO_SYM%%.*}"
-fi
+PKG="${3:-main}"
 
 CLANG="$(goc_resolve_clang)"
 goc_prepend_lib "$(goc_clang_libdir "$CLANG")"
@@ -80,6 +71,14 @@ if [[ "$GOC_ARCH" == arm64 ]]; then
       ;;
   esac
   echo "realbody: GOC_ARCH=arm64 llc=$LLC (x28 reserved; frame-address repair not ported)" >&2
+fi
+# Go linking always gets a splittable frame and a morestack prologue.
+# amd64 also records sptr maps. Set these after the arm64 refusal above:
+# exporting GOC_SPTR_MAPS first would trip that check on arm64.
+export GOC_MORESTACK=1
+export GOC_NO_NOSPLIT=1
+if [[ "$GOC_ARCH" != arm64 ]]; then
+  export GOC_SPTR_MAPS=1
 fi
 # GOC_FRAMEADDR_MODE=gep (default): goc-reanchor rematerializes frame
 # addresses as plain GEPs, which is only safe with goc-llc's post-RA
@@ -263,16 +262,13 @@ if [[ "$IN" != *.ll && "$OPT_LEVEL" != 0 ]]; then
   cp "$TMP/body.opt.ll" "$LL"
   echo "realbody: O$OPT_LEVEL inlined before stack maps" >&2
 fi
-if [[ $GOABI -eq 1 ]]; then
-  "$LOWER" goabi "$LL" "$TMP/body.impl.ll" "$TMP/thunks.s" "$GOABI_JSON"
-  cp "$TMP/body.impl.ll" "$LL"
-fi
+"$LOWER" goabi "$LL" "$TMP/body.impl.ll" "$TMP/thunks.s" "$GOABI_JSON"
+cp "$TMP/body.impl.ll" "$LL"
 
 # The MIR, object and assembly must come from the *same* IR. A stackmap pass
 # after object emission changes neither its .llvm_stackmaps section nor the
 # register allocation; silently continuing without real locations is unsafe.
-if [[ $ALL -eq 1 && "${GOC_SPTR_MAPS:-0}" == "1" &&
-      "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
+if [[ "${GOC_SPTR_MAPS:-0}" == "1" && "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
   if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
     SMPASS="$GOC_STACKMAP"
   elif [[ -f "$ROOT/passes/GocStackMap.so" ]]; then
@@ -345,62 +341,23 @@ fi
 # Go thunks are appended to the same assembly and assembled once. That puts
 # both .text contributions in one relocatable object, so the driver does not
 # call ld or ld.lld.
-ASM_IN="$TMP/body.s"
-if [[ $GOABI -eq 1 ]]; then
-  cat "$TMP/body.s" "$TMP/thunks.s" > "$TMP/body.thunks.s"
-  ASM_IN="$TMP/body.thunks.s"
-fi
+cat "$TMP/body.s" "$TMP/thunks.s" > "$TMP/body.thunks.s"
 "$MC" -filetype=obj -triple="$MC_TRIPLE" \
-  -o "$TMP/body.llc.o" "$ASM_IN"
+  -o "$TMP/body.llc.o" "$TMP/body.thunks.s"
 ELF="$TMP/body.llc.o"
 
-if [[ $ALL -eq 1 ]]; then
-  "$OBJDUMP" -dr "$ELF" > "$TMP/body.dis"
-  # GOC_SPTR_MAPS: also dump MIR after PEI so the meta can carry the frame
-  # offsets of the allocas that hold sptr values (see the report: the color
-  # metadata marks *values*, not slots, so slots are derived from the stores
-  # of sptr values, and their offsets from these stack objects).
-  MIR="$TMP/body.mir"
-  if [[ "${GOC_SPTR_MAPS:-0}" == "1" ]]; then
-    "$LLC" "${LLC_ARGS[@]}" -stop-after=prologepilog \
-      -o "$MIR" "$LL"
-    [[ -s "$MIR" ]] || { echo "realbody: FATAL empty post-PEI MIR" >&2; exit 1; }
-  fi
-  "$LOWER" meta "$LL" "$TMP/body.s" "$TMP/body.dis" "$TMP/meta.json" "$GO_SYM" "$GOABI_JSON" "$ABI0" "$TMP/body.mir"
-else
-  "$LOWER" has-define "$LL" "$FN_NAME"
-  CALLS_JSON='[]'
-  if nm "$ELF" 2>/dev/null | grep -q 'U p28_external_hook' \
-    || "$OBJDUMP" -d "$ELF" 2>/dev/null | grep -q 'p28_external_hook'; then
-    CALLS_JSON='[{"callee":"p28_external_hook","stackmap_index":0}]'
-  fi
-  FRAME="$("$LOWER" frame "$TMP/body.s" "$FN_NAME")"
-  cat > "$TMP/meta.json" << JSON
-{
-  "producer": "goc-p28-realbody",
-  "pipeline": "clang.c→real IR→llc ISel→elfpack (not P21 seed templates)",
-  "not_source": "p21-color-vertical seed templates",
-  "functions": [
-    {
-      "mir_name": "$FN_NAME",
-      "go_sym": "$GO_SYM",
-      "frame": $FRAME,
-      "flags": "nosplit",
-      "encoding": "clang-real-isel",
-      "calls": $CALLS_JSON,
-      "branches": []
-    }
-  ],
-  "mircanon": {
-    "mode": "identity",
-    "transforms": [],
-    "cfg_rewrite": false,
-    "frame_inject": false,
-    "dialect_strip": false
-  }
-}
-JSON
+"$OBJDUMP" -dr "$ELF" > "$TMP/body.dis"
+# GOC_SPTR_MAPS: also dump MIR after PEI so the meta can carry the frame
+# offsets of the allocas that hold sptr values (see the report: the color
+# metadata marks *values*, not slots, so slots are derived from the stores
+# of sptr values, and their offsets from these stack objects).
+MIR="$TMP/body.mir"
+if [[ "${GOC_SPTR_MAPS:-0}" == "1" ]]; then
+  "$LLC" "${LLC_ARGS[@]}" -stop-after=prologepilog \
+    -o "$MIR" "$LL"
+  [[ -s "$MIR" ]] || { echo "realbody: FATAL empty post-PEI MIR" >&2; exit 1; }
 fi
+"$LOWER" meta "$LL" "$TMP/body.s" "$TMP/body.dis" "$TMP/meta.json" "$PKG" "$GOABI_JSON" "$ABI0" "$TMP/body.mir"
 
 "$LOWER" check-meta "$TMP/meta.json"
 
@@ -420,11 +377,13 @@ if [[ $MAGIC_OK -eq 1 ]]; then
   "$LOWER" magic-obj "$OUT_O"
 fi
 
-cp "$TMP/meta.json" "${OUT_O%.o}.meta.json"
-cp "$LL" "${OUT_O%.o}.ll"
-if [[ $ALL -eq 1 ]]; then
-  NTEXT="$(go tool nm "$OUT_O" | grep -c ' T ' || true)"
-  echo "P29-realbody-all: wrote $OUT_O (encoding=clang-real-isel, goabi=$GOABI, TEXT syms=$NTEXT)"
-else
-  echo "P28-realbody: wrote $OUT_O (encoding=clang-real-isel)"
-fi
+# foo.goobj and a legacy foo.o both sit beside foo.meta.json and foo.ll.
+side="$OUT_O"
+case "$side" in
+  *.goobj) side="${side%.goobj}" ;;
+  *.o) side="${side%.o}" ;;
+esac
+cp "$TMP/meta.json" "${side}.meta.json"
+cp "$LL" "${side}.ll"
+NTEXT="$(go tool nm "$OUT_O" | grep -c ' T ' || true)"
+echo "realbody: wrote $OUT_O (encoding=clang-real-isel, TEXT syms=$NTEXT)"

@@ -1,5 +1,5 @@
 // Stubs only: the goabi golden's C bodies come from the packed goobj TEXT
-// (Go-ABI thunks + <name>.impl SysV bodies) via toolexec_pack_goobj.sh.
+// (Go-ABI thunks + <name>.impl SysV bodies) via toolexec_recognize_goobj.sh.
 #include "textflag.h"
 
 DATA ·goabiMarker+0(SB)/8, $0x670ab1

@@ -36,10 +36,8 @@ pass "PASS P28-sema-implicit-uptr (in-tree Sema accepts cptr T* destination)"
 echo "=== P28: real-body goobj ==="
 "$ROOT/backend/realbody/goc_p28_realbody.sh" \
   "$ROOT/tests/realbody/03_ok_realbody_goobj.c" \
-  "$OUT/p28_real.o" \
-  p28_real_body \
-  main.P28RealBody | tee "$OUT/realbody.log"
-test -f "$OUT/p28_real.o"
+  "$OUT/p28_real.goobj" | tee "$OUT/realbody.log"
+test -f "$OUT/p28_real.goobj"
 test -f "$OUT/p28_real.meta.json"
 rg -q 'clang-real-isel' "$OUT/p28_real.meta.json"
 rg -q 'magic 0x28C0DE42|P28-proof' "$OUT/realbody.log"
@@ -55,4 +53,4 @@ pass "PASS P28-driver-clang (patched clang next to goc)"
 echo ""
 echo "PASS p28-clang-intree"
 echo "Clang: $CLANG"
-echo "Artifact: $OUT/p28_real.o"
+echo "Artifact: $OUT/p28_real.goobj"

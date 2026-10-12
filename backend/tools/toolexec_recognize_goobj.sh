@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
-# 1) After asm -gensymabis for our package: append ABIInternal defs for binary-goobj TEXTs.
-# 2) After compile -pack for our package: pack binary goobj into the .a.
+# -toolexec hook. goc already wrote the .goobj. This script makes Go's asm
+# and compile stages recognize it:
+#   1) After asm -gensymabis: append defs for the .goobj TEXTs. asm only
+#      scanned .s files.
+#   2) After compile: pack that .goobj into the package archive.
+# The Go linker loads an archive member only when its name ends in .o or
+# .syso (cmd/link, names shorter than 16 bytes). The packed member is
+# therefore named .o. The file on disk stays .goobj.
 set -euo pipefail
 TOOL="$1"
 shift
@@ -50,12 +56,17 @@ append_goc_symabis() {
     echo "def ${pkg}.GocFadd64 ABIInternal"
     echo "def ${pkg}.GocFadd32 ABIInternal"
   } >> "$out"
-  # P29: ABIInternal defs for every goobj TEXT from the sidecar meta
-  # (multi-function / goabi objects). Extra defs are harmless.
-  # GOC_BINOBJ may be a space-separated list of goobj files (multi-TU builds).
-  local obj meta
+  # Defs for every TEXT in the sidecar meta. Extra defs are harmless.
+  # GOC_BINOBJ may be a space-separated list (multi-TU builds).
+  # foo.goobj and the legacy foo.o both sit beside foo.meta.json.
+  local obj meta side
   for obj in ${GOC_BINOBJ:-}; do
-    meta="${obj%.o}.meta.json"
+    side="$obj"
+    case "$side" in
+      *.goobj) side="${side%.goobj}" ;;
+      *.o) side="${side%.o}" ;;
+    esac
+    meta="${side}.meta.json"
     [[ -f "$meta" ]] || continue
     lower="${GOC_LOWER:-${GOC_ROOT:-}/bin/goc-lower}"
     if [[ ! -x "$lower" ]]; then
@@ -78,12 +89,21 @@ inject_binobj() {
   local pack
   pack="$(dirname "$TOOL")/pack"
   [[ -x "$pack" ]] || pack="$(go env GOTOOLDIR)/pack"
-  local f
+  # Member name must end in .o. See the header comment.
+  local stage f base
+  stage="$(mktemp -d)"
+  trap 'rm -rf "$stage"' RETURN
   for f in $GOC_BINOBJ; do
     [[ -f "$f" ]] || continue
-    "$pack" r "$out_a" "$f"
+    base="$(basename "$f")"
+    case "$base" in
+      *.goobj) base="${base%.goobj}.o" ;;
+    esac
+    cp "$f" "$stage/$base"
+    "$pack" r "$out_a" "$stage/$base"
     echo "toolexec: packed $(basename "$f") into $out_a" >&2
   done
+  rm -rf "$stage"
 }
 
 case "$BASE" in

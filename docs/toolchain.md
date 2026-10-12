@@ -24,11 +24,11 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 - 包里没有 `.s` 时写入 `goc_marker_amd64.s`。Go 拒绝没有任何汇编文件的无函数体声明。这个文件不是 C 函数的桩。
 - Go 侧仍要写同名的无函数体声明。`int` 对 `int32`。
 - `package main` 产出二进制，默认为 `<目录>/<目录名>`。其它包只做编译并打进构建缓存，不接受 `-o`。
-- 对象文件在 `build/goc-go/<目录哈希>/`，经 `backend/tools/toolexec_pack_goobj.sh` 打进包。打进哪一个包由该包的编译器 `-p` 决定。
+- 产物是 `.goobj`，在 `build/goc-go/<目录哈希>/`。`backend/tools/toolexec_recognize_goobj.sh` 在 Go 的 asm 和 compile 阶段认出它并打进包。打进哪一个包由该包的编译器 `-p` 决定。
 
 `goc go` 和 `goc check` 不读环境里已有的 `GOC_*`。要改默认就加参数。
 
-`goc build` 不带 `--goabi` 时不套用这组默认。P28 黄金测试仍是 `-O0`。仓库脚本可以继续用同名环境变量调用 `goc build`；同一项又写了参数时，参数优先。
+`goc build` 保持 `-O0`，仍读取调用方已经导出的 `GOC_*`。同一项又写了参数时，参数优先。P28 黄金测试仍是 `-O0`。`-O3`、`cptr`、`--fast-stack-alloca` 只在 `goc go` 和 `goc check` 上。
 
 ## 默认
 
@@ -40,7 +40,7 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 
 每个 Go 调 C 的 thunk 帧由编译器按该函数的栈参数计算，再向上取整到 16。amd64 另外加上保存的 `%rbp`。
 
-morestack 前导、可分裂帧、sptr 栈图在 `goc go` 上一定打开，没有参数可以关掉。`goc build --goabi` 同样打开 morestack 和可分裂帧；amd64 还会打开 sptr 栈图。不带 `--goabi` 时这三项保持关闭，除非调用方用环境变量打开。arm64 记不了 sptr 栈图。
+每个定义了的函数都会写进对象文件，并带一个 Go 入口。morestack 前导、可分裂帧、amd64 的 sptr 栈图在 `goc go` 和 `goc build` 上都一定打开。arm64 记不了 sptr 栈图。
 
 `goc go` 会把 clang 所在树的 `lib/` 加到本次进程的库搜索路径前面，这样 `goc-llc` 和 `goc-color-escape` 找得到 `libLLVM.so.19.1`。
 
