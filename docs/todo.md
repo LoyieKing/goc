@@ -92,6 +92,17 @@
 - 同时测调用中触发搬栈的情况，看 morestack 在 goc 帧上的代价。
 - 结果写进 benchmark.md，图表带上所有对照组。
 
+## QuickJS 直接使用 Go 的 GC
+
+现在 QuickJS 的对象由它自己的分配器分配，靠引用计数加环检测回收，Go 的 GC 不管它们。goc 只保证 C 帧里持有的 Go 对象（`gptr`）不会被 GC 漏扫。设想是让 JS 对象直接分配在 Go 堆上，交给 Go 的 GC 回收。先讨论清楚这几件事，再定实现：
+
+- 引用计数和环回收怎么处理：全部去掉，完全交给 Go GC；还是保留引用计数做及时释放，只把环回收交给 Go GC。
+- 对象布局怎么告诉 Go GC：`JSObject`、`JSString`、`JSShape` 等结构里哪些字段是指针，要生成对应的指针位图（Go 的类型元数据），`JSValue` 这种标签加联合体的值怎么扫。
+- 写屏障覆盖范围：改成 Go 堆对象后，所有往对象里写指针的地方都要带写屏障，数量和性能开销要先估出来。
+- 析构的对应关系：`JS_FreeValue`、finalizer（`JSClassFinalizer`）、`FinalizationRegistry` / `WeakRef` 和 Go 的 `runtime.AddCleanup` / 弱指针怎么对应，释放时机的语义会不会变。
+- 和指针色的关系：堆上 JS 对象里的指针应当都是 `gptr`，要确认颜色分析能自动推断，不需要大规模手改 QuickJS 源码。
+- 收益要量化：内存占用、GC 停顿、V8-v7 分数，和现在的方案对比。
+
 ## 性能：缩小和原生 QuickJS 的差距
 
 来源是 [perf-gap.md](perf-gap.md) 第 8 节。下面每一项都在默认构建里（linux/amd64，`GOC_OPT_LEVEL=3`，gep 模式用 `goc-llc`）。`GOC_FIXED_G` 仍默认关。perf-gap 第 13 项 `-inline-threshold=250` 不在这份清单里，没有开。收益一栏仍是合入前的数字：“实测”是当时的 A/B（时间比，小于 1 表示变快）；“估计”按指令份额推算，这次没有再计时。

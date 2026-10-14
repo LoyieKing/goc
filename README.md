@@ -243,6 +243,7 @@ See [docs/todo.md](docs/todo.md) (Chinese):
 
 - **An out-of-the-box goc compiler:** the release archive is goc plus the patched Clang ([docs/quickstart.md](docs/quickstart.md)). `goc go` and `goc check` take flags. There is no clang path to pass.
 - **Measure the cost of calls between goc and Go:** per-call cost of Go calling goc and goc calling Go, compared with Go calling Go and cgo.
+- **QuickJS using Go's GC directly:** allocate JS objects on the Go heap and let the Go garbage collector reclaim them.
 - **linux/arm64 support.**
 - **goc calling Go:** call Go with just a declaration, the same way Go calls goc.
 - **Stack pointers across goroutines.**

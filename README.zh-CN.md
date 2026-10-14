@@ -243,6 +243,7 @@ Bellard 版 QuickJS 放到 `third_party/quickjs-bellard` 后，用 `QJS_FLAVOR=b
 
 - **开箱即用的 goc 编译器**：发布包是 goc 加打过补丁的 Clang（[docs/quickstart.md](docs/quickstart.md)）。`goc go` 和 `goc check` 用命令行参数。没有传入 clang 路径的参数。
 - **量化 goc 与 Go 互相调用的开销**：测出 Go 调 goc、goc 调 Go 每次调用的开销，并和 Go 调 Go、cgo 对比。
+- **QuickJS 直接使用 Go 的 GC**：JS 对象直接分配在 Go 堆上，交给 Go 的垃圾回收器回收。
 - **支持 linux/arm64。**
 - **goc 调用 Go**：像 Go 调用 goc 一样，只写声明就能调用。
 - **跨 goroutine 使用栈指针。**
