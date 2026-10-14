@@ -185,8 +185,8 @@ More detail in [docs/architecture.md](docs/architecture.md).
 Download and the smallest program: [docs/quickstart.md](docs/quickstart.md).
 
 ```bash
-tar -xzf goc-0.0.1-linux-amd64.tar.gz
-cd goc-0.0.1-linux-amd64
+tar -xzf goc-0.0.2-linux-amd64.tar.gz
+cd goc-0.0.2-linux-amd64
 export PATH="$PWD/bin:$PATH"
 goc check
 goc go examples/hello -o /tmp/hello

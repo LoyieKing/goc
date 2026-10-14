@@ -9,8 +9,8 @@ C 写函数体，Go 来调用。C 里不要调用 `printf`、`malloc`。要输�
 发布页：<https://github.com/LoyieKing/goc/releases>
 
 ```bash
-tar -xzf goc-0.0.1-linux-amd64.tar.gz
-cd goc-0.0.1-linux-amd64
+tar -xzf goc-0.0.2-linux-amd64.tar.gz
+cd goc-0.0.2-linux-amd64
 export PATH="$PWD/bin:$PATH"
 goc version
 ```
@@ -119,8 +119,8 @@ Write the function body in C and call it from Go. Do not call `printf` or `mallo
 Releases: <https://github.com/LoyieKing/goc/releases>
 
 ```bash
-tar -xzf goc-0.0.1-linux-amd64.tar.gz
-cd goc-0.0.1-linux-amd64
+tar -xzf goc-0.0.2-linux-amd64.tar.gz
+cd goc-0.0.2-linux-amd64
 export PATH="$PWD/bin:$PATH"
 goc version
 ```

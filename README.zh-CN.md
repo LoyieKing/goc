@@ -185,8 +185,8 @@ flowchart LR
 下载和最小例子在 [docs/quickstart.md](docs/quickstart.md)。
 
 ```bash
-tar -xzf goc-0.0.1-linux-amd64.tar.gz
-cd goc-0.0.1-linux-amd64
+tar -xzf goc-0.0.2-linux-amd64.tar.gz
+cd goc-0.0.2-linux-amd64
 export PATH="$PWD/bin:$PATH"
 goc check
 goc go examples/hello -o /tmp/hello

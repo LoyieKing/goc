@@ -51,7 +51,7 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 ## 5. 打成一个包
 
 ```bash
-./scripts/pack-release.sh dist/goc-0.0.1-linux-amd64.tar.gz
+./scripts/pack-release.sh dist/goc-0.0.2-linux-amd64.tar.gz
 ```
 
 版本号读仓库根目录的 `VERSION`。`goc toolchain pack DEST` 做的是同一件事。
@@ -80,8 +80,8 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 ## 6. 确认这个包能用
 
 ```bash
-tar -C /tmp -xzf dist/goc-0.0.1-linux-amd64.tar.gz
-export PATH="/tmp/goc-0.0.1-linux-amd64/bin:$PATH"
+tar -C /tmp -xzf dist/goc-0.0.2-linux-amd64.tar.gz
+export PATH="/tmp/goc-0.0.2-linux-amd64/bin:$PATH"
 goc check
 ```
 
@@ -95,7 +95,7 @@ goc check
 ./cmd/goc test --p27
 ```
 
-`scripts/ci-test.sh` 就是这五项。GitHub Actions 在每次推送到 `main` 和每个 pull request 上跑它。打 `v*` tag 时，release workflow 先跑同样的测试，再执行 `pack-release.sh`，把压缩包传到对应的 GitHub Release。tag 必须和 `VERSION` 一致，例如 `VERSION` 是 `0.0.1` 时 tag 是 `v0.0.1`。
+`scripts/ci-test.sh` 就是这五项。GitHub Actions 在每次推送到 `main` 和每个 pull request 上跑它。打 `v*` tag 时，release workflow 先跑同样的测试，再执行 `pack-release.sh`，把压缩包传到对应的 GitHub Release。tag 必须和 `VERSION` 一致，例如 `VERSION` 是 `0.0.2` 时 tag 是 `v0.0.2`。
 
 QuickJS 和跑分不在 CI 里。它们要另外下载引擎源码。
 
@@ -154,7 +154,7 @@ This uses the host `clang++-19`, that `llvm-config`, and the X86 backend headers
 ## 5. Pack one archive
 
 ```bash
-./scripts/pack-release.sh dist/goc-0.0.1-linux-amd64.tar.gz
+./scripts/pack-release.sh dist/goc-0.0.2-linux-amd64.tar.gz
 ```
 
 The version is the `VERSION` file at the repository root. `goc toolchain pack DEST` does the same thing.
@@ -183,8 +183,8 @@ There is no `--clang` and no `--toolchain`.
 ## 6. Check the archive
 
 ```bash
-tar -C /tmp -xzf dist/goc-0.0.1-linux-amd64.tar.gz
-export PATH="/tmp/goc-0.0.1-linux-amd64/bin:$PATH"
+tar -C /tmp -xzf dist/goc-0.0.2-linux-amd64.tar.gz
+export PATH="/tmp/goc-0.0.2-linux-amd64/bin:$PATH"
 goc check
 ```
 
@@ -198,6 +198,6 @@ From the checkout, without packing:
 ./cmd/goc test --p27
 ```
 
-`scripts/ci-test.sh` is those five. GitHub Actions runs it on every push to `main` and every pull request. On a `v*` tag, the release workflow runs the same tests, then `pack-release.sh`, and uploads the archive to that GitHub Release. The tag has to match `VERSION`: `0.0.1` in the file means the tag `v0.0.1`.
+`scripts/ci-test.sh` is those five. GitHub Actions runs it on every push to `main` and every pull request. On a `v*` tag, the release workflow runs the same tests, then `pack-release.sh`, and uploads the archive to that GitHub Release. The tag has to match `VERSION`: `0.0.2` in the file means the tag `v0.0.2`.
 
 QuickJS and the benchmarks are not in CI. They need an engine tree downloaded separately.
