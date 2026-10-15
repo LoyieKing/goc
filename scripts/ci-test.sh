@@ -17,6 +17,9 @@ echo "=== p29 ==="
 echo "=== arm64 ==="
 ./test/arm64/check_arm64.sh
 
+echo "=== gocobj ==="
+(cd "$(dirname "$0")/.." && go test ./gocobj/ && go run ./tools/goc-objdump verify test/gocobj/v1.0/valid.gocobj)
+
 echo "=== p27 ==="
 ./cmd/goc test --p27
 

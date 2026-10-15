@@ -40,6 +40,8 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子、默认栈图 |
 | `tools/goc-elfpack` | ELF → goobj |
 | `tools/goc-lower` | `goobj/lower` 的命令行外壳 |
+| `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
+| `gocobj` | `.gocobj` 的 Go 读写和校验库（与 Go 版本无关，ABI 常量见 `docs/go-abi-profiles.md`） |
 | `runtime/` | uptr 运行时（`runtime/uptr`）和头文件 |
 | `include/` | 用户头文件 `goc.h`、`goc_uptr.h` |
 | `test/` | 测试：`sema`、`realbody`（p27/p28 golden）、`goabi`（p29）、`arm64`、`color-escape`、`color`、`qjs`/`qjscli`/`qjsmem`（QuickJS 宿主） |
