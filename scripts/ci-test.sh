@@ -15,7 +15,7 @@ echo "=== p29 ==="
 ./scripts/test-p29-goabi.sh
 
 echo "=== arm64 ==="
-./backend/realbody/check_arm64.sh
+./test/arm64/check_arm64.sh
 
 echo "=== p27 ==="
 ./cmd/goc test --p27

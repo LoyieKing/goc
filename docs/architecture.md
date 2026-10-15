@@ -17,7 +17,7 @@ Clang 19  (Attr.td + SemaGocColors)
 LLVM IR  (!goc.color)
     │
     ▼
-frontend/color-escape
+llvm/lib/Transforms/ColorEscape
     │
     ▼
 opt O3, then goc-stackmap / goc-reanchor
@@ -37,7 +37,7 @@ elfpack  →  goobj
 Go link
 ```
 
-`backend/realbody/` is this path. It does not use seed MIR templates.
+`tools/goc/` is this path. It does not use seed MIR templates.
 
 ## Pieces
 
@@ -46,9 +46,9 @@ Go link
 | `include/goc.h` | `cptr` / `sptr` / `uptr` / `auto_ptr` / `gptr` |
 | `clang/patches`, `clang/sema` | In-tree Sema for LLVM 19.1.7 |
 | `clang/plugin` | Same checks as an out-of-tree plugin |
-| `frontend/color-escape` | Escape refine; lowers dynamic `alloca`; inserts uptr encode/decode |
-| `backend/pass` | Stack maps, safepoint spills, morestack insertion |
-| `backend/goobj/elfpack` | ELF bytes and relocations → goobj |
+| `llvm/lib/Transforms/ColorEscape` | Escape refine; lowers dynamic `alloca`; inserts uptr encode/decode |
+| `llvm` | Stack maps, safepoint spills, morestack insertion |
+| `tools/goc-elfpack` | ELF bytes and relocations → goobj |
 | `runtime/uptr` | MSB encode/decode; `g` from `FS:-8`; `goc_dynalloc` / `goc_dynrelease` |
 
 Drivers pick the patched clang at `bin/clang`, then

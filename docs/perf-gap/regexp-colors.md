@@ -4,7 +4,7 @@
 
 工具：`scripts/goc-color-report.py`。它按 `cmd/goc build` 的步骤重跑前半段编译，保留每一级 IR，再把 `goc-color-escape` 的决定映射回 C 声明和行号。用法见文末“复现”。
 
-标注：【实测】直接从 IR 元数据或 callgrind 数据读出；【推导】根据 IR 形状加 `frontend/color-escape/pass/GocColorEscape.cpp` 的规则重建出来的原因；【推测】按指令模式匹配，没有直接验证。下文行号都是 Bellard 版 `third_party/quickjs-bellard/libregexp.c`（打过 `scripts/qjs-gstack-bellard.patch`）；ng 的着色完全相同，行号整体 +58。
+标注：【实测】直接从 IR 元数据或 callgrind 数据读出；【推导】根据 IR 形状加 `llvm/lib/Transforms/ColorEscape/GocColorEscape.cpp` 的规则重建出来的原因；【推测】按指令模式匹配，没有直接验证。下文行号都是 Bellard 版 `third_party/quickjs-bellard/libregexp.c`（打过 `scripts/qjs-gstack-bellard.patch`）；ng 的着色完全相同，行号整体 +58。
 
 ## 1. 结论
 
@@ -97,7 +97,7 @@ E1 成立的条件（**没有运行验证**）：压进回溯栈的指针，在�
 
 ## 7. 复现
 
-在仓库根目录执行（`build/` 已被 gitignore）。前提：QuickJS 源码在 `third_party/` 下且打过 gstack 补丁（`scripts/qjs-build.sh` 会打），打过补丁的 clang、它旁边的 `opt`、`frontend/color-escape/build/goc-color-escape`、`backend/build/pass-out/GocStackMap.so` 都已就绪。
+在仓库根目录执行（`build/` 已被 gitignore）。前提：QuickJS 源码在 `third_party/` 下且打过 gstack 补丁（`scripts/qjs-build.sh` 会打），打过补丁的 clang、它旁边的 `opt`、`build/llvm/goc-color-escape`、`build/llvm/GocStackMap.so` 都已就绪。
 
 ```bash
 R=build/regexp-colors

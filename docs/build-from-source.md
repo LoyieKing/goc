@@ -44,9 +44,9 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 
 这一步用宿主的 `clang++-19`、刚才的 `llvm-config` 和 X86 后端头文件编出。打过补丁的 `clang++` 会把 LLVM 头文件里的 `return &局部` 判成栈指针逃逸，所以不用它来编 pass：
 
-- `frontend/color-escape/build/goc-color-escape`
-- `backend/build/pass-out/goc-llc`
-- `backend/build/pass-out/GocStackMap.so`
+- `build/llvm/goc-color-escape`
+- `build/llvm/goc-llc`
+- `build/llvm/GocStackMap.so`
 
 ## 5. 打成一个包
 
@@ -67,7 +67,7 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 | `bin/goc-lower` | 预编译的 realbody 辅助程序（签名、thunk、meta） |
 | `lib/libLLVM.so.19.1`、`lib/clang/` | Clang 的运行库和资源目录 |
 | `passes/` | `goc-llc`、`goc-color-escape`、`GocStackMap.so` |
-| `cmd/`、`scripts/`、`include/`、`backend/realbody/`、`examples/hello/` | 驱动和自检样例 |
+| `cmd/`、`scripts/`、`include/`、`tools/goc/`、`examples/hello/` | 驱动和自检样例 |
 
 驱动只在这三个位置找 Clang，找不到就停，不用系统 `clang-19`：
 
@@ -91,7 +91,7 @@ goc check
 ./cmd/goc check
 ./cmd/goc test --p28
 ./scripts/test-p29-goabi.sh
-./backend/realbody/check_arm64.sh
+./test/arm64/check_arm64.sh
 ./cmd/goc test --p27
 ```
 
@@ -147,9 +147,9 @@ When `bin/clang`, `opt`, `llc`, `llvm-mc`, and `llvm-objdump` are already there,
 
 This uses the host `clang++-19`, that `llvm-config`, and the X86 backend headers to produce. The patched `clang++` reports `return &local` inside LLVM headers as a stack-pointer escape, so it is not the compiler for these passes:
 
-- `frontend/color-escape/build/goc-color-escape`
-- `backend/build/pass-out/goc-llc`
-- `backend/build/pass-out/GocStackMap.so`
+- `build/llvm/goc-color-escape`
+- `build/llvm/goc-llc`
+- `build/llvm/GocStackMap.so`
 
 ## 5. Pack one archive
 
@@ -170,7 +170,7 @@ Layout after unpacking:
 | `bin/goc-lower` | Prebuilt real-body helper (signatures, thunks, meta) |
 | `lib/libLLVM.so.19.1`, `lib/clang/` | Clang's runtime library and resource directory |
 | `passes/` | `goc-llc`, `goc-color-escape`, `GocStackMap.so` |
-| `cmd/`, `scripts/`, `include/`, `backend/realbody/`, `examples/hello/` | The driver and the self-check sample |
+| `cmd/`, `scripts/`, `include/`, `tools/goc/`, `examples/hello/` | The driver and the self-check sample |
 
 The driver looks for Clang in these three places only, then stops. It does not use system `clang-19`:
 
@@ -194,7 +194,7 @@ From the checkout, without packing:
 ./cmd/goc check
 ./cmd/goc test --p28
 ./scripts/test-p29-goabi.sh
-./backend/realbody/check_arm64.sh
+./test/arm64/check_arm64.sh
 ./cmd/goc test --p27
 ```
 

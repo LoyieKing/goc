@@ -51,10 +51,10 @@ jobs:
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
-            frontend/color-escape/build/goc-color-escape
-            backend/build/pass-out/goc-llc
-            backend/build/pass-out/GocStackMap.so
-          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
+            build/llvm/goc-color-escape
+            build/llvm/goc-llc
+            build/llvm/GocStackMap.so
+          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'llvm/lib/Transforms/ColorEscape/**', 'llvm/**') }}
 
       - name: Build clang and passes
         if: steps.cache.outputs.cache-hit != 'true'
@@ -75,10 +75,10 @@ jobs:
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
-            frontend/color-escape/build/goc-color-escape
-            backend/build/pass-out/goc-llc
-            backend/build/pass-out/GocStackMap.so
-          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'frontend/color-escape/pass/**', 'backend/pass/**') }}
+            build/llvm/goc-color-escape
+            build/llvm/goc-llc
+            build/llvm/GocStackMap.so
+          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'llvm/lib/Transforms/ColorEscape/**', 'llvm/**') }}
 
       - name: Test
         run: |

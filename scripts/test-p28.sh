@@ -26,16 +26,16 @@ compile_ok() {
 }
 
 echo "=== P28: OK out-param / stack ==="
-compile_ok "$ROOT/tests/sema/01_ok_outparam_stack.c" 01_ok_outparam_stack
+compile_ok "$ROOT/test/sema/01_ok_outparam_stack.c" 01_ok_outparam_stack
 pass "PASS P28-sema-ok (in-tree clang, no -fplugin: 01_ok_outparam_stack)"
 
 echo "=== P28: implicit uptr storage for cptr T* ==="
-compile_ok "$ROOT/tests/sema/02_ok_sptr_to_cptr_uptr.c" 02_ok_sptr_to_cptr_uptr
+compile_ok "$ROOT/test/sema/02_ok_sptr_to_cptr_uptr.c" 02_ok_sptr_to_cptr_uptr
 pass "PASS P28-sema-implicit-uptr (in-tree Sema accepts cptr T* destination)"
 
 echo "=== P28: real-body goobj ==="
-"$ROOT/backend/realbody/goc_p28_realbody.sh" \
-  "$ROOT/tests/realbody/03_ok_realbody_goobj.c" \
+"$ROOT/tools/goc/realbody.sh" \
+  "$ROOT/test/realbody/03_ok_realbody_goobj.c" \
   "$OUT/p28_real.goobj" | tee "$OUT/realbody.log"
 test -f "$OUT/p28_real.goobj"
 test -f "$OUT/p28_real.meta.json"

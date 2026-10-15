@@ -32,9 +32,9 @@ fi
   exit 1
 }
 
-COLOR="$ROOT/frontend/color-escape/build/goc-color-escape"
-LLC="$ROOT/backend/build/pass-out/goc-llc"
-SM="$ROOT/backend/build/pass-out/GocStackMap.so"
+COLOR="$ROOT/build/llvm/goc-color-escape"
+LLC="$ROOT/build/llvm/goc-llc"
+SM="$ROOT/build/llvm/GocStackMap.so"
 
 if [[ "${GOC_REBUILD_PASSES:-}" != 1 && -x "$COLOR" && -x "$LLC" && -f "$SM" ]]; then
   echo "build-passes: already built"
@@ -51,14 +51,14 @@ else
   exit 1
 fi
 
-make -C "$ROOT/frontend/color-escape/pass" all \
+make -C "$ROOT/llvm/lib/Transforms/ColorEscape" all \
   CXX="$CXX" LLVM_CFG="$LLVM_CFG" LIBS="$LIBS"
 # Goals must be the makefile's relative paths. An absolute path is a
 # different target, and make has no rule for it when the file is absent.
-make -C "$ROOT/backend/pass" \
+make -C "$ROOT/llvm" \
   CXX="$CXX" LLVM_CFG="$LLVM_CFG" LIBS="$LIBS" \
   LLVM_X86_SRC="$X86_SRC" LLVM_X86_BUILD="$X86_BUILD" \
-  ../build/pass-out/GocStackMap.so ../build/pass-out/goc-llc
+  ../build/llvm/GocStackMap.so ../build/llvm/goc-llc
 
 [[ -x "$COLOR" && -x "$LLC" && -f "$SM" ]] || {
   echo "build-passes: outputs missing" >&2

@@ -24,7 +24,7 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 - 包里没有 `.s` 时写入 `goc_marker_amd64.s`。Go 拒绝没有任何汇编文件的无函数体声明。这个文件不是 C 函数的桩。
 - Go 侧仍要写同名的无函数体声明。`int` 对 `int32`。
 - `package main` 产出二进制，默认为 `<目录>/<目录名>`。其它包只做编译并打进构建缓存，不接受 `-o`。
-- 产物是 `.goobj`，在 `build/goc-go/<目录哈希>/`。`backend/tools/toolexec_recognize_goobj.sh` 在 Go 的 asm 和 compile 阶段认出它并打进包。打进哪一个包由该包的编译器 `-p` 决定。
+- 产物是 `.goobj`，在 `build/goc-go/<目录哈希>/`。`tools/goc/toolexec_recognize_goobj.sh` 在 Go 的 asm 和 compile 阶段认出它并打进包。打进哪一个包由该包的编译器 `-p` 决定。
 
 `goc go` 和 `goc check` 不读环境里已有的 `GOC_*`。要改默认就加参数。
 
@@ -56,7 +56,7 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 
 没有 `--clang`，也没有 `--toolchain`。
 
-`opt`、`llc`、`llvm-mc`、`llvm-objdump` 用 clang 旁边的同名文件。pass 在发布包的 `passes/`，在仓库里则是已编好的 `backend/build/pass-out` 和 `frontend/color-escape/build`。
+`opt`、`llc`、`llvm-mc`、`llvm-objdump` 用 clang 旁边的同名文件。pass 在发布包的 `passes/`，在仓库里则是已编好的 `build/llvm/`（goc-llc、GocStackMap.so、goc-color-escape）。
 
 打包（本机已经编好 clang 和 pass 时）打出的是完整的 goc，不是单独的 clang 目录：
 

@@ -17,7 +17,7 @@ goc_prepend_lib "$(goc_clang_libdir "$(goc_resolve_clang)")"
 
 echo "=== P29-goabi: C → goobj (Go ABIInternal entry thunks) ==="
 env -u GOC_DEFAULT_PTR_COLOR "$ROOT/cmd/goc" build \
-  "$ROOT/tests/goabi/goabi.c" -o "$OUT/goabi.goobj" | tee "$OUT/build.log"
+  "$ROOT/test/goabi/goabi.c" -o "$OUT/goabi.goobj" | tee "$OUT/build.log"
 
 go tool nm "$OUT/goabi.goobj" | tee "$OUT/nm.txt"
 rg -q ' T main\.goabi_add2$' "$OUT/nm.txt"
@@ -25,9 +25,9 @@ rg -q ' T main\.goabi_add2\.impl$' "$OUT/nm.txt"
 rg -q ' T main\.goabi_addl$' "$OUT/nm.txt"
 
 echo "=== P29-goabi: Go caller + toolexec pack ==="
-( cd "$ROOT/tests/goabi" && \
+( cd "$ROOT/test/goabi" && \
   CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/goabi.goobj" \
-  go build -a -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" \
+  go build -a -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" \
     -o "$OUT/goabi_test" . ) 2>&1 | tee "$OUT/go-build.log"
 
 "$OUT/goabi_test" | tee "$OUT/run.log"

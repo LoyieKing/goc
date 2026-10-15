@@ -169,11 +169,13 @@ flowchart LR
 | `cmd/goc` | 命令行入口 |
 | `include/goc.h` | 指针颜色的写法 |
 | `clang/` | Clang 前端的修改 |
-| `frontend/` | 指针颜色推断 |
-| `backend/` | 生成符合 Go 栈规则的代码和 Go 目标文件 |
-| `runtime/` | goc 的运行时支持 |
-| `tests/` | 测试，包括 QuickJS |
-| `scripts/` | 构建和跑分脚本 |
+| `llvm/` | goc 的 LLVM pass（颜色/逃逸变换、栈图插件）和 `goc-llc` |
+| `goobj/` | Go 侧的库：vendored 的 Go 目标文件写入器、Go ABI 降级 |
+| `tools/` | `goc` 流水线脚本、`goc-elfpack`（ELF → Go 目标文件）、`goc-lower` |
+| `runtime/` | goc 运行时支持 |
+| `test/` | 测试，包括 QuickJS |
+| `bench/` | 基准测试和性能差距分析 |
+| `scripts/` | 构建、发布和测试脚本 |
 | `docs/` | 文档 |
 
 更多细节见 [docs/architecture.md](docs/architecture.md)。
@@ -203,7 +205,7 @@ cd goc
 ./cmd/goc check
 ```
 
-**从 Go 调用 goc**：最小例子是 `examples/hello`。黄金测试在 `tests/goabi`：
+**从 Go 调用 goc**：最小例子是 `examples/hello`。黄金测试在 `test/goabi`：
 
 ```bash
 ./scripts/test-p29-goabi.sh

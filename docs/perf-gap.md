@@ -15,7 +15,7 @@
 
 ## 0. 结论先看
 
-测量时段：北京时间 2026-09-27，同一台 8 vCPU 虚拟机，计时一律 `taskset -c 3` 绑核、多家交替轮换（方法同 `scripts/bench-all.sh`）。除特别注明外，下表数字来自“开关实验”时段（`data/toggles/`，19:53–23:01，28 个构建同一时段交替跑）。这是那次机制研究里覆盖最全的一次，不是当前默认构建的分数。当前五引擎数字在 [benchmark.md](benchmark.md)。
+测量时段：北京时间 2026-09-27，同一台 8 vCPU 虚拟机，计时一律 `taskset -c 3` 绑核、多家交替轮换（方法同 `bench/bench-all.sh`）。除特别注明外，下表数字来自“开关实验”时段（`data/toggles/`，19:53–23:01，28 个构建同一时段交替跑）。这是那次机制研究里覆盖最全的一次，不是当前默认构建的分数。当前五引擎数字在 [benchmark.md](benchmark.md)。
 
 | 指标 | Bellard gcc -O2 | Bellard clang -O3 | goc-bellard | ng clang -O2（native ng） | ng clang -O3 | goc-ng |
 |---|---:|---:|---:|---:|---:|---:|
@@ -40,7 +40,7 @@ ng 的 gcc 版只在主时段（`data/`，16:18–17:41）测过：V8 1020、Sun
 
 ## 1. 参与比较的构建
 
-所有构建都来自同一台机器上的同两份源码：quickjs-ng 0.17.0（`/workspace/perf-study/native`）和 Bellard QuickJS 2026-06-04（`/workspace/perf-study/bellard/quickjs-2026-06-04.tar.xz`）。原生构建由 [`scripts/perfgap-build-natives.sh`](../scripts/perfgap-build-natives.sh) 生成，goc 变体用 `QJS_OUT_DIR=... scripts/qjs-cli-build.sh` 加实验开关生成（见第 9 节）。
+所有构建都来自同一台机器上的同两份源码：quickjs-ng 0.17.0（`/workspace/perf-study/native`）和 Bellard QuickJS 2026-06-04（`/workspace/perf-study/bellard/quickjs-2026-06-04.tar.xz`）。原生构建由 [`bench/perfgap-build-natives.sh`](../bench/perfgap-build-natives.sh) 生成，goc 变体用 `QJS_OUT_DIR=... scripts/qjs-cli-build.sh` 加实验开关生成（见第 9 节）。
 
 ### 1.1 原生构建
 
@@ -77,7 +77,7 @@ gocflags 构建**只有参数、没有 goc 运行时**：没有 morestack 检查
 
 ### 1.3 “goc 的流水线原生编译”（gocpipe）
 
-goc 的优化流水线和普通 `clang -O3` 并不完全一样：前端用 `-disable-llvm-passes` 出未优化的 IR，再用 `opt` 跑一条**文本形式**的 `default<O3>` 流水线（去掉 `argpromotion` 和 `globalopt` 两个 pass，它们会改函数签名/全局布局，和 goc 的元数据冲突），最后 `llc` 带上表里的参数出汇编，并把 `movaps` 换成 `movups`（ALIGNFIX）。[`scripts/perfgap-gocpipe-cc.sh`](../scripts/perfgap-gocpipe-cc.sh) 把这条流水线包成一个“编译器”，直接编原生 Bellard：
+goc 的优化流水线和普通 `clang -O3` 并不完全一样：前端用 `-disable-llvm-passes` 出未优化的 IR，再用 `opt` 跑一条**文本形式**的 `default<O3>` 流水线（去掉 `argpromotion` 和 `globalopt` 两个 pass，它们会改函数签名/全局布局，和 goc 的元数据冲突），最后 `llc` 带上表里的参数出汇编，并把 `movaps` 换成 `movups`（ALIGNFIX）。[`bench/perfgap-gocpipe-cc.sh`](../bench/perfgap-gocpipe-cc.sh) 把这条流水线包成一个“编译器”，直接编原生 Bellard：
 
 | 名字 | 内容 |
 |---|---|
@@ -172,13 +172,13 @@ microbench 72 项的逐项比值在 `data/tables.md` / `data/toggles/tables.md`�
 | `string_build_large1` | 1.34 | 1.18 | memcpy/realloc 路径（【推测】） |
 | `sort_bench` | 1.32 | 1.19 | 比较回调走 JS 调用路径 + uptr（【推测】） |
 
-microcall（10 种 JS 调用形状，`tests/bench/microcall.js`）上，goc/clang-O3 是 1.063（Bellard）和 1.066（ng），属于调用路径上的固定开销：morestack 检查、帧移动守卫和 `JS_CallInternal` 更大的栈帧（第 4 节）。
+microcall（10 种 JS 调用形状，`bench/js/microcall.js`）上，goc/clang-O3 是 1.063（Bellard）和 1.066（ng），属于调用路径上的固定开销：morestack 检查、帧移动守卫和 `JS_CallInternal` 更大的栈帧（第 4 节）。
 
 ### 2.4 模拟计数器
 
 ![counters](perf-gap/charts/perf-gap-counters.png)
 
-这台虚拟机没有硬件 PMU（`perf stat` 的 cycles/instructions 都是 `<not supported>`），所以计数器来自 callgrind 的模拟：Ir 是执行的指令数，D1/LL 是它的简单缓存模型，分支预测是它的简单模型（间接跳转只记“上一次的目标”）。输入是固定工作量的 V8（每个子项固定迭代次数，外加一个只解析不运行的 `Parse`），见 `scripts/perfgap-callgrind.sh`。
+这台虚拟机没有硬件 PMU（`perf stat` 的 cycles/instructions 都是 `<not supported>`），所以计数器来自 callgrind 的模拟：Ir 是执行的指令数，D1/LL 是它的简单缓存模型，分支预测是它的简单模型（间接跳转只记“上一次的目标”）。输入是固定工作量的 V8（每个子项固定迭代次数，外加一个只解析不运行的 `Parse`），见 `bench/perfgap-callgrind.sh`。
 
 | 构建 | Ir | 条件分支误预测 | 间接跳转误预测 | D1 读缺失 |
 |---|---:|---:|---:|---:|
@@ -249,7 +249,7 @@ LLVM 其实也会做尾复制，但默认只在前驱和后继都不超过 16 �
 
 callgrind 的间接跳转误预测（V8 + Parse，固定工作量）：gcc 232M，clang 306M，clang+尾复制 230M。Ir 基本不变（16.41G → 16.34G）。【实测】
 
-C 微基准 `tests/perfgap/mech.c` 的 `interp`（31 个 handler 的 computed-goto 小解释器，形状仿 `JS_CallInternal`）把这件事单独拎出来：
+C 微基准 `bench/perfgap/mech.c` 的 `interp`（31 个 handler 的 computed-goto 小解释器，形状仿 `JS_CallInternal`）把这件事单独拎出来：
 
 | 构建 | ns/op |
 |---|---:|
@@ -316,7 +316,7 @@ ng 的 SunSpider 和 microbench 也快了 6%～11%，但 V8 只快 1%～1.5%。�
 
 ![Ir decomposition](perf-gap/charts/perf-gap-ir-decomp.png)
 
-`scripts/perfgap-cg-classify.py` 把 callgrind 记下的每一条执行过的指令地址用 objdump 映射回二进制，按指令形状分类（分类规则写在脚本开头），再和 gocflags 构建逐类相减。下表是 V8 8 个子项 + Parse 的合计，单位是**原生构建总 Ir 的百分点**（`data/ir-decomposition.json`）：
+`bench/perfgap-cg-classify.py` 把 callgrind 记下的每一条执行过的指令地址用 objdump 映射回二进制，按指令形状分类（分类规则写在脚本开头），再和 gocflags 构建逐类相减。下表是 V8 8 个子项 + Parse 的合计，单位是**原生构建总 Ir 的百分点**（`data/ir-decomposition.json`）：
 
 | 类别 | 是什么 | goc-bellard | goc-ng |
 |---|---|---:|---:|
@@ -390,7 +390,7 @@ ng 的 SunSpider 和 microbench 也快了 6%～11%，但 V8 只快 1%～1.5%。�
 
 **为什么这么贵。** ① 每次编码要读两次 `FS:-8`：goc 把 `g` 的读取做成 volatile（architecture.md：“hot uptr helpers are inlined to a volatile FS:-8 load”），编译器既不能把同一函数里的多次读取合并，也不能提到循环外；② 范围判断要两次比较加一次分支；③ 这段代码出现在很多“其实永远不会指向栈”的写入上，因为编译器证明不了。【实测：分类与计数】【“绝大多数写入其实不指向栈”是推测，没有逐点统计】
 
-**热点在哪。** RegExp 子项最重（Ir +18.2 个点）。`scripts/perfgap-cg-bycount.py` 按执行次数把 goc-bellard 与 gocflags 的 `lre_exec` 基本块一一配对（`data/regexp-lre-exec-bycount.txt`）：最热的一个块执行了 2442 万次，goc 版 48 条指令，原生 22 条；多出来的 26 条里 23 条是两段 uptr 编码。这个块是正则回溯时往回溯栈里压一条记录（`pc`、当前字符指针、栈深度）：
+**热点在哪。** RegExp 子项最重（Ir +18.2 个点）。`bench/perfgap-cg-bycount.py` 按执行次数把 goc-bellard 与 gocflags 的 `lre_exec` 基本块一一配对（`data/regexp-lre-exec-bycount.txt`）：最热的一个块执行了 2442 万次，goc 版 48 条指令，原生 22 条；多出来的 26 条里 23 条是两段 uptr 编码。这个块是正则回溯时往回溯栈里压一条记录（`pc`、当前字符指针、栈深度）：
 
 ```asm
 ; goc-bellard, lre_exec 回溯栈压栈（每条记录要存两个指针，各做一次编码检查）
@@ -419,9 +419,9 @@ tls 类还包括 JS 栈溢出检查：两个 goc 版本都打了 `qjs-gstack*.pa
 
 ### 4.5 栈帧读写（Ir +8.6～9.2 个点）
 
-`scripts/perfgap-cg-framemem.py` 按指令种类和位置把这一块再拆一次（`data/framemem.json`，goc-bellard 对 gocflags）：读 +4.7、写 +3.7、读改写 +0.3；按位置看，调用前后 4 条指令以内的只占 0.8，其余 7.9 分散在函数体里。按函数看，`JS_CallInternal` +3.6、`lre_exec` +2.4、`next_token` +0.4，其余都很小。【实测】
+`bench/perfgap-cg-framemem.py` 按指令种类和位置把这一块再拆一次（`data/framemem.json`，goc-bellard 对 gocflags）：读 +4.7、写 +3.7、读改写 +0.3；按位置看，调用前后 4 条指令以内的只占 0.8，其余 7.9 分散在函数体里。按函数看，`JS_CallInternal` +3.6、`lre_exec` +2.4、`next_token` +0.4，其余都很小。【实测】
 
-`scripts/perfgap-cg-frameslots.py` 把汇编（带 `# 8-byte Spill`/`Reload` 注释的 llc 输出）与二进制逐条对齐，再按槽位用途分桶（`data/frameslots.json`，单位是 goc-bellard 总 Ir 的百分比）：
+`bench/perfgap-cg-frameslots.py` 把汇编（带 `# 8-byte Spill`/`Reload` 注释的 llc 输出）与二进制逐条对齐，再按槽位用途分桶（`data/frameslots.json`，单位是 goc-bellard 总 Ir 的百分比）：
 
 | 函数 | GC 根槽（root） | 溢出 | 重载 | 其他局部 |
 |---|---:|---:|---:|---:|
@@ -503,7 +503,7 @@ C 微基准（`mech.c`，ns/次调用）：
 
 ### 4.9 memcpy / memset / memcmp shim（Ir +1.8～2.1 个点）
 
-goc 的程序不链接 glibc，`memcpy` 等由 `tests/qjs/_qjs_libc_shim.c` 提供：小尺寸用重叠的 8/4/2/1 字节读写，大尺寸用 `rep movsb/stosb`；glibc 用的是 AVX-512 版本。`memcmp` 是逐字节循环（第 5.3 节）。perf 采样里 RegExp 子项 `goc_memcpy` 多 8 ms（总 1122 ms）。【实测】
+goc 的程序不链接 glibc，`memcpy` 等由 `test/qjs/_qjs_libc_shim.c` 提供：小尺寸用重叠的 8/4/2/1 字节读写，大尺寸用 `rep movsb/stosb`；glibc 用的是 AVX-512 版本。`memcmp` 是逐字节循环（第 5.3 节）。perf 采样里 RegExp 子项 `goc_memcpy` 多 8 ms（总 1122 ms）。【实测】
 
 ---
 
@@ -511,7 +511,7 @@ goc 的程序不链接 glibc，`memcpy` 等由 `tests/qjs/_qjs_libc_shim.c` 提�
 
 这一节量的是 2026-09-27 合入之前的默认构建。当时 `sin` / `cos` / `exp` / `pow` / `log` 走 Go→cgo→glibc，`memcmp` 是逐字节循环，`goc_malloc_usable_size` 返回申请尺寸。这些后来都进了默认构建（见 [todo.md](todo.md)）：精确函数用 C，超越函数用 glibc 栈上直调，`memcmp` 每步 8 字节，`malloc_usable_size` 返回 `h->capacity`。下面的探针数字没有重测。
 
-goc 版本里，libc 的服务要么由 shim 用 C 实现，要么桥接到 Go。`tests/bench/perfgap-mech.js` 每个循环只压一种服务，三轮取中位数（`data/mech-js/`，ns/op）：
+goc 版本里，libc 的服务要么由 shim 用 C 实现，要么桥接到 Go。`bench/js/perfgap-mech.js` 每个循环只压一种服务，三轮取中位数（`data/mech-js/`，ns/op）：
 
 | 探针 | Bellard clang-O3 + goc 参数 | goc-bellard | goc-bellard-fast | ng clang-O3 + goc 参数 | goc-ng | goc-ng-fast |
 |---|---:|---:|---:|---:|---:|---:|
@@ -582,7 +582,7 @@ goc 这边的 107,800 次，正好约等于 200 轮 × 每轮越过 512 字节�
 
 callgrind 上 Bellard gocflags 的 Ir 比 clang-O3 少 1.2%，帧读写少 2.8 个点、其他指令多 1.2 个点；I1 缺失反而从 7.2M 升到 11.1M。指令数的变化不足以解释 6% 的时间差。
 
-为了找出是哪一个参数起的作用，又单独做了一轮：在 Bellard clang -O3 -DNDEBUG 上**每次只加一个** goc 的参数（`SET=flags scripts/perfgap-bench-toggles.sh`，V8 5 轮、SunSpider 3 轮，2026-09-27 23:01–23:58，数据在 `docs/perf-gap/data/flags/`）。表中是时间比，以同一时段的 clang-O3 为 1（V8 1326，SunSpider 14.15 ms）；Ir 是 callgrind 在 V8 8 个套件加 Parse 上的指令数（clang-O3 为 16.41G）。
+为了找出是哪一个参数起的作用，又单独做了一轮：在 Bellard clang -O3 -DNDEBUG 上**每次只加一个** goc 的参数（`SET=flags bench/perfgap-bench-toggles.sh`，V8 5 轮、SunSpider 3 轮，2026-09-27 23:01–23:58，数据在 `docs/perf-gap/data/flags/`）。表中是时间比，以同一时段的 clang-O3 为 1（V8 1326，SunSpider 14.15 ms）；Ir 是 callgrind 在 V8 8 个套件加 Parse 上的指令数（clang-O3 为 16.41G）。
 
 | 构建（clang -O3 + …） | 参数 | V8 | V8 时间比 | SunSpider 时间比 | Ir |
 |---|---|---:|---:|---:|---:|
@@ -683,51 +683,51 @@ gocpipe → gocpipe-sm 只加了 goc 的 stackmap pass 和 `GocFrameAddrFix`（�
 
 ### 9.1 计时
 
-- 全部用 `scripts/bench-all.sh` 的方法：`taskset -c 3` 绑核，每轮所有构建各跑一次，下一轮换起始构建；V8 取 5 轮中位数，SunSpider、microbench、microcall 各 3 轮（主时段 microcall 5 轮）。`ENGINE_MAP` 让 bench-all.sh 接受任意构建名 → 命令的映射，`MICROCALL_PER_ENGINE=1` 让 microcall 每个构建单独跑 `tests/bench/microcall.js`。
+- 全部用 `bench/bench-all.sh` 的方法：`taskset -c 3` 绑核，每轮所有构建各跑一次，下一轮换起始构建；V8 取 5 轮中位数，SunSpider、microbench、microcall 各 3 轮（主时段 microcall 5 轮）。`ENGINE_MAP` 让 bench-all.sh 接受任意构建名 → 命令的映射，`MICROCALL_PER_ENGINE=1` 让 microcall 每个构建单独跑 `bench/js/microcall.js`。
 - 原生 Bellard 用 `--stack-size 16M`，原生 ng 用 `-C --stack-size 16384`，goc 构建用 `--stack-size 16384`。
-- 汇总：`scripts/perfgap-summarize.py`，每项取中位数，几何平均只算所有构建都跑出的项；V8 和 microcall 的分数取倒数当“时间”，这样所有比值都是“>1 表示慢”。
+- 汇总：`bench/perfgap-summarize.py`，每项取中位数，几何平均只算所有构建都跑出的项；V8 和 microcall 的分数取倒数当“时间”，这样所有比值都是“>1 表示慢”。
 
 三个计时时段（北京时间 2026-09-27；机器时钟后来从 KST 改成了 CST，所以 `raw/env.txt` 里写的是 17:18 KST）：
 
 | 时段 | 数据 | 构建 | 脚本 |
 |---|---|---|---|
-| 16:18–17:41 | `data/raw` → `data/all.json`、`data/tables.md` | 12 个（含 ng-gcc、Bellard gcc 带 assert） | `scripts/perfgap-bench.sh` |
-| 19:32–19:53 | `data/mech-c*.txt`、`data/mech-js/` | 13 个 | `scripts/perfgap-mech.sh`、`scripts/perfgap-mech-js.sh` |
-| 19:53–23:01 | `data/raw-toggles` → `data/toggles/` | 28 个 | `SET=toggles scripts/perfgap-bench-toggles.sh` |
-| 23:01–23:58 | `data/raw-flags` → `data/flags/` | 13 个 | `SET=flags scripts/perfgap-bench-toggles.sh` |
+| 16:18–17:41 | `data/raw` → `data/all.json`、`data/tables.md` | 12 个（含 ng-gcc、Bellard gcc 带 assert） | `bench/perfgap-bench.sh` |
+| 19:32–19:53 | `data/mech-c*.txt`、`data/mech-js/` | 13 个 | `bench/perfgap-mech.sh`、`bench/perfgap-mech-js.sh` |
+| 19:53–23:01 | `data/raw-toggles` → `data/toggles/` | 28 个 | `SET=toggles bench/perfgap-bench-toggles.sh` |
+| 23:01–23:58 | `data/raw-flags` → `data/flags/` | 13 个 | `SET=flags bench/perfgap-bench-toggles.sh` |
 
 ### 9.2 计数器
 
-- callgrind（`scripts/perfgap-callgrind.sh`）：固定工作量的 V8（`v8fixed-q.js`：V8-v7 的代码 + `tests/perfgap/v8fixed-harness.js`，每个子项固定迭代次数，规模 0.25），每个子项一个进程，另加只解析不运行的 `Parse`；`--cache-sim=yes --branch-sim=yes --dump-instr=yes`。goc 二进制要设 `GODEBUG=asyncpreemptoff=1`（Go 的异步抢占信号会触发 callgrind 的断言）。
+- callgrind（`bench/perfgap-callgrind.sh`）：固定工作量的 V8（`v8fixed-q.js`：V8-v7 的代码 + `bench/perfgap/v8fixed-harness.js`，每个子项固定迭代次数，规模 0.25），每个子项一个进程，另加只解析不运行的 `Parse`；`--cache-sim=yes --branch-sim=yes --dump-instr=yes`。goc 二进制要设 `GODEBUG=asyncpreemptoff=1`（Go 的异步抢占信号会触发 callgrind 的断言）。
 - 分类与拆解：`perfgap-cg-classify.py`（指令分类）→ `perfgap-cg-decompose.py`（`ir-decomposition.json`）；`perfgap-cg-framemem.py`、`perfgap-cg-frameslots.py`、`perfgap-cg-bycount.py`（第 4 节的细分）；`perfgap-cg-summarize.py`（`callgrind.json`）。
-- perf（`scripts/perfgap-perf.sh`）：没有硬件 PMU，只能 `-e cpu-clock` 采样，结果在 `perf-compare.json`，只用来确认热点函数。
+- perf（`bench/perfgap-perf.sh`）：没有硬件 PMU，只能 `-e cpu-clock` 采样，结果在 `perf-compare.json`，只用来确认热点函数。
 
 ### 9.3 默认构建没有变
 
 这一节只记录 2026-09-27 那次提交当时的核对。官方测试 69/77 和 73/77 是那一天、`test_builtin.js` 没有加 `--std` 的计数。当前五引擎对照在 [benchmark.md](benchmark.md)（73/77 与 77/77）。
 
-本次提交对构建脚本的改动（`git diff 8973a12..HEAD -- backend/realbody/goc_p28_realbody.sh cmd/goc scripts/qjs-cli-build.sh scripts/bench-all.sh`）只增加了默认为空的开关：`GOC_OPT_EXTRA`（为空时 `opt` 的参数列表不变）、`GOC_LLC_EXTRA`（为空时不追加）、`QJS_OUT_DIR`（为空时输出目录不变）、`ENGINE_MAP` / `MICROCALL_PER_ENGINE`（为空时 bench-all.sh 走原来的分支）。为确认这一点，2026-09-27 用当前 HEAD、不设任何新开关，把两个默认 CLI 重新编到 `/tmp`（`QJS_OUT_DIR` 只改输出目录）。逐字节比较时，`quickjs.o`、`libregexp.o`、`cli_std_os.o` 和 `build/` 下的旧产物有几十到几百字节的差异，但同一个 HEAD 连编两次也有同样量级的差异（例如 `quickjs.o` 两次之间 370 字节，文件大小相同），说明 goc 的构建本身不是逐字节可复现的，这些差异不来自脚本改动；其余目标文件完全相同。于是改为直接跑正确性对照：新编的 goc-ng 为 test262 1502/1526、官方测试 69/77，goc-bellard 为 1501/1526、73/77，和当时 benchmark.md 的结果一致（`docs/perf-gap/data/parity/`）。那一次默认构建的行为没有变化。
+本次提交对构建脚本的改动（`git diff 8973a12..HEAD -- tools/goc/realbody.sh cmd/goc scripts/qjs-cli-build.sh bench/bench-all.sh`）只增加了默认为空的开关：`GOC_OPT_EXTRA`（为空时 `opt` 的参数列表不变）、`GOC_LLC_EXTRA`（为空时不追加）、`QJS_OUT_DIR`（为空时输出目录不变）、`ENGINE_MAP` / `MICROCALL_PER_ENGINE`（为空时 bench-all.sh 走原来的分支）。为确认这一点，2026-09-27 用当前 HEAD、不设任何新开关，把两个默认 CLI 重新编到 `/tmp`（`QJS_OUT_DIR` 只改输出目录）。逐字节比较时，`quickjs.o`、`libregexp.o`、`cli_std_os.o` 和 `build/` 下的旧产物有几十到几百字节的差异，但同一个 HEAD 连编两次也有同样量级的差异（例如 `quickjs.o` 两次之间 370 字节，文件大小相同），说明 goc 的构建本身不是逐字节可复现的，这些差异不来自脚本改动；其余目标文件完全相同。于是改为直接跑正确性对照：新编的 goc-ng 为 test262 1502/1526、官方测试 69/77，goc-bellard 为 1501/1526、73/77，和当时 benchmark.md 的结果一致（`docs/perf-gap/data/parity/`）。那一次默认构建的行为没有变化。
 
 ### 9.4 复现
 
 ```sh
 PS=/workspace/perf-study
-scripts/perfgap-build-natives.sh                        # 原生构建（含尾复制、单参数、gocpipe）
+bench/perfgap-build-natives.sh                        # 原生构建（含尾复制、单参数、gocpipe）
 # goc 变体：同一份源码，只加开关，输出到别处
 QJS_OUT_DIR=$PS/goc-variants/bellard-taildup QJS_FLAVOR=bellard \
   GOC_LLC_EXTRA="-tail-dup-pred-size=1000 -tail-dup-succ-size=1000" scripts/qjs-cli-build.sh
 QJS_OUT_DIR=$PS/goc-variants/bellard-inl250  QJS_FLAVOR=bellard \
   GOC_OPT_EXTRA=-inline-threshold=250 scripts/qjs-cli-build.sh
 # -fast：在一个工作树里 git apply docs/perf-gap/experiments/shim-fast.patch 后同样构建
-scripts/perfgap-bench.sh                                 # 主时段
-SET=toggles scripts/perfgap-bench-toggles.sh             # 开关实验
-SET=flags   scripts/perfgap-bench-toggles.sh             # 单参数实验
-scripts/perfgap-mech.sh; scripts/perfgap-mech-js.sh      # 机制探针
-python3 scripts/perfgap-summarize.py docs/perf-gap/data/raw
-python3 scripts/perfgap-summarize.py docs/perf-gap/data/raw-toggles --out docs/perf-gap/data/toggles
-python3 scripts/perfgap-summarize.py docs/perf-gap/data/raw-flags   --out docs/perf-gap/data/flags
-ENGINE_MAP=docs/perf-gap/data/raw-toggles/engines.txt scripts/perfgap-callgrind.sh
-python3 scripts/perfgap-charts.py                        # 重画 docs/perf-gap/charts/
+bench/perfgap-bench.sh                                 # 主时段
+SET=toggles bench/perfgap-bench-toggles.sh             # 开关实验
+SET=flags   bench/perfgap-bench-toggles.sh             # 单参数实验
+bench/perfgap-mech.sh; bench/perfgap-mech-js.sh      # 机制探针
+python3 bench/perfgap-summarize.py docs/perf-gap/data/raw
+python3 bench/perfgap-summarize.py docs/perf-gap/data/raw-toggles --out docs/perf-gap/data/toggles
+python3 bench/perfgap-summarize.py docs/perf-gap/data/raw-flags   --out docs/perf-gap/data/flags
+ENGINE_MAP=docs/perf-gap/data/raw-toggles/engines.txt bench/perfgap-callgrind.sh
+python3 bench/perfgap-charts.py                        # 重画 docs/perf-gap/charts/
 ```
 
 ### 9.5 已知的坑
@@ -758,5 +758,5 @@ python3 scripts/perfgap-charts.py                        # 重画 docs/perf-gap/
 | `docs/perf-gap/data/parity/` | 9.3 节默认构建的正确性复核 |
 | `docs/perf-gap/data/string-build/` | 5.5 节 `string_build1` 的 callgrind 对照 |
 | `docs/perf-gap/experiments/shim-fast.patch` | `-fast` 变体的 shim 补丁 |
-| `docs/perf-gap/charts/*.png`、`*.svg` | 本页的图（`scripts/perfgap-charts.py` 生成） |
-| `tests/perfgap/`、`tests/bench/perfgap-mech.js` | 机制微基准与固定工作量 V8 的 harness |
+| `docs/perf-gap/charts/*.png`、`*.svg` | 本页的图（`bench/perfgap-charts.py` 生成） |
+| `bench/perfgap/`、`bench/js/perfgap-mech.js` | 机制微基准与固定工作量 V8 的 harness |

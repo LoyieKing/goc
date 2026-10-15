@@ -26,7 +26,6 @@ third_party/quickjs-bellard/
 
 # Go module vendor trees (not our pass/vendor lite headers)
 /vendor/
-backend/vendor/
 **/go/pkg/
 
 # IDE / OS
@@ -51,6 +50,6 @@ cmd/goc-p8
 cmd/elfpack
 /bin/
 
-# Python bytecode (scripts import backend/realbody helpers)
+# Python bytecode (scripts import tools/goc helpers)
 __pycache__/
 *.pyc

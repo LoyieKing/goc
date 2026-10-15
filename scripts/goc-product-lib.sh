@@ -77,18 +77,18 @@ goc_export_tools() {
   if [[ -z "${LLC:-}" && -x "$ROOT/passes/goc-llc" ]]; then
     export LLC="$ROOT/passes/goc-llc"
   fi
-  export LLC="${LLC:-$ROOT/backend/build/pass-out/goc-llc}"
+  export LLC="${LLC:-$ROOT/build/llvm/goc-llc}"
   if [[ -z "${GOC_STACKMAP:-}" && -f "$ROOT/passes/GocStackMap.so" ]]; then
     export GOC_STACKMAP="$ROOT/passes/GocStackMap.so"
   fi
-  export GOC_STACKMAP="${GOC_STACKMAP:-$ROOT/backend/build/pass-out/GocStackMap.so}"
+  export GOC_STACKMAP="${GOC_STACKMAP:-$ROOT/build/llvm/GocStackMap.so}"
   # Leave GOC_COLOR_ESCAPE unset when the repo pass is not built yet.
   # `goc build` compiles that pass on first use. A packed pass is exported above.
   if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/passes/goc-color-escape" ]]; then
     export GOC_COLOR_ESCAPE="$ROOT/passes/goc-color-escape"
   fi
-  if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/frontend/color-escape/build/goc-color-escape" ]]; then
-    export GOC_COLOR_ESCAPE="$ROOT/frontend/color-escape/build/goc-color-escape"
+  if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/build/llvm/goc-color-escape" ]]; then
+    export GOC_COLOR_ESCAPE="$ROOT/build/llvm/goc-color-escape"
   fi
   if [[ -z "${OPT:-}" || ! -x "${OPT:-}" ]]; then
     OPT="$(goc_beside opt 2>/dev/null || true)"
@@ -106,7 +106,7 @@ goc_lower_bin() {
   if [[ ! -x "$bin" ]]; then
     stale=1
   else
-    for src in "$ROOT/backend/goobj/goclower/"*.go "$ROOT/backend/goobj/lower/"*.go; do
+    for src in "$ROOT/tools/goc-lower/"*.go "$ROOT/goobj/lower/"*.go; do
       if [[ -f "$src" && "$src" -nt "$bin" ]]; then
         stale=1
         break
@@ -114,11 +114,11 @@ goc_lower_bin() {
     done
   fi
   if [[ $stale -eq 1 ]]; then
-    if [[ ! -f "$ROOT/backend/goobj/goclower/main.go" ]]; then
+    if [[ ! -f "$ROOT/tools/goc-lower/main.go" ]]; then
       goc_die "goc-lower missing ($bin). See docs/build-from-source.md"
     fi
     mkdir -p "$ROOT/bin"
-    ( cd "$ROOT/backend" && GOPROXY=off go build -o "$bin" ./goobj/goclower/ ) \
+    ( cd "$ROOT" && GOPROXY=off go build -o "$bin" ./tools/goc-lower/ ) \
       || goc_die "could not build goc-lower"
   fi
   printf '%s\n' "$bin"

@@ -114,7 +114,7 @@
 - 两边 CLI：`Math.sin(1).toString()` 为 `0.8414709848078965`。
 - 五引擎对照（[benchmark.md](benchmark.md)，2026-10-09）里，同一套 Bellard `tests/test_*.js` 按函数计是 goc-ng 73/77（与 native ng 相同）、goc-bellard 77/77（与 native Bellard 相同）。上面的 `tests.conf` 116/116 是另一套。
 - Bellard 和 ng 的 `libregexp`：隐式 uptr 存储 2，解码指针加载 0。
-- `backend/realbody/check_arm64.sh` 通过。arm64 ELF 没有在 qemu 里执行。
+- `test/arm64/check_arm64.sh` 通过。arm64 ELF 没有在 qemu 里执行。
 
 ### RegExp（V8 里差距最大的子项）
 
@@ -139,7 +139,7 @@
   - 收益：合入前实测 1 KiB 比较从 366 ns 降到 83 ns。
 - **`goc_malloc_usable_size` 返回 `h->capacity`，`goc_realloc` 按这个容量拷贝。**
   - 收益：机制已实测；估计 Bellard microbench 的几何平均少约 2%。
-- **超越函数直接调 glibc。** `tests/qjs/asm/goc_libm_glibc.S` 做栈对齐后调用，不经 Go 的 cgo。`frexp` / `modf` / `ldexp` / `scalbn` / `lrint` / `strtod` 仍走原来的 cgo。CLI 要求 `Math.sin(1)` 的十进制和 glibc 一致。
+- **超越函数直接调 glibc。** `test/qjs/asm/goc_libm_glibc.S` 做栈对齐后调用，不经 Go 的 cgo。`frexp` / `modf` / `ldexp` / `scalbn` / `lrint` / `strtod` 仍走原来的 cgo。CLI 要求 `Math.sin(1)` 的十进制和 glibc 一致。
   - 收益：估计 `3d-morph` 少 35% 到 40%。这次没有重测，只对了 `sin` / `log` / `atan2` 的值。
 - **非根槽恢复栈槽共享。** 默认 llc 不再传 `-no-stack-slot-sharing`。根 alloca 仍独占槽位。没有开 `goc-pin-i64`。
   - 收益：估计 `JS_CallInternal` 的帧从 1768 字节降到约 1200 字节。关掉槽共享的实验构建在第 16 次扫描 SIGSEGV，默认构建保持打开。

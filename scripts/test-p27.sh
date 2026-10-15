@@ -58,9 +58,9 @@ compile_c() {
 }
 
 echo "=== P27: OK / ERROR goldens ==="
-compile_c "$ROOT/tests/sema/01_ok_outparam_stack.c" 01_ok_outparam_stack 0
+compile_c "$ROOT/test/sema/01_ok_outparam_stack.c" 01_ok_outparam_stack 0
 pass "PASS P27-ok-outparam"
-compile_c "$ROOT/tests/sema/02_ok_sptr_to_cptr_uptr.c" 02_ok_sptr_to_cptr_uptr 0
+compile_c "$ROOT/test/sema/02_ok_sptr_to_cptr_uptr.c" 02_ok_sptr_to_cptr_uptr 0
 pass "PASS P27-implicit-uptr-store"
 
 {

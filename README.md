@@ -169,11 +169,13 @@ flowchart LR
 | `cmd/goc` | Command-line entry point |
 | `include/goc.h` | How to write pointer colors |
 | `clang/` | Changes to the Clang frontend |
-| `frontend/` | Pointer-color inference |
-| `backend/` | Code generation that follows Go's stack rules, Go object files |
+| `llvm/` | goc's LLVM passes (color/escape transform, stack-map plugin) and `goc-llc` |
+| `goobj/` | Go-side libraries: vendored Go object writer, Go ABI lowering |
+| `tools/` | `goc` pipeline scripts, `goc-elfpack` (ELF → Go object), `goc-lower` |
 | `runtime/` | goc runtime support |
-| `tests/` | Tests, including QuickJS |
-| `scripts/` | Build and benchmark scripts |
+| `test/` | Tests, including QuickJS |
+| `bench/` | Benchmarks and perf-gap studies |
+| `scripts/` | Build, release and test scripts |
 | `docs/` | Documentation |
 
 More detail in [docs/architecture.md](docs/architecture.md).
@@ -203,7 +205,7 @@ cd goc
 ./cmd/goc check
 ```
 
-**Call goc from Go.** The smallest program is `examples/hello`. The golden test is `tests/goabi`:
+**Call goc from Go.** The smallest program is `examples/hello`. The golden test is `test/goabi`:
 
 ```bash
 ./scripts/test-p29-goabi.sh

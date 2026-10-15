@@ -36,7 +36,7 @@ trap 'rm -rf "$work"' EXIT
 stage="$work/$name"
 mkdir -p "$stage/bin" "$stage/lib" "$stage/passes" "$stage/cmd" \
   "$stage/scripts" "$stage/include" "$stage/examples/hello" \
-  "$stage/backend/realbody" "$stage/backend/tools"
+  "$stage/tools/goc" "$stage/tools/goc"
 
 cp -a "$ROOT/cmd/goc" "$stage/cmd/goc"
 chmod a+rx "$stage/cmd/goc"
@@ -49,13 +49,13 @@ done
 cp -a "$ROOT/include/goc.h" "$ROOT/include/goc_uptr.h" "$stage/include/"
 cp -a "$ROOT/examples/hello/go.mod" "$ROOT/examples/hello/main.go" \
   "$ROOT/examples/hello/add.c" "$stage/examples/hello/"
-cp -a "$ROOT/backend/realbody/goc_p28_realbody.sh" \
-  "$ROOT/backend/realbody/args_map.bin" \
-  "$ROOT/backend/realbody/locals_map.bin" \
-  "$stage/backend/realbody/"
-chmod a+rx "$stage/backend/realbody/goc_p28_realbody.sh"
-cp -a "$ROOT/backend/tools/toolexec_recognize_goobj.sh" "$stage/backend/tools/"
-chmod a+rx "$stage/backend/tools/toolexec_recognize_goobj.sh"
+cp -a "$ROOT/tools/goc/realbody.sh" \
+  "$ROOT/tools/goc/args_map.bin" \
+  "$ROOT/tools/goc/locals_map.bin" \
+  "$stage/tools/goc/"
+chmod a+rx "$stage/tools/goc/realbody.sh"
+cp -a "$ROOT/tools/goc/toolexec_recognize_goobj.sh" "$stage/tools/goc/"
+chmod a+rx "$stage/tools/goc/toolexec_recognize_goobj.sh"
 
 cp -a "$(readlink -f "$clang")" "$stage/bin/clang-19"
 ln -sfn clang-19 "$stage/bin/clang"

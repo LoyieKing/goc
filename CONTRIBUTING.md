@@ -32,7 +32,7 @@ Go 1.24+. Packing a release also uses `python3`. Repository tests also use `pyth
 
 ## Code style
 
-- C/C++: match surrounding Clang / LLVM style in `clang/` and `backend/pass`
+- C/C++: match surrounding Clang / LLVM style in `clang/` and `llvm`
 - Go: standard `gofmt`
 - Shell: `set -euo pipefail`, quote paths
 

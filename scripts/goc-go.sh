@@ -132,9 +132,9 @@ fi
   cd "$DIR"
   export CGO_ENABLED=0 GOFLAGS= GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off
   if [[ "$NAME" == "main" ]]; then
-    go build -a -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" -o "$OUT" .
+    go build -a -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" -o "$OUT" .
   else
-    go build -a -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" .
+    go build -a -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" .
   fi
 )
 if [[ "$NAME" == "main" ]]; then

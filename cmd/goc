@@ -213,7 +213,7 @@ cmd_build() {
   if [[ -z "$COLOR_ESC" && -x "$ROOT/passes/goc-color-escape" ]]; then
     COLOR_ESC="$ROOT/passes/goc-color-escape"
   fi
-  COLOR_ESC="${COLOR_ESC:-$ROOT/frontend/color-escape/build/goc-color-escape}"
+  COLOR_ESC="${COLOR_ESC:-$ROOT/build/llvm/goc-color-escape}"
   # amd64 gep remat is only safe with goc-llc's GocFrameAddrFix. Passing
   # stock llc-19 here used to skip realbody's missing-binary check, so tail
   # duplication kept frame addresses in callee-saved registers across calls.
@@ -234,13 +234,13 @@ cmd_build() {
     if [[ -x "$ROOT/passes/goc-llc" ]]; then
       LLC="$ROOT/passes/goc-llc"
     else
-      LLC="$ROOT/backend/build/pass-out/goc-llc"
+      LLC="$ROOT/build/llvm/goc-llc"
     fi
   elif [[ -z "$LLC" ]]; then
     LLC="$(goc_beside llc 2>/dev/null || true)"
     [[ -n "$LLC" ]] || LLC="$(command -v llc-19 || true)"
   fi
-  local REALBODY="$ROOT/backend/realbody/goc_p28_realbody.sh"
+  local REALBODY="$ROOT/tools/goc/realbody.sh"
   local PLUGIN="$ROOT/build/libGocClang.so"
   local OPT_LEVEL="${GOC_OPT_LEVEL:-0}"
   case "$OPT_LEVEL" in
@@ -253,7 +253,7 @@ cmd_build() {
       echo "goc build: missing color-escape pass $COLOR_ESC" >&2
       exit 1
     fi
-    make -C "$ROOT/frontend/color-escape/pass" all
+    make -C "$ROOT/llvm/lib/Transforms/ColorEscape" all
     [[ -x "$COLOR_ESC" ]] || { echo "goc build: missing color-escape pass" >&2; exit 1; }
   fi
 
@@ -349,7 +349,7 @@ cmd_build() {
     if [[ -z "$SMPASS" && -f "$ROOT/passes/GocStackMap.so" ]]; then
       SMPASS="$ROOT/passes/GocStackMap.so"
     fi
-    SMPASS="${SMPASS:-$ROOT/backend/build/pass-out/GocStackMap.so}"
+    SMPASS="${SMPASS:-$ROOT/build/llvm/GocStackMap.so}"
     [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
     # goc-inline-gate is a no-op: call-bearing functions may inline. Maps are
     # recorded after O3 on the merged frame. Stack-pointer arguments and slots
@@ -390,7 +390,7 @@ cmd_build() {
       if [[ -z "$SMPASS" && -f "$ROOT/passes/GocStackMap.so" ]]; then
         SMPASS="$ROOT/passes/GocStackMap.so"
       fi
-      SMPASS="${SMPASS:-$ROOT/backend/build/pass-out/GocStackMap.so}"
+      SMPASS="${SMPASS:-$ROOT/build/llvm/GocStackMap.so}"
       [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
       if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap \
           -S "$BODY_LL" -o "$TMP/a.sm.ll"; then

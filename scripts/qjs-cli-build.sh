@@ -5,7 +5,7 @@ ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
 # QJS_FLAVOR=ng (default) or bellard, as in scripts/qjs-build.sh. The Bellard
 # CLI is build/qjs-bellard/qjscli; the host files map the ng API they use onto
-# Bellard's with tests/qjs/_qjs_bellard_compat.h.
+# Bellard's with test/qjs/_qjs_bellard_compat.h.
 QJS_FLAVOR="${QJS_FLAVOR:-ng}"
 export QJS_FLAVOR
 case "$QJS_FLAVOR" in
@@ -18,7 +18,7 @@ case "$QJS_FLAVOR" in
 esac
 export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
 # QJSCLI_TAGS / QJSCLI_OUT build a variant of the same CLI package, e.g.
-# scripts/bench-mem.sh uses QJSCLI_TAGS=qjsmem QJSCLI_OUT=build/qjs/qjsmem.
+# bench/bench-mem.sh uses QJSCLI_TAGS=qjsmem QJSCLI_OUT=build/qjs/qjsmem.
 TAGS="${QJSCLI_TAGS:-}"
 BIN="${QJSCLI_OUT:-$OUT/qjscli}"
 
@@ -28,22 +28,22 @@ BIN="${QJSCLI_OUT:-$OUT/qjscli}"
 export GOC_DEFAULT_PTR_COLOR=cptr GOC_NO_NOSPLIT=1 GOC_MORESTACK=1
 export GOC_SPTR_MAPS=1 GOC_INLINE_DYNALLOC=1
 
-"$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_host.c" \
+"$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_cli_host.c" \
   -o "$OUT/cli_host.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
-"$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_std_os.c" \
+"$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_cli_std_os.c" \
   -o "$OUT/cli_std_os.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
-"$ROOT/cmd/goc" build "$ROOT/tests/qjs/_qjs_cli_worker.c" \
+"$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_cli_worker.c" \
   -o "$OUT/cli_worker.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
 
-LDX=""  # tests/qjscli/mem_instances.go labels its JSON by flavor
+LDX=""  # test/qjscli/mem_instances.go labels its JSON by flavor
 [[ "$QJS_FLAVOR" == bellard ]] && LDX=" -X main.qjsFlavor=bellard"
 BINOBJ=""
 for src in $ENGINE_TUS; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
 BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/uptr.goobj $OUT/cli_host.goobj $OUT/cli_std_os.goobj $OUT/cli_worker.goobj$EXTRA_OBJS"
-( cd "$ROOT/tests/qjscli" && \
+( cd "$ROOT/test/qjscli" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
   go build -a -tags "$TAGS" -ldflags="-extldflags=-lm$LDX" \
-    -toolexec "$ROOT/backend/tools/toolexec_recognize_goobj.sh" \
+    -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" \
     -o "$BIN" . )
 echo "CLI ready: $BIN"
 "$BIN" -e '

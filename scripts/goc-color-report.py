@@ -10,8 +10,8 @@ Usage (from the repo root; build/ is gitignored):
 
 Needs: the patched clang next to goc (bin/clang, else
 third_party/llvm-19.1.7-clang-build/bin/clang), opt beside that clang or
-opt-19 (OPT), frontend/color-escape/build/goc-color-escape (built
-with make if missing) and backend/build/pass-out/GocStackMap.so (from
+opt-19 (OPT), build/llvm/goc-color-escape (built
+with make if missing) and build/llvm/GocStackMap.so (from
 scripts/build-passes.sh).  The QuickJS tree (third_party/quickjs-bellard or
 quickjs-ng, gitignored) must exist with scripts/qjs-gstack*.patch applied;
 scripts/qjs-build.sh applies it.  build/qjs*/shim.goobj is optional (shim -D
@@ -35,7 +35,7 @@ actually left in the machine-code input: inlined uptr helpers (each
 `movq %fs:-8` inline-asm is one volatile g load) and GC root slots
 (goc.spill.root / goc.arganchor) chosen by the backend GocStackMap pass.
 
-Metadata semantics (from frontend/color-escape/pass/GocColorEscape.cpp):
+Metadata semantics (from llvm/lib/Transforms/ColorEscape/GocColorEscape.cpp):
   * on a load / GEP / call: color of the *value*.
   * on a pointer-typed alloca that got the TU default (-default-ptr-color):
     color of the *contents* of the slot (SlotColor).  When the pass drops that
@@ -127,16 +127,16 @@ def cmd_build(a):
         cargs.append("-g")
     o = lambda n: os.path.join(a.out, n)
     sh([clang] + cargs + defs + a.cflags.split() + ["-o", o("a.ll"), src], cwd=ROOT)
-    esc = os.path.join(ROOT, "frontend/color-escape/build/goc-color-escape")
+    esc = os.path.join(ROOT, "build/llvm/goc-color-escape")
     if not os.access(esc, os.X_OK):
         if not shutil.which("make"):
             sys.exit("missing %s and no make to build it" % esc)
-        sh(["make", "-C", os.path.join(ROOT, "frontend/color-escape/pass"), "all"])
+        sh(["make", "-C", os.path.join(ROOT, "llvm/lib/Transforms/ColorEscape"), "all"])
     with open(o("color-escape.log"), "w") as log:
         subprocess.run([esc, o("a.ll"), "-o", o("a.color.ll"), "-fatal-errors=true",
                         "-default-ptr-color=" + a.default_color], check=True, stderr=log)
     print(open(o("color-escape.log")).read().strip(), file=sys.stderr)
-    sm = os.path.join(ROOT, "backend/build/pass-out/GocStackMap.so")
+    sm = os.path.join(ROOT, "build/llvm/GocStackMap.so")
     if not os.path.exists(sm):
         sys.exit("missing %s (run scripts/build-passes.sh first)" % sm)
     env = dict(os.environ, GOC_INLINE_DYNALLOC="1", GOC_SPTR_MAPS="1")
