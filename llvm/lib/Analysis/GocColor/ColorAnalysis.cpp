@@ -1,4 +1,4 @@
-//===- CEAnalysis.cpp - colors: seeding and per-function propagation -===//
+//===- ColorAnalysis.cpp - colors: seeding and per-function propagation -===//
 
 #include "Goc/Internal/ColorEscape.h"
 

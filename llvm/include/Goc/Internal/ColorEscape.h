@@ -1,4 +1,4 @@
-//===- ColorEscapeInternal.h - internal declarations shared by the split files -===//
+//===- Goc/Internal/ColorEscape.h - shared state of the color passes -===//
 
 #ifndef GOC_COLORESCAPE_INTERNAL_H
 #define GOC_COLORESCAPE_INTERNAL_H

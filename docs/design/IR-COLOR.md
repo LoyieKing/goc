@@ -24,7 +24,7 @@ Clang 19 emits:
 
 ## Pass output metadata
 
-After `goc-color-escape`:
+After the `goc-color-escape` pass:
 
 - Instruction metadata `!goc.color !{!"sptr"}` (also `cptr`/`uptr`/`gptr`/`auto`)
 - Optional `!goc.prov !{!"stack"|"cheap"|"goheap"}`
@@ -43,7 +43,7 @@ After `goc-color-escape`:
 
 ```text
 clang-19 -emit-llvm -S -O0 -I include foo.c|.goc
-  → goc-color-escape foo.ll -o foo.color.ll
+  → opt -load-pass-plugin=build/llvm/libGocPasses.so -passes=goc-color-escape -S foo.ll -o foo.color.ll
 ```
 
 The product path does not read `!goc.color` after this pass: `libGocPasses.so` records live sptr/gptr slots at call sites, and goc-llc turns those records into the `.goc.gcmaps` bitmaps that become Go stack maps.

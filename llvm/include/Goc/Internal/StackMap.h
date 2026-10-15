@@ -1,4 +1,4 @@
-//===- StackMapInternal.h - internal declarations shared by the split files -===//
+//===- Goc/Internal/StackMap.h - shared helpers of the stack-map passes -===//
 
 #ifndef GOC_STACKMAP_INTERNAL_H
 #define GOC_STACKMAP_INTERNAL_H

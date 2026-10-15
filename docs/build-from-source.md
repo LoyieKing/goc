@@ -2,7 +2,7 @@
 
 这篇是给要自己编发布包的人。只用 `goc` 的话，下载现成的包：[quickstart.md](quickstart.md)。
 
-产物是一个目录（或 `.tar.gz`）。里面有驱动、打过补丁的 Clang 19.1.7、`opt`、`llc`、`llvm-mc`、`llvm-objdump`、`goc-llc`、`goc-color-escape`、`libGocPasses.so`，以及预编译的 `gocobj2goobj` 和 `goc-lower`。用户把 `bin` 放到 `PATH` 上即可。Clang 不进 git。
+产物是一个目录（或 `.tar.gz`）。里面有驱动、打过补丁的 Clang 19.1.7、`opt`、`llc`、`llvm-mc`、`llvm-objdump`、`goc-llc`、`libGocPasses.so`，以及预编译的 `gocobj2goobj` 和 `goc-lower`。用户把 `bin` 放到 `PATH` 上即可。Clang 不进 git。
 
 ## 1. 宿主工具
 
@@ -44,9 +44,8 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 
 这一步用宿主的 `clang++-19`、刚才的 `llvm-config` 和 X86 后端头文件编出。打过补丁的 `clang++` 会把 LLVM 头文件里的 `return &局部` 判成栈指针逃逸，所以不用它来编 pass：
 
-- `build/llvm/goc-color-escape`
 - `build/llvm/goc-llc`
-- `build/llvm/libGocPasses.so`
+- `build/llvm/libGocPasses.so`（所有 IR pass，包括 goc-color-escape）
 
 ## 5. 打成一个包
 
@@ -66,7 +65,7 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 | `bin/gocobj2goobj` | 预编译的 .gocobj → goobj 转换器 |
 | `bin/goc-lower` | 预编译的 realbody 辅助程序（签名、thunk、meta） |
 | `lib/libLLVM.so.19.1`、`lib/clang/` | Clang 的运行库和资源目录 |
-| `passes/` | `goc-llc`、`goc-color-escape`、`libGocPasses.so` |
+| `passes/` | `goc-llc`、`libGocPasses.so` |
 | `cmd/`、`scripts/`、`include/`、`tools/goc/`、`examples/hello/` | 驱动和自检样例 |
 
 驱动只在这三个位置找 Clang，找不到就停，不用系统 `clang-19`：
@@ -105,7 +104,7 @@ QuickJS 和跑分不在 CI 里。它们要另外下载引擎源码。
 
 This page is for producing the release archive. To use `goc`, download one: [quickstart.md](quickstart.md).
 
-The result is a directory (or a `.tar.gz`). It contains the driver, patched Clang 19.1.7, `opt`, `llc`, `llvm-mc`, `llvm-objdump`, `goc-llc`, `goc-color-escape`, `libGocPasses.so`, and prebuilt `gocobj2goobj` and `goc-lower`. The user puts `bin` on `PATH`. Clang is not committed to git.
+The result is a directory (or a `.tar.gz`). It contains the driver, patched Clang 19.1.7, `opt`, `llc`, `llvm-mc`, `llvm-objdump`, `goc-llc`, `libGocPasses.so`, and prebuilt `gocobj2goobj` and `goc-lower`. The user puts `bin` on `PATH`. Clang is not committed to git.
 
 ## 1. Host tools
 
@@ -147,9 +146,8 @@ When `bin/clang`, `opt`, `llc`, `llvm-mc`, and `llvm-objdump` are already there,
 
 This uses the host `clang++-19`, that `llvm-config`, and the X86 backend headers to produce. The patched `clang++` reports `return &local` inside LLVM headers as a stack-pointer escape, so it is not the compiler for these passes:
 
-- `build/llvm/goc-color-escape`
 - `build/llvm/goc-llc`
-- `build/llvm/libGocPasses.so`
+- `build/llvm/libGocPasses.so` (every IR pass, goc-color-escape included)
 
 ## 5. Pack one archive
 
@@ -169,7 +167,7 @@ Layout after unpacking:
 | `bin/gocobj2goobj` | Prebuilt .gocobj → goobj converter |
 | `bin/goc-lower` | Prebuilt real-body helper (signatures, thunks, meta) |
 | `lib/libLLVM.so.19.1`, `lib/clang/` | Clang's runtime library and resource directory |
-| `passes/` | `goc-llc`, `goc-color-escape`, `libGocPasses.so` |
+| `passes/` | `goc-llc`, `libGocPasses.so` |
 | `cmd/`, `scripts/`, `include/`, `tools/goc/`, `examples/hello/` | The driver and the self-check sample |
 
 The driver looks for Clang in these three places only, then stops. It does not use system `clang-19`:

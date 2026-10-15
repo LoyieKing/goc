@@ -13,7 +13,7 @@
 // is not added (the placement pass still runs, and -enable-tail-merge=false
 // is the default unless given explicitly).
 //
-// The problem it solves (see StackMap/SMLiveness.cpp, rematFrameAddress): a goroutine
+// The problem it solves (see Transforms/StackMap/SMRoots.cpp, rematFrameAddress): a goroutine
 // stack is copied during a call (the callee's morestack prologue, or the Go
 // runtime). A value "RBP+c" (the address of a local) that the register
 // allocator kept in a callee-saved register, or in a spill slot, across that

@@ -48,9 +48,10 @@
 // Stack-derived integers stay with goc-reanchor so growth can still adjust them.
 #include <algorithm>
 //
-// The passes are split across files; StackMapInternal.h has the shared helpers:
-//   SMLiveness.cpp    safepoints, cross-call liveness, frame-address remat
-//   SMAddresses.cpp   which values are frame addresses
+// The passes are split across files; Goc/Internal/StackMap.h has the shared helpers:
+//   ../../Analysis/StackMap/SafepointAnalysis.cpp  safepoints, stack and
+//                     frame addresses, uses across safepoints (read-only)
+//   SMRoots.cpp       STACKMAP roots, TLS g hoist, frame-address remat
 //   SMStackMap.cpp    goc-stackmap
 //   SMReanchor.cpp    goc-reanchor
 //   SMPinI64.cpp      goc-pin-i64

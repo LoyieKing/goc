@@ -9,15 +9,18 @@ C 源码
   │  clang（打过补丁的 Clang 19.1.7：clang/patches + clang/sema/SemaGocColors.cpp）
   │    Sema 检查和推断指针颜色，输出 LLVM IR
   ▼
-goc-color-escape        llvm/lib/Transforms/ColorEscape   IR → IR：逃逸细化，插入 uptr 编码/解码
+opt -passes=goc-color-escape     llvm/lib/Transforms/ColorEscape（分析在 lib/Analysis/GocColor）
+                                   IR → IR：逃逸细化，插入 uptr 编码/解码；--color-report 时先跑 print<goc-color>
   ▼
 tools/goc/realbody.sh   （由 cmd/goc build / scripts/goc-go.sh 调用）
   ├─ goc-lower fix-ir                tools/goc-lower + goobj/lower   Go ABI 包装、IR 修正
   ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-inline-gate
   ├─ opt default<O{0..3}>
   ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-stackmap    llvm/lib/Transforms/StackMap
-  ├─ goc-llc -function-sections -goc-tables   llvm/tools/goc-llc
-  │    GocFrameAddrFix、GocStackmapPlacement、GocStackCheck（栈检查 + morestack）、GocObjTables（.goc.s 表）
+  ├─ goc-llc -function-sections -goc-tables   llvm/tools/goc-llc（只是 llc 驱动）
+  │    lib/CodeGen：GocStackmapPlacement、GocStackCheck（栈检查 + morestack）
+  │    lib/Target/X86：GocX86FrameAddrFix；lib/Target/AArch64：arm64 帧和 LR
+  │    lib/Object：GocObjTables（.goc.* 表）
   ├─ goc-lower goabi                 生成 Go ABI thunk（thunks.s + thunks.goc.s）
   ├─ llvm-mc → 一个 ELF，即 .gocobj（机器码 + ELF 重定位 + .goc.* 表）
   └─ gocobj2goobj -symabis           tools/gocobj2goobj   纯表 → goobj 转换
@@ -48,13 +51,13 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `cmd/goc` | 命令行入口（bash）：`goc go`、`goc build`、`goc test`、`goc check`、`goc toolchain` |
 | `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`、`qjs-build.sh`、`qjs-cli-build.sh`）、发布（`pack-release.sh`）、CI 入口（`ci-test.sh`、`check-file-size.sh`：单文件 800 行上限）。测试脚本本身都在 `test/` 下 |
 | `clang/` | Clang 补丁、`SemaGocColors.cpp`（树内 Sema）、树外插件 `plugin/`（与树内同规则，`goc test --plugin` 用） |
-| `llvm/` | goc 自己的 LLVM 代码。`lib/Transforms/ColorEscape` 编成独立工具 `goc-color-escape`；`lib/Transforms/StackMap` 是 opt 插件 `libGocPasses.so`；`tools/goc-llc` 是加了 goc 机器 pass 和表输出的 llc；`lib/CodeGen` 是共享栈检查，`lib/Target/<arch>` 是架构钩子。构建：`scripts/build-passes.sh`，产物在 `build/llvm/` |
+| `llvm/` | goc 自己的 LLVM 代码，目录照 LLVM 的布局：`lib/Analysis`（只读分析：指针颜色、safepoint、栈地址）、`lib/Transforms`（IR 改写：ColorEscape、StackMap）、`lib/Plugin`（`libGocPasses.so`，所有 IR pass 都在这里，用 `opt -load-pass-plugin`）、`lib/CodeGen` / `lib/Target/<arch>` / `lib/Object`（goc-llc 的机器 pass 和表输出）、`tools/goc-llc`（llc 驱动）。构建：`scripts/build-passes.sh`，产物在 `build/llvm/`。见 `llvm/README.md` |
 | `goobj/enc` | 从 Go 1.24 源码 vendored 的目标文件写入器（`goobj/enc/vendorize.sh` 负责同步） |
 | `goobj/lower` | Go ABI 降级：thunk、签名、参数布局 |
 | `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子 |
 | `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata。随 Go 版本变的映射（profile、ELF→`R_*`、funcdata 编号）都在 `gover_go1_XX.go`，升级 Go 只加这一个文件 |
-| `tools/gocobj-diff` | 两个 goobj 的语义比对（符号、reloc、解码后的 pc 表、funcdata、FuncInfo） |
-| `tools/goc-lower` | `goobj/lower` 的命令行外壳 |
+| `tools/gocobj-diff` | 开发工具：两个 goobj 的语义比对（符号、reloc、解码后的 pc 表、funcdata、FuncInfo），改转换器时用；CI 里由 `test/gocobj/diff.sh` 检查 |
+| `tools/goc-lower` | `goobj/lower` 的命令行外壳，realbody.sh 调用，发布包里是 `bin/goc-lower` |
 | `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
 | `gocobj` | `.gocobj` 的 Go 读写和校验库（与 Go 版本无关，ABI 常量见 `docs/go-abi-profiles.md`） |
 | `runtime/` | uptr 运行时（`runtime/uptr`）和头文件 |

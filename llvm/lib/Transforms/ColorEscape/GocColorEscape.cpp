@@ -3,7 +3,7 @@
 // cptr T* slots as uptr, and annotate IR for later backend hooks.
 //===----------------------------------------------------------------------===//
 //
-// The pass is split by phase; ColorEscapeInternal.h holds the shared state:
+// The pass is split by phase; Goc/Internal/ColorEscape.h holds the shared state:
 //   CERewrite.cpp   implicit uptr encodes/decodes and guarded returns
 //   CECheck.cpp     escape/mix checks, metadata, formals, default color
 //   lib/Analysis/GocColor: ColorAnalysis.cpp (seeding, propagation) and

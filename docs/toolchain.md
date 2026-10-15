@@ -42,7 +42,7 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 
 每个定义了的函数都会写进对象文件，并带一个 Go 入口。morestack 前导、可分裂帧、amd64 的 sptr 栈图在 `goc go` 和 `goc build` 上都一定打开。arm64 记不了 sptr 栈图。
 
-`goc go` 会把 clang 所在树的 `lib/` 加到本次进程的库搜索路径前面，这样 `goc-llc` 和 `goc-color-escape` 找得到 `libLLVM.so.19.1`。
+`goc go` 会把 clang 所在树的 `lib/` 加到本次进程的库搜索路径前面，这样 `goc-llc` 和带插件的 `opt` 找得到 `libLLVM.so.19.1`。
 
 全部参数见 `./cmd/goc go --help`。
 
@@ -56,7 +56,7 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 
 没有 `--clang`，也没有 `--toolchain`。
 
-`opt`、`llc`、`llvm-mc`、`llvm-objdump` 用 clang 旁边的同名文件。pass 在发布包的 `passes/`，在仓库里则是已编好的 `build/llvm/`（goc-llc、libGocPasses.so、goc-color-escape）。
+`opt`、`llc`、`llvm-mc`、`llvm-objdump` 用 clang 旁边的同名文件。pass 在发布包的 `passes/`，在仓库里则是已编好的 `build/llvm/`（goc-llc、libGocPasses.so）。
 
 打包（本机已经编好 clang 和 pass 时）打出的是完整的 goc，不是单独的 clang 目录：
 
