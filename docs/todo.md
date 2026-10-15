@@ -147,3 +147,15 @@
   - 收益：估计能省下栈检查那 1.8 个点指令里的一部分。
 - **`memcpy` / `memset` 在 64 字节到 4096 字节用 SSE2 `movups`。** 不用 AVX，不用 `movaps`。`memset` 的尾巴走 `always_inline` 的 `goc_memset_small`，不递归调用 `goc_memset`。这段汇编只在 amd64 宿主里，arm64 构建会拒绝这份 shim。
   - 收益：估计。这次没有重测。
+
+## pass 不再依赖 IR 值名
+
+现在 `cmd/goc` 和 `tools/goc/realbody.sh` 给 clang 加了 `-fno-discard-value-names`。不加的话，关了 assertions 的 Release clang 会丢掉 IR 值名，QuickJS 会被编错（例如 `2**8` 得 10）。原因是 pass 靠名字认栈槽：
+
+- `GocStackMap.cpp` 跳过没名字的 alloca，并按名字建表。
+- `goc_llc.cpp` 按名字前缀匹配栈槽。
+
+要做的：
+
+- 着色和 stackmap 阶段给要跟踪的栈槽挂 metadata（例如 `!goc.slot`），后续 pass 和 `goc-llc` 只认 metadata，不看名字。
+- 改完后，用 Release clang 不加这个开关跑全套测试，结果要和现在一样。然后删掉 `-fno-discard-value-names`。
