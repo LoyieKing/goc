@@ -268,9 +268,22 @@ func elfCallRelocs(ef *elf.File, syms []elf.Symbol) map[string]string {
 			if (typ != elf.R_X86_64_PLT32 && typ != elf.R_X86_64_PC32) || idx == 0 || int(idx) > len(syms) {
 				continue
 			}
+			target := syms[idx-1]
+			name := target.Name
+			if elf.ST_TYPE(target.Info) == elf.STT_SECTION {
+				// One section per function: a section-relative reference
+				// names the function at that offset.
+				at := target.Value + uint64(int64(binary.LittleEndian.Uint64(data[i+16:]))+4)
+				name = ""
+				for _, y := range syms {
+					if y.Section == target.Section && elf.ST_TYPE(y.Info) == elf.STT_FUNC && y.Value == at {
+						name = y.Name
+					}
+				}
+			}
 			for _, f := range funcs {
 				if off >= f.Value && off < f.Value+f.Size {
-					out[fmt.Sprintf("%s+%d", f.Name, off-f.Value)] = syms[idx-1].Name
+					out[fmt.Sprintf("%s+%d", f.Name, off-f.Value)] = name
 				}
 			}
 		}

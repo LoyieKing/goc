@@ -1,16 +1,15 @@
 // gocobj2goobj converts a .gocobj (docs/gocobj-format.md) into a Go object
 // file.
 //
-//	gocobj2goobj -in foo.gocobj -meta foo.meta.json -maps DIR -o foo.goobj [-p main]
+//	gocobj2goobj -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis]
 //
-// Plan row 5, transitional: the file is checked with gocobj.Verify and its
-// ABI profile must match this converter's Go version. The per-function
-// facts the tables carry (Go symbol, frame, calls, function addresses,
-// sptr slots, SysV pointer registers) replace goc-lower's text-derived
-// values in meta.json (GOC_TABLES_META=0 turns this off); the conversion
-// itself still runs the elfpack code (goobj/elfpack), with meta.json and the
-// maps directory for what the .goc.* tables do not carry yet. Later rows move
-// that information into the tables and replace elfpack piece by piece.
+// The conversion is table driven: the machine code, its ELF relocations and
+// the .goc.* tables (frame sizes, pc-value tables, GC maps, ABI, nosplit) go
+// into the object as they are. The converter decodes no instruction and
+// emits none; the backend already put the stack check and the morestack
+// block into the code. What it does decide is the Go side of each name
+// (package qualification, ABI0 vs ABIInternal, the .impl/.goabi/@plt
+// conventions) and how ELF relocations map onto Go relocation types.
 package main
 
 import (
@@ -19,7 +18,6 @@ import (
 	"os"
 
 	"github.com/LoyieKing/goc/gocobj"
-	"github.com/LoyieKing/goc/goobj/elfpack"
 )
 
 // profileFor is the ABI profile each target architecture of this converter
@@ -31,22 +29,17 @@ var profileFor = map[string]string{
 
 func main() {
 	in := flag.String("in", "", "input .gocobj")
-	meta := flag.String("meta", "", "meta.json sidecar")
-	maps := flag.String("maps", "", "maps directory")
 	out := flag.String("o", "", "output Go object file")
 	pkg := flag.String("p", "main", "package path")
-	checkMeta := flag.Bool("check-meta", false, "compare what the tables give with meta.json, print differences, exit")
-	flagsWord := flag.String("flags", "noframe", "stack-check policy word for meta (nosplit|noframe)")
-	cABI := flag.String("c-abi", "", "per-function ABI of the C functions (ABI0 when thunks wrap them)")
+	symabis := flag.String("symabis", "", "also write the asm symabis (def lines) of the functions here")
 	flag.Parse()
-	if *in == "" || *out == "" || *meta == "" {
-		fmt.Fprintln(os.Stderr, "usage: gocobj2goobj -in foo.gocobj -meta foo.meta.json [-maps DIR] -o foo.goobj [-p pkg]")
+	if *in == "" || *out == "" {
+		fmt.Fprintln(os.Stderr, "usage: gocobj2goobj -in foo.gocobj -o foo.goobj [-p pkg] [-symabis file]")
 		os.Exit(2)
 	}
 	f, err := gocobj.Open(*in)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "gocobj2goobj: %v\n", err)
-		os.Exit(1)
+		fatalf("%v", err)
 	}
 	if errs := gocobj.Verify(f); len(errs) > 0 {
 		for _, e := range errs {
@@ -59,56 +52,26 @@ func main() {
 		goarch = "amd64"
 	}
 	if want := profileFor[goarch]; f.Header.Profile != want {
-		fmt.Fprintf(os.Stderr, "gocobj2goobj: %s has ABI profile %q, this converter writes %q for GOARCH=%s\n",
-			*in, f.Header.Profile, want, goarch)
-		os.Exit(1)
+		fatalf("%s has ABI profile %q, this converter writes %q for GOARCH=%s", *in, f.Header.Profile, want, goarch)
 	}
-	if *checkMeta {
-		syn, err := synthFuncs(f, *pkg, *flagsWord, *cABI)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, err)
-			os.Exit(1)
-		}
-		diffs, err := checkAgainstMeta(syn, *meta, f.Header.Minor >= 3)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "gocobj2goobj: %v\n", err)
-			os.Exit(1)
-		}
-		for _, d := range diffs {
-			fmt.Println(d)
-		}
-		fmt.Printf("check-meta: %s: %d functions, %d differences\n", *in, len(syn), len(diffs))
-		if len(diffs) > 0 {
-			os.Exit(1)
-		}
-		return
+	if f.Header.Flags&gocobj.HeaderStackChecksInCode == 0 {
+		fatalf("%s: the backend did not emit the stack checks (header flag stack_checks_in_code is 0)", *in)
 	}
-	metaPath := *meta
-	if os.Getenv("GOC_TABLES_META") != "0" {
-		syn, err := synthFuncs(f, *pkg, *flagsWord, *cABI)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, err)
-			os.Exit(1)
-		}
-		tmp, err := mergeMeta(syn, *meta)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, err)
-			os.Exit(1)
-		}
-		metaPath = tmp
+	c, err := newConverter(*in, f, *pkg, goarch)
+	if err != nil {
+		fatalf("%v", err)
 	}
-	if f.Header.Minor >= 3 && os.Getenv("GOC_TABLES_STACKMAPS") != "0" {
-		elfpack.TableStackmaps = map[string][]elfpack.TableStackmap{}
-		for _, sm := range f.Stackmaps {
-			r := elfpack.TableStackmap{ID: sm.ID, InsnOff: uint32(sm.InsnOff)}
-			for _, l := range sm.Locs {
-				r.Locs = append(r.Locs, elfpack.TableStackmapLoc{Type: l.Type, Size: uint16(l.Size), Reg: uint16(l.Reg), Off: int32(l.Off)})
-			}
-			elfpack.TableStackmaps[sm.Func] = append(elfpack.TableStackmaps[sm.Func], r)
+	if err := c.write(*out); err != nil {
+		fatalf("%v", err)
+	}
+	if *symabis != "" {
+		if err := os.WriteFile(*symabis, []byte(c.symabis()), 0o644); err != nil {
+			fatalf("%v", err)
 		}
 	}
-	elfpack.Main([]string{"-elf", *in, "-meta", metaPath, "-maps", *maps, "-out-o", *out, "-p", *pkg})
-	if metaPath != *meta {
-		os.Remove(metaPath)
-	}
+}
+
+func fatalf(format string, args ...any) {
+	fmt.Fprintf(os.Stderr, "gocobj2goobj: "+format+"\n", args...)
+	os.Exit(1)
 }

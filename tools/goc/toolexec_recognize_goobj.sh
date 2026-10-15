@@ -54,25 +54,19 @@ append_goc_symabis() {
     echo "def ${pkg}.GocFadd64 ABIInternal"
     echo "def ${pkg}.GocFadd32 ABIInternal"
   } >> "$out"
-  # Defs for every TEXT in the sidecar meta. Extra defs are harmless.
-  # GOC_BINOBJ may be a space-separated list (multi-TU builds).
-  # foo.goobj and the legacy foo.o both sit beside foo.meta.json.
-  local obj meta side
+  # Defs for every TEXT of each object: gocobj2goobj writes them beside it
+  # (foo.goobj -> foo.symabis). GOC_BINOBJ may be a space-separated list
+  # (multi-TU builds).
+  local obj side
   for obj in ${GOC_BINOBJ:-}; do
     side="$obj"
     case "$side" in
       *.goobj) side="${side%.goobj}" ;;
       *.o) side="${side%.o}" ;;
     esac
-    meta="${side}.meta.json"
-    [[ -f "$meta" ]] || continue
-    lower="${GOC_LOWER:-${GOC_ROOT:-}/bin/goc-lower}"
-    if [[ ! -x "$lower" ]]; then
-      echo "toolexec: goc-lower missing ($lower)" >&2
-      exit 1
-    fi
-    "$lower" symabis "$meta" >> "$out"
-    echo "toolexec: appended goc ABIInternal symabis from $(basename "$meta")" >&2
+    [[ -f "${side}.symabis" ]] || continue
+    cat "${side}.symabis" >> "$out"
+    echo "toolexec: appended goc symabis from $(basename "${side}.symabis")" >&2
   done
   echo "toolexec: appended goc ABIInternal symabis → $out" >&2
 }

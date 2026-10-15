@@ -200,6 +200,7 @@ struct GocObjTables : MachineFunctionPass {
   static char ID;
   std::string Path;
   std::string Profile;
+  unsigned SymABI;
   std::vector<FuncInfo> Funcs;
   // Computed on the IR as goc-llc received it: CodeGenPrepare and friends
   // later rewrite or drop instructions that carry the colors.
@@ -285,8 +286,8 @@ struct GocObjTables : MachineFunctionPass {
     return false;
   }
 
-  GocObjTables(StringRef P, StringRef Prof)
-      : MachineFunctionPass(ID), Path(P.str()), Profile(Prof.str()) {}
+  GocObjTables(StringRef P, StringRef Prof, unsigned A)
+      : MachineFunctionPass(ID), Path(P.str()), Profile(Prof.str()), SymABI(A) {}
   StringRef getPassName() const override { return "goc .gocobj tables"; }
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
@@ -631,7 +632,7 @@ bool GocObjTables::doFinalization(Module &M) {
     W.uleb(F.End + "-" + F.Name);
     W.uleb(Twine(F.FrameSize));
     W.uleb("0");          // arg_size: still in meta.json
-    W.u8(F.Stack.ABI == goc::EntryABI::C ? 0 : 1);
+    W.u8(SymABI);
     W.u8(0); // kind normal
     uint64_t Flags = F.Flags & ~uint64_t(7);
     if (F.Stack.HasCheck)
@@ -748,6 +749,6 @@ bool GocObjTables::doFinalization(Module &M) {
 
 } // namespace
 
-MachineFunctionPass *goc::createGocObjTablesPass(StringRef Path, StringRef Profile) {
-  return new GocObjTables(Path, Profile);
+MachineFunctionPass *goc::createGocObjTablesPass(StringRef Path, StringRef Profile, unsigned SymABI) {
+  return new GocObjTables(Path, Profile, SymABI);
 }

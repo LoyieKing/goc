@@ -11,7 +11,8 @@ class MachineFunctionPass;
 namespace goc {
 /// Last pass before the AsmPrinter: labels calls and function ends and, at
 /// module end, writes the .goc.* sections as assembler text to Path.
-llvm::MachineFunctionPass *createGocObjTablesPass(llvm::StringRef Path, llvm::StringRef Profile);
+llvm::MachineFunctionPass *createGocObjTablesPass(llvm::StringRef Path, llvm::StringRef Profile,
+                                                  unsigned SymABI);
 } // namespace goc
 
 #endif

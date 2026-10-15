@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Real Clang IR body → llc ISel → elfpack goobj (NO P21 seedMIR).
+# Real Clang IR body → goc-llc → .gocobj → gocobj2goobj → goobj.
 # Every defined function is emitted. Each eligible function is renamed F.impl
 # and gains a Go ABIInternal entry F (Go→C thunk, C→C on the platform ABI,
 # C→Go .goabi). amd64 uses SysV; arm64 uses AAPCS64.
@@ -72,14 +72,6 @@ if [[ "$GOC_ARCH" == arm64 ]]; then
   esac
   echo "realbody: GOC_ARCH=arm64 llc=$LLC (x28 reserved; frame-address repair not ported)" >&2
 fi
-# Go linking always gets a splittable frame and a morestack prologue.
-# amd64 also records sptr maps. Set these after the arm64 refusal above:
-# exporting GOC_SPTR_MAPS first would trip that check on arm64.
-export GOC_MORESTACK=1
-export GOC_NO_NOSPLIT=1
-if [[ "$GOC_ARCH" != arm64 ]]; then
-  export GOC_SPTR_MAPS=1
-fi
 # GOC_FRAMEADDR_MODE=gep (default): goc-reanchor rematerializes frame
 # addresses as plain GEPs, which is only safe with goc-llc's post-RA
 # GocFrameAddrFix pass (llvm/tools/goc-llc/goc_llc.cpp). asm: the old opaque leaq
@@ -127,16 +119,6 @@ fi
   exit 1
 }
 MC="$LLVM_MC"
-if [[ -z "${OBJDUMP:-}" || ! -x "${OBJDUMP:-}" ]]; then
-  OBJDUMP="$(goc_beside llvm-objdump 2>/dev/null || true)"
-  if [[ -z "$OBJDUMP" ]]; then
-    OBJDUMP="$(command -v llvm-objdump-19 || command -v llvm-objdump || true)"
-  fi
-fi
-[[ -n "${OBJDUMP:-}" && -x "$OBJDUMP" ]] || {
-  echo "realbody: FATAL llvm-objdump missing. See docs/build-from-source.md" >&2
-  exit 1
-}
 if [[ -z "${OPT:-}" || ! -x "${OPT:-}" ]]; then
   OPT="$(goc_beside opt 2>/dev/null || true)"
   if [[ -z "$OPT" ]]; then
@@ -226,10 +208,6 @@ if grep -qE '28C0DE42|0x28c0de42|683728450' "$LL"; then
   MAGIC_OK=1
 fi
 
-mkdir -p "$TMP/maps"
-cp "$SELF/args_map.bin" "$TMP/maps/args_map.bin"
-cp "$SELF/locals_map.bin" "$TMP/maps/locals_map.bin"
-
 # Optional IR-level symbol redirects for compiler-emitted libc calls that -D
 # macros cannot reach (e.g. @memcpy from struct copies):
 #   GOC_IR_RENAMES="memcpy:goc_memcpy memset:goc_memset"
@@ -266,21 +244,19 @@ fi
 # goc-llc writes the .goc.* tables of the C functions (body.goc.s) and
 # goc-lower goabi those of the Go ABI thunks (thunks.goc.s); both are
 # appended to the assembly (docs/gocobj-format.md).
-GOC_TABLES=""
-GOC_TABLES_ARGS=()
-if [[ "$GOC_ARCH" != arm64 && "$LLC" == *goc-llc* && "${GOC_GOCOBJ:-1}" == 1 ]]; then
-  GOC_TABLES="$TMP/body.goc.s"
-  GOC_TABLES_ARGS=(-goc-tables "$GOC_TABLES")
-fi
-GOABI_TABLES=()
-[[ -n "$GOC_TABLES" ]] && GOABI_TABLES=("$TMP/thunks.goc.s")
-"$LOWER" goabi "$LL" "$TMP/body.impl.ll" "$TMP/thunks.s" "$GOABI_JSON" "${GOABI_TABLES[@]}"
+GOC_TABLES="$TMP/body.goc.s"
+"$LOWER" goabi "$LL" "$TMP/body.impl.ll" "$TMP/thunks.s" "$GOABI_JSON" "$TMP/thunks.goc.s"
 cp "$TMP/body.impl.ll" "$LL"
+# Go symbol ABI of the C functions: ABI0 when Go ABI thunks wrap them (the
+# thunk owns the ABIInternal name) or for a C-side object (--abi0).
+SYM_ABI=1
+if [[ "$ABI0" == 1 ]] || grep -q '"name"' "$GOABI_JSON"; then
+  SYM_ABI=0
+fi
 
-# The MIR, object and assembly must come from the *same* IR. A stackmap pass
-# after object emission changes neither its .llvm_stackmaps section nor the
-# register allocation; silently continuing without real locations is unsafe.
-if [[ "${GOC_SPTR_MAPS:-0}" == "1" && "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
+# Record the stack-map roots on the IR goc-llc compiles: the tables take
+# their locations from the STACKMAP instructions of this very compile.
+if [[ "$GOC_ARCH" != arm64 && "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
   if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
     SMPASS="$GOC_STACKMAP"
   elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
@@ -337,12 +313,16 @@ elif [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-reserve-goc-r14)
   echo "realbody: GOC_FIXED_G=1 llc=$LLC" >&2
 fi
-# goc-llc also writes the .goc.* tables (docs/gocobj-format.md) as assembler
-# text. They are assembled into the same ELF object, which makes it a
-# .gocobj; elfpack ignores those sections (they are not SHF_ALLOC).
-# Until gocobj2goobj reads the tables only, elfpack still adds the check.
-LLC_ARGS+=(-goc-no-stack-check)
-"$LLC" "${LLC_ARGS[@]}" "${GOC_TABLES_ARGS[@]}" -filetype=asm \
+# goc-llc emits the Go stack check and morestack block of each function and
+# writes the .goc.* tables (docs/gocobj-format.md) as assembler text. They
+# are assembled into the same ELF object, which makes it a .gocobj. One
+# section per function: every reference between functions then carries an
+# ELF relocation, so the converter never patches code.
+LLC_ARGS+=(-function-sections -goc-sym-abi="$SYM_ABI")
+if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
+  LLC_ARGS+=(-goc-fixed-g)
+fi
+"$LLC" "${LLC_ARGS[@]}" -goc-tables "$GOC_TABLES" -filetype=asm \
   -o "$TMP/body.s" "$LL"
 
 # ALIGNFIX: without realignment an amd64 frame is only 8-byte aligned, so
@@ -358,64 +338,32 @@ fi
 # Go thunks are appended to the same assembly and assembled once. That puts
 # both .text contributions in one relocatable object, so the driver does not
 # call ld or ld.lld.
-cat "$TMP/body.s" "$TMP/thunks.s" ${GOC_TABLES:+"$GOC_TABLES" "$TMP/thunks.goc.s"} > "$TMP/body.thunks.s"
+cat "$TMP/body.s" "$TMP/thunks.s" "$GOC_TABLES" "$TMP/thunks.goc.s" > "$TMP/body.thunks.s"
 "$MC" -filetype=obj -triple="$MC_TRIPLE" \
   -o "$TMP/body.llc.o" "$TMP/body.thunks.s"
 ELF="$TMP/body.llc.o"
 
-"$OBJDUMP" -dr "$ELF" > "$TMP/body.dis"
-# GOC_SPTR_MAPS: also dump MIR after PEI so the meta can carry the frame
-# offsets of the allocas that hold sptr values (see the report: the color
-# metadata marks *values*, not slots, so slots are derived from the stores
-# of sptr values, and their offsets from these stack objects).
-MIR="$TMP/body.mir"
-if [[ "${GOC_SPTR_MAPS:-0}" == "1" ]]; then
-  "$LLC" "${LLC_ARGS[@]}" -stop-after=prologepilog \
-    -o "$MIR" "$LL"
-  [[ -s "$MIR" ]] || { echo "realbody: FATAL empty post-PEI MIR" >&2; exit 1; }
-fi
-"$LOWER" meta "$LL" "$TMP/body.s" "$TMP/body.dis" "$TMP/meta.json" "$PKG" "$GOABI_JSON" "$ABI0" "$TMP/body.mir"
-
-"$LOWER" check-meta "$TMP/meta.json"
-
-# A release ships bin/elfpack and bin/gocobj2goobj. A checkout builds them.
-# With the .goc.* tables present the object goes through gocobj2goobj, which
-# checks it (goc-objdump verify) and then still runs the elfpack code.
-if [[ -n "$GOC_TABLES" ]]; then
-  PACK_PKG=./tools/gocobj2goobj/
-  PACK_BIN="$ROOT/bin/gocobj2goobj"
-else
-  PACK_PKG=./tools/goc-elfpack/
-  PACK_BIN="$ROOT/bin/elfpack"
-fi
+# A release ships bin/gocobj2goobj. A checkout builds it.
+PACK_BIN="$ROOT/bin/gocobj2goobj"
 if [[ ! -x "$PACK_BIN" ]]; then
   PACK_BIN="$TMP/pack"
-  ( cd "$GOMOD_ROOT" && go build -o "$PACK_BIN" "$PACK_PKG" )
+  ( cd "$GOMOD_ROOT" && go build -o "$PACK_BIN" ./tools/gocobj2goobj/ )
 fi
-# HeaderString follows GOARCH, not the host. An explicit amd64 must override
-# a user's GOARCH too. The packer itself stays a host (amd64) tool.
-if [[ -n "$GOC_TABLES" ]]; then
-  GOARCH="$GOC_ARCH" "$PACK_BIN" -in "$ELF" -meta "$TMP/meta.json" \
-    -maps "$TMP/maps" -o "$OUT_O" -p "$PKG"
-else
-  GOARCH="$GOC_ARCH" "$PACK_BIN" -elf "$ELF" -meta "$TMP/meta.json" \
-    -maps "$TMP/maps" -out-o "$OUT_O" -p "$PKG"
-fi
-
-if [[ $MAGIC_OK -eq 1 ]]; then
-  "$LOWER" magic-obj "$OUT_O"
-fi
-
-# foo.goobj and a legacy foo.o both sit beside foo.meta.json and foo.ll.
 side="$OUT_O"
 case "$side" in
   *.goobj) side="${side%.goobj}" ;;
   *.o) side="${side%.o}" ;;
 esac
-cp "$TMP/meta.json" "${side}.meta.json"
-if [[ -n "$GOC_TABLES" ]]; then
-  cp "$ELF" "${side}.gocobj"
+# HeaderString follows GOARCH, not the host. An explicit amd64 must override
+# a user's GOARCH too. The converter itself stays a host tool.
+GOARCH="$GOC_ARCH" "$PACK_BIN" -in "$ELF" -o "$OUT_O" -p "$PKG" -symabis "${side}.symabis"
+
+if [[ $MAGIC_OK -eq 1 ]]; then
+  "$LOWER" magic-obj "$OUT_O"
 fi
+
+# foo.goobj sits beside foo.gocobj, foo.symabis and foo.ll.
+cp "$ELF" "${side}.gocobj"
 cp "$LL" "${side}.ll"
 NTEXT="$(go tool nm "$OUT_O" | grep -c ' T ' || true)"
 echo "realbody: wrote $OUT_O (encoding=clang-real-isel, TEXT syms=$NTEXT)"

@@ -1075,16 +1075,29 @@ func emitThunksL(a abiSet, goabi []llFunc, labels bool) string {
 		return emitArm64Thunks(goabi)
 	}
 	lines := []string{"# Go 1.24 ABIInternal -> SysV entry thunks — generated", "\t.text"}
+	// mark defines a label for the .goc.* tables (it emits no bytes).
+	mark := func(l string, ti int) {
+		if labels {
+			lines = append(lines, fmt.Sprintf(".Lgocw_%s%d:", l, ti))
+		}
+	}
 	for ti, d := range goabi {
+		if labels {
+			// One section per function, as goc-llc -function-sections: every
+			// reference between functions then carries an ELF relocation.
+			lines = append(lines, fmt.Sprintf("\t.section\t.text.%s,\"ax\",@progbits", d.Name))
+		}
 		lines = append(lines,
 			fmt.Sprintf("\t.globl\t%s", d.Name),
 			fmt.Sprintf("\t.type\t%s,@function", d.Name),
 			d.Name+":",
 			"\tpushq\t%rbp",
-			"\tmovq\t%rsp, %rbp",
 		)
+		mark("p", ti)
+		lines = append(lines, "\tmovq\t%rsp, %rbp")
 		if d.plan.Outgoing > 0 {
 			lines = append(lines, fmt.Sprintf("\tsubq\t$%d, %%rsp", d.plan.Outgoing))
+			mark("a", ti)
 		}
 		var regMoves [][2]string
 		var floatMoves []xmmMove
@@ -1127,10 +1140,11 @@ func emitThunksL(a abiSet, goabi []llFunc, labels bool) string {
 		}
 		lines = append(lines,
 			"\tpxor\t%xmm15, %xmm15",
-			"\tmovq\t%rbp, %rsp",
-			"\tpopq\t%rbp",
-			"\tret",
-		)
+			"\tmovq\t%rbp, %rsp")
+		mark("m", ti)
+		lines = append(lines, "\tpopq\t%rbp")
+		mark("o", ti)
+		lines = append(lines, "\tret")
 		if labels {
 			lines = append(lines, fmt.Sprintf(".Lgocw_e%d:", ti))
 		}
@@ -1457,6 +1471,75 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		ts[i] = thunk{spills, stackPtrs, area, slots, 0}
 	}
 	b.WriteString("# .goc.* records of the Go ABI thunks (goc-lower goabi)\n")
+	// A thunk has no stack check (nosplit: the linker charges its small
+	// frame to the caller's guard; the C body checks its own frame). Its
+	// SP_DELTA follows the push/sub/mov/pop, and its one safepoint, the call
+	// to the C body, scans the Go stack arguments and the outgoing pointer
+	// arguments.
+	pcv := make([]string, len(goabi))
+	b.WriteString("\t.section .goc.pcvalue,\"\",@progbits\n")
+	for i, d := range goabi {
+		l := begin()
+		pcv[i] = l
+		at := func(lbl string, v int) {
+			fmt.Fprintf(&b, "\t.uleb128 .Lgocw_%s%d-%s\n\t.sleb128 %d\n", lbl, i, d.Name, v)
+		}
+		uleb(1)
+		u8(1) // SP_DELTA
+		if d.Outgoing > 0 {
+			uleb(5)
+		} else {
+			uleb(4)
+		}
+		uleb(0)
+		fmt.Fprintf(&b, "\t.sleb128 0\n")
+		at("p", 8)
+		if d.Outgoing > 0 {
+			at("a", 8+d.Outgoing)
+		}
+		at("m", 8)
+		at("o", 0)
+		end(l)
+	}
+	gc := make([]string, len(goabi))
+	b.WriteString("\t.section .goc.gcmaps,\"\",@progbits\n")
+	for i, d := range goabi {
+		t := ts[i]
+		if t.area%8 != 0 || d.Outgoing%8 != 0 {
+			return "", fmt.Errorf("goabi: %s: Go argument area %d or outgoing area %d is not word aligned", d.Name, t.area, d.Outgoing)
+		}
+		nargs, nlocals := t.area/8, d.Outgoing/8
+		args := make([]byte, (nargs+7)/8)
+		for _, o := range t.stackPtrs {
+			if o%8 != 0 || o/8 >= nargs {
+				return "", fmt.Errorf("goabi: %s: stack pointer argument +%d outside the %d-byte area", d.Name, o, t.area)
+			}
+			args[o/8/8] |= 1 << (o / 8 % 8)
+		}
+		locals := make([]byte, (nlocals+7)/8)
+		for _, o := range t.slots {
+			// o bytes below BP; bit 0 is the word at BP-8*nlocals.
+			if o < 8 || o%8 != 0 || o/8 > nlocals {
+				return "", fmt.Errorf("goabi: %s: outgoing pointer slot BP-%d outside the frame", d.Name, o)
+			}
+			bit := nlocals - o/8
+			locals[bit/8] |= 1 << (bit % 8)
+		}
+		l := begin()
+		gc[i] = l
+		uleb(nargs)
+		uleb(nlocals)
+		uleb(1)
+		uleb(fmt.Sprintf(".Lgocw_r%d-%s", i, d.Name))
+		for _, v := range args {
+			u8(int(v))
+		}
+		for _, v := range locals {
+			u8(int(v))
+		}
+		uleb(0) // ncolor
+		end(l)
+	}
 	b.WriteString("\t.section .goc.funcs,\"\",@progbits\n")
 	for i, d := range goabi {
 		t := ts[i]
@@ -1467,12 +1550,12 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		uleb(t.area)         // arg_size
 		u8(1)                // ABIInternal
 		u8(1)                // kind: ABI wrapper
-		uleb(0)              // flags
+		uleb(4 | 8)          // flags: nosplit, has_frame_pointer
 		u8(0)                // func_id
 		uleb(0)              // file
 		uleb(0)              // start_line
-		uleb(0)              // pcv
-		uleb(0)              // gc
+		uleb(pcv[i] + "-.Lgoc_pcvbase+1")
+		uleb(gc[i] + "-.Lgoc_gcbase+1")
 		uleb(0)              // inl
 		uleb(t.mask)         // 1.1 sysv_ptr_regs
 		uleb(len(t.slots))   // 1.2 sptr_slots

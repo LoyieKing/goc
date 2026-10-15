@@ -135,9 +135,11 @@ static cl::opt<std::string> GocTables(
 static cl::opt<std::string> GocProfile(
     "goc-profile", cl::desc("Go ABI profile (Goc/AbiProfiles.def) the code targets"),
     cl::init("go1.24-amd64"));
-static cl::opt<std::string> GocCABI(
-    "goc-c-abi", cl::desc("Entry ABI of the C functions: c (Go ABI thunks wrap them) or go"),
-    cl::init("c"));
+static cl::opt<unsigned> GocSymABI(
+    "goc-sym-abi",
+    cl::desc("Go symbol ABI of the C functions in the tables: 0 ABI0 (Go ABI thunks wrap "
+             "them, or a C-only object), 1 ABIInternal"),
+    cl::init(0));
 static cl::opt<bool> GocFixedG("goc-fixed-g",
                                cl::desc("g stays in the profile's G register (-reserve-goc-r14)"));
 static cl::opt<bool> GocNoStackCheck("goc-no-stack-check",
@@ -1222,16 +1224,13 @@ int main(int argc, char **argv) {
         errs() << "goc-llc: unknown or non-amd64 profile " << GocProfile << "\n";
         return 1;
       }
-      if (GocCABI != "c" && GocCABI != "go") {
-        errs() << "goc-llc: -goc-c-abi wants c or go\n";
-        return 1;
-      }
-      goc::StackCheckOptions SO{Prof, GocCABI == "c" ? goc::EntryABI::C : goc::EntryABI::GoInternal,
-                                GocFixedG};
+      // The bodies are C: they are entered with the platform convention
+      // whatever their Go symbol ABI says.
+      goc::StackCheckOptions SO{Prof, goc::EntryABI::C, GocFixedG};
       PM.add(goc::createGocStackCheckPass(SO, goc::createX86StackCheckTarget()));
     }
     if (!GocTables.empty())
-      PM.add(goc::createGocObjTablesPass(GocTables, GocProfile));
+      PM.add(goc::createGocObjTablesPass(GocTables, GocProfile, GocSymABI));
     if (LLVMTM.addAsmPrinter(PM, *OS, nullptr, codegen::getFileType(),
                              MMIWP->getMMI().getContext())) {
       errs() << "goc-llc: target does not support this file type\n";
