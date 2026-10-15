@@ -22,7 +22,10 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -58,6 +61,19 @@ struct FuncAddr {
   int64_t Offset;
 };
 
+// One STACKMAP, in the location encoding of .llvm_stackmaps (version 3).
+struct SMLoc {
+  uint8_t Type;
+  uint16_t Size;
+  uint16_t Reg;
+  int32_t Off;
+};
+struct SMRec {
+  std::string Label; // at the STACKMAP; its offset is the record's insn offset
+  uint64_t ID;
+  std::vector<SMLoc> Locs;
+};
+
 struct FuncInfo {
   std::string Name, End;
   uint64_t FrameSize;
@@ -66,6 +82,7 @@ struct FuncInfo {
   std::vector<CallSite> Calls;
   std::vector<FuncAddr> Addrs;
   std::vector<uint64_t> SptrSlots; // 1.2: BP-relative offsets, sorted
+  std::vector<SMRec> Stackmaps;    // 1.3
 };
 
 // An alloca (by IR name) plus a byte offset inside it that holds an sptr.
@@ -264,6 +281,82 @@ struct GocObjTables : MachineFunctionPass {
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
+  // Mirrors StackMaps::parseOperand on the post-PEI operands.
+  static uint16_t dwarfReg(const TargetRegisterInfo *TRI, Register R) {
+    int N = TRI->getDwarfRegNum(R, false);
+    for (MCPhysReg S : TRI->superregs(R)) {
+      if (N >= 0)
+        break;
+      N = TRI->getDwarfRegNum(S, false);
+    }
+    return (uint16_t)N;
+  }
+
+  bool recordStackmap(MachineFunction &MF, MachineInstr &MI, FuncInfo &FI) {
+    const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+    StackMapOpers Opers(&MI);
+    SMRec R;
+    R.ID = MI.getOperand(StackMapOpers::IDPos).getImm();
+    for (auto I = MI.operands_begin() + Opers.getVarIdx(), E = MI.operands_end(); I != E;) {
+      if (I->isImm()) {
+        switch (I->getImm()) {
+        case StackMaps::DirectMemRefOp: {
+          Register Reg = (++I)->getReg();
+          int64_t Imm = (++I)->getImm();
+          R.Locs.push_back({2, (uint16_t)MF.getDataLayout().getPointerSize(), dwarfReg(TRI, Reg), (int32_t)Imm});
+          break;
+        }
+        case StackMaps::IndirectMemRefOp: {
+          int64_t Size = (++I)->getImm();
+          Register Reg = (++I)->getReg();
+          int64_t Imm = (++I)->getImm();
+          R.Locs.push_back({3, (uint16_t)Size, dwarfReg(TRI, Reg), (int32_t)Imm});
+          break;
+        }
+        case StackMaps::ConstantOp: {
+          int64_t Imm = (++I)->getImm();
+          if (!isInt<32>(Imm))
+            return false; // ConstantIndex: the pool index is module-wide
+          R.Locs.push_back({4, 8, 0, (int32_t)Imm});
+          break;
+        }
+        default:
+          return false;
+        }
+        ++I;
+        continue;
+      }
+      if (I->isReg()) {
+        if (I->isImplicit()) {
+          ++I;
+          continue;
+        }
+        if (I->isUndef()) {
+          R.Locs.push_back({4, 8, 0, (int32_t)0xFEFEFEFE});
+          ++I;
+          continue;
+        }
+        const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(I->getReg());
+        uint16_t D = dwarfReg(TRI, I->getReg());
+        unsigned Off = 0;
+        unsigned LLVMReg = *TRI->getLLVMRegNum(D, false);
+        if (unsigned Sub = TRI->getSubRegIndex(LLVMReg, I->getReg()))
+          Off = TRI->getSubRegIdxOffset(Sub);
+        R.Locs.push_back({1, (uint16_t)TRI->getSpillSize(*RC), D, (int32_t)Off});
+        ++I;
+        continue;
+      }
+      ++I; // register live-out masks: not used by goc
+    }
+    if (MI.getPreInstrSymbol())
+      return false;
+    MCSymbol *S = MF.getContext().createTempSymbol("goc_sm");
+    MI.setPreInstrSymbol(MF, S);
+    R.Label = S->getName().str();
+    FI.Stackmaps.push_back(std::move(R));
+    return true;
+  }
+
   static bool isRealCall(const MachineInstr &MI) {
     return MI.isCall() && MI.getOpcode() != TargetOpcode::STACKMAP &&
            MI.getOpcode() != TargetOpcode::PATCHPOINT;
@@ -305,6 +398,8 @@ struct GocObjTables : MachineFunctionPass {
           Last = &MI;
         if (MI.getOpcode() == TargetOpcode::STACKMAP) {
           SawStackmap = true;
+          if (!recordStackmap(MF, MI, FI))
+            return false;
           continue;
         }
         if (MI.isInlineAsm()) {
@@ -500,6 +595,23 @@ bool GocObjTables::doFinalization(Module &M) {
     }
   }
 
+  W.section(".goc.stackmaps");
+  for (const FuncInfo &F : Funcs)
+    for (const SMRec &R : F.Stackmaps) {
+      std::string L = W.begin();
+      W.uleb(W.ref(F.Name));
+      W.uleb(R.Label + "-" + F.Name);
+      W.uleb(Twine(R.ID));
+      W.uleb(Twine(R.Locs.size()));
+      for (const SMLoc &Lc : R.Locs) {
+        W.u8(Lc.Type);
+        W.uleb(Twine(Lc.Size));
+        W.uleb(Twine(Lc.Reg));
+        W.sleb(Twine(Lc.Off));
+      }
+      W.end(L);
+    }
+
   const DataLayout &DL = M.getDataLayout();
   W.section(".goc.data");
   for (const GlobalVariable &G : M.globals()) {
@@ -520,7 +632,7 @@ bool GocObjTables::doFinalization(Module &M) {
   unsigned Prod = W.str("goc-llc (LLVM " LLVM_VERSION_STRING ")");
   W.section(".goc.header");
   OS << "\t.byte 0x47,0x4f,0x43,0x4f,0x42,0x4a,0,0\n"
-     << "\t.short 1\n\t.short 2\n"
+     << "\t.short 1\n\t.short 3\n"
      << "\t.byte 1\n\t.byte 0\n\t.short 0\n"
      << "\t.long .Lgoc_s" << Prof << "-.Lgoc_strtab\n"
      << "\t.long .Lgoc_s" << Prod << "-.Lgoc_strtab\n"

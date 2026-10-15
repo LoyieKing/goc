@@ -101,6 +101,26 @@ func Verify(f *File) []error {
 		}
 	}
 
+	for _, wr := range f.Wrappers {
+		w := "wrapper " + wr.Sym
+		if fn := funcs[wr.Sym]; fn == nil {
+			bad("%s: function not in %s", w, SecFuncs)
+		} else if fn.Kind != 1 {
+			bad("%s: function kind %d, want 1", w, fn.Kind)
+		}
+		sym(w, wr.Target)
+		if wr.FromABI > 2 || wr.ToABI > 2 {
+			bad("%s: bad abi %d -> %d", w, wr.FromABI, wr.ToABI)
+		}
+	}
+	for i, sm := range f.Stackmaps {
+		w := fmt.Sprintf("stackmap %d (%s+%d)", i, sm.Func, sm.InsnOff)
+		if fn := funcs[sm.Func]; fn == nil {
+			bad("%s: function not in %s", w, SecFuncs)
+		} else if sm.InsnOff >= fn.TextSize {
+			bad("%s: past function end %d", w, fn.TextSize)
+		}
+	}
 	for i, r := range f.Relocs {
 		w := fmt.Sprintf("reloc %d (%s+%d)", i, r.Func, r.Offset)
 		fn := funcs[r.Func]

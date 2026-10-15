@@ -33,6 +33,16 @@ func Dump(w io.Writer, f *File) {
 				fmt.Fprintln(w)
 			}
 		}
+		for _, wr := range f.Wrappers {
+			if wr.Sym == fn.Name {
+				fmt.Fprintf(w, "  wrapper -> %s abi %d->%d spills=%v stackptrs=%v\n", wr.Target, wr.FromABI, wr.ToABI, wr.ArgSpills, wr.StackPtrArgs)
+			}
+		}
+		for _, sm := range f.Stackmaps {
+			if sm.Func == fn.Name {
+				fmt.Fprintf(w, "  stackmap +%d id=%#x locs=%v\n", sm.InsnOff, sm.ID, sm.Locs)
+			}
+		}
 		for _, r := range f.Relocs {
 			if r.Func == fn.Name {
 				fmt.Fprintf(w, "  reloc +%d w=%d %s %s%+d flags=%#x\n", r.Offset, r.Width, r.Kind, r.Target, r.Addend, r.Flags)

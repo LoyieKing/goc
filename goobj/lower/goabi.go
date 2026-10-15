@@ -1065,12 +1065,17 @@ func emitArm64RegisterArgument(ty string, source loc, dest string) []string {
 	return []string{fmt.Sprintf("\t%s\t%s, %s", load, arm64IntName(dest, info.size), src)}
 }
 
-func emitThunks(a abiSet, goabi []llFunc) string {
+func emitThunks(a abiSet, goabi []llFunc) string { return emitThunksL(a, goabi, false) }
+
+// emitThunksL is emitThunks; with labels it also defines .Lgocw_c<i> and
+// .Lgocw_r<i> around thunk i's call and .Lgocw_e<i> at its end, for the
+// .goc.* wrapper tables (labels emit no bytes).
+func emitThunksL(a abiSet, goabi []llFunc, labels bool) string {
 	if a.arch == "arm64" {
 		return emitArm64Thunks(goabi)
 	}
 	lines := []string{"# Go 1.24 ABIInternal -> SysV entry thunks — generated", "\t.text"}
-	for _, d := range goabi {
+	for ti, d := range goabi {
 		lines = append(lines,
 			fmt.Sprintf("\t.globl\t%s", d.Name),
 			fmt.Sprintf("\t.type\t%s,@function", d.Name),
@@ -1110,7 +1115,13 @@ func emitThunks(a abiSet, goabi []llFunc) string {
 		lines = append(lines, parallelXMM(floatMoves)...)
 		lines = append(lines, intLoads...)
 		lines = append(lines, floatLoads...)
+		if labels {
+			lines = append(lines, fmt.Sprintf(".Lgocw_c%d:", ti))
+		}
 		lines = append(lines, "\tcall\t"+d.Impl)
+		if labels {
+			lines = append(lines, fmt.Sprintf(".Lgocw_r%d:", ti))
+		}
 		for _, mv := range d.plan.ResultMoves {
 			lines = append(lines, fmt.Sprintf("\tmovq\t%%%s, %%%s", mv[0], mv[1]))
 		}
@@ -1119,8 +1130,11 @@ func emitThunks(a abiSet, goabi []llFunc) string {
 			"\tmovq\t%rbp, %rsp",
 			"\tpopq\t%rbp",
 			"\tret",
-			fmt.Sprintf("\t.size\t%s, .-%s", d.Name, d.Name),
 		)
+		if labels {
+			lines = append(lines, fmt.Sprintf(".Lgocw_e%d:", ti))
+		}
+		lines = append(lines, fmt.Sprintf("\t.size\t%s, .-%s", d.Name, d.Name))
 	}
 	lines = append(lines, "")
 	return strings.Join(lines, "\n")
@@ -1251,9 +1265,14 @@ type goABIFile struct {
 // assembly plus the sidecar JSON. logText is the human summary printed by
 // the old goc_goabi.py.
 func RunGoABI(text, arch string) (outLL, asm string, js []byte, logText string, err error) {
+	outLL, asm, js, logText, _, err = runGoABI(text, arch, false)
+	return
+}
+
+func runGoABI(text, arch string, tables bool) (outLL, asm string, js []byte, logText, wrappers string, err error) {
 	a, err := abiFor(arch)
 	if err != nil {
-		return "", "", nil, "", err
+		return "", "", nil, "", "", err
 	}
 	defs := parseFunctions(text, "define")
 	var goabi []llFunc
@@ -1296,7 +1315,12 @@ func RunGoABI(text, arch string) (outLL, asm string, js []byte, logText string, 
 	for _, name := range names {
 		text = replaceAtName(text, name, name+".impl")
 	}
-	asm = emitThunks(a, goabi)
+	asm = emitThunksL(a, goabi, tables)
+	if tables {
+		if wrappers, err = emitWrapperTables(a, goabi); err != nil {
+			return "", "", nil, "", "", err
+		}
+	}
 	file := goABIFile{Functions: []goFuncJSON{}, Skipped: skipped}
 	for _, d := range goabi {
 		file.Functions = append(file.Functions, goFuncJSON{
@@ -1308,7 +1332,7 @@ func RunGoABI(text, arch string) (outLL, asm string, js []byte, logText string, 
 	}
 	js, err = marshalIndent(file)
 	if err != nil {
-		return "", "", nil, "", err
+		return "", "", nil, "", "", err
 	}
 	var log bytes.Buffer
 	extra := ""
@@ -1319,7 +1343,7 @@ func RunGoABI(text, arch string) (outLL, asm string, js []byte, logText string, 
 	for _, name := range skipped {
 		fmt.Fprintf(&log, "goabi: skipped %s: %s\n", name, reasons[name])
 	}
-	return text, asm, js, log.String(), nil
+	return text, asm, js, log.String(), wrappers, nil
 }
 
 func atoi(s string) int {
@@ -1347,14 +1371,23 @@ func marshalIndent(v any) ([]byte, error) {
 }
 
 // WriteGoABI is the goc-lower goabi subcommand.
-func WriteGoABI(inLL, outLL, outS, outJSON, arch string) error {
+// WriteGoABI writes the renamed IR, the thunk assembly and goabi.json. With
+// a non-empty outTables (amd64) it also writes the thunks' .goc.* table
+// records as assembler text (docs/gocobj-format.md, 1.3).
+func WriteGoABI(inLL, outLL, outS, outJSON, outTables, arch string) error {
 	text, err := os.ReadFile(inLL)
 	if err != nil {
 		return err
 	}
-	ll, asm, js, logText, err := RunGoABI(string(text), arch)
+	tables := outTables != "" && arch != "arm64"
+	ll, asm, js, logText, wrappers, err := runGoABI(string(text), arch, tables)
 	if err != nil {
 		return err
+	}
+	if outTables != "" {
+		if err := os.WriteFile(outTables, []byte(wrappers), 0o644); err != nil {
+			return err
+		}
 	}
 	if err := os.WriteFile(outLL, []byte(ll), 0o644); err != nil {
 		return err
@@ -1371,3 +1404,123 @@ func WriteGoABI(inLL, outLL, outS, outJSON, arch string) error {
 
 // silence unused in case nameRE is wanted by later files in the package.
 var _ = nameRE
+
+// emitWrapperTables writes, for each thunk, a .goc.funcs record (kind 1,
+// ABI wrapper), its .goc.wrappers record and the CALL relocation to the C
+// body. Strings go to .goc.strtab under their own labels and are referenced
+// from goc-llc's .Lgoc_strtab, so this text is appended after goc-llc's.
+func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
+	var b strings.Builder
+	strs := map[string]int{}
+	var list []string
+	ref := func(s string) string {
+		i, ok := strs[s]
+		if !ok {
+			i = len(list)
+			strs[s] = i
+			list = append(list, s)
+		}
+		return fmt.Sprintf(".Lgocw_s%d-.Lgoc_strtab", i)
+	}
+	rec := 0
+	begin := func() string {
+		l := fmt.Sprintf(".Lgocw_q%d", rec)
+		rec++
+		fmt.Fprintf(&b, "%s:\n\t.uleb128 %se-%sb\n%sb:\n", l, l, l, l)
+		return l
+	}
+	end := func(l string) { fmt.Fprintf(&b, "%se:\n", l) }
+	uleb := func(v any) { fmt.Fprintf(&b, "\t.uleb128 %v\n", v) }
+	u8 := func(v int) { fmt.Fprintf(&b, "\t.byte %d\n", v) }
+	type thunk struct {
+		spills    []metaSpill
+		stackPtrs []int
+		area      int
+		slots     []int
+		mask      uint64
+	}
+	ts := make([]thunk, len(goabi))
+	for i, d := range goabi {
+		spills, stackPtrs, area, err := goArgsLayout(d.ABI.Go)
+		if err != nil {
+			return "", err
+		}
+		var slots []int
+		for _, p := range d.ABI.SysV.Params {
+			if p.Location.Kind == "stack" && p.Type == "ptr" {
+				slots = append(slots, d.Outgoing-p.Location.Off)
+			}
+		}
+		sort.Ints(slots)
+		// A thunk is entered with the Go ABI; SysV pointer registers
+		// describe C entries only (meta.json has [] for thunks too).
+		ts[i] = thunk{spills, stackPtrs, area, slots, 0}
+	}
+	b.WriteString("# .goc.* records of the Go ABI thunks (goc-lower goabi)\n")
+	b.WriteString("\t.section .goc.funcs,\"\",@progbits\n")
+	for i, d := range goabi {
+		t := ts[i]
+		l := begin()
+		uleb(ref(d.Name))
+		uleb(fmt.Sprintf(".Lgocw_e%d-%s", i, d.Name))
+		uleb(8 + d.Outgoing) // frame
+		uleb(t.area)         // arg_size
+		u8(1)                // ABIInternal
+		u8(1)                // kind: ABI wrapper
+		uleb(0)              // flags
+		u8(0)                // func_id
+		uleb(0)              // file
+		uleb(0)              // start_line
+		uleb(0)              // pcv
+		uleb(0)              // gc
+		uleb(0)              // inl
+		uleb(t.mask)         // 1.1 sysv_ptr_regs
+		uleb(len(t.slots))   // 1.2 sptr_slots
+		for _, o := range t.slots {
+			uleb(o)
+		}
+		end(l)
+	}
+	b.WriteString("\t.section .goc.wrappers,\"\",@progbits\n")
+	for i, d := range goabi {
+		t := ts[i]
+		l := begin()
+		uleb(ref(d.Name))
+		uleb(ref(d.Impl))
+		u8(1) // from ABIInternal
+		u8(2) // to the C ABI (SysV)
+		uleb(len(t.spills))
+		for _, sp := range t.spills {
+			uleb(ref(sp.Reg))
+			uleb(sp.Off)
+			uleb(sp.Size)
+			if sp.Ptr {
+				u8(1)
+			} else {
+				u8(0)
+			}
+		}
+		uleb(len(t.stackPtrs))
+		for _, o := range t.stackPtrs {
+			uleb(o)
+		}
+		end(l)
+	}
+	b.WriteString("\t.section .goc.relocs,\"\",@progbits\n")
+	for i, d := range goabi {
+		l := begin()
+		uleb(ref(d.Name))
+		uleb(fmt.Sprintf(".Lgocw_r%d-4-%s", i, d.Name))
+		u8(4)
+		u8(1) // CALL
+		uleb(ref(d.Impl))
+		fmt.Fprintf(&b, "\t.sleb128 -4\n")
+		u8(0)
+		end(l)
+	}
+	b.WriteString("\t.section .goc.strtab,\"\",@progbits\n")
+	for i, s := range list {
+		fmt.Fprintf(&b, ".Lgocw_s%d:\n\t.asciz %q\n", i, s)
+	}
+	return b.String(), nil
+}

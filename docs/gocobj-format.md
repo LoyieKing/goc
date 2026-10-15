@@ -1,4 +1,4 @@
-# gocobj format, version 1.2
+# gocobj format, version 1.3
 
 A `.gocobj` is what goc's LLVM backend will write for one C file. It is a
 normal relocatable ELF file (machine code in `.text` or `.text.<sym>`, data in
@@ -103,6 +103,30 @@ Kinds: 1 CALL, 2 CALL_INDIRECT_MARK, 3 PCREL, 4 ADDR_ABS, 5 FUNC_ADDR,
 
 ELF's own relocations in the file stay valid and are only a cross-check.
 
+### `.goc.stackmaps` (1.3)
+
+One record per LLVM `STACKMAP` site: `strref func`, `uleb insn_off` (from
+the function start), `uleb id`, `uleb nloc`, then `nloc` locations of
+`u8 type, uleb size, uleb reg, sleb off`, in the encoding of
+`.llvm_stackmaps` version 3 (type 1 Register, 2 Direct, 3 Indirect,
+4 Constant; `reg` is a DWARF register number). Records are in code order
+within a function. While the ELF still carries `.llvm_stackmaps`, the
+converter requires the two to agree record for record.
+
+### `.goc.wrappers` (1.3)
+
+One record per ABI wrapper. The wrapper itself is a `.goc.funcs` record
+with kind 1 (its `arg_size` is the Go argument area); this record adds:
+
+| field | type | meaning |
+|---|---|---|
+| sym | strref | the wrapper (a kind-1 function) |
+| target | strref | the function it calls |
+| from_abi | u8 | convention it is entered with: 0 ABI0, 1 ABIInternal, 2 C (SysV) |
+| to_abi | u8 | convention of `target` |
+| nspills | uleb | then `nspills` × {`strref reg`, `uleb off`, `uleb size`, `u8 ptr`}: where the morestack path spills each register argument |
+| nstackptr | uleb | then `nstackptr` × `uleb`: offsets of pointer arguments passed on the stack |
+
 ### `.goc.pcvalue`
 
 One record per function: `uleb ntables`, then `ntables` tables of
@@ -176,6 +200,12 @@ transitional content of plan row 4:
   IR allocas by name); relocs add direct calls written in inline assembly
   (goc-llc puts a label pair around each `call sym` line of the asm text;
   labels emit no bytes).
+- 1.3: `.goc.stackmaps` carries every STACKMAP record (goc-llc reads the
+  post-PEI operands the same way LLVM's StackMaps does); the converter takes
+  the records from it, after checking them against `.llvm_stackmaps`.
+  `goc-lower goabi` writes the Go ABI thunks' records (kind-1 funcs,
+  `.goc.wrappers`, their CALL relocations) as assembler text appended after
+  goc-llc's; its strings go to `.goc.strtab` under labels of their own.
 
 `gocobj2goobj -check-meta` rebuilds the per-function part of meta.json from
 these tables and lists every field that differs from goc-lower's.

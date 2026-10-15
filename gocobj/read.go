@@ -186,6 +186,31 @@ func Parse(ra io.ReaderAt) (*File, error) {
 		return nil, err
 	}
 
+	b, _ = sec(SecStackmaps)
+	if err := records(SecStackmaps, b, func(_ uint64, r *buf) error {
+		sm := Stackmap{Func: str(r.uleb()), InsnOff: r.uleb(), ID: r.uleb()}
+		for n := r.uleb(); n > 0 && r.err == nil; n-- {
+			sm.Locs = append(sm.Locs, StackmapLoc{Type: r.u8(), Size: r.uleb(), Reg: r.uleb(), Off: r.sleb()})
+		}
+		out.Stackmaps = append(out.Stackmaps, sm)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	b, _ = sec(SecWrappers)
+	if err := records(SecWrappers, b, func(_ uint64, r *buf) error {
+		w := Wrapper{Sym: str(r.uleb()), Target: str(r.uleb()), FromABI: r.u8(), ToABI: r.u8()}
+		for n := r.uleb(); n > 0 && r.err == nil; n-- {
+			w.ArgSpills = append(w.ArgSpills, ArgSpill{Reg: str(r.uleb()), Off: r.uleb(), Size: r.uleb(), Ptr: r.u8() != 0})
+		}
+		for n := r.uleb(); n > 0 && r.err == nil; n-- {
+			w.StackPtrArgs = append(w.StackPtrArgs, r.uleb())
+		}
+		out.Wrappers = append(out.Wrappers, w)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
 	b, _ = sec(SecRelocs)
 	if err := records(SecRelocs, b, func(_ uint64, r *buf) error {
 		out.Relocs = append(out.Relocs, Reloc{Func: str(r.uleb()), Offset: r.uleb(), Width: r.u8(),

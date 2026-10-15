@@ -39,6 +39,16 @@ type synthFn struct {
 	SptrSlots       []int         `json:"sptr_slots"`
 	SysvPointerRegs []string      `json:"sysv_pointer_regs"`
 	ABI             string        `json:"abi"`
+	ArgSpills       []synthSpill  `json:"go_arg_spills,omitempty"`
+	ArgArea         *int          `json:"go_arg_area,omitempty"`
+	StackPtrArgs    []int         `json:"go_stack_ptr_args,omitempty"`
+}
+
+type synthSpill struct {
+	Reg  string `json:"reg"`
+	Off  int    `json:"off"`
+	Size int    `json:"size"`
+	Ptr  bool   `json:"ptr"`
 }
 
 var (
@@ -65,8 +75,48 @@ func synthFuncs(f *gocobj.File, pkg, flags, cABI string) ([]synthFn, error) {
 	for _, r := range f.Relocs {
 		byFunc[r.Func] = append(byFunc[r.Func], r)
 	}
+	wrappers := map[string]*gocobj.Wrapper{}
+	for i := range f.Wrappers {
+		wrappers[f.Wrappers[i].Sym] = &f.Wrappers[i]
+	}
 	var out []synthFn
+	var thunks []synthFn
 	for _, fn := range f.Funcs {
+		if fn.Kind == 1 {
+			w := wrappers[fn.Name]
+			if w == nil {
+				return nil, fmt.Errorf("%s: kind 1 without a %s record", fn.Name, gocobj.SecWrappers)
+			}
+			area := int(fn.ArgSize)
+			e := synthFn{MIRName: fn.Name, GoSym: pkg + "." + fn.Name, Frame: int(fn.FrameSize),
+				Flags: flags, Encoding: "clang-real-isel", SptrSlots: []int{}, SysvPointerRegs: []string{},
+				ABI: "ABIInternal", Calls: []synthCall{}, Branches: []synthBranch{}, ArgArea: &area}
+			for _, o := range fn.SptrSlots {
+				e.SptrSlots = append(e.SptrSlots, int(o))
+			}
+			for i, reg := range sysvRegs {
+				if fn.SysvPtrRegs&(1<<i) != 0 {
+					e.SysvPointerRegs = append(e.SysvPointerRegs, reg)
+				}
+			}
+			for _, sp := range w.ArgSpills {
+				e.ArgSpills = append(e.ArgSpills, synthSpill{sp.Reg, int(sp.Off), int(sp.Size), sp.Ptr})
+			}
+			for _, o := range w.StackPtrArgs {
+				e.StackPtrArgs = append(e.StackPtrArgs, int(o))
+			}
+			for _, r := range byFunc[fn.Name] {
+				if r.Kind == gocobj.RCall {
+					callee := f.ELFRelocs[fmt.Sprintf("%s+%d", fn.Name, r.Offset)]
+					if callee == "" {
+						callee = r.Target
+					}
+					e.Calls = append(e.Calls, synthCall{callee, int64(r.Offset) - 1, -1})
+				}
+			}
+			thunks = append(thunks, e)
+			continue
+		}
 		if fn.Flags&gocobj.FuncSysvUnmodelled != 0 {
 			return nil, fmt.Errorf("%s: SysV signature not modelled in the tables", fn.Name)
 		}
@@ -117,7 +167,8 @@ func synthFuncs(f *gocobj.File, pkg, flags, cABI string) ([]synthFn, error) {
 		sort.Slice(e.Branches, func(a, b int) bool { return e.Branches[a].Off < e.Branches[b].Off })
 		out = append(out, e)
 	}
-	return out, nil
+	// meta.json lists the thunks first.
+	return append(thunks, out...), nil
 }
 
 // checkAgainstMeta compares the synthesized entries with goc-lower's
@@ -153,6 +204,15 @@ func checkAgainstMeta(syn []synthFn, metaPath string) ([]string, error) {
 			}
 		}
 	}
+	seen := map[string]bool{}
+	for _, x := range syn {
+		seen[x.MIRName] = true
+	}
+	for name := range meta {
+		if !seen[name] {
+			diffs = append(diffs, name+": in meta.json but not in the tables")
+		}
+	}
 	sort.Strings(diffs)
 	return diffs, nil
 }
@@ -169,7 +229,8 @@ func clip(v any) string {
 // overwrites them in each function goc-llc compiled; everything else (the
 // Go ABI thunks, the stack-check policy, the ABI word, the document header)
 // still comes from goc-lower's meta.json.
-var tableFields = []string{"go_sym", "frame", "calls", "branches", "has_sptr", "sptr_slots", "sysv_pointer_regs"}
+var tableFields = []string{"go_sym", "frame", "calls", "branches", "has_sptr", "sptr_slots", "sysv_pointer_regs",
+	"go_arg_spills", "go_arg_area", "go_stack_ptr_args"}
 
 // mergeMeta writes meta.json with the table-derived fields replaced and
 // returns the path of the temporary file.
@@ -201,7 +262,11 @@ func mergeMeta(syn []synthFn, metaPath string) (string, error) {
 		var mine map[string]json.RawMessage
 		_ = json.Unmarshal(js, &mine)
 		for _, k := range tableFields {
-			fns[i][k] = mine[k]
+			if v, ok := mine[k]; ok {
+				fns[i][k] = v
+			} else {
+				delete(fns[i], k)
+			}
 		}
 	}
 	if doc["functions"], err = json.Marshal(fns); err != nil {

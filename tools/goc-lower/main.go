@@ -22,11 +22,15 @@ func main() {
 	var err error
 	switch os.Args[1] {
 	case "goabi":
-		if len(os.Args) != 6 {
+		if len(os.Args) != 6 && len(os.Args) != 7 {
 			usage()
 			os.Exit(2)
 		}
-		err = lower.WriteGoABI(os.Args[2], os.Args[3], os.Args[4], os.Args[5], arch)
+		tables := ""
+		if len(os.Args) == 7 {
+			tables = os.Args[6]
+		}
+		err = lower.WriteGoABI(os.Args[2], os.Args[3], os.Args[4], os.Args[5], tables, arch)
 	case "fix-ir":
 		err = lower.FixIR(need(2), arch)
 	case "rename-ir":
@@ -103,7 +107,7 @@ func mustRead(path string) string {
 
 func usage() {
 	io.WriteString(os.Stderr, `goc-lower: real-body helper
-  goabi <in.ll> <out.ll> <thunks.s> <goabi.json>
+  goabi <in.ll> <out.ll> <thunks.s> <goabi.json> [thunks.goc.s]
   fix-ir <file.ll>
   rename-ir <file.ll> <old:new pairs>
   align-asm <file.s>

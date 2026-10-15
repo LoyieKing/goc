@@ -97,6 +97,16 @@ func main() {
 		}
 		metaPath = tmp
 	}
+	if f.Header.Minor >= 3 && os.Getenv("GOC_TABLES_STACKMAPS") != "0" {
+		elfpack.TableStackmaps = map[string][]elfpack.TableStackmap{}
+		for _, sm := range f.Stackmaps {
+			r := elfpack.TableStackmap{ID: sm.ID, InsnOff: uint32(sm.InsnOff)}
+			for _, l := range sm.Locs {
+				r.Locs = append(r.Locs, elfpack.TableStackmapLoc{Type: l.Type, Size: uint16(l.Size), Reg: uint16(l.Reg), Off: int32(l.Off)})
+			}
+			elfpack.TableStackmaps[sm.Func] = append(elfpack.TableStackmaps[sm.Func], r)
+		}
+	}
 	elfpack.Main([]string{"-elf", *in, "-meta", metaPath, "-maps", *maps, "-out-o", *out, "-p", *pkg})
 	if metaPath != *meta {
 		os.Remove(metaPath)

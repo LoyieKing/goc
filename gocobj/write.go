@@ -11,11 +11,12 @@ import (
 // Builder encodes the .goc.* sections. The C++ emitter in goc-llc is the
 // product writer; this one exists for tests and golden files.
 type Builder struct {
-	Header Header
-	Files  []string
-	Funcs  []Func
-	Relocs []Reloc
-	Data   []Data
+	Header    Header
+	Files     []string
+	Funcs     []Func
+	Relocs    []Reloc
+	Stackmaps []Stackmap
+	Data      []Data
 }
 
 // Sections returns the payload of every .goc.* section.
@@ -44,7 +45,7 @@ func (bd *Builder) Sections() map[string][]byte {
 	le.PutUint32(h[20:], uint32(s(bd.Header.Producer)))
 	out[SecHeader] = h
 
-	var files, funcs, relocs, pcv, gcm, data enc
+	var files, funcs, relocs, stackmaps, pcv, gcm, data enc
 	for _, f := range bd.Files {
 		var r enc
 		r.uleb(s(f))
@@ -115,6 +116,20 @@ func (bd *Builder) Sections() map[string][]byte {
 		r.u8(rl.Flags)
 		relocs.record(r.b)
 	}
+	for _, sm := range bd.Stackmaps {
+		var r enc
+		r.uleb(s(sm.Func))
+		r.uleb(sm.InsnOff)
+		r.uleb(sm.ID)
+		r.uleb(uint64(len(sm.Locs)))
+		for _, l := range sm.Locs {
+			r.u8(l.Type)
+			r.uleb(l.Size)
+			r.uleb(l.Reg)
+			r.sleb(l.Off)
+		}
+		stackmaps.record(r.b)
+	}
 	for _, d := range bd.Data {
 		var r enc
 		r.uleb(s(d.Name))
@@ -125,7 +140,7 @@ func (bd *Builder) Sections() map[string][]byte {
 		r.raw(d.Bitmap)
 		data.record(r.b)
 	}
-	for name, e := range map[string]*enc{SecFiles: &files, SecFuncs: &funcs, SecRelocs: &relocs,
+	for name, e := range map[string]*enc{SecFiles: &files, SecFuncs: &funcs, SecRelocs: &relocs, SecStackmaps: &stackmaps,
 		SecPCValue: &pcv, SecGCMaps: &gcm, SecData: &data} {
 		if len(e.b) > 0 {
 			out[name] = e.b

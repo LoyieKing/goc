@@ -4,18 +4,20 @@
 package gocobj
 
 const (
-	Magic      = "GOCOBJ\x00\x00"
-	Major      = 1
-	Minor      = 2
-	HeaderSize = 28
-	SecHeader  = ".goc.header"
-	SecStrtab  = ".goc.strtab"
-	SecFiles   = ".goc.files"
-	SecFuncs   = ".goc.funcs"
-	SecRelocs  = ".goc.relocs"
-	SecPCValue = ".goc.pcvalue"
-	SecGCMaps  = ".goc.gcmaps"
-	SecData    = ".goc.data"
+	Magic        = "GOCOBJ\x00\x00"
+	Major        = 1
+	Minor        = 3
+	HeaderSize   = 28
+	SecHeader    = ".goc.header"
+	SecStrtab    = ".goc.strtab"
+	SecFiles     = ".goc.files"
+	SecFuncs     = ".goc.funcs"
+	SecRelocs    = ".goc.relocs"
+	SecStackmaps = ".goc.stackmaps" // 1.3
+	SecWrappers  = ".goc.wrappers"  // 1.3
+	SecPCValue   = ".goc.pcvalue"
+	SecGCMaps    = ".goc.gcmaps"
+	SecData      = ".goc.data"
 )
 
 // Arch values in the header.
@@ -136,6 +138,39 @@ type Func struct {
 	gcOff       uint64
 }
 
+// Stackmap is one LLVM STACKMAP site (1.3), with locations encoded as in
+// .llvm_stackmaps version 3 (type 1 Register, 2 Direct, 3 Indirect,
+// 4 Constant; reg is a DWARF register number).
+type Stackmap struct {
+	Func    string
+	InsnOff uint64
+	ID      uint64
+	Locs    []StackmapLoc
+}
+
+type StackmapLoc struct {
+	Type uint8
+	Size uint64
+	Reg  uint64
+	Off  int64
+}
+
+// Wrapper is an ABI wrapper (1.3): the function Sym, listed in .goc.funcs
+// with kind 1, takes the FromABI convention and calls Target in ToABI.
+type Wrapper struct {
+	Sym, Target    string
+	FromABI, ToABI uint8 // 0 ABI0, 1 ABIInternal, 2 C (SysV)
+	ArgSpills      []ArgSpill
+	StackPtrArgs   []uint64 // offsets of pointer arguments passed on the stack
+}
+
+// ArgSpill is where the wrapper's morestack path spills a register argument.
+type ArgSpill struct {
+	Reg       string
+	Off, Size uint64
+	Ptr       bool
+}
+
 type Reloc struct {
 	Func   string
 	Offset uint64
@@ -190,12 +225,14 @@ type Symbol struct {
 
 // File is a parsed .gocobj.
 type File struct {
-	Header  Header
-	Files   []string
-	Funcs   []Func
-	Relocs  []Reloc
-	Data    []Data
-	Symbols map[string]*Symbol
+	Header    Header
+	Files     []string
+	Funcs     []Func
+	Relocs    []Reloc
+	Stackmaps []Stackmap // 1.3
+	Wrappers  []Wrapper  // 1.3
+	Data      []Data
+	Symbols   map[string]*Symbol
 	// Text returns a function's machine code (nil if unknown).
 	Text map[string][]byte
 	// ELFRelocs maps "function+offset" to the target of the ELF relocation

@@ -161,6 +161,72 @@ type smapRecord struct {
 	locs    []smapLoc
 }
 
+// TableStackmap is one stack map record taken from a .gocobj's
+// .goc.stackmaps table (docs/gocobj-format.md). A caller that sets
+// TableStackmaps before Main makes elfpack use these records; when the ELF
+// still has .llvm_stackmaps, every record must agree with it.
+type TableStackmap struct {
+	ID      uint64
+	InsnOff uint32
+	Locs    []TableStackmapLoc
+}
+
+type TableStackmapLoc struct {
+	Type uint8
+	Size uint16
+	Reg  uint16
+	Off  int32
+}
+
+// TableStackmaps is keyed by function symbol, records in code order.
+var TableStackmaps map[string][]TableStackmap
+
+func tableRecords() map[string][]smapRecord {
+	out := map[string][]smapRecord{}
+	for name, recs := range TableStackmaps {
+		for _, r := range recs {
+			rec := smapRecord{id: r.ID, insnOff: r.InsnOff}
+			for _, l := range r.Locs {
+				rec.locs = append(rec.locs, smapLoc{typ: l.Type, size: l.Size, reg: l.Reg, off: l.Off})
+			}
+			out[name] = append(out[name], rec)
+		}
+	}
+	return out
+}
+
+// sameRecords reports the first difference between the ELF's and the
+// table's stack maps, or "".
+func sameRecords(elfRecs, tab map[string][]smapRecord) string {
+	for name, er := range elfRecs {
+		if name == "" {
+			continue
+		}
+		tr := tab[name]
+		if len(tr) != len(er) {
+			return fmt.Sprintf("%s: %d records in .llvm_stackmaps, %d in the table", name, len(er), len(tr))
+		}
+		for i := range er {
+			a, b := er[i], tr[i]
+			if a.id != b.id || a.insnOff != b.insnOff || len(a.locs) != len(b.locs) {
+				return fmt.Sprintf("%s record %d: elf id=%#x off=%d locs=%d, table id=%#x off=%d locs=%d",
+					name, i, a.id, a.insnOff, len(a.locs), b.id, b.insnOff, len(b.locs))
+			}
+			for j := range a.locs {
+				if a.locs[j] != b.locs[j] {
+					return fmt.Sprintf("%s record %d loc %d: elf %+v, table %+v", name, i, j, a.locs[j], b.locs[j])
+				}
+			}
+		}
+	}
+	for name := range tab {
+		if _, ok := elfRecs[name]; !ok {
+			return fmt.Sprintf("%s: records in the table, none in .llvm_stackmaps", name)
+		}
+	}
+	return ""
+}
+
 func alignUp8(n int) int { return (n + 7) &^ 7 }
 
 // parseLLVMStackMaps reads the section and attributes records to functions via
@@ -1069,6 +1135,16 @@ func Main(args []string) {
 		defer smapFile.Close()
 	}
 	recsByName := parseLLVMStackMaps(smapFile)
+	if TableStackmaps != nil {
+		tab := tableRecords()
+		if recsByName != nil {
+			if d := sameRecords(recsByName, tab); d != "" {
+				fmt.Fprintf(os.Stderr, "elfpack: FATAL .goc.stackmaps disagrees with .llvm_stackmaps: %s\n", d)
+				os.Exit(1)
+			}
+		}
+		recsByName = tab
+	}
 	if *stackmapElf != "" || len(recsByName) > 0 {
 		n := 0
 		for _, recs := range recsByName {

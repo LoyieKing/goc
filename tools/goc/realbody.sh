@@ -263,7 +263,18 @@ if [[ "$IN" != *.ll && "$OPT_LEVEL" != 0 ]]; then
   cp "$TMP/body.opt.ll" "$LL"
   echo "realbody: O$OPT_LEVEL inlined before stack maps" >&2
 fi
-"$LOWER" goabi "$LL" "$TMP/body.impl.ll" "$TMP/thunks.s" "$GOABI_JSON"
+# goc-llc writes the .goc.* tables of the C functions (body.goc.s) and
+# goc-lower goabi those of the Go ABI thunks (thunks.goc.s); both are
+# appended to the assembly (docs/gocobj-format.md).
+GOC_TABLES=""
+GOC_TABLES_ARGS=()
+if [[ "$GOC_ARCH" != arm64 && "$LLC" == *goc-llc* && "${GOC_GOCOBJ:-1}" == 1 ]]; then
+  GOC_TABLES="$TMP/body.goc.s"
+  GOC_TABLES_ARGS=(-goc-tables "$GOC_TABLES")
+fi
+GOABI_TABLES=()
+[[ -n "$GOC_TABLES" ]] && GOABI_TABLES=("$TMP/thunks.goc.s")
+"$LOWER" goabi "$LL" "$TMP/body.impl.ll" "$TMP/thunks.s" "$GOABI_JSON" "${GOABI_TABLES[@]}"
 cp "$TMP/body.impl.ll" "$LL"
 
 # The MIR, object and assembly must come from the *same* IR. A stackmap pass
@@ -329,12 +340,6 @@ fi
 # goc-llc also writes the .goc.* tables (docs/gocobj-format.md) as assembler
 # text. They are assembled into the same ELF object, which makes it a
 # .gocobj; elfpack ignores those sections (they are not SHF_ALLOC).
-GOC_TABLES=""
-GOC_TABLES_ARGS=()
-if [[ "$GOC_ARCH" != arm64 && "$LLC" == *goc-llc* && "${GOC_GOCOBJ:-1}" == 1 ]]; then
-  GOC_TABLES="$TMP/body.goc.s"
-  GOC_TABLES_ARGS=(-goc-tables "$GOC_TABLES")
-fi
 "$LLC" "${LLC_ARGS[@]}" "${GOC_TABLES_ARGS[@]}" -filetype=asm \
   -o "$TMP/body.s" "$LL"
 
@@ -351,7 +356,7 @@ fi
 # Go thunks are appended to the same assembly and assembled once. That puts
 # both .text contributions in one relocatable object, so the driver does not
 # call ld or ld.lld.
-cat "$TMP/body.s" "$TMP/thunks.s" ${GOC_TABLES:+"$GOC_TABLES"} > "$TMP/body.thunks.s"
+cat "$TMP/body.s" "$TMP/thunks.s" ${GOC_TABLES:+"$GOC_TABLES" "$TMP/thunks.goc.s"} > "$TMP/body.thunks.s"
 "$MC" -filetype=obj -triple="$MC_TRIPLE" \
   -o "$TMP/body.llc.o" "$TMP/body.thunks.s"
 ELF="$TMP/body.llc.o"
