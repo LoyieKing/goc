@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -22,20 +23,31 @@ func FixIR(path, arch string) error {
 		arch = "amd64"
 	}
 	if arch != "arm64" && !strings.Contains(ll, "override-stack-alignment") {
-		if strings.Contains(ll, "!llvm.module.flags = !{") {
-			ll = strings.Replace(ll, "!llvm.module.flags = !{", "!llvm.module.flags = !{!9000, ", 1)
-		} else {
-			ll += "\n!llvm.module.flags = !{!9000}\n"
+		// A metadata id above every one in use (debug info has thousands).
+		id := 9000
+		for _, m := range regexp.MustCompile(`(?m)^!([0-9]+) = `).FindAllStringSubmatch(ll, -1) {
+			if n, _ := strconv.Atoi(m[1]); n >= id {
+				id = n + 1
+			}
 		}
-		ll += "\n!9000 = !{i32 1, !\"override-stack-alignment\", i32 8}\n"
+		md := "!" + strconv.Itoa(id)
+		if strings.Contains(ll, "!llvm.module.flags = !{") {
+			ll = strings.Replace(ll, "!llvm.module.flags = !{", "!llvm.module.flags = !{"+md+", ", 1)
+		} else {
+			ll += "\n!llvm.module.flags = !{" + md + "}\n"
+		}
+		ll += "\n" + md + " = !{i32 1, !\"override-stack-alignment\", i32 8}\n"
 		fmt.Println("realbody: override-stack-alignment=8 (no aligned SSE on the C stack)")
 	}
-	defRE := regexp.MustCompile(`(?m)^(define [^\n]*)\{$`)
+	// Attributes go before the metadata attachments (!dbg !N) that
+	// -gline-tables-only puts on the define line.
+	defRE := regexp.MustCompile(`(?m)^(define [^\n]*?)((?: ![A-Za-z_.][A-Za-z0-9_.]* ![0-9]+)*) \{$`)
 	ll = defRE.ReplaceAllStringFunc(ll, func(s string) string {
 		if strings.Contains(s, `"no-realign-stack"`) {
-			return strings.TrimSuffix(s, "{")
+			return s
 		}
-		return strings.TrimSuffix(s, "{") + `"no-realign-stack" {`
+		m := defRE.FindStringSubmatch(s)
+		return m[1] + ` "no-realign-stack"` + m[2] + " {"
 	})
 	return os.WriteFile(path, []byte(ll), 0o644)
 }
