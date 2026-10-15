@@ -742,6 +742,8 @@ python3 bench/perfgap-charts.py                        # 重画 docs/perf-gap/ch
 
 ## 10. 原始文件
 
+> 原始数据不在源码分支里，放在单独的本地分支 `docs-data`。用 `git worktree add ../goc-data docs-data` 取出后，下面的路径相对 `../goc-data` 不变；也可以 `git checkout docs-data -- docs/perf-gap/data docs/benchmark/data` 放回原处（这两个目录已加入 .gitignore）。
+
 | 文件 | 内容 |
 |---|---|
 | `docs/perf-gap/data/raw/`、`all.json`、`tables.md` | 主时段 12 个构建的原始输出与汇总 |

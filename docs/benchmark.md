@@ -2,6 +2,8 @@
 
 同一台机器，五个引擎，2026-10-09。每节先看图，表是全部数字。原始输出在 [`docs/benchmark/data/raw/`](benchmark/data/raw/)，汇总在 [`docs/benchmark/data/all.json`](benchmark/data/all.json)。机器是 AMD Ryzen 9 7900X（24 个逻辑 CPU，Linux 6.8.0-49-generic）。
 
+> 原始数据不在源码分支里，放在单独的本地分支 `docs-data`。用 `git worktree add ../goc-data docs-data` 取出后，下面的路径相对 `../goc-data` 不变；也可以 `git checkout docs-data -- docs/perf-gap/data docs/benchmark/data` 放回原处（这两个目录已加入 .gitignore）。
+
 浏览器打开 [`docs/benchmark/report.html`](benchmark/report.html) 时图会直接嵌在页里（用的是同名的 SVG）。图里的标题、坐标轴和图例都用英文，正文仍是中文。每张性能图都包含全部五个引擎；Goja 的数字比其他几家大几倍的图用对数轴。
 
 goc 编译两份 QuickJS：QuickJS-ng（goc-ng）和 Fabrice Bellard 的原版 QuickJS（goc-bellard，移植细节见“Bellard QuickJS 移植”一节）。每个 goc 构建都和用同一份源码编译的原生构建对照：goc-ng 对 native ng，goc-bellard 对 native Bellard。

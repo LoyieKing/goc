@@ -53,3 +53,7 @@ cmd/elfpack
 # Python bytecode (scripts import tools/goc helpers)
 __pycache__/
 *.pyc
+
+# Raw measurements live on the local docs-data branch (git worktree add ../goc-data docs-data).
+/docs/perf-gap/data/
+/docs/benchmark/data/

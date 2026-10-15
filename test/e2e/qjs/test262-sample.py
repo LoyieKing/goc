@@ -5,7 +5,7 @@ Reconstructed from the earlier docs/benchmark/data/test262-meta.json: with
 tc39/test262 7ab7fafa0003f73fc85c1b95d88094d33f7eb8bd every per-directory
 eligible count matches, and the evenly spaced pick below contains every
 failing file of that report for all four engines. The current counts live in
-docs/benchmark/data/all.json (test262.dirs).
+docs/benchmark/data/all.json (test262.dirs; on the docs-data branch).
 
 Eligibility: skip test/language/{import,export,module-code}; skip flags
 module/async/raw/CanBlockIsFalse/CanBlockIsTrue; skip features Atomics,
