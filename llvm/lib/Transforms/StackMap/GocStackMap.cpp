@@ -258,8 +258,9 @@ AllocaInst *frameAlloca(Value *Address, int64_t &Offset,
 // can tell the runtime that those words hold (possibly stack) pointers.
 bool outgoingPointerWords(const CallBase &CB, const DataLayout &DL,
                           SmallVectorImpl<int64_t> &Offsets) {
-  // arm64: goc-llc refuses calls that pass anything on the stack (0(RSP)
-  // is the LR slot Go unwinds through), so no outgoing word holds a pointer.
+  // arm64: stack arguments sit 16 above SP (goc-llc AArch64Frame) and are
+  // not described here yet. TODO: a stack pointer passed on the stack and
+  // reloaded by the callee after the stack moved is not adjusted.
   if (gocArchArm64())
     return true;
   unsigned GPR = 0, SSE = 0;
