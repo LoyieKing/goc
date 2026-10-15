@@ -92,6 +92,7 @@
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
+#include "Goc/AArch64Frame.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/InlineAsm.h"
@@ -1211,7 +1212,13 @@ int main(int argc, char **argv) {
     errs() << "goc-llc: addISelPasses failed\n";
     return 1;
   }
+  bool GocA64 = Triple(M->getTargetTriple()).getArch() == Triple::aarch64;
+  // arm64: reserve 0(RSP) for the LR copy Go unwinds through (AArch64Frame.h).
+  if (GocA64)
+    PM.add(goc::createA64CallFramePass());
   PassConfig->addMachinePasses();
+  if (GocA64)
+    PM.add(goc::createA64SaveLRPass());
   PassConfig->setInitialized();
   if (TargetPassConfig::willCompleteCodeGenPipeline()) {
     PM.add(new GocStackmapPlacement());

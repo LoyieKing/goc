@@ -688,7 +688,8 @@ def emit_arm64_register_argument(ty, source, dest):
 def emit_arm64_thunks(goabi):
     """AAPCS64 thunk. BL clobbers LR, so X29/X30 are saved even if outgoing is 0.
 
-    After `stp x29, x30, [sp, #-16]!` / `mov x29, sp`, x29 is entry-16 and
+    The frame is 32 bytes: the LR copy Go unwinds through at [sp] and the
+    X29/X30 record at [sp, #16]. After `add x29, sp, #16`, x29 is entry-16 and
     the first Go stack argument is at entry+8, i.e. [x29, #24+offset].
     Outgoing stack arguments are [sp, #offset] below the reserve. Stack
     stores run before register moves so the 9th Go argument (x8) is not
@@ -701,8 +702,10 @@ def emit_arm64_thunks(goabi):
                   "\t.type\t%s, %%function" % d["name"],
                   "\t.balign\t4",
                   "%s:" % d["name"],
-                  "\tstp\tx29, x30, [sp, #-16]!",
-                  "\tmov\tx29, sp"]
+                  "\tsub\tsp, sp, #32",
+                  "\tstp\tx29, x30, [sp, #16]",
+                  "\tadd\tx29, sp, #16",
+                  "\tstr\tx30, [sp]"]
         reserve = d["_plan"]["outgoing"]
         if reserve > 0:
             lines.append("\tsub\tsp, sp, #%d" % reserve)

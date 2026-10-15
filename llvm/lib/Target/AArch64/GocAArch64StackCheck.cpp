@@ -147,18 +147,21 @@ struct AArch64StackCheck : goc::StackCheckTarget {
       SP.push_back({BuildMI(&Stub, DL, N.op("STPXpre"), Sp)
                         .addReg(R(Pr[0])).addReg(R(Pr[1])).addReg(Sp).addImm(-2),
                     Delta += 16});
-    SP.push_back({BuildMI(&Stub, DL, N.op("SUBXri"), Sp).addReg(Sp).addImm(128).addImm(0),
-                  Delta += 128});
+    // q0-q7 above a 16-byte LR area: the unwinder reads this frame's
+    // return address at 0(RSP) (AArch64Frame.h). x30 is still the caller's.
+    SP.push_back({BuildMI(&Stub, DL, N.op("SUBXri"), Sp).addReg(Sp).addImm(144).addImm(0),
+                  Delta += 144});
+    BuildMI(&Stub, DL, N.op("STRXui")).addReg(N.x(30)).addReg(Sp).addImm(0);
     for (unsigned I = 0; I < 8; I += 2)
-      BuildMI(&Stub, DL, N.op("STPQi")).addReg(N.q(I)).addReg(N.q(I + 1)).addReg(Sp).addImm(I);
+      BuildMI(&Stub, DL, N.op("STPQi")).addReg(N.q(I)).addReg(N.q(I + 1)).addReg(Sp).addImm(I + 1);
     // mov x3, x30 = orr x3, xzr, x30
     BuildMI(&Stub, DL, N.op("ORRXrs"), N.x(3)).addReg(XZR).addReg(N.x(30)).addImm(0);
     MachineInstr *Call = BuildMI(&Stub, DL, N.op("BL")).addExternalSymbol(P.Profile->Morestack);
     for (int I = 6; I >= 0; I -= 2)
       BuildMI(&Stub, DL, N.op("LDPQi")).addReg(N.q(I), RegState::Define)
-          .addReg(N.q(I + 1), RegState::Define).addReg(Sp).addImm(I);
-    SP.push_back({BuildMI(&Stub, DL, N.op("ADDXri"), Sp).addReg(Sp).addImm(128).addImm(0),
-                  Delta -= 128});
+          .addReg(N.q(I + 1), RegState::Define).addReg(Sp).addImm(I + 1);
+    SP.push_back({BuildMI(&Stub, DL, N.op("ADDXri"), Sp).addReg(Sp).addImm(144).addImm(0),
+                  Delta -= 144});
     for (int I = 4; I >= 0; --I)
       // ldp xA, xB, [sp], #16
       SP.push_back({BuildMI(&Stub, DL, N.op("LDPXpost"), Sp)

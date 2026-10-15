@@ -1169,10 +1169,12 @@ func emitArm64Thunks(goabi []llFunc, labels bool) string {
 			fmt.Sprintf("\t.type\t%s, %%function", d.Name),
 			"\t.balign\t4",
 			d.Name+":",
-			"\tstp\tx29, x30, [sp, #-16]!",
+			// 32-byte frame: Go's unwinder reads this frame's return
+			// address at 0(RSP); the AAPCS frame record sits above it.
+			"\tsub\tsp, sp, #32",
 		)
 		mark("p", ti)
-		lines = append(lines, "\tmov\tx29, sp")
+		lines = append(lines, "\tstp\tx29, x30, [sp, #16]", "\tadd\tx29, sp, #16", "\tstr\tx30, [sp]")
 		if d.plan.Outgoing > 0 {
 			lines = append(lines, fmt.Sprintf("\tsub\tsp, sp, #%d", d.plan.Outgoing))
 			mark("a", ti)
@@ -1466,12 +1468,14 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		mask      uint64
 	}
 	// The thunk frame: x86-64 pushes RBP (8 bytes, BP = the saved RBP);
-	// arm64 saves X29/X30 with one pre-indexed STP (16 bytes). Outgoing
-	// stack arguments sit below that in both.
+	// arm64 allocates 32 bytes: the LR copy at 0(RSP) Go unwinds through,
+	// and the X29/X30 record at +16 (X29 points at it). Outgoing stack
+	// arguments sit below that in both. After "mov sp, x29" an arm64
+	// thunk is 16 below its entry SP.
 	a64 := a.arch == "arm64"
-	save := 8
+	save, restored := 8, 8
 	if a64 {
-		save = 16
+		save, restored = 32, 16
 	}
 	ts := make([]thunk, len(goabi))
 	for i, d := range goabi {
@@ -1486,7 +1490,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 				// the entry SP minus 8, i.e. 8 above the saved X29.
 				o := d.Outgoing - p.Location.Off
 				if a64 {
-					o += 8
+					o += save - 8
 				}
 				slots = append(slots, o)
 			}
@@ -1523,7 +1527,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		if d.Outgoing > 0 {
 			at("a", save+d.Outgoing)
 		}
-		at("m", save)
+		at("m", restored)
 		at("o", 0)
 		end(l)
 	}
