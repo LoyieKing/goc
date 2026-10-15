@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Prove the linux/arm64 backend links. This does not execute the ELF:
-# qemu-aarch64 is not required and is not invoked.
+# Prove the linux/arm64 backend links, and run the ELFs under qemu-aarch64
+# when it is installed (ARM64_REQUIRE_QEMU=1 makes a missing qemu a failure).
 #
 #   1. leaf add, linked from a Go caller
 #   2. callit → leaf, the call reloc resolves
@@ -17,8 +17,22 @@ export GOC_ROOT="$ROOT"
 GOC="$ROOT/cmd/goc"
 
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+[[ -n "${ARM64_KEEP:-}" ]] || trap 'rm -rf "$TMP"' EXIT; echo "tmp=$TMP"
 pass() { echo "PASS $*"; }
+QEMU="$(command -v qemu-aarch64 || command -v qemu-aarch64-static || true)"
+if [[ -z "$QEMU" && -n "${ARM64_REQUIRE_QEMU:-}" ]]; then
+  echo "FAIL qemu-aarch64 not found" >&2; exit 1
+fi
+RAN=0
+# run_arm64 ELF EXPECTED: run under qemu, compare stdout+stderr.
+run_arm64() {
+  [[ -n "$QEMU" ]] || return 0
+  local got
+  got="$(timeout 60 "$QEMU" "$1" 2>&1)" || { echo "$got" >&2; fail "$1 exited non-zero under qemu"; }
+  [[ "$got" == "$2" ]] || { printf 'want:\n%s\ngot:\n%s\n' "$2" "$got" >&2; fail "$1 output under qemu"; }
+  RAN=$((RAN + 1))
+  echo "qemu: $(basename "$1") ok"
+}
 fail() { echo "FAIL $*" >&2; exit 1; }
 
 # A caller's environment must not leak into a case.
@@ -155,6 +169,7 @@ if "adrp" not in low and "adr " not in low:
     sys.exit("aglob.impl disassembly has no ADRP:\n" + aglob[:800])
 print("callit.impl names add; aglob.impl has adrp")
 PY
+run_arm64 "$TMP/leaf.elf" "$(printf '42\n4\n0x')$(GOARCH=arm64 go tool nm "$TMP/leaf.elf" | awk '$3=="main.glob"{sub(/^0+/,"",$1); print $1}')"
 pass "arm64 leaf linked; callit→add resolved; aglob has ADRP"
 
 echo "== arm64 morestack prologue =="
@@ -187,6 +202,7 @@ PY
 ( cd "$ROOT" && go run ./tools/goc-objdump verify "$TMP/ms.gocobj" ) || fail "arm64 .gocobj does not verify"
 ( cd "$ROOT" && go run ./tools/goc-objdump dump "$TMP/ms.gocobj" ) | rg -q 'ARM64_CALL26 runtime\.morestack_noctxt' \
   || fail "tables list no morestack call"
+run_arm64 "$TMP/ms.elf" "$(printf '42\n4\n0x')$(GOARCH=arm64 go tool nm "$TMP/ms.elf" | awk '$3=="main.glob"{sub(/^0+/,"",$1); print $1}')"
 pass "arm64 morestack prologue reads g and compares"
 
 echo "== arm64 goabi 9th integer argument =="
@@ -223,6 +239,7 @@ link_arm64 "$TMP/sum9.go" "$TMP/sum9.elf" "$TMP/sum9.goobj"
 # turn that into a false failure.
 GOARCH=arm64 go tool nm "$TMP/sum9.elf" >"$TMP/sum9.nm"
 rg -q 'main\.sum9$' "$TMP/sum9.nm" || fail "linked ELF has no main.sum9"
+run_arm64 "$TMP/sum9.elf" "45"
 pass "arm64 goabi thunk stores x8, assembled, linked"
 
 echo "== refuse an unported amd64 host =="
@@ -255,4 +272,4 @@ if ! rg -qi 'r28|x28' "$TMP/uptr.dis"; then
 fi
 pass "runtime/uptr arm64 reads x28"
 
-echo "check_arm64: all cases passed (not executed under qemu)"
+echo "check_arm64: all cases passed ($RAN ELFs run under qemu)"
