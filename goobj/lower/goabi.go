@@ -1495,6 +1495,11 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 				slots = append(slots, o)
 			}
 		}
+		if a64 {
+			// The saved X29 (entry SP - 16) is a raw address into the Go
+			// caller's frame; a stack copy must adjust it.
+			slots = append(slots, 8)
+		}
 		sort.Ints(slots)
 		// A thunk is entered with the Go ABI; SysV pointer registers
 		// describe C entries only.

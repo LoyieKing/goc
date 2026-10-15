@@ -103,7 +103,9 @@ struct FuncInfo {
   unsigned File = 0, StartLine = 0;
   std::vector<LineRow> Lines;
   std::vector<InlNode> Inl;
-  bool A64 = false; // AArch64: BL relocations at the instruction, no stack-map roots
+  bool A64 = false; // AArch64: BL relocations at the instruction
+  int64_t A64FPSave = 0; // AArch64: entry-SP offset of the saved X29 (X29 points there)
+  bool A64HasFP = false;
   std::string Name, End;
   uint64_t FrameSize;
   uint64_t Flags = 0;
@@ -185,6 +187,9 @@ static std::vector<SptrTarget> sptrTargets(const Function &F) {
 // Which SysV integer argument registers (rdi rsi rdx rcx r8 r9) carry a
 // pointer on entry. Returns false for a signature this model does not cover.
 static bool sysvPointerRegs(const Function &F, uint64_t &Mask) {
+  // AAPCS64 has x0-x7; an i128 takes an even-numbered pair.
+  bool A64 = Triple(F.getParent()->getTargetTriple()).isAArch64();
+  unsigned NRegs = A64 ? 8 : 6;
   unsigned Used = 0;
   Mask = 0;
   for (const Argument &A : F.args()) {
@@ -198,13 +203,15 @@ static bool sysvPointerRegs(const Function &F, uint64_t &Mask) {
     if (T->isPointerTy() || (T->isIntegerTy() && T->getIntegerBitWidth() <= 64 &&
                              isPowerOf2_32(T->getIntegerBitWidth()) && T->getIntegerBitWidth() != 2 &&
                              T->getIntegerBitWidth() != 4)) {
-      if (Used < 6) {
+      if (Used < NRegs) {
         if (T->isPointerTy())
           Mask |= 1u << Used;
         ++Used;
       }
     } else if (T->isIntegerTy(128)) {
-      if (Used <= 4)
+      if (A64 && Used % 2)
+        ++Used;
+      if (Used + 2 <= NRegs)
         Used += 2;
     } else if (T->isFloatTy() || T->isDoubleTy()) {
       // SSE registers; do not affect the integer sequence
@@ -584,7 +591,9 @@ struct GocObjTables : MachineFunctionPass {
       const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
       for (const CalleeSavedInfo &CS : MFI.getCalleeSavedInfo())
         if (StringRef(TRI.getName(CS.getReg())) == "FP") {
-          int64_t Off = -MFI.getObjectOffset(CS.getFrameIdx()) - 8;
+          FI.A64FPSave = MFI.getObjectOffset(CS.getFrameIdx());
+          FI.A64HasFP = true;
+          int64_t Off = -FI.A64FPSave - 8;
           if (Off >= 8 && Off % 8 == 0 &&
               std::find(FI.SptrSlots.begin(), FI.SptrSlots.end(), (uint64_t)Off) == FI.SptrSlots.end())
             FI.SptrSlots.push_back(Off);
@@ -753,8 +762,17 @@ bool GocObjTables::doFinalization(Module &M) {
             Set(B, 8 * (int64_t)S.WordBelowVarp);
       }
       for (const SMLoc &Lc : C.Roots) {
-        if (F.A64)
-          break; // no stack-map roots on arm64
+        if (F.A64) {
+          // Bytes below varp (entry SP - 8). X29 = entry SP + A64FPSave
+          // (the frame record), SP = entry SP - FrameSize.
+          if (Lc.Type == 2 && Lc.Reg == 29 && F.A64HasFP && Lc.Size == 8)
+            Set(B, -(F.A64FPSave + (int64_t)Lc.Off) - 8);
+          else if (Lc.Type == 2 && Lc.Reg == 31 && Lc.Size == 8)
+            Set(B, (int64_t)F.FrameSize - 8 - Lc.Off);
+          else if (Lc.Type == 4 && Lc.Off >= 0 && Lc.Off % 8 == 0)
+            Set(B, (int64_t)F.FrameSize - 8 - Lc.Off);
+          continue;
+        }
         if (Lc.Type == 2 && Lc.Reg == 6 && Lc.Off < 0 && Lc.Size == 8)
           Set(B, -(int64_t)Lc.Off);
         else if (Lc.Type == 4 && Lc.Off >= 0 && Lc.Off % 8 == 0)

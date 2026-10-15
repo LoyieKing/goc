@@ -241,7 +241,7 @@ fi
 
 # Record the stack-map roots on the IR goc-llc compiles: the tables take
 # their locations from the STACKMAP instructions of this very compile.
-if [[ "$GOC_ARCH" != arm64 && "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
+if [[ "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
   if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
     SMPASS="$GOC_STACKMAP"
   elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then

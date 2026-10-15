@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# test/stress built for linux/arm64 and run under qemu-aarch64. Not in
-# ci-test yet: arm64 has no stack maps for spilled frame addresses, so the
-# values read back after a stack copy are still wrong (see docs/todo.md).
+# test/stress built for linux/arm64 and run under qemu-aarch64: C recursion
+# in the three stack-check tiers while GCs grow and shrink the stacks.
+# Skipped when qemu-aarch64 is not installed.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
@@ -21,4 +21,5 @@ trap 'rm -f "$STUB"' EXIT
   >"$OUT/go-build.log" 2>&1 || { tail -20 "$OUT/go-build.log" >&2; exit 1; }
 timeout 600 "$QEMU" "$OUT/stress_test" | tee "$OUT/run.log"
 grep -q '^PASS stress' "$OUT/run.log"
+GOMAXPROCS=1 timeout 600 "$QEMU" "$OUT/stress_test" | grep -q '^PASS stress'
 echo "PASS test-stress-arm64"

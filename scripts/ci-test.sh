@@ -22,6 +22,7 @@ echo "=== lines ==="
 
 echo "=== arm64 ==="
 ./test/arm64/check_arm64.sh
+./scripts/test-stress-arm64.sh
 
 echo "=== gocobj ==="
 (cd "$(dirname "$0")/.." && go test ./gocobj/ && go run ./tools/goc-objdump verify test/gocobj/v1.0/valid.gocobj && go test ./goobj/lower/ ./tools/gocobj2goobj/ && go run ./tools/gocobj-diff build/p28-out/p28_real.goobj build/p28-out/p28_real.goobj)

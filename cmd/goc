@@ -372,8 +372,8 @@ cmd_build() {
     # hoisted g value lives in a callee-saved register, not a colored spill.
     # Integer fragments stay in registers; the copier copies those spills
     # verbatim.
-    # amd64 records sptr maps; arm64 has no frame-address repair.
-    if [[ "$GOC_ARCH" == amd64 ]]; then
+    # Both arches record sptr maps and repair frame addresses (goc-llc).
+    if [[ "$GOC_ARCH" == amd64 || "$GOC_ARCH" == arm64 ]]; then
       local SMPASS="${GOC_STACKMAP:-}"
       if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
         SMPASS="$ROOT/passes/libGocPasses.so"

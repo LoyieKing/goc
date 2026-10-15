@@ -140,7 +140,10 @@ struct AArch64StackCheck : goc::StackCheckTarget {
     Register Sp = N.reg("SP"), XZR = N.reg("XZR");
     DebugLoc DL;
     int64_t Delta = 0;
-    static const unsigned Pairs[5][2] = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {8, 9}};
+    // x0-x9 first (stubSlots counts words from the top), then the AAPCS
+    // callee-saved x19-x28: Go's newstack/gogo preserve none of them.
+    static const unsigned Pairs[10][2] = {{0, 1},   {2, 3},   {4, 5},   {6, 7},   {8, 9},
+                                          {19, 20}, {21, 22}, {23, 24}, {25, 26}, {27, 28}};
     auto R = [&](unsigned I) { return N.x(I); };
     for (const auto &Pr : Pairs)
       // stp xA, xB, [sp, #-16]!
@@ -149,20 +152,27 @@ struct AArch64StackCheck : goc::StackCheckTarget {
                     Delta += 16});
     // q0-q7 above a 16-byte LR area: the unwinder reads this frame's
     // return address at 0(RSP) (AArch64Frame.h). x30 is still the caller's.
-    SP.push_back({BuildMI(&Stub, DL, N.op("SUBXri"), Sp).addReg(Sp).addImm(144).addImm(0),
-                  Delta += 144});
+    // [sp] LR, [16,144) q0-q7, [144,208) d8-d15 (callee-saved halves).
+    SP.push_back({BuildMI(&Stub, DL, N.op("SUBXri"), Sp).addReg(Sp).addImm(208).addImm(0),
+                  Delta += 208});
     BuildMI(&Stub, DL, N.op("STRXui")).addReg(N.x(30)).addReg(Sp).addImm(0);
     for (unsigned I = 0; I < 8; I += 2)
       BuildMI(&Stub, DL, N.op("STPQi")).addReg(N.q(I)).addReg(N.q(I + 1)).addReg(Sp).addImm(I + 1);
+    for (unsigned I = 8; I < 16; I += 2) // stp dI, dI+1, [sp, #144+8*(I-8)] (scaled by 8)
+      BuildMI(&Stub, DL, N.op("STPDi")).addReg(N.reg("D" + std::to_string(I)))
+          .addReg(N.reg("D" + std::to_string(I + 1))).addReg(Sp).addImm(18 + (I - 8));
     // mov x3, x30 = orr x3, xzr, x30
     BuildMI(&Stub, DL, N.op("ORRXrs"), N.x(3)).addReg(XZR).addReg(N.x(30)).addImm(0);
     MachineInstr *Call = BuildMI(&Stub, DL, N.op("BL")).addExternalSymbol(P.Profile->Morestack);
     for (int I = 6; I >= 0; I -= 2)
       BuildMI(&Stub, DL, N.op("LDPQi")).addReg(N.q(I), RegState::Define)
           .addReg(N.q(I + 1), RegState::Define).addReg(Sp).addImm(I + 1);
-    SP.push_back({BuildMI(&Stub, DL, N.op("ADDXri"), Sp).addReg(Sp).addImm(144).addImm(0),
-                  Delta -= 144});
-    for (int I = 4; I >= 0; --I)
+    for (unsigned I = 8; I < 16; I += 2)
+      BuildMI(&Stub, DL, N.op("LDPDi")).addReg(N.reg("D" + std::to_string(I)), RegState::Define)
+          .addReg(N.reg("D" + std::to_string(I + 1)), RegState::Define).addReg(Sp).addImm(18 + (I - 8));
+    SP.push_back({BuildMI(&Stub, DL, N.op("ADDXri"), Sp).addReg(Sp).addImm(208).addImm(0),
+                  Delta -= 208});
+    for (int I = 9; I >= 0; --I)
       // ldp xA, xB, [sp], #16
       SP.push_back({BuildMI(&Stub, DL, N.op("LDPXpost"), Sp)
                         .addReg(R(Pairs[I][0]), RegState::Define)
@@ -175,9 +185,14 @@ struct AArch64StackCheck : goc::StackCheckTarget {
   }
 
   std::vector<goc::StubSlot> stubSlots(const goc::CheckPlan &) const override {
-    // No pointer map at the morestack call, as on main: arm64 records no
-    // stack maps yet.
-    return {};
+    // The first STP (x0, x1) lands at entry SP - 16: x0 is word 1 below
+    // varp (entry SP - 8) and x1 is varp itself, which copystack adjusts on
+    // its own ("saved bp"). Pair k (x2k, x2k+1) is words 2k+1 and 2k.
+    std::vector<goc::StubSlot> S;
+    for (unsigned I = 0; I < 8; ++I)
+      if (I != 1)
+        S.push_back({I, I % 2 == 0 ? I + 1 : I - 1});
+    return S;
   }
 
   void emitTrap(MachineFunction &MF, MachineBasicBlock &MBB) const override {
