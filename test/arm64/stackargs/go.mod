@@ -1,0 +1,3 @@
+module goc.local/stackargs-test
+
+go 1.24

@@ -1217,8 +1217,10 @@ int main(int argc, char **argv) {
   if (GocA64)
     PM.add(goc::createA64CallFramePass());
   PassConfig->addMachinePasses();
-  if (GocA64)
+  if (GocA64) {
+    PM.add(goc::createA64FrameAddrFixPass());
     PM.add(goc::createA64SaveLRPass());
+  }
   PassConfig->setInitialized();
   if (TargetPassConfig::willCompleteCodeGenPipeline()) {
     PM.add(new GocStackmapPlacement());

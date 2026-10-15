@@ -291,7 +291,10 @@ cmd_build() {
   if [[ "$GOC_ARCH" == arm64 ]]; then
     # IR datalayout must be aarch64. -ffixed-x28 matches llc's reservation
     # of g; the in-tree clang accepts it and records +reserve-x28.
-    CLANG_ARGS+=(-target aarch64-unknown-linux-gnu -ffixed-x28)
+    CLANG_ARGS+=(-target aarch64-unknown-linux-gnu -ffixed-x28 -fno-pic)
+    # -fno-pic: declarations are dso_local, so llc reaches them with ADRP
+    # pairs, not GOT loads. Debian's cross headers when present.
+    [[ -d /usr/aarch64-linux-gnu/include ]] && CLANG_ARGS+=(-isystem /usr/aarch64-linux-gnu/include)
   fi
   if ! "$CLANG" "${CLANG_ARGS[@]}" "${EXTRA[@]}" -o "$TMP/a.ll" "$SRC"; then
     echo "goc build: Clang Sema/frontend failed for $SRC" >&2

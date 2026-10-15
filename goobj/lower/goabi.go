@@ -933,6 +933,20 @@ func arm64FloatName(reg, ty string) string {
 	return "d" + n
 }
 
+// a64LRArea is the word pair at 0(RSP) below an arm64 call's stack
+// arguments: the caller's LR copy Go unwinds through, and a scratch word.
+// goc-llc places C stack arguments and reads incoming ones 16 bytes up.
+const a64LRArea = 16
+
+// outArea is the outgoing area of a thunk: the C stack arguments, plus the
+// LR area on arm64 when there are any (with none, the frame's own 0(RSP)).
+func outArea(a64 bool, outgoing int) int {
+	if a64 && outgoing > 0 {
+		return outgoing + a64LRArea
+	}
+	return outgoing
+}
+
 func arm64Mem(base string, offset int) string { return fmt.Sprintf("[%s, #%d]", base, offset) }
 
 type a64gpr struct {
@@ -1176,8 +1190,11 @@ func emitArm64Thunks(goabi []llFunc, labels bool) string {
 		mark("p", ti)
 		lines = append(lines, "\tstp\tx29, x30, [sp, #16]", "\tadd\tx29, sp, #16", "\tstr\tx30, [sp]")
 		if d.plan.Outgoing > 0 {
-			lines = append(lines, fmt.Sprintf("\tsub\tsp, sp, #%d", d.plan.Outgoing))
+			// The callee's stack arguments start 16 above SP; 0(RSP) is
+			// again the LR copy Go unwinds through (see goc-llc AArch64Frame).
+			lines = append(lines, fmt.Sprintf("\tsub\tsp, sp, #%d", outArea(true, d.plan.Outgoing)))
 			mark("a", ti)
+			lines = append(lines, "\tstr\tx30, [sp]")
 		}
 		var regMoves []a64gpr
 		var floatMoves []a64fpr
@@ -1187,7 +1204,7 @@ func emitArm64Thunks(goabi []llFunc, labels bool) string {
 			goLoc := arg.Location
 			sysvLoc := d.plan.ABI.SysV.Params[i].Location
 			if sysvLoc.Kind == "stack" {
-				lines = append(lines, emitArm64StackArgument(ty, goLoc, sysvLoc.Off)...)
+				lines = append(lines, emitArm64StackArgument(ty, goLoc, sysvLoc.Off+a64LRArea)...)
 				continue
 			}
 			bank, size, _ := mustScalar(ty)
@@ -1530,7 +1547,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		fmt.Fprintf(&b, "\t.sleb128 0\n")
 		at("p", save)
 		if d.Outgoing > 0 {
-			at("a", save+d.Outgoing)
+			at("a", save+outArea(a64, d.Outgoing))
 		}
 		at("m", restored)
 		at("o", 0)
@@ -1545,7 +1562,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		}
 		nargs, nlocals := t.area/8, d.Outgoing/8
 		if a64 {
-			nlocals = (d.Outgoing + save - 8) / 8 // varp = entry SP - 8
+			nlocals = (outArea(a64, d.Outgoing) + save - 8) / 8 // varp = entry SP - 8
 		}
 		args := make([]byte, (nargs+7)/8)
 		for _, o := range t.stackPtrs {
@@ -1584,7 +1601,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		l := begin()
 		uleb(ref(d.Name))
 		uleb(fmt.Sprintf(".Lgocw_e%d-%s", i, d.Name))
-		uleb(save + d.Outgoing) // frame
+		uleb(save + outArea(a64, d.Outgoing)) // frame
 		uleb(t.area)            // arg_size
 		u8(1)                   // ABIInternal
 		u8(1)                   // kind: ABI wrapper

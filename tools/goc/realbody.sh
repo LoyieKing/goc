@@ -161,7 +161,10 @@ else
   fi
   TARGET_ARGS=()
   if [[ "$GOC_ARCH" == arm64 ]]; then
-    TARGET_ARGS=(-target aarch64-unknown-linux-gnu -ffixed-x28)
+    TARGET_ARGS=(-target aarch64-unknown-linux-gnu -ffixed-x28 -fno-pic)
+    # -fno-pic: declarations are dso_local, so llc reaches them with ADRP
+    # pairs, not GOT loads. Debian's cross headers when present.
+    [[ -d /usr/aarch64-linux-gnu/include ]] && TARGET_ARGS+=(-isystem /usr/aarch64-linux-gnu/include)
   fi
   # -gline-tables-only: the FILE/LINE/INL_INDEX rows and the inline tree.
   "$CLANG" "${NATIVE_DEFS[@]}" "${TARGET_ARGS[@]}" -mno-red-zone -fno-stack-protector \
@@ -274,8 +277,13 @@ fi
 if [[ "$GOC_ARCH" == arm64 ]]; then
   # No -march=x86-64, no -no-x86-call-frame-opt, no -reserve-goc-r14.
   # +reserve-x28 keeps g live across the body. AArch64 has no red zone.
-  LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic
+  # Jump tables stay 4-byte: goc-llc inserts code after the compression
+  # pass sized the entries (LR copy, frame-address repair, stack check).
+  # Static model: extern data is reached with ADRP+ADD/LDR (PC-relative,
+  # also fine in a PIE), not through a GOT pair that llc may split.
+  LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=static
             -mtriple=aarch64-unknown-linux-gnu -mattr=+reserve-x28
+            -aarch64-enable-compress-jump-tables=false
             -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
             -enable-tail-merge=false
             -tail-dup-pred-size=1000 -tail-dup-succ-size=1000)

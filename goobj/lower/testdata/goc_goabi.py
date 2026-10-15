@@ -691,7 +691,7 @@ def emit_arm64_thunks(goabi):
     The frame is 32 bytes: the LR copy Go unwinds through at [sp] and the
     X29/X30 record at [sp, #16]. After `add x29, sp, #16`, x29 is entry-16 and
     the first Go stack argument is at entry+8, i.e. [x29, #24+offset].
-    Outgoing stack arguments are [sp, #offset] below the reserve. Stack
+    Outgoing stack arguments are [sp, #16+offset]: 0(RSP) is the LR copy. Stack
     stores run before register moves so the 9th Go argument (x8) is not
     clobbered on its way to the AAPCS stack.
     """
@@ -708,7 +708,9 @@ def emit_arm64_thunks(goabi):
                   "\tstr\tx30, [sp]"]
         reserve = d["_plan"]["outgoing"]
         if reserve > 0:
-            lines.append("\tsub\tsp, sp, #%d" % reserve)
+            # 16-byte LR area below the callee's stack arguments.
+            lines.append("\tsub\tsp, sp, #%d" % (reserve + 16))
+            lines.append("\tstr\tx30, [sp]")
         plan = d["_plan"]
         reg_moves = []
         float_moves = []
@@ -719,7 +721,7 @@ def emit_arm64_thunks(goabi):
             go_loc = arg["location"]
             sysv_loc = plan["abi"]["sysv"]["params"][i]["location"]
             if sysv_loc["kind"] == "stack":
-                lines += emit_arm64_stack_argument(ty, go_loc, sysv_loc["offset"])
+                lines += emit_arm64_stack_argument(ty, go_loc, sysv_loc["offset"] + 16)
                 continue
             bank, size, _ = scalar(ty)
             if go_loc["kind"] == "stack":
