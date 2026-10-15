@@ -37,7 +37,7 @@ func (bd *Builder) Sections() map[string][]byte {
 	copy(h, Magic)
 	le := binary.LittleEndian
 	le.PutUint16(h[8:], Major)
-	le.PutUint16(h[10:], Minor)
+	le.PutUint16(h[10:], bd.Header.Minor)
 	h[12] = bd.Header.Arch
 	h[13] = bd.Header.Flags
 	le.PutUint32(h[16:], uint32(s(bd.Header.Profile)))
@@ -93,6 +93,9 @@ func (bd *Builder) Sections() map[string][]byte {
 		r.uleb(pcvOff)
 		r.uleb(gcOff)
 		r.uleb(0)
+		if bd.Header.Minor >= 1 {
+			r.uleb(fn.SysvPtrRegs)
+		}
 		funcs.record(r.b)
 	}
 	for _, rl := range bd.Relocs {

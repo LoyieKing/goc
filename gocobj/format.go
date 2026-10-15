@@ -40,6 +40,9 @@ const (
 	FuncNosplit
 	FuncHasFramePointer
 	FuncUnsafeEntry
+	FuncInternal       // 1.1: internal linkage in the C source
+	FuncHasSptr        // 1.1: the IR carries an sptr color
+	FuncSysvUnmodelled // 1.1: SysvPtrRegs is not valid for this signature
 )
 
 // RelocKind is the Go-neutral relocation kind.
@@ -115,20 +118,21 @@ type Header struct {
 }
 
 type Func struct {
-	Name      string
-	TextSize  uint64
-	FrameSize uint64
-	ArgSize   uint64
-	ABI       uint8
-	Kind      uint8
-	Flags     uint64
-	FuncID    uint8
-	File      uint64
-	StartLine uint64
-	PCValue   []PCTable // decoded from the pcv record (nil if none)
-	GC        *GCMap    // decoded from the gc record (nil if none)
-	pcvOff    uint64
-	gcOff     uint64
+	Name        string
+	TextSize    uint64
+	FrameSize   uint64
+	ArgSize     uint64
+	ABI         uint8
+	Kind        uint8
+	Flags       uint64
+	FuncID      uint8
+	File        uint64
+	StartLine   uint64
+	SysvPtrRegs uint64    // 1.1: bit i = SysV integer argument register i holds a pointer
+	PCValue     []PCTable // decoded from the pcv record (nil if none)
+	GC          *GCMap    // decoded from the gc record (nil if none)
+	pcvOff      uint64
+	gcOff       uint64
 }
 
 type Reloc struct {

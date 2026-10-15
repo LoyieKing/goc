@@ -109,15 +109,22 @@ func Verify(f *File) []error {
 		} else if r.Offset+uint64(r.Width) > fn.TextSize {
 			bad("%s: width %d runs past function end %d", w, r.Width, fn.TextSize)
 		}
-		switch r.Width {
-		case 1, 2, 4, 8:
+		switch {
+		case r.Kind == RCallIndirectMark:
+			// width is the call instruction's length; there is no target
+			if r.Width == 0 || r.Width > 15 {
+				bad("%s: bad call length %d", w, r.Width)
+			}
+		case r.Width == 1, r.Width == 2, r.Width == 4, r.Width == 8:
 		default:
 			bad("%s: bad width %d", w, r.Width)
 		}
 		if r.Kind == 0 || r.Kind >= rLast {
 			bad("%s: unknown kind %d", w, r.Kind)
 		}
-		sym(w, r.Target)
+		if r.Kind != RCallIndirectMark {
+			sym(w, r.Target)
+		}
 		if t, ok := f.ELFRelocs[fmt.Sprintf("%s+%d", r.Func, r.Offset)]; ok && t != r.Target {
 			bad("%s: ELF relocation there targets %q, table says %q", w, t, r.Target)
 		}

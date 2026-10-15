@@ -46,7 +46,7 @@ main.tbl:
 func valid() *gocobj.Builder {
 	return &gocobj.Builder{
 		Header: gocobj.Header{Arch: gocobj.ArchAMD64, Flags: gocobj.HeaderStackChecksInCode,
-			Profile: "go1.24-amd64", Producer: "goc golden"},
+			Minor: 0, Profile: "go1.24-amd64", Producer: "goc golden"},
 		Files: []string{"add.c"},
 		Funcs: []gocobj.Func{{
 			Name: "main.add", TextSize: 23, FrameSize: 16, ArgSize: 16, ABI: gocobj.ABIInternal,

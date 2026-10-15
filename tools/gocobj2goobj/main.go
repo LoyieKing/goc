@@ -32,6 +32,9 @@ func main() {
 	maps := flag.String("maps", "", "maps directory")
 	out := flag.String("o", "", "output Go object file")
 	pkg := flag.String("p", "main", "package path")
+	checkMeta := flag.Bool("check-meta", false, "compare what the tables give with meta.json, print differences, exit")
+	flagsWord := flag.String("flags", "noframe", "stack-check policy word for meta (nosplit|noframe)")
+	cABI := flag.String("c-abi", "", "per-function ABI of the C functions (ABI0 when thunks wrap them)")
 	flag.Parse()
 	if *in == "" || *out == "" || *meta == "" {
 		fmt.Fprintln(os.Stderr, "usage: gocobj2goobj -in foo.gocobj -meta foo.meta.json [-maps DIR] -o foo.goobj [-p pkg]")
@@ -56,6 +59,26 @@ func main() {
 		fmt.Fprintf(os.Stderr, "gocobj2goobj: %s has ABI profile %q, this converter writes %q for GOARCH=%s\n",
 			*in, f.Header.Profile, want, goarch)
 		os.Exit(1)
+	}
+	if *checkMeta {
+		syn, err := synthFuncs(f, *pkg, *flagsWord, *cABI)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, err)
+			os.Exit(1)
+		}
+		diffs, err := checkAgainstMeta(syn, *meta)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gocobj2goobj: %v\n", err)
+			os.Exit(1)
+		}
+		for _, d := range diffs {
+			fmt.Println(d)
+		}
+		fmt.Printf("check-meta: %s: %d functions, %d differences\n", *in, len(syn), len(diffs))
+		if len(diffs) > 0 {
+			os.Exit(1)
+		}
+		return
 	}
 	elfpack.Main([]string{"-elf", *in, "-meta", *meta, "-maps", *maps, "-out-o", *out, "-p", *pkg})
 }

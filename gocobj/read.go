@@ -165,7 +165,10 @@ func Parse(ra io.ReaderAt) (*File, error) {
 			ABI: r.u8(), Kind: r.u8(), Flags: r.uleb(), FuncID: r.u8(), File: r.uleb(), StartLine: r.uleb()}
 		fn.pcvOff = r.uleb()
 		fn.gcOff = r.uleb()
-		r.uleb() // inl, reserved in 1.0
+		r.uleb()          // inl, reserved
+		if len(r.b) > 0 { // 1.1
+			fn.SysvPtrRegs = r.uleb()
+		}
 		if fn.pcvOff != 0 {
 			fn.PCValue = pcv[fn.pcvOff-1]
 		}

@@ -14,8 +14,8 @@ func Dump(w io.Writer, f *File) {
 		fmt.Fprintf(w, "file %d %s\n", i, p)
 	}
 	for _, fn := range f.Funcs {
-		fmt.Fprintf(w, "func %s size=%d frame=%d args=%d abi=%d kind=%d flags=%#x id=%d file=%d line=%d\n",
-			fn.Name, fn.TextSize, fn.FrameSize, fn.ArgSize, fn.ABI, fn.Kind, fn.Flags, fn.FuncID, fn.File, fn.StartLine)
+		fmt.Fprintf(w, "func %s size=%d frame=%d args=%d abi=%d kind=%d flags=%#x id=%d file=%d line=%d sysvptr=%#x\n",
+			fn.Name, fn.TextSize, fn.FrameSize, fn.ArgSize, fn.ABI, fn.Kind, fn.Flags, fn.FuncID, fn.File, fn.StartLine, fn.SysvPtrRegs)
 		for _, t := range fn.PCValue {
 			fmt.Fprintf(w, "  pcvalue %s:", t.Kind)
 			for _, e := range t.Entries {

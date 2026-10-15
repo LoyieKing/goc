@@ -24,6 +24,10 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSymbol.h"
@@ -39,21 +43,109 @@ using namespace llvm;
 namespace {
 
 struct CallSite {
+  std::string Pre;    // label at the call instruction
   std::string Ret;    // label right after the call instruction
   std::string Target; // empty for an indirect call
   bool Safepoint;
 };
 
+// A rip-relative LEA of a function address (lea f(%rip), r64).
+struct FuncAddr {
+  std::string Ret;    // label after the LEA; its disp32 is the last 4 bytes
+  std::string Target;
+  int64_t Offset;
+};
+
 struct FuncInfo {
   std::string Name, End;
   uint64_t FrameSize;
+  uint64_t Flags = 0;
+  uint64_t SysvPtrRegs = 0; // bit i: SysV integer argument register i holds a pointer
   std::vector<CallSite> Calls;
+  std::vector<FuncAddr> Addrs;
 };
+
+// .goc.funcs flag bits (docs/gocobj-format.md).
+enum : uint64_t {
+  FlagInternal = 1u << 5,
+  FlagHasSptr = 1u << 6,
+  FlagSysvUnmodelled = 1u << 7,
+};
+
+// Whether F carries a !goc.color !{"sptr"} attachment anywhere.
+static bool hasSptr(const Function &F) {
+  auto IsSptr = [](const MDNode *N) {
+    if (!N || N->getNumOperands() != 1)
+      return false;
+    auto *S = dyn_cast<MDString>(N->getOperand(0));
+    return S && S->getString() == "sptr";
+  };
+  if (IsSptr(F.getMetadata("goc.color")))
+    return true;
+  for (const BasicBlock &BB : F)
+    for (const Instruction &I : BB)
+      if (IsSptr(I.getMetadata("goc.color")))
+        return true;
+  return false;
+}
+
+// Which SysV integer argument registers (rdi rsi rdx rcx r8 r9) carry a
+// pointer on entry. Returns false for a signature this model does not cover.
+static bool sysvPointerRegs(const Function &F, uint64_t &Mask) {
+  unsigned Used = 0;
+  Mask = 0;
+  for (const Argument &A : F.args()) {
+    if (A.hasByValAttr())
+      continue;
+    if (A.hasInAllocaAttr() || A.hasPreallocatedAttr() || A.hasByRefAttr() ||
+        A.hasAttribute(Attribute::InReg) || A.hasNestAttr() || A.hasSwiftSelfAttr() ||
+        A.hasSwiftErrorAttr() || A.hasAttribute(Attribute::SwiftAsync))
+      return false;
+    Type *T = A.getType();
+    if (T->isPointerTy() || (T->isIntegerTy() && T->getIntegerBitWidth() <= 64 &&
+                             isPowerOf2_32(T->getIntegerBitWidth()) && T->getIntegerBitWidth() != 2 &&
+                             T->getIntegerBitWidth() != 4)) {
+      if (Used < 6) {
+        if (T->isPointerTy())
+          Mask |= 1u << Used;
+        ++Used;
+      }
+    } else if (T->isIntegerTy(128)) {
+      if (Used <= 4)
+        Used += 2;
+    } else if (T->isFloatTy() || T->isDoubleTy()) {
+      // SSE registers; do not affect the integer sequence
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
 
 struct GocObjTables : MachineFunctionPass {
   static char ID;
   std::string Path;
   std::vector<FuncInfo> Funcs;
+  // Computed on the IR as goc-llc received it: CodeGenPrepare and friends
+  // later rewrite or drop instructions that carry the colors.
+  StringMap<uint64_t> IRFlags, IRSysv;
+
+  bool doInitialization(Module &M) override {
+    for (const Function &F : M) {
+      if (F.isDeclaration())
+        continue;
+      uint64_t Fl = 0, Mask = 0;
+      if (F.hasInternalLinkage())
+        Fl |= FlagInternal;
+      if (hasSptr(F))
+        Fl |= FlagHasSptr;
+      if (!sysvPointerRegs(F, Mask))
+        Fl |= FlagSysvUnmodelled;
+      IRFlags[F.getName()] = Fl;
+      IRSysv[F.getName()] = Mask;
+    }
+    return false;
+  }
 
   explicit GocObjTables(StringRef P) : MachineFunctionPass(ID), Path(P.str()) {}
   StringRef getPassName() const override { return "goc .gocobj tables"; }
@@ -73,6 +165,8 @@ struct GocObjTables : MachineFunctionPass {
     FuncInfo FI;
     FI.Name = TM.getSymbol(&MF.getFunction())->getName().str();
     FI.FrameSize = MF.getFrameInfo().getStackSize();
+    FI.Flags = IRFlags.lookup(MF.getFunction().getName());
+    FI.SysvPtrRegs = IRSysv.lookup(MF.getFunction().getName());
     MachineInstr *Last = nullptr;
     for (MachineBasicBlock &MBB : MF) {
       bool SawStackmap = false;
@@ -81,6 +175,18 @@ struct GocObjTables : MachineFunctionPass {
           Last = &MI;
         if (MI.getOpcode() == TargetOpcode::STACKMAP) {
           SawStackmap = true;
+          continue;
+        }
+        if (MI.getOpcode() == X86::LEA64r && MI.getNumOperands() >= 6 &&
+            MI.getOperand(1).getReg() == X86::RIP && MI.getOperand(4).isGlobal() &&
+            isa<Function>(MI.getOperand(4).getGlobal())) {
+          if (MI.getPostInstrSymbol())
+            return false;
+          MCSymbol *S = Ctx.createTempSymbol("goc_lea");
+          MI.setPostInstrSymbol(MF, S);
+          FI.Addrs.push_back({S->getName().str(),
+                              TM.getSymbol(MI.getOperand(4).getGlobal())->getName().str(),
+                              MI.getOperand(4).getOffset()});
           continue;
         }
         if (!isRealCall(MI))
@@ -98,10 +204,13 @@ struct GocObjTables : MachineFunctionPass {
           else if (MO.isMCSymbol())
             CS.Target = MO.getMCSymbol()->getName().str();
         }
-        if (MI.getPostInstrSymbol())
+        if (MI.getPostInstrSymbol() || MI.getPreInstrSymbol())
           return false; // someone else owns the slot; skip this function
+        MCSymbol *P = Ctx.createTempSymbol("goc_call");
+        MI.setPreInstrSymbol(MF, P);
         MCSymbol *S = Ctx.createTempSymbol("goc_ret");
         MI.setPostInstrSymbol(MF, S);
+        CS.Pre = P->getName().str();
         CS.Ret = S->getName().str();
         FI.Calls.push_back(std::move(CS));
       }
@@ -187,6 +296,13 @@ bool GocObjTables::doFinalization(Module &M) {
     W.end(L);
   }
 
+  W.section(".goc.files");
+  {
+    std::string L = W.begin();
+    W.uleb(W.ref(M.getSourceFileName()));
+    W.end(L);
+  }
+
   W.section(".goc.funcs");
   for (size_t I = 0; I < Funcs.size(); ++I) {
     const FuncInfo &F = Funcs[I];
@@ -197,21 +313,44 @@ bool GocObjTables::doFinalization(Module &M) {
     W.uleb("0");          // arg_size: still in meta.json
     W.u8(1);              // ABIInternal; meta.json lists the ABI0 exceptions
     W.u8(0);              // kind normal
-    W.uleb("0");          // flags: stack-check decision still in elfpack
+    W.uleb(Twine(F.Flags)); // stack-check decision still in elfpack
     W.u8(0);              // func_id
-    W.uleb("0");          // file
+    W.uleb("0");          // file: the translation unit
     W.uleb("0");          // start_line
     W.uleb("0");          // pcv: none yet
     W.uleb(GC[I].empty() ? std::string("0") : GC[I] + "-.Lgoc_gcbase+1");
     W.uleb("0");          // inl
+    W.uleb(Twine(F.SysvPtrRegs)); // 1.1: sysv_ptr_regs
     W.end(L);
   }
 
   W.section(".goc.relocs");
-  for (const FuncInfo &F : Funcs)
+  for (const FuncInfo &F : Funcs) {
+    for (const FuncAddr &A : F.Addrs) {
+      std::string L = W.begin();
+      W.uleb(W.ref(F.Name));
+      W.uleb(A.Ret + "-4-" + F.Name);
+      W.u8(4);
+      W.u8(5); // FUNC_ADDR
+      W.uleb(W.ref(A.Target));
+      W.sleb(Twine(A.Offset - 4));
+      W.u8(0);
+      W.end(L);
+    }
     for (const CallSite &C : F.Calls) {
-      if (C.Target.empty())
+      if (C.Target.empty()) {
+        // CALL_INDIRECT_MARK: offset is the instruction, width its length.
+        std::string L = W.begin();
+        W.uleb(W.ref(F.Name));
+        W.uleb(C.Pre + "-" + F.Name);
+        OS << "\t.byte " << C.Ret << "-" << C.Pre << "\n";
+        W.u8(2);
+        W.uleb("0");
+        W.sleb("0");
+        W.u8(C.Safepoint ? 1 : 0);
+        W.end(L);
         continue;
+      }
       std::string L = W.begin();
       W.uleb(W.ref(F.Name));
       W.uleb(C.Ret + "-4-" + F.Name);
@@ -222,6 +361,7 @@ bool GocObjTables::doFinalization(Module &M) {
       W.u8(C.Safepoint ? 1 : 0);
       W.end(L);
     }
+  }
 
   const DataLayout &DL = M.getDataLayout();
   W.section(".goc.data");
@@ -243,7 +383,7 @@ bool GocObjTables::doFinalization(Module &M) {
   unsigned Prod = W.str("goc-llc (LLVM " LLVM_VERSION_STRING ")");
   W.section(".goc.header");
   OS << "\t.byte 0x47,0x4f,0x43,0x4f,0x42,0x4a,0,0\n"
-     << "\t.short 1\n\t.short 0\n"
+     << "\t.short 1\n\t.short 1\n"
      << "\t.byte 1\n\t.byte 0\n\t.short 0\n"
      << "\t.long .Lgoc_s" << Prof << "-.Lgoc_strtab\n"
      << "\t.long .Lgoc_s" << Prod << "-.Lgoc_strtab\n"

@@ -1,4 +1,4 @@
-# gocobj format, version 1.0
+# gocobj format, version 1.1
 
 A `.gocobj` is what goc's LLVM backend will write for one C file. It is a
 normal relocatable ELF file (machine code in `.text` or `.text.<sym>`, data in
@@ -45,7 +45,7 @@ and checks a file. Golden files are in `test/gocobj/`.
 |---|---|---|
 | 0 | `[8]byte` | magic `"GOCOBJ\0\0"` |
 | 8 | u16 | major (1) |
-| 10 | u16 | minor (0) |
+| 10 | u16 | minor (1) |
 | 12 | u8 | arch: 1 amd64, 2 arm64 |
 | 13 | u8 | flags: bit 0 `stack_checks_in_code` (entry checks are already in the machine code; until goc's backend emits them, this is 0 and the converter adds them) |
 | 14 | u16 | reserved, 0 |
@@ -73,13 +73,14 @@ One record per Go-visible function:
 | arg_size | uleb | argument + result area |
 | abi | u8 | 0 ABI0, 1 ABIInternal |
 | kind | u8 | 0 normal, 1 ABI wrapper |
-| flags | uleb | bit 0 needs_stack_check, 1 leaf, 2 nosplit, 3 has_frame_pointer, 4 unsafe_entry |
+| flags | uleb | bit 0 needs_stack_check, 1 leaf, 2 nosplit, 3 has_frame_pointer, 4 unsafe_entry; 1.1: 5 internal linkage, 6 has an sptr color, 7 sysv_ptr_regs not modelled |
 | func_id | u8 | 0 normal; other values reserved |
 | file | uleb | index into `.goc.files` |
 | start_line | uleb | |
 | pcv | uleb | offset of its `.goc.pcvalue` record |
 | gc | uleb | offset of its `.goc.gcmaps` record |
-| inl | uleb | offset of its `.goc.inltree` record (reserved; 0 in 1.0) |
+| inl | uleb | offset of its `.goc.inltree` record (reserved; 0) |
+| sysv_ptr_regs | uleb | 1.1: bit i set when SysV integer argument register i (rdi rsi rdx rcx r8 r9) holds a pointer on entry |
 
 ### `.goc.relocs`
 
@@ -89,9 +90,9 @@ One record per relocation inside a function's code:
 |---|---|---|
 | func | strref | function the bytes belong to |
 | offset | uleb | byte offset from the function start |
-| width | u8 | 1, 2, 4 or 8 |
+| width | u8 | 1, 2, 4 or 8; for CALL_INDIRECT_MARK the call instruction length (offset is the instruction start) |
 | kind | u8 | see below |
-| target | strref | ELF symbol |
+| target | strref | ELF symbol (empty for CALL_INDIRECT_MARK) |
 | addend | sleb | |
 | flags | u8 | bit 0 safepoint_call (a gc record exists at `offset+width`), bit 1 weak |
 
@@ -166,6 +167,13 @@ transitional content of plan row 4:
 - `.goc.gcmaps`: one record per safepoint call (a call that follows a
   `STACKMAP`), with empty bitmaps. The bits are still in `.llvm_stackmaps`.
 - `.goc.data`: every non-private global, without pointer bitmaps.
+- 1.1: `.goc.files` names the source file; funcs carry the internal,
+  has-sptr and SysV pointer-register facts (computed on the IR goc-llc
+  receives); relocs add indirect calls (CALL_INDIRECT_MARK) and
+  function-address LEAs (FUNC_ADDR).
+
+`gocobj2goobj -check-meta` rebuilds the per-function part of meta.json from
+these tables and lists every field that differs from goc-lower's.
 
 `test/gocobj/verify-real.sh` runs `goc-objdump verify` on every `.gocobj`
 under `build/`. `verify` also checks each table relocation against the ELF
