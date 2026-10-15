@@ -42,7 +42,7 @@ Usage:
   linux/amd64. --fixed-g and --opt-extra=-inline-threshold=250 stay off.
 `goc build` emits every defined function and a Go entry for each. It stays
 at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
-frames, and amd64 sptr maps are always on. arm64 cannot record sptr maps.
+frames, and sptr maps are always on. linux/amd64 only (arm64 pending).
 There is no --all or --goabi.
 
 Download and use: docs/quickstart.md
@@ -166,32 +166,13 @@ cmd_build() {
     esac
   fi
 
-  # Default stays linux/amd64. arm64 is a separate backend, not -march.
+  # linux/amd64 only until the AArch64 stack-check hook exists (ARCHITECTURE.md).
   GOC_ARCH="${GOC_ARCH:-amd64}"
-  case "$GOC_ARCH" in
-    amd64|arm64) ;;
-    *) echo "goc build: FATAL GOC_ARCH=$GOC_ARCH (want amd64 or arm64)" >&2; exit 1 ;;
-  esac
-  export GOC_ARCH
-  if [[ "$GOC_ARCH" == arm64 ]]; then
-    # gep is unsafe across a stack copy until GocFrameAddrFix exists for
-    # AArch64, and the x86 leaq remat does not assemble. Force the stock
-    # llc path and refuse the x86 stack-map repairs.
-    export GOC_FRAMEADDR_MODE=asm
-    if [[ "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
-      echo "goc build: FATAL GOC_CSR_ADJUST is x86-only; arm64 has no frame-address repair" >&2
-      exit 1
-    fi
-    case "$SRC" in
-      *runtime/uptr/*) ;;
-      *)
-        if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$SRC"; then
-          echo "goc build: FATAL $SRC is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
-          exit 1
-        fi
-        ;;
-    esac
+  if [[ "$GOC_ARCH" != amd64 ]]; then
+    echo "goc build: FATAL GOC_ARCH=$GOC_ARCH is not supported (amd64 only; the AArch64 stack-check hook is not implemented yet)" >&2
+    exit 1
   fi
+  export GOC_ARCH
 
   local CLANG USE_PLUGIN=0
   CLANG="$(resolve_clang)"
@@ -209,19 +190,7 @@ cmd_build() {
   # stock llc-19 here used to skip realbody's missing-binary check, so tail
   # duplication kept frame addresses in callee-saved registers across calls.
   local LLC="${LLC:-}"
-  if [[ "$GOC_ARCH" == arm64 ]]; then
-    # goc-llc is the X86-only backend. arm64 ISel is the llc that ships
-    # beside the patched clang (it must include the AArch64 target).
-    case "$LLC" in
-      *goc-llc*|"")
-        LLC="$(goc_beside llc 2>/dev/null || true)"
-        if [[ -z "$LLC" ]]; then
-          LLC="$(command -v llc-19 || command -v llc || true)"
-        fi
-        [[ -n "$LLC" ]] || { echo "goc build: no llc for arm64" >&2; exit 1; }
-        ;;
-    esac
-  elif [[ -z "$LLC" && "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
+  if [[ -z "$LLC" && "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
     if [[ -x "$ROOT/passes/goc-llc" ]]; then
       LLC="$ROOT/passes/goc-llc"
     else
@@ -299,11 +268,6 @@ cmd_build() {
     fi
   fi
 
-  if [[ "$GOC_ARCH" == arm64 ]]; then
-    # IR datalayout must be aarch64. -ffixed-x28 matches llc's reservation
-    # of g; the in-tree clang accepts it and records +reserve-x28.
-    CLANG_ARGS+=(-target aarch64-unknown-linux-gnu -ffixed-x28)
-  fi
   if ! "$CLANG" "${CLANG_ARGS[@]}" "${EXTRA[@]}" -o "$TMP/a.ll" "$SRC"; then
     echo "goc build: Clang Sema/frontend failed for $SRC" >&2
     cleanup_build_tmp
@@ -380,7 +344,7 @@ cmd_build() {
     # hoisted g value lives in a callee-saved register, not a colored spill.
     # Integer fragments stay in registers; the copier copies those spills
     # verbatim.
-    # amd64 records sptr maps; arm64 has no frame-address repair.
+    # Record the sptr/gptr roots the tables take their bitmaps from.
     if [[ "$GOC_ARCH" == amd64 ]]; then
       local SMPASS="${GOC_STACKMAP:-}"
       if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
