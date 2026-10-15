@@ -178,7 +178,7 @@ flowchart LR
 | `scripts/` | Build, release and test scripts |
 | `docs/` | Documentation |
 
-More detail in [docs/architecture.md](docs/architecture.md).
+More detail in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Usage
 
@@ -261,7 +261,8 @@ See [docs/todo.md](docs/todo.md) (Chinese):
 | [docs/guide.md](docs/guide.md) | User guide (Chinese / English) |
 | [docs/toolchain.md](docs/toolchain.md) | `goc go` flags and where clang lives |
 | [docs/syntax-guide.md](docs/syntax-guide.md) | Language rules (Chinese) |
-| [docs/architecture.md](docs/architecture.md) | Compilation pipeline |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Pipeline, directory layout, passes and tools |
+| [docs/runtime-model.md](docs/runtime-model.md) | uptr encoding, alloca, what is not supported |
 | [docs/benchmark.md](docs/benchmark.md) | Benchmarks (Chinese) |
 | [docs/perf-gap.md](docs/perf-gap.md) | Performance gap analysis (Chinese) |
 | [docs/todo.md](docs/todo.md) | Roadmap (Chinese) |

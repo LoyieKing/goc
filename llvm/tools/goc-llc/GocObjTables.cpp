@@ -381,7 +381,7 @@ struct GocObjTables : MachineFunctionPass {
   // in the asm text itself; labels emit no bytes, so the code is unchanged.
   // Returns false when the string was left alone.
   // STACKMAP locations not yet given to a call: a record belongs to the first
-  // call at or after it in code order (elfpack's "site").
+  // call at or after it in code order (its "site").
   std::vector<SMLoc> Pending;
 
   bool labelInlineAsmCalls(MachineFunction &MF, MachineInstr &MI, FuncInfo &FI) {
@@ -727,7 +727,7 @@ bool GocObjTables::doFinalization(Module &M) {
     // there: bit i is the word at SP+8*i, SP = BP-(frame-8). Set are the
     // sptr slots, and the roots of the STACKMAPs whose site this call is
     // (Direct BP-relative slots and Constant SP offsets of stack-passed
-    // pointers), as elfpack builds them.
+    // pointers).
     const FuncInfo &F = Funcs[I];
     if (F.Calls.empty())
       continue;

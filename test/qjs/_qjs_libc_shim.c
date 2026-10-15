@@ -333,8 +333,8 @@ void *goc_memmove(void *d, const void *s, size_t n) {
 }
 
 /* always_inline: a real call to goc_memset from its own SSE2 tail is a
- * nosplit cycle (the body has no annotated CALL, so elfpack marks the
- * small frame AttrNoSplit and the linker rejects the recursion). */
+ * nosplit cycle (the body has no call, so goc-llc marks the small leaf
+ * frame nosplit and the linker rejects the recursion). */
 static inline __attribute__((always_inline)) void goc_memset_small(
     unsigned char *p, unsigned char byte, size_t n) {
   uint64_t v = (uint64_t)byte * 0x0101010101010101ull;
@@ -960,7 +960,7 @@ double round(double x) {
 double goc_round(double x) { return round(x); }
 
 /* Transcendentals call glibc through test/qjs/asm/goc_libm_glibc.S. The asm
- * symbol is goc_libc_<name>; elfpack records it as main.goc_libc_<name>.
+ * symbol is goc_libc_<name>; gocobj2goobj names it main.goc_libc_<name>.
  * A Go -> cgo -> glibc hop is not bit-identical in cost, and a C libm
  * would change the last bit. The trampoline realigns SP, then calls
  * glibc, so the SysV registers set up here are the ones glibc sees. */

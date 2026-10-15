@@ -1051,8 +1051,8 @@ struct GocFrameAddrFix : MachineFunctionPass {
 char GocFrameAddrFix::ID = 0;
 
 // Each llvm.experimental.stackmap goc-stackmap/goc-reanchor emit names the
-// roots live across the CALL that follows it; elfpack attaches the record to
-// the first CALL after it in layout order. That is only sound when the
+// roots live across the CALL that follows it; GocObjTables attaches the record
+// to the first CALL after it in layout order. That is only sound when the
 // STACKMAP and its CALL stay in one machine block. Two things break it:
 //  - Tail merging (BranchFolding) hoists a CALL shared by two blocks into a
 //    common tail and leaves each STACKMAP before a JMP; the pcdata at the

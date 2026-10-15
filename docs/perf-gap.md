@@ -388,7 +388,7 @@ ng 的 SunSpider 和 microbench 也快了 6%～11%，但 V8 只快 1%～1.5%。�
 
 原生构建里，这些地方只有一条 `mov`。
 
-**为什么这么贵。** ① 每次编码要读两次 `FS:-8`：goc 把 `g` 的读取做成 volatile（architecture.md：“hot uptr helpers are inlined to a volatile FS:-8 load”），编译器既不能把同一函数里的多次读取合并，也不能提到循环外；② 范围判断要两次比较加一次分支；③ 这段代码出现在很多“其实永远不会指向栈”的写入上，因为编译器证明不了。【实测：分类与计数】【“绝大多数写入其实不指向栈”是推测，没有逐点统计】
+**为什么这么贵。** ① 每次编码要读两次 `FS:-8`：goc 把 `g` 的读取做成 volatile（当时的 architecture.md：“hot uptr helpers are inlined to a volatile FS:-8 load”），编译器既不能把同一函数里的多次读取合并，也不能提到循环外；② 范围判断要两次比较加一次分支；③ 这段代码出现在很多“其实永远不会指向栈”的写入上，因为编译器证明不了。【实测：分类与计数】【“绝大多数写入其实不指向栈”是推测，没有逐点统计】
 
 **热点在哪。** RegExp 子项最重（Ir +18.2 个点）。`bench/perfgap-cg-bycount.py` 按执行次数把 goc-bellard 与 gocflags 的 `lre_exec` 基本块一一配对（`data/regexp-lre-exec-bycount.txt`）：最热的一个块执行了 2442 万次，goc 版 48 条指令，原生 22 条；多出来的 26 条里 23 条是两段 uptr 编码。这个块是正则回溯时往回溯栈里压一条记录（`pc`、当前字符指针、栈深度）：
 
@@ -671,7 +671,7 @@ gocpipe → gocpipe-sm 只加了 goc 的 stackmap pass 和 `GocFrameAddrFix`（�
 | 8 | GC 根槽不再 volatile：两个 safepoint 之间留在寄存器，只在调用前写回、调用后重读（类似 LLVM statepoint 的重定位） | 4.5 | **估计** 最多省 3.9 个点 Ir（`lre_exec` 2.5、`JS_CallInternal` 0.9） | 高：后端改动，漏一个就是搬栈后的悬垂指针 |
 | 9 | 只对非根槽恢复栈槽共享（`-no-stack-slot-sharing` 只作用于 stackmap 登记的槽） | 4.6 | **估计** `JS_CallInternal` 帧 1768 → 约 1200 字节，递归深度 +30% 以上；速度影响见 6.1 的单参数实验 | 中高：需要改 LLVM 的 StackSlotColoring 或在 goc-llc 里标记 |
 | 10 | 小叶子函数免栈检查（去掉 `GOC_NO_NOSPLIT=1`，让链接器检查 NOSPLIT 预算） | 4.7 | **估计** stackcheck 1.8 个点 Ir 的一部分；叶子调用每次 ~0.07 ns | 低中：超预算由链接器拒绝，不会静默出错 |
-| 11 | shim 的 `memcpy/memset` 在 64 字节～几 KiB 区间用向量循环 | 4.9 | **估计** memstr 1.8 个点 Ir 的一部分 | 低；goc 路径上不能用 AVX（architecture.md），只能 SSE2 |
+| 11 | shim 的 `memcpy/memset` 在 64 字节～几 KiB 区间用向量循环 | 4.9 | **估计** memstr 1.8 个点 Ir 的一部分 | 低；goc 路径上不能用 AVX（runtime-model.md），只能 SSE2 |
 | 12 | `goc_malloc_usable_size` 返回 `h->capacity`（同时 `goc_realloc` 按容量拷贝） | 5.5 | **实测机制**：`JS_ConcatString1` 重建次数 8.6 倍、Ir 3.1 倍；**估计**这三项从 1.8 倍回到 ~1.1 倍，Bellard microbench 几何平均约 −2% | 低：几行 shim 改动，需跑正确性对照 |
 | 13 | `-inline-threshold=250` 补回 `default<O3>` 的内联阈值 | 6.2 | **实测** 无稳定收益（Ir 不变） | 低；可以顺手加，但别指望 |
 

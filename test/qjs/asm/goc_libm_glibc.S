@@ -1,6 +1,6 @@
 /* Trampolines from the goc shim to glibc libm.
  *
- * elfpack turns the shim's `call goc_libc_sin` into a Go relocation to
+ * gocobj2goobj turns the shim's `call goc_libc_sin` into a Go relocation to
  * main.goc_libc_sin. The Go stack is only 8-byte aligned. SysV requires
  * SP%16==0 at a call instruction, so glibc's entry sees SP%16==8 and its
  * movaps prologue is aligned. andq $-16 does that for either incoming

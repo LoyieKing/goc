@@ -7,6 +7,6 @@ void p28_external_hook(void);
 int p28_real_body(int x) {
   /* Magic constant proves body came from this source, not seedMinimal. */
   int v = x + 0x28C0DE42;
-  p28_external_hook(); /* CALL site → Go-frame / PCDATA hook via elfpack */
+  p28_external_hook(); /* a CALL site: stack map and PCDATA entry */
   return v;
 }

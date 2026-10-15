@@ -5,9 +5,9 @@
  }
  
 +//===----------------------------------------------------------------------===//
-+// goc P27 — pointer-color attributes (in-tree form of p27-clang-frontend plugin)
-+// Out-of-tree plugin registers the same GNU spellings via ParsedAttrInfo until
-+// a full clang rebuild lands these. See p27-clang-frontend/patches/.
++// goc pointer-color attributes. clang/plugin/GocClangPlugin.cpp registers
++// the same GNU spellings through ParsedAttrInfo for a stock clang (tests
++// only). See clang/patches/README.md in the goc tree.
 +//===----------------------------------------------------------------------===//
 +
 +def GocCPtr : InheritableAttr {

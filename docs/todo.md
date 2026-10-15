@@ -1,18 +1,12 @@
 # 下一版
 
-当前产品后端是 linux/amd64。下一版做 linux/arm64。不是换 `-march`。
+## linux/arm64：剩下的部分
 
-颜色分析、当前的单字 `uptr` MSB 协议、`alloca` 降成 `cptr` 留着。`g.stackguard0` 仍在偏移 16。arm64 这一项不改指针色的表示。
+arm64 后端已经接上：goc-llc 生成栈检查和 morestack 冷块（`llvm/lib/Target/AArch64`），每个有调用的帧在 0(SP) 留 LR 副本供 Go 回溯，记录 sptr 栈图，调用后修正被调用者保存寄存器和溢出槽里的帧地址；`gocobj2goobj` 映射 `R_AARCH64_*`；Go ABI thunk 按 arm64 ABIInternal。`test/arm64` 和 arm64 压力测试在 qemu-aarch64 里运行。还没做的：
 
-要重写的是出指令之后：
-
-- `llc` 目标改成 `aarch64`。现在固定 `-march=x86-64`，triple 是 `x86_64-unknown-linux-gnu`。
-- 机器 pass 不再发 X86 指令。`g` 在 R28，不在 R14，也不从 `FS:-8` 取。
-- `elfpack` 的 morestack 前导改成 arm64 的比较和条件跳转，不再手写 `CMPQ` / `JBE` / `0xe8`。重定位认 `R_AARCH64_*`，不认 `R_X86_64_*`。
-- goobj 用 arm64 的 `LinkArch`。现在是 `Linknew(&x86.Linkamd64)`，vendored 汇编器只有 `obj/x86`。
-- ABI thunk 按 Go arm64 ABIInternal：整数 R0–R15，浮点 F0–F15。现在是 SysV `rdi/rsi/...` 洗到 Go amd64 `rax/rbx/...`。
-- `runtime/uptr` 不再用 `movq %fs:-8, %rax`。arm64 上 Go 不走这个 TLS 槽。
-- QuickJS 宿主里写死 linux/amd64 的 syscall 和 `#error` 要分开，不能跟着后端一起假移植。
+- QuickJS 宿主（`test/e2e/qjs` 下的 CLI 宿主和 libc shim）用 x86 syscall 和 SSE 汇编，arm64 上被拒绝，所以 QuickJS 还没在 qemu 里跑。
+- `runtime/uptr` 的 TLS 读取只有 amd64 汇编（`goc_uptr_tls_amd64.S`）。
+- 通过栈传参、指向栈的指针，被调用方在栈移动之后才读时不会被修正（栈参数区不在栈图里）。
 
 ## `sptr` / `uptr` 带上所属 goroutine
 

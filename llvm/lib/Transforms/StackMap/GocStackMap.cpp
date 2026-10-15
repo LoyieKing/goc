@@ -18,7 +18,7 @@
 // The driver runs O3, including the inliner, before this pass. Maps are
 // recorded on the merged frame, so an inlined call-bearing callee does not
 // need its old offsets retargeted: its allocas and calls are the caller's.
-// An inlined copy has no TEXT entry; elfpack emits one morestack prologue
+// An inlined copy is no function of its own; goc-llc emits one stack check
 // for the surviving caller. Nothing after this pass may inline — a later
 // caller cannot retarget frame-word offsets or stackmap IDs already emitted.
 // goc-reanchor then spills any alloca-derived address this pass did not

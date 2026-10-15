@@ -12,7 +12,7 @@
 //            cmp x17, x16
 //       b.ls stub
 //
-//   cold block (as main's elfpack arm64SysvSplitStub): save X0-X9 in pairs
+//   cold block: save X0-X9 in pairs
 //   with pre-indexed STP, reserve 128 bytes and save Q0-Q7, hand the
 //   return address to morestack in X3 (Go's arm64 prologue does the same),
 //   BL runtime.morestack_noctxt, restore everything, B back to the check.

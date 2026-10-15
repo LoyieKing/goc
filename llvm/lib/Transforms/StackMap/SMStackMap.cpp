@@ -450,7 +450,7 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
     }
 
     // Do not add noinline. Inlining already ran; an inlined body is this
-    // function's frame, and elfpack inserts morestack only at TEXT entries
+    // function's frame, and goc-llc emits the stack check only for functions
     // that still exist. Stamping noinline here would only block a later
     // pass, and a later inline would invalidate the maps just recorded.
     return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();

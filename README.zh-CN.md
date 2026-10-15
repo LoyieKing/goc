@@ -178,7 +178,7 @@ flowchart LR
 | `scripts/` | 构建、发布和测试脚本 |
 | `docs/` | 文档 |
 
-更多细节见 [docs/architecture.md](docs/architecture.md)。
+更多细节见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 ## 使用方法
 
@@ -261,7 +261,8 @@ Bellard 版 QuickJS 放到 `third_party/quickjs-bellard` 后，用 `QJS_FLAVOR=b
 | [docs/guide.md](docs/guide.md) | 使用指南 |
 | [docs/toolchain.md](docs/toolchain.md) | `goc go` 的参数，以及 clang 放在哪 |
 | [docs/syntax-guide.md](docs/syntax-guide.md) | 语言规则 |
-| [docs/architecture.md](docs/architecture.md) | 编译流程 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 流水线、目录、pass 和工具 |
+| [docs/runtime-model.md](docs/runtime-model.md) | uptr 编码、alloca、不支持的内容 |
 | [docs/benchmark.md](docs/benchmark.md) | 跑分 |
 | [docs/perf-gap.md](docs/perf-gap.md) | 性能差距分析 |
 | [docs/todo.md](docs/todo.md) | 后续计划 |

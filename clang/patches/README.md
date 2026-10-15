@@ -9,6 +9,11 @@
 | `0003-mirror-goc-colors-before-codegen.patch` | `ParseAST.cpp` mirrors colors before CodeGen |
 | `0004-wire-sema-goc-colors.patch` | `CMakeLists.txt`, `Sema.h`, end-of-TU call in `Sema.cpp` |
 
-`0001-SemaGocColors-real.patch` and `0002-SemaGocColors-stub.patch` are earlier snapshots. The build copies `clang/sema/SemaGocColors.cpp` instead of applying them.
+What the Sema part does:
+
+| Change | File |
+|--------|------|
+| Sema checks | `lib/Sema/SemaGocColors.cpp`: mirrors the Goc* attributes to `AnnotateAttr` (what the IR passes read) and reports sptr escapes |
+| Mirror before CodeGen | `lib/Parse/ParseAST.cpp` calls `MirrorGocColorAttrs` before `HandleTopLevelDecl`; the end-of-TU call in `Sema.cpp` only diagnoses, it is too late for IR |
 
 The out-of-tree plugin `../plugin/GocClangPlugin.cpp` is only for `goc test --p27`.
