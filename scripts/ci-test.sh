@@ -5,6 +5,9 @@ ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 cd "$ROOT"
 export GOC_ROOT="$ROOT"
 
+echo "=== file sizes ==="
+./scripts/check-file-size.sh
+
 echo "=== goc check ==="
 ./cmd/goc check
 

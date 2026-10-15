@@ -1,0 +1,7 @@
+# path lines — files that predate the 800-line limit (scripts/check-file-size.sh).
+# A file may shrink but not grow; remove its line once it is split.
+goobj/lower/goabi.go 1672
+llvm/tools/goc-llc/goc_llc.cpp 1271
+llvm/tools/goc-llc/GocObjTables.cpp 1004
+tools/gocobj2goobj/convert.go 929
+scripts/goc-color-report.py 1171
