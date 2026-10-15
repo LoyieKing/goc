@@ -139,7 +139,7 @@ def cmd_build(a):
     sm = os.path.join(ROOT, "build/llvm/libGocPasses.so")
     if not os.path.exists(sm):
         sys.exit("missing %s (run scripts/build-passes.sh first)" % sm)
-    env = dict(os.environ, GOC_INLINE_DYNALLOC="1", GOC_SPTR_MAPS="1")
+    env = dict(os.environ, GOC_INLINE_DYNALLOC="1")
     sh([opt, "-load-pass-plugin=" + sm, "-passes=goc-inline-gate", "-S", o("a.color.ll"), "-o", o("a.gate.ll")], env=env)
     pipe = subprocess.run([opt, "-passes=default<O%s>" % lvl, "-print-pipeline-passes", "-disable-output", "/dev/null"],
                           check=True, capture_output=True, text=True).stdout.strip()

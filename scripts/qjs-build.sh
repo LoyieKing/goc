@@ -58,14 +58,6 @@ fi
 QJS_DEFS=("${FLAVOR_DEFS[@]}" -D_GNU_SOURCE -DGOC_QJS_GSTACK=1 -DNDEBUG)
 UPTR_DEFS=(-DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS -DGOC_DYNALLOC_POOL)
 export GOC_DEFAULT_PTR_COLOR=cptr   # bulk coloring: uncolored ptrs are cptr
-# "noframe" in the meta, not "nosplit". Unsetting this marks every function
-# nosplit, including JS_CallInternal, and the linker rejects the chain.
-# ABI0 leaves with no call and 0 < frame <= StackSmall (128) still skip the
-# probe: elfpack gocLeafNosplit sets AttrNoSplit and the linker checks the
-# nosplit budget. GOC_MORESTACK=1 stays on for everyone else.
-export GOC_NO_NOSPLIT=1
-export GOC_MORESTACK="${GOC_MORESTACK:-1}"  # real split check + morestack stub in goc TEXT
-export GOC_SPTR_MAPS="${GOC_SPTR_MAPS:-1}"  # real locals maps at C call sites
 export GOC_INLINE_DYNALLOC=1        # bump the alloca pool in-line; no per-call memset
 # Bellard has no JS_SetPromiseHook: its smoke skips the promise-hook probe.
 [[ "$QJS_FLAVOR" == bellard ]] && QJS_PROMISE="${QJS_PROMISE:-0}"

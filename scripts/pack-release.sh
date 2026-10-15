@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pack a complete linux/amd64 goc release: the driver, the patched clang,
-# opt/llc/llvm-mc/llvm-objdump, the passes, and prebuilt elfpack and goc-lower.
+# opt/llc/llvm-mc/llvm-objdump, the passes, and prebuilt gocobj2goobj and goc-lower.
 # Usage: scripts/pack-release.sh DEST
 # DEST is a directory, or a path ending in .tar / .tar.gz.
 set -euo pipefail
@@ -81,8 +81,6 @@ cp -a "$GOC_COLOR_ESCAPE" "$stage/passes/goc-color-escape"
 cp -a "$GOC_STACKMAP" "$stage/passes/libGocPasses.so"
 chmod a+rx "$stage/passes/goc-llc" "$stage/passes/goc-color-escape"
 
-( cd "$ROOT" && go build -o "$stage/bin/elfpack" ./tools/goc-elfpack/ )
-chmod a+rx "$stage/bin/elfpack"
 ( cd "$ROOT" && go build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
 chmod a+rx "$stage/bin/gocobj2goobj"
 ( cd "$ROOT" && go build -o "$stage/bin/goc-lower" ./tools/goc-lower/ )

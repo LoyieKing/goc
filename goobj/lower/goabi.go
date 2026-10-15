@@ -1065,8 +1065,6 @@ func emitArm64RegisterArgument(ty string, source loc, dest string) []string {
 	return []string{fmt.Sprintf("\t%s\t%s, %s", load, arm64IntName(dest, info.size), src)}
 }
 
-func emitThunks(a abiSet, goabi []llFunc) string { return emitThunksL(a, goabi, false) }
-
 // emitThunksL is emitThunks; with labels it also defines .Lgocw_c<i> and
 // .Lgocw_r<i> around thunk i's call and .Lgocw_e<i> at its end, for the
 // .goc.* wrapper tables (labels emit no bytes).
@@ -1447,7 +1445,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 	uleb := func(v any) { fmt.Fprintf(&b, "\t.uleb128 %v\n", v) }
 	u8 := func(v int) { fmt.Fprintf(&b, "\t.byte %d\n", v) }
 	type thunk struct {
-		spills    []metaSpill
+		spills    []argSpill
 		stackPtrs []int
 		area      int
 		slots     []int
@@ -1556,9 +1554,9 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		uleb(0)              // start_line
 		uleb(pcv[i] + "-.Lgoc_pcvbase+1")
 		uleb(gc[i] + "-.Lgoc_gcbase+1")
-		uleb(0)              // inl
-		uleb(t.mask)         // 1.1 sysv_ptr_regs
-		uleb(len(t.slots))   // 1.2 sptr_slots
+		uleb(0)            // inl
+		uleb(t.mask)       // 1.1 sysv_ptr_regs
+		uleb(len(t.slots)) // 1.2 sptr_slots
 		for _, o := range t.slots {
 			uleb(o)
 		}

@@ -10,8 +10,7 @@ OUT="${OUT:-$ROOT/build/perfgap-mech}"
 CPU="${CPU:-3}"
 ROUNDS="${ROUNDS:-5}"
 mkdir -p "$OUT"
-export GOC_OPT_LEVEL=3 GOC_DEFAULT_PTR_COLOR=cptr GOC_NO_NOSPLIT=1 GOC_MORESTACK=1
-export GOC_SPTR_MAPS=1 GOC_INLINE_DYNALLOC=1
+export GOC_OPT_LEVEL=3 GOC_DEFAULT_PTR_COLOR=cptr GOC_INLINE_DYNALLOC=1
 SRC="$ROOT/bench/perfgap"
 if [[ "${BUILD:-1}" == 1 ]]; then
   env -u GOC_PKG "$ROOT/cmd/goc" build "$SRC/mech.c" -o "$OUT/mech.goobj" -DNDEBUG

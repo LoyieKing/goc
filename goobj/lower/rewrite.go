@@ -3,7 +3,6 @@ package lower
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -134,49 +133,6 @@ func ObjectHasMagic(path string) error {
 		return fmt.Errorf("FAIL: magic 0x28C0DE42 not in goobj TEXT — body not from source")
 	}
 	fmt.Println("P28-proof: magic 0x28C0DE42 present in goobj (real ISel body)")
-	return nil
-}
-
-// CheckMeta rejects a sidecar that is not the real-ISel producer.
-func CheckMeta(path string) error {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	if !bytes.Contains(b, []byte(`"encoding": "clang-real-isel"`)) {
-		return fmt.Errorf("realbody: meta is missing clang-real-isel encoding")
-	}
-	if !bytes.Contains(b, []byte("not_source")) {
-		return fmt.Errorf("realbody: meta is missing not_source")
-	}
-	if bytes.Contains(b, []byte("attrs→seedMIR")) || bytes.Contains(b, []byte("seedMIR→Spill")) {
-		return fmt.Errorf("FATAL: meta looks like P21 seedMIR pipeline")
-	}
-	return nil
-}
-
-// SymABIs prints one Go symabis line per TEXT in the sidecar.
-func SymABIs(path string) error {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	var m struct {
-		ABI       string `json:"abi"`
-		Functions []struct {
-			GoSym string `json:"go_sym"`
-		} `json:"functions"`
-	}
-	if err := json.Unmarshal(b, &m); err != nil {
-		return err
-	}
-	abi := m.ABI
-	if abi == "" {
-		abi = "ABIInternal"
-	}
-	for _, f := range m.Functions {
-		fmt.Printf("def %s %s\n", f.GoSym, abi)
-	}
 	return nil
 }
 

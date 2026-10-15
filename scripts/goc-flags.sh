@@ -21,8 +21,7 @@ goc_flag_seen() { [[ " ${GOC_FLAG_SEEN:-} " == *" $1 "* ]]; }
 # `goc build` does not: repository scripts still pass the same settings as
 # variables, and a flag on that command overrides them.
 goc_isolate_product_env() {
-  unset GOC_OPT_LEVEL GOC_DEFAULT_PTR_COLOR GOC_NO_NOSPLIT GOC_MORESTACK \
-    GOC_SPTR_MAPS GOC_INLINE_DYNALLOC GOC_FIXED_G GOC_OPT_EXTRA \
+  unset GOC_OPT_LEVEL GOC_DEFAULT_PTR_COLOR GOC_INLINE_DYNALLOC GOC_FIXED_G GOC_OPT_EXTRA \
     GOC_LLC_EXTRA GOC_COLOR_REPORT GOC_CSR_ADJUST GOC_FRAMEADDR_MODE \
     GOC_ARCH GOC_LLC_OPT GOC_IR_RENAMES GOC_LIBCALL_IMPL GOC_KEEP_TMP \
     LLC OPT GOC_COLOR_ESCAPE GOC_STACKMAP GOC_PKG
@@ -317,10 +316,6 @@ goc_consume_flag() {
 goc_product_defaults() {
   goc_flag_seen opt || export GOC_OPT_LEVEL=3
   goc_flag_seen default-ptr-color || export GOC_DEFAULT_PTR_COLOR=cptr
-  # Required to run on a Go stack. Not flags.
-  export GOC_NO_NOSPLIT=1
-  export GOC_MORESTACK=1
-  export GOC_SPTR_MAPS=1
   goc_flag_seen fast-stack-alloca || export GOC_INLINE_DYNALLOC=1
 }
 

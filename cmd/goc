@@ -178,8 +178,8 @@ cmd_build() {
     # AArch64, and the x86 leaq remat does not assemble. Force the stock
     # llc path and refuse the x86 stack-map repairs.
     export GOC_FRAMEADDR_MODE=asm
-    if [[ "${GOC_SPTR_MAPS:-0}" == 1 || "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
-      echo "goc build: FATAL GOC_SPTR_MAPS and GOC_CSR_ADJUST are x86-only; arm64 has no frame-address repair" >&2
+    if [[ "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
+      echo "goc build: FATAL GOC_CSR_ADJUST is x86-only; arm64 has no frame-address repair" >&2
       exit 1
     fi
     case "$SRC" in
@@ -191,15 +191,6 @@ cmd_build() {
         fi
         ;;
     esac
-  fi
-
-  # Go linking needs a splittable frame and a morestack prologue. amd64 also
-  # records sptr maps. arm64 has no frame-address repair, so maps stay off.
-  # Set these after the arm64 refusal above.
-  export GOC_MORESTACK=1
-  export GOC_NO_NOSPLIT=1
-  if [[ "$GOC_ARCH" == amd64 ]]; then
-    export GOC_SPTR_MAPS=1
   fi
 
   local CLANG USE_PLUGIN=0
@@ -389,7 +380,8 @@ cmd_build() {
     # hoisted g value lives in a callee-saved register, not a colored spill.
     # Integer fragments stay in registers; the copier copies those spills
     # verbatim.
-    if [[ "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
+    # amd64 records sptr maps; arm64 has no frame-address repair.
+    if [[ "$GOC_ARCH" == amd64 ]]; then
       local SMPASS="${GOC_STACKMAP:-}"
       if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
         SMPASS="$ROOT/passes/libGocPasses.so"

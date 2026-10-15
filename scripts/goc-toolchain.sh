@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # goc toolchain status | pack DEST
 # DEST is a directory, or a path ending in .tar / .tar.gz.
-# pack writes a complete goc release: driver, patched clang, passes, elfpack.
+# pack writes a complete goc release: driver, patched clang, passes, gocobj2goobj.
 set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${GOC_ROOT:-$(cd "$SELF/.." && pwd)}"

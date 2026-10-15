@@ -6,7 +6,6 @@
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
-export GOC_MORESTACK=1 GOC_NO_NOSPLIT=1 GOC_SPTR_MAPS=1
 OUT="$ROOT/build/p29-goabi"
 mkdir -p "$OUT"
 

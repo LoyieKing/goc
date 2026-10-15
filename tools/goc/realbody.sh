@@ -54,8 +54,8 @@ esac
 export GOC_ARCH
 if [[ "$GOC_ARCH" == arm64 ]]; then
   export GOC_FRAMEADDR_MODE=asm
-  if [[ "${GOC_SPTR_MAPS:-0}" == 1 || "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
-    echo "realbody: FATAL GOC_SPTR_MAPS and GOC_CSR_ADJUST are x86-only; arm64 has no frame-address repair" >&2
+  if [[ "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
+    echo "realbody: FATAL GOC_CSR_ADJUST is x86-only; arm64 has no frame-address repair" >&2
     exit 1
   fi
   case "${LLC:-}" in
