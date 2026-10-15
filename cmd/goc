@@ -42,7 +42,7 @@ Usage:
   linux/amd64. --fixed-g and --opt-extra=-inline-threshold=250 stay off.
 `goc build` emits every defined function and a Go entry for each. It stays
 at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
-frames, and amd64 sptr maps are always on. arm64 records no sptr maps.
+frames, and sptr maps are always on (amd64 and arm64).
 There is no --all or --goabi.
 
 Download and use: docs/quickstart.md

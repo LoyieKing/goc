@@ -114,7 +114,7 @@
 - 两边 CLI：`Math.sin(1).toString()` 为 `0.8414709848078965`。
 - 五引擎对照（[benchmark.md](benchmark.md)，2026-10-09）里，同一套 Bellard `tests/test_*.js` 按函数计是 goc-ng 73/77（与 native ng 相同）、goc-bellard 77/77（与 native Bellard 相同）。上面的 `tests.conf` 116/116 是另一套。
 - Bellard 和 ng 的 `libregexp`：隐式 uptr 存储 2，解码指针加载 0。
-- `test/arm64/check_arm64.sh` 通过。arm64 ELF 没有在 qemu 里执行。
+- `test/arm64/check_arm64.sh` 和 `scripts/test-stress-arm64.sh` 通过，arm64 ELF 在 qemu-aarch64 里执行（栈增长、栈拷贝、栈参数）。arm64 也记录 sptr 栈图；调用后对被调用者保存寄存器和溢出槽里的帧地址做 copystack 同样的修正。quickjs-ng 能编成 arm64，但 CLI 宿主还是 x86 syscall，QuickJS 还没在 qemu 里跑。已知缺口：通过栈传参、指向栈的指针，被调用方在栈移动后才读时不会修正。
 
 ### RegExp（V8 里差距最大的子项）
 
@@ -124,7 +124,7 @@
   - 收益：合入前只编译未运行。`lre_exec` 的 `FS:-8` 读取 29 → 0，TU 隐式 uptr 存储 12 → 2，`lre_exec` spill 根槽 12 → 7、根重载 52 → 12。按指令份额估计 RegExp 指令数少约 15 个点。这次默认构建上 Bellard 和 ng 的 `libregexp` 都是隐式 uptr 存储 2、解码加载 0。
 - **同一函数里只读一次 `g`。** 已进默认构建，没有开 `GOC_FIXED_G`。`tlsGWord` 的读 `g` 是 `readnone` + `nounwind` + `willreturn`（amd64 `movq %fs:-8, $0`，arm64 `mov $0, x28`）。O3 之后 `hoistTlsG` 把一个函数里的多次读取收成入口处一次。`stack.lo` / `stack.hi` 的加载仍是 volatile。
   - 收益：估计读 `g` 这一类的 9.4 个点指令能省一半左右。E1 之后 `lre_exec` 里已经没有 `g` 读取，剩下的是 JS 栈溢出检查等位置。Bellard 的 `quickjs.ll` 从 481 次读、54 个函数重复读，变成 122 次读、0 个函数重复读。
-- **GC 根在两次调用之间留在寄存器。** 定义处仍 volatile 写回根槽（stackmap 认的是槽地址，不能被 DSE 删掉）。同一段没有 safepoint 的区间只 volatile 重载一次，后面的使用留在寄存器里；下一次调用后再重载。另外，根槽（`goc.arganchor` / `goc.anchor` / `goc.spill.root`）的精确拷贝若活在被调用者保存的寄存器里，调用后从槽里重读，不再对这份拷贝做 LEA。Go 已经改过槽里的指针。arm64 的帧地址重物化仍然直接失败，没有移植。
+- **GC 根在两次调用之间留在寄存器。** 定义处仍 volatile 写回根槽（stackmap 认的是槽地址，不能被 DSE 删掉）。同一段没有 safepoint 的区间只 volatile 重载一次，后面的使用留在寄存器里；下一次调用后再重载。另外，根槽（`goc.arganchor` / `goc.anchor` / `goc.spill.root`）的精确拷贝若活在被调用者保存的寄存器里，调用后从槽里重读，不再对这份拷贝做 LEA。Go 已经改过槽里的指针。arm64 的帧地址重物化已移植（IR 重物化 + goc-llc 的调用后修正）。
   - 收益：估计最多省 3.9 个点指令。这次没有重测指令数。Bellard 的 300 次栈增长扫描通过；原先字面量 `8` 在搬栈后会被读成 `8*(1+2^-32)`，就是这条路径。
 
 ### 其他项（按收益和风险排序）

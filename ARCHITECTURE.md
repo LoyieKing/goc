@@ -48,13 +48,13 @@ arm64 的覆盖面和 main 一致：能编译、生成栈检查和 morestack、�
 | 目录 | 职责 |
 |---|---|
 | `cmd/goc` | 命令行入口（bash）：`goc go`、`goc build`、`goc test`、`goc check`、`goc toolchain` |
-| `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`）、发布（`pack-release.sh`）、测试入口（`ci-test.sh`、`test-p27/p28/p29*.sh`、`qjs-*.sh`、`test262-sample.py`、`qjs-official-tests.py`） |
+| `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`）、发布（`pack-release.sh`）、测试入口（`ci-test.sh`、`check-file-size.sh`（单文件 800 行上限）、`test-lit.sh`（`test/lit` 的 FileCheck 测试）、`test-p27/p28/p29*.sh`、`qjs-*.sh`、`test262-sample.py`、`qjs-official-tests.py`） |
 | `clang/` | Clang 补丁、`SemaGocColors.cpp`、树外插件（p27 测试用） |
 | `llvm/` | goc 自己的 LLVM 代码。`lib/Transforms/ColorEscape` 编成独立工具 `goc-color-escape`；`lib/Transforms/StackMap` 是 opt 插件 `libGocPasses.so`；`tools/goc-llc` 是加了 goc 机器 pass 和表输出的 llc；`lib/CodeGen` 是共享栈检查，`lib/Target/<arch>` 是架构钩子。构建：`scripts/build-passes.sh`，产物在 `build/llvm/` |
 | `goobj/enc` | 从 Go 1.24 源码 vendored 的目标文件写入器（`goobj/enc/vendorize.sh` 负责同步） |
 | `goobj/lower` | Go ABI 降级：thunk、签名、参数布局 |
 | `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子 |
-| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata |
+| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata。随 Go 版本变的映射（profile、ELF→`R_*`、funcdata 编号）都在 `gover_go1_XX.go`，升级 Go 只加这一个文件 |
 | `tools/gocobj-diff` | 两个 goobj 的语义比对（符号、reloc、解码后的 pc 表、funcdata、FuncInfo） |
 | `tools/goc-lower` | `goobj/lower` 的命令行外壳 |
 | `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
