@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # test/stress built for linux/arm64 and run under qemu-aarch64: C recursion
 # in the three stack-check tiers while GCs grow and shrink the stacks.
-# Skipped when qemu-aarch64 is not installed.
+# Skipped when qemu-aarch64 is not installed (ARM64_REQUIRE_QEMU=1: fail).
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
 cd "$ROOT"
 QEMU="$(command -v qemu-aarch64 || command -v qemu-aarch64-static || true)"
-[[ -n "$QEMU" ]] || { echo "SKIP test-stress-arm64: no qemu-aarch64"; exit 0; }
+if [[ -z "$QEMU" ]]; then
+  [[ -z "${ARM64_REQUIRE_QEMU:-}" ]] || { echo "FAIL test-stress-arm64: no qemu-aarch64" >&2; exit 1; }
+  echo "SKIP test-stress-arm64: no qemu-aarch64"; exit 0
+fi
 OUT="$ROOT/build/stress-arm64"
 mkdir -p "$OUT"
 env -u GOC_DEFAULT_PTR_COLOR GOC_ARCH=arm64 GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-2}" "$ROOT/cmd/goc" build \

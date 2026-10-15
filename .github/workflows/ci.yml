@@ -10,6 +10,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    # The pinned Go is what the vendored goobj writer and
+    # tools/gocobj2goobj/gover_go1_24.go are for. The next release runs as an
+    # early warning: it is expected to fail until its gover file and ABI
+    # profile exist, and does not fail the workflow.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - go: "1.24.4"
+            experimental: false
+          - go: "1.25.x"
+            experimental: true
+    continue-on-error: ${{ matrix.experimental }}
+    name: test (go ${{ matrix.go }})
     steps:
       - uses: actions/checkout@v4
 
@@ -24,7 +38,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build python3 \
             ripgrep curl ca-certificates xz-utils patchelf pkg-config \
-            zlib1g-dev lld
+            zlib1g-dev lld \
+            qemu-user libc6-dev-arm64-cross linux-libc-dev-arm64-cross
           if ! command -v clang-19 >/dev/null 2>&1; then
             wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
             chmod +x /tmp/llvm.sh
@@ -33,7 +48,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.24.4"
+          go-version: ${{ matrix.go }}
 
       # restore + save, not actions/cache. The combined action only writes
       # the cache when the whole job succeeds, so a test failure used to
@@ -83,8 +98,9 @@ jobs:
         run: |
           # p27 builds libGocClang.so with the host clang++-19. That package
           # does not ship llvm-config-19 or the Clang C++ headers.
-          sudo apt-get install -y llvm-19-dev libclang-19-dev
+          sudo apt-get install -y llvm-19-dev libclang-19-dev llvm-19-tools
+          pipx install lit   # Ubuntu 24.04 pip refuses system-wide installs
           command -v llvm-config-19 >/dev/null
           inc="$(llvm-config-19 --includedir)"
           test -f "$inc/clang/Frontend/FrontendPluginRegistry.h"
-          ./scripts/ci-test.sh
+          ARM64_REQUIRE_QEMU=1 GOC_REQUIRE_LIT=1 ./scripts/ci-test.sh
