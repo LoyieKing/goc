@@ -21,6 +21,6 @@ step "arm64"             ./test/e2e/arm64/run.sh
 step "arm64 stress"      ./test/e2e/arm64/stress.sh
 step "go unit tests"     go test ./gocobj/ ./goobj/lower/ ./tools/...
 step "gocobj goldens"    go run ./tools/goc-objdump verify test/gocobj/v1.0/valid.gocobj
-step "gocobj-diff"       go run ./tools/gocobj-diff build/test/realbody/realbody.goobj build/test/realbody/realbody.goobj
+step "gocobj-diff"       ./test/gocobj/diff.sh
 
 echo "=== ci-test: all passed ==="
