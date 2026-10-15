@@ -9,7 +9,9 @@
 //     and the non-safepoint JMP/Jcc/LEA refs (meta.branches), kept apart
 //   - rebuilds pcsp consistent with LLVM Go frame (PUSH BP + SUB $frame)
 //
-// Primary path for P12/P13. Does not use mirlower opcode switches for encoding.
+// Function bodies are encoded by LLVM MC. The stack-check prologue and
+// morestack stub bytes are still emitted here (gocSplitCheck, gocSplitStub);
+// docs/todo.md tracks moving them into LLVM.
 package main
 
 import (
@@ -27,12 +29,12 @@ import (
 	"strconv"
 	"strings"
 
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/bio"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj/x86"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/src"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/bio"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj/x86"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/src"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
 )
 
 type metaFile struct {

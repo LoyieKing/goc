@@ -7,7 +7,7 @@
 // and must have minimal dependencies.
 package chacha8rand
 
-import "goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/byteorder"
+import "github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/byteorder"
 
 const (
 	ctrInc = 4  // increment counter by 4 between block calls

@@ -241,7 +241,7 @@ field:
 // indexByte returns the index of the first instance of c in s,
 // or -1 if c is not present in s.
 // indexByte is semantically the same as [strings.IndexByte].
-// We copy this function because "goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/cpu" should not have external dependencies.
+// We copy this function because "github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/cpu" should not have external dependencies.
 func indexByte(s string, c byte) int {
 	for i := 0; i < len(s); i++ {
 		if s[i] == c {

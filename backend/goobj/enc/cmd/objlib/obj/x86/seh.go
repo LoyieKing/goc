@@ -5,9 +5,9 @@
 package x86
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/src"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/src"
 	"encoding/base64"
 	"fmt"
 	"math"

@@ -7,7 +7,7 @@
 package maps
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
 	"unsafe"
 )
 

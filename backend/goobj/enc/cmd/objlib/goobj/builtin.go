@@ -4,7 +4,7 @@
 
 package goobj
 
-import "goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+import "github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 
 // Builtin (compiler-generated) function references appear
 // frequently. We assign special indices for them, so they

@@ -5,8 +5,8 @@
 package sync
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goarch"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goarch"
 	"sync/atomic"
 	"unsafe"
 )
@@ -79,7 +79,7 @@ func (ht *HashTrieMap[K, V]) Load(key K) (value V, ok bool) {
 		}
 		i = n.indirect()
 	}
-	panic("goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
+	panic("github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
 }
 
 // LoadOrStore returns the existing value for the key if present.
@@ -120,7 +120,7 @@ func (ht *HashTrieMap[K, V]) LoadOrStore(key K, value V) (result V, loaded bool)
 			i = n.indirect()
 		}
 		if !haveInsertPoint {
-			panic("goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
+			panic("github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
 		}
 
 		// Grab the lock and double-check what we saw.
@@ -178,7 +178,7 @@ func (ht *HashTrieMap[K, V]) expand(oldEntry, newEntry *entry[K, V], newHash uin
 	top := newIndirect
 	for {
 		if hashShift == 0 {
-			panic("goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while inserting")
+			panic("github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while inserting")
 		}
 		hashShift -= nChildrenLog2 // hashShift is for the level parent is at. We need to go deeper.
 		oi := (oldHash >> hashShift) & nChildrenMask
@@ -228,7 +228,7 @@ func (ht *HashTrieMap[K, V]) Swap(key K, new V) (previous V, loaded bool) {
 			i = n.indirect()
 		}
 		if !haveInsertPoint {
-			panic("goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
+			panic("github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
 		}
 
 		// Grab the lock and double-check what we saw.
@@ -339,7 +339,7 @@ func (ht *HashTrieMap[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
 	// Check if the node is now empty (and isn't the root), and delete it if able.
 	for i.parent != nil && i.empty() {
 		if hashShift == 8*goarch.PtrSize {
-			panic("goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
+			panic("github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
 		}
 		hashShift += nChildrenLog2
 
@@ -401,7 +401,7 @@ func (ht *HashTrieMap[K, V]) CompareAndDelete(key K, old V) (deleted bool) {
 	// Check if the node is now empty (and isn't the root), and delete it if able.
 	for i.parent != nil && i.empty() {
 		if hashShift == 8*goarch.PtrSize {
-			panic("goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
+			panic("github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
 		}
 		hashShift += nChildrenLog2
 
@@ -454,7 +454,7 @@ func (ht *HashTrieMap[K, V]) find(key K, hash uintptr, valEqual equalFunc, value
 			i = n.indirect()
 		}
 		if !found {
-			panic("goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
+			panic("github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync.HashTrieMap: ran out of hash bits while iterating")
 		}
 
 		// Grab the lock and double-check what we saw.

@@ -4,7 +4,7 @@
 
 package math
 
-import "goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goarch"
+import "github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goarch"
 
 const MaxUintptr = ^uintptr(0)
 

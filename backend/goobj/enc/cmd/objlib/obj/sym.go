@@ -32,13 +32,13 @@
 package obj
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/goobj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/hash"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/goobj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/hash"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 	"log"
 	"math"
 	"sort"

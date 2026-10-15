@@ -9,11 +9,11 @@ package dwarf
 
 import (
 	"bytes"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/src"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/src"
 	"cmp"
 	"errors"
 	"fmt"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 	"os/exec"
 	"slices"
 	"strconv"

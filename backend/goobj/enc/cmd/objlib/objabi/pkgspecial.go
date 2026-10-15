@@ -48,25 +48,25 @@ var runtimePkgs = []string{
 
 	"runtime",
 
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/atomic",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/exithook",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/maps",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/math",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/sys",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/syscall",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/atomic",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/exithook",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/maps",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/math",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/sys",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/syscall",
 
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/bytealg",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/byteorder",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/chacha8rand",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/coverage/rtcov",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/cpu",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goarch",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/godebugs",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goexperiment",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goos",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/profilerecord",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/stringslite",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/bytealg",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/byteorder",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/chacha8rand",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/coverage/rtcov",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/cpu",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goarch",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/godebugs",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goexperiment",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goos",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/profilerecord",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/stringslite",
 }
 
 // extraNoInstrumentPkgs is the set of packages in addition to runtimePkgs that
@@ -83,15 +83,15 @@ var extraNoInstrumentPkgs = []string{
 	"-internal/bytealg",
 }
 
-var noRaceFuncPkgs = []string{"sync", "sync/atomic", "goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/sync", "goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/atomic"}
+var noRaceFuncPkgs = []string{"sync", "sync/atomic", "github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/sync", "github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/atomic"}
 
 var allowAsmABIPkgs = []string{
 	"runtime",
 	"reflect",
 	"syscall",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/bytealg",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/chacha8rand",
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/syscall",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/bytealg",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/chacha8rand",
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/syscall",
 	"runtime/internal/startlinetest",
 }
 

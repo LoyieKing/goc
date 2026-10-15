@@ -10,7 +10,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goexperiment"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goexperiment"
 	"log"
 	"os"
 	"reflect"

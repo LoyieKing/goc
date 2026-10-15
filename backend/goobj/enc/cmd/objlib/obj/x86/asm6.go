@@ -31,12 +31,12 @@
 package x86
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/sys"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/sys"
 	"encoding/binary"
 	"fmt"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 	"log"
 	"strings"
 )

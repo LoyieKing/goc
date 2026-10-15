@@ -7,11 +7,11 @@
 package maps
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/asan"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/msan"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/race"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/sys"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/asan"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/msan"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/race"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/sys"
 	"unsafe"
 )
 

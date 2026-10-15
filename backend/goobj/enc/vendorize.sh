@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ENC="$ROOT/goobj/enc"
 GOROOT="$(go env GOROOT)"
-MOD="goc.local/p5-machinepass-goobj/goobj/enc"
+MOD="github.com/LoyieKing/goc/backend/goobj/enc"
 
 rm -rf "$ENC/cmd" "$ENC/stdinternal"
 mkdir -p "$ENC"
@@ -50,7 +50,7 @@ done < <(find "$ENC" -name '*.go' -print0)
 # go.mod for enc (same module as parent — use replace from root)
 # Ensure root go.mod exists
 if [[ ! -f "$ROOT/go.mod" ]]; then
-  (cd "$ROOT" && go mod init goc.local/p5-machinepass-goobj)
+  (cd "$ROOT" && go mod init github.com/LoyieKing/goc/backend)
 fi
 
 echo "Vendored into $ENC"

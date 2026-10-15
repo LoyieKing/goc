@@ -9,7 +9,7 @@
 package sync
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/race"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/race"
 	"sync/atomic"
 	"unsafe"
 )

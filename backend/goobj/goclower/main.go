@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"goc.local/p5-machinepass-goobj/goobj/lower"
+	"github.com/LoyieKing/goc/backend/goobj/lower"
 )
 
 func main() {

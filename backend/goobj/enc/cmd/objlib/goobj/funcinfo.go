@@ -7,7 +7,7 @@ package goobj
 import (
 	"bytes"
 	"encoding/binary"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
 )
 
 // CUFileIndex is used to index the filenames that are stored in the

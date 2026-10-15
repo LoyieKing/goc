@@ -4,7 +4,7 @@
 
 package obj
 
-import "goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/src"
+import "github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/src"
 
 // InlTree is a collection of inlined calls. The Parent field of an
 // InlinedCall is the index of another InlinedCall in InlTree.

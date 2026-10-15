@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/sys"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/sys"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
 )
 
 func u32(b []byte) uint32 { return binary.LittleEndian.Uint32(b) }

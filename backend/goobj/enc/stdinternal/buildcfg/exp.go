@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goexperiment"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goexperiment"
 )
 
 // ExperimentFlags represents a set of GOEXPERIMENT flags relative to a baseline

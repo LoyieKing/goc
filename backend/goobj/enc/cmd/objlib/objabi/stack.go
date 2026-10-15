@@ -5,8 +5,8 @@
 package objabi
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 )
 
 func StackNosplit(race bool) int {

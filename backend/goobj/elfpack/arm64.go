@@ -20,10 +20,10 @@ import (
 	"os"
 	"sort"
 
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/sys"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/sys"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
 )
 
 // gocArch is "amd64" or "arm64", taken from the ELF machine and checked

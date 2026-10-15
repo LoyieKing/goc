@@ -9,7 +9,7 @@
 package stringslite
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/bytealg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/bytealg"
 	"unsafe"
 )
 

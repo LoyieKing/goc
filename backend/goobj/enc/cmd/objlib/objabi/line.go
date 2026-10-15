@@ -5,7 +5,7 @@
 package objabi
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 	"os"
 	"path/filepath"
 	"runtime"

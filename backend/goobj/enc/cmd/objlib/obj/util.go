@@ -6,10 +6,10 @@ package obj
 
 import (
 	"bytes"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
 	"fmt"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 	"io"
 	"strings"
 )

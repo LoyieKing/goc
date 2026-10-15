@@ -14,7 +14,7 @@
 package exithook
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/atomic"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/atomic"
 	_ "unsafe" // for linkname
 )
 

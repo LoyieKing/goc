@@ -5,9 +5,9 @@
 package maps
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/abi"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goarch"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/runtime/sys"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goarch"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/runtime/sys"
 	"unsafe"
 )
 

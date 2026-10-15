@@ -1,3 +1,3 @@
-module goc.local/p5-machinepass-goobj
+module github.com/LoyieKing/goc/backend
 
 go 1.24.4

@@ -135,10 +135,10 @@ see ../../link/internal/ld/fips.go for those details.
 package obj
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
 	"fmt"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/bisect"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/bisect"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/buildcfg"
 	"log"
 	"os"
 	"strings"

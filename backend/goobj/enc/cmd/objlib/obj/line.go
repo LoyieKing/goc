@@ -5,8 +5,8 @@
 package obj
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/goobj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/src"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/goobj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/src"
 )
 
 // AddImport adds a package to the list of imported packages.

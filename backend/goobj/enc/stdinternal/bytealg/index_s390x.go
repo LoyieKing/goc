@@ -4,7 +4,7 @@
 
 package bytealg
 
-import "goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/cpu"
+import "github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/cpu"
 
 const MaxBruteForce = 64
 

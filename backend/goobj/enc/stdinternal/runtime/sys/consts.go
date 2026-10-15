@@ -5,8 +5,8 @@
 package sys
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goarch"
-	"goc.local/p5-machinepass-goobj/goobj/enc/stdinternal/goos"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goarch"
+	"github.com/LoyieKing/goc/backend/goobj/enc/stdinternal/goos"
 )
 
 // AIX and OpenBSD require a larger stack for syscalls.

@@ -31,7 +31,7 @@
 package x86
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj"
 	"fmt"
 )
 

@@ -5,8 +5,8 @@
 package obj
 
 import (
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/goobj"
-	"goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/goobj"
+	"github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/objabi"
 	"encoding/binary"
 	"fmt"
 	"log"

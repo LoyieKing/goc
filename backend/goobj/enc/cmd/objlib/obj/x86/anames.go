@@ -2,7 +2,7 @@
 
 package x86
 
-import "goc.local/p5-machinepass-goobj/goobj/enc/cmd/objlib/obj"
+import "github.com/LoyieKing/goc/backend/goobj/enc/cmd/objlib/obj"
 
 var Anames = []string{
 	obj.A_ARCHSPECIFIC: "AAA",
