@@ -101,7 +101,7 @@ func (c *converter) emitData() error {
 		sec int
 		r   rela
 	}
-	for sec := range c.bySec {
+	for _, sec := range c.textSecs() {
 		rs, err := c.relas(sec)
 		if err != nil {
 			return err
@@ -113,7 +113,8 @@ func (c *converter) emitData() error {
 			}{sec, r})
 		}
 	}
-	for i, ls := range c.secSym {
+	for _, i := range sortedKeys(c.secSym) {
+		ls := c.secSym[i]
 		rs, err := c.relas(i)
 		if err != nil {
 			return err

@@ -68,6 +68,9 @@ func load(path string) (*object, error) {
 	r := goobj.NewReaderFromBytes(b[i:], true)
 	ndef := uint32(r.NSym() + r.NHashed64def() + r.NHasheddef() + r.NNonpkgdef())
 	nall := ndef + uint32(r.NNonpkgref())
+	// PkgIdxNone indexes the non-package symbols, defined ones first: the
+	// same base the Go linker's loader uses (cmd/link/internal/loader).
+	nonpkg := uint32(r.NSym() + r.NHashed64def() + r.NHasheddef())
 	nameOf := func(i uint32) string {
 		s := r.Sym(i)
 		n := s.Name(r)
@@ -80,7 +83,7 @@ func load(path string) (*object, error) {
 	resolve := func(ref goobj.SymRef) string {
 		switch ref.PkgIdx {
 		case goobj.PkgIdxNone:
-			k := ndef + ref.SymIdx
+			k := nonpkg + ref.SymIdx
 			if k < nall {
 				return nameOf(k)
 			}
@@ -116,8 +119,8 @@ func load(path string) (*object, error) {
 			var data []byte
 			if ref.PkgIdx == goobj.PkgIdxSelf && ref.SymIdx < ndef {
 				data = r.Data(ref.SymIdx)
-			} else if ref.PkgIdx == goobj.PkgIdxNone && ndef+ref.SymIdx < nall {
-				data = nil
+			} else if ref.PkgIdx == goobj.PkgIdxNone && nonpkg+ref.SymIdx < ndef {
+				data = r.Data(nonpkg + ref.SymIdx)
 			} else if ref.PkgIdx == goobj.PkgIdxHashed64 {
 				data = r.Data(uint32(r.NSym()) + ref.SymIdx)
 			} else if ref.PkgIdx == goobj.PkgIdxHashed {

@@ -324,3 +324,18 @@ func writeBytes(ctxt *obj.Link, ls *obj.LSym, b []byte) {
 		ls.WriteInt(ctxt, int64(off), 1, int64(b[off]))
 	}
 }
+
+// textSecs returns the text section indices in ascending order. Go map
+// iteration is random, and the order in which this converter creates
+// symbols (GOT slots, section copies) decides their index in the object:
+// every walk that can create a symbol must be in a fixed order.
+func (c *converter) textSecs() []int { return sortedKeys(c.bySec) }
+
+func sortedKeys[V any](m map[int]V) []int {
+	ks := make([]int, 0, len(m))
+	for k := range m {
+		ks = append(ks, k)
+	}
+	sort.Ints(ks)
+	return ks
+}

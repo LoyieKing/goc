@@ -178,7 +178,8 @@ func (c *converter) write(out string) error {
 			callAt[r.Func][r.Offset] = true
 		}
 	}
-	for sec, l := range c.bySec {
+	for _, sec := range c.textSecs() {
+		l := c.bySec[sec]
 		rs, err := c.relas(sec)
 		if err != nil {
 			return err
