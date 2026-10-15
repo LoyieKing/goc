@@ -196,8 +196,9 @@ else
   if [[ "$GOC_ARCH" == arm64 ]]; then
     TARGET_ARGS=(-target aarch64-unknown-linux-gnu -ffixed-x28)
   fi
+  # -fno-discard-value-names: see cmd/goc. The passes match stack slots by name.
   "$CLANG" "${NATIVE_DEFS[@]}" "${TARGET_ARGS[@]}" -mno-red-zone -fno-stack-protector \
-    -fno-asynchronous-unwind-tables -I "$INC" \
+    -fno-asynchronous-unwind-tables -fno-discard-value-names -I "$INC" \
     -emit-llvm -S "${OPT_FLAGS[@]}" \
     -o "$LL" "$IN"
 fi
