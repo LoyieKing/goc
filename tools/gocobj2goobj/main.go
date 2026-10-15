@@ -69,7 +69,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, err)
 			os.Exit(1)
 		}
-		diffs, err := checkAgainstMeta(syn, *meta)
+		diffs, err := checkAgainstMeta(syn, *meta, f.Header.Minor >= 3)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "gocobj2goobj: %v\n", err)
 			os.Exit(1)

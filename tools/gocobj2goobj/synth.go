@@ -173,7 +173,9 @@ func synthFuncs(f *gocobj.File, pkg, flags, cABI string) ([]synthFn, error) {
 
 // checkAgainstMeta compares the synthesized entries with goc-lower's
 // meta.json and returns one line per difference.
-func checkAgainstMeta(syn []synthFn, metaPath string) ([]string, error) {
+// With requireAll (1.3 files, which list the Go ABI thunks too) every
+// meta.json function must also come from the tables.
+func checkAgainstMeta(syn []synthFn, metaPath string, requireAll bool) ([]string, error) {
 	b, err := os.ReadFile(metaPath)
 	if err != nil {
 		return nil, err
@@ -209,7 +211,7 @@ func checkAgainstMeta(syn []synthFn, metaPath string) ([]string, error) {
 		seen[x.MIRName] = true
 	}
 	for name := range meta {
-		if !seen[name] {
+		if requireAll && !seen[name] {
 			diffs = append(diffs, name+": in meta.json but not in the tables")
 		}
 	}
