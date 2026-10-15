@@ -525,16 +525,11 @@ func (c *converter) emitData() error {
 				host.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
 				continue
 			}
-			switch elf.R_X86_64(r.Type) {
-			case elf.R_X86_64_64:
-				typ, siz = objabi.R_ADDR, 8
-			case elf.R_X86_64_32, elf.R_X86_64_32S:
-				typ = objabi.R_ADDR
-			case elf.R_X86_64_PC32, elf.R_X86_64_PLT32:
-				typ = objabi.R_PCREL
-			default:
+			d, ok := gv.X86Data[elf.R_X86_64(r.Type)]
+			if !ok {
 				return fmt.Errorf("unsupported data reloc type %d in %s at %#x", r.Type, secs[i].Name, r.Off)
 			}
+			typ, siz = d.Type, d.Siz
 			host.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
 		}
 	}
@@ -727,8 +722,8 @@ func (c *converter) write(out string) error {
 				name string
 				blob []byte
 			}{
-				{abi.FUNCDATA_ArgsPointerMaps, "gclocals.goc." + x.sym.Name + ".args", args},
-				{abi.FUNCDATA_LocalsPointerMaps, "gclocals.goc." + x.sym.Name + ".locals", locals},
+				{gv.FuncdataArgs, "gclocals.goc." + x.sym.Name + ".args", args},
+				{gv.FuncdataLocals, "gclocals.goc." + x.sym.Name + ".locals", locals},
 			} {
 				ms := ctxt.Lookup(m.name)
 				ctxt.GloblPos(ms, int64(len(m.blob)), obj.RODATA|obj.DUPOK, src.NoXPos)
@@ -742,7 +737,7 @@ func (c *converter) write(out string) error {
 		}
 		p := ctxt.NewProg()
 		p.As = obj.APCDATA
-		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: int64(abi.PCDATA_StackMapIndex)}
+		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: gv.PcdataStackMapIndex}
 		p.To = obj.Addr{Type: obj.TYPE_CONST, Offset: -1}
 		add(p)
 	}
@@ -786,7 +781,7 @@ func (c *converter) write(out string) error {
 		st.sym.Set(obj.AttrNoFrame, true)
 		fi := st.sym.Func()
 		fi.StartLine = int32(st.line)
-		fi.Pcln.Pcdata = make([]*obj.LSym, abi.PCDATA_StackMapIndex+1)
+		fi.Pcln.Pcdata = make([]*obj.LSym, gv.PcdataStackMapIndex+1)
 		for i := range fi.Pcln.Pcdata {
 			fi.Pcln.Pcdata[i] = pctab(ctxt, 0, nil)
 		}
@@ -843,20 +838,15 @@ func (c *converter) write(out string) error {
 				if ty == elf.R_X86_64_GOTPCREL || ty == elf.R_X86_64_GOTPCRELX || ty == elf.R_X86_64_REX_GOTPCRELX {
 					target, goAdd, ty = c.gotSlot(target, goAdd), 0, elf.R_X86_64_PC32
 				}
-				var typ objabi.RelocType
-				switch ty {
-				case elf.R_X86_64_PLT32, elf.R_X86_64_PC32:
-					typ = objabi.R_PCREL
-					if callAt[x.name][off] {
-						typ = objabi.R_CALL
-						if goAdd != 0 {
-							return fmt.Errorf("call at %s+%#x has addend %d", s.Name, off, goAdd)
-						}
-					}
-				case elf.R_X86_64_32, elf.R_X86_64_32S:
-					typ = objabi.R_ADDR
-				default:
+				typ, ok := gv.X86Text[ty]
+				if !ok {
 					return fmt.Errorf("unsupported text reloc type %d in %s at %#x", r.Type, s.Name, off)
+				}
+				if (ty == elf.R_X86_64_PLT32 || ty == elf.R_X86_64_PC32) && callAt[x.name][off] {
+					typ = gv.X86Call
+					if goAdd != 0 {
+						return fmt.Errorf("call at %s+%#x has addend %d", s.Name, off, goAdd)
+					}
 				}
 				if r.Add < math.MinInt32 || r.Add > math.MaxInt32 {
 					return fmt.Errorf("reloc at %s+%#x: addend %d out of range", s.Name, off, r.Add)

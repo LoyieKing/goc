@@ -20,23 +20,22 @@ import (
 	"github.com/LoyieKing/goc/gocobj"
 )
 
-// profileFor is the ABI profile each target architecture of this converter
-// expects. It changes when the vendored goobj writer moves to a new Go.
-var profileFor = map[string]string{
-	"amd64": "go1.24-amd64",
-	"arm64": "go1.24-arm64",
-}
-
 func main() {
 	in := flag.String("in", "", "input .gocobj")
 	out := flag.String("o", "", "output Go object file")
 	pkg := flag.String("p", "main", "package path")
+	goversion := flag.String("goversion", os.Getenv("GOC_GOVERSION"), "Go release the object is for (default: the Go this converter was built with)")
 	symabis := flag.String("symabis", "", "also write the asm symabis (def lines) of the functions here")
 	flag.Parse()
 	if *in == "" || *out == "" {
 		fmt.Fprintln(os.Stderr, "usage: gocobj2goobj -in foo.gocobj -o foo.goobj [-p pkg] [-symabis file]")
 		os.Exit(2)
 	}
+	v, err := lookupGoVersion(*goversion)
+	if err != nil {
+		fatalf("%v", err)
+	}
+	gv = v
 	f, err := gocobj.Open(*in)
 	if err != nil {
 		fatalf("%v", err)
@@ -51,7 +50,7 @@ func main() {
 	if goarch == "" {
 		goarch = "amd64"
 	}
-	if want := profileFor[goarch]; f.Header.Profile != want {
+	if want := gv.Profiles[goarch]; f.Header.Profile != want {
 		fatalf("%s has ABI profile %q, this converter writes %q for GOARCH=%s", *in, f.Header.Profile, want, goarch)
 	}
 	if f.Header.Flags&gocobj.HeaderStackChecksInCode == 0 {
