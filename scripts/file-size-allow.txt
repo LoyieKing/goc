@@ -2,7 +2,5 @@
 # (scripts/check-file-size.sh). A file may shrink but not grow; lower the
 # number when it shrinks and remove the line once it is split.
 goobj/lower/goabi.go 1672                # thunk emitters for both arches + wrapper tables; split per arch next
-llvm/tools/goc-llc/goc_llc.cpp 1271      # llc driver plus the goc machine passes; move the passes to lib/
-llvm/tools/goc-llc/GocObjTables.cpp 1004 # .goc.* table writer; one section per file would split it
 tools/gocobj2goobj/convert.go 919        # text, data and pc tables in one converter; split by section kind
 scripts/goc-color-report.py 1171         # report tool; build/diff/render could be separate modules
