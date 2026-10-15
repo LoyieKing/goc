@@ -72,6 +72,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#include "Goc/StackMap.h"
+
 using namespace llvm;
 
 namespace {
@@ -2291,30 +2293,23 @@ struct GocInlineGate : PassInfoMixin<GocInlineGate> {
 
 } // namespace
 
-extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
-llvmGetPassPluginInfo() {
-  return {LLVM_PLUGIN_API_VERSION, "GocStackMap", LLVM_VERSION_STRING,
-          [](PassBuilder &PB) {
-            PB.registerPipelineParsingCallback(
-                [](StringRef Name, FunctionPassManager &FPM,
-                   ArrayRef<PassBuilder::PipelineElement>) {
-                  if (Name == "goc-stackmap") {
-                    FPM.addPass(GocStackMap());
-                    return true;
-                  }
-                  if (Name == "goc-reanchor") {
-                    FPM.addPass(GocReanchor());
-                    return true;
-                  }
-                  if (Name == "goc-pin-i64") {
-                    FPM.addPass(GocPinI64());
-                    return true;
-                  }
-                  if (Name == "goc-inline-gate") {
-                    FPM.addPass(GocInlineGate());
-                    return true;
-                  }
-                  return false;
-                });
-          }};
+bool goc::parseStackMapPass(StringRef Name, FunctionPassManager &FPM,
+                            ArrayRef<PassBuilder::PipelineElement>) {
+  if (Name == "goc-stackmap") {
+    FPM.addPass(GocStackMap());
+    return true;
+  }
+  if (Name == "goc-reanchor") {
+    FPM.addPass(GocReanchor());
+    return true;
+  }
+  if (Name == "goc-pin-i64") {
+    FPM.addPass(GocPinI64());
+    return true;
+  }
+  if (Name == "goc-inline-gate") {
+    FPM.addPass(GocInlineGate());
+    return true;
+  }
+  return false;
 }

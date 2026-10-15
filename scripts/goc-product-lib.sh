@@ -71,17 +71,17 @@ goc_export_tools() {
   if [[ -x "$toolroot/passes/goc-llc" ]]; then
     export LLC="${LLC:-$toolroot/passes/goc-llc}"
     export GOC_COLOR_ESCAPE="${GOC_COLOR_ESCAPE:-$toolroot/passes/goc-color-escape}"
-    export GOC_STACKMAP="${GOC_STACKMAP:-$toolroot/passes/GocStackMap.so}"
+    export GOC_STACKMAP="${GOC_STACKMAP:-$toolroot/passes/libGocPasses.so}"
     export OPT="${OPT:-$toolroot/bin/opt}"
   fi
   if [[ -z "${LLC:-}" && -x "$ROOT/passes/goc-llc" ]]; then
     export LLC="$ROOT/passes/goc-llc"
   fi
   export LLC="${LLC:-$ROOT/build/llvm/goc-llc}"
-  if [[ -z "${GOC_STACKMAP:-}" && -f "$ROOT/passes/GocStackMap.so" ]]; then
-    export GOC_STACKMAP="$ROOT/passes/GocStackMap.so"
+  if [[ -z "${GOC_STACKMAP:-}" && -f "$ROOT/passes/libGocPasses.so" ]]; then
+    export GOC_STACKMAP="$ROOT/passes/libGocPasses.so"
   fi
-  export GOC_STACKMAP="${GOC_STACKMAP:-$ROOT/build/llvm/GocStackMap.so}"
+  export GOC_STACKMAP="${GOC_STACKMAP:-$ROOT/build/llvm/libGocPasses.so}"
   # Leave GOC_COLOR_ESCAPE unset when the repo pass is not built yet.
   # `goc build` compiles that pass on first use. A packed pass is exported above.
   if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/passes/goc-color-escape" ]]; then
@@ -130,7 +130,7 @@ goc_require_tools() {
   clang="$(goc_resolve_clang)"
   [[ -x "$clang" ]] || goc_die "clang missing"
   [[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). See docs/build-from-source.md."
-  [[ -f "$GOC_STACKMAP" ]] || goc_die "GocStackMap.so missing ($GOC_STACKMAP)."
+  [[ -f "$GOC_STACKMAP" ]] || goc_die "libGocPasses.so missing ($GOC_STACKMAP)."
   [[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. See docs/build-from-source.md."
   if [[ -n "${GOC_COLOR_ESCAPE:-}" && ! -x "$GOC_COLOR_ESCAPE" ]]; then
     goc_die "goc-color-escape missing ($GOC_COLOR_ESCAPE)."

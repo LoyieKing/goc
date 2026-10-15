@@ -6,7 +6,7 @@ REPO="$(cd "$ROOT/../.." && pwd)"
 cd "$ROOT"
 
 echo "=== color-escape: build goc-color-escape ==="
-make -C "$REPO/llvm/lib/Transforms/ColorEscape"
+"$REPO/scripts/build-passes.sh"
 
 PASS_BIN="$REPO/build/llvm/goc-color-escape"
 CLANG="${CLANG:-clang-19}"

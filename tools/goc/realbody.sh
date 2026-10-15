@@ -91,7 +91,7 @@ else
 fi
 if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
   if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
-    make -C "$ROOT/llvm" "$GOC_LLC_BIN" >&2 || true
+    "$ROOT/scripts/build-passes.sh" >&2 || true
   fi
   if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
     echo "realbody: FATAL missing $GOC_LLC_BIN; GOC_FRAMEADDR_MODE=gep needs its" \
@@ -244,10 +244,10 @@ if [[ "$IN" != *.ll && "$OPT_LEVEL" != 0 ]]; then
   # passes that rewrite internal SysV calls before those maps are taken.
   if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
     SMPASS="$GOC_STACKMAP"
-  elif [[ -f "$ROOT/passes/GocStackMap.so" ]]; then
-    SMPASS="$ROOT/passes/GocStackMap.so"
+  elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
+    SMPASS="$ROOT/passes/libGocPasses.so"
   else
-    SMPASS="$ROOT/build/llvm/GocStackMap.so"
+    SMPASS="$ROOT/build/llvm/libGocPasses.so"
   fi
   [[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
   "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate -S "$LL" -o "$TMP/body.gate.ll"
@@ -272,10 +272,10 @@ cp "$TMP/body.impl.ll" "$LL"
 if [[ "${GOC_SPTR_MAPS:-0}" == "1" && "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
   if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
     SMPASS="$GOC_STACKMAP"
-  elif [[ -f "$ROOT/passes/GocStackMap.so" ]]; then
-    SMPASS="$ROOT/passes/GocStackMap.so"
+  elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
+    SMPASS="$ROOT/passes/libGocPasses.so"
   else
-    SMPASS="$ROOT/build/llvm/GocStackMap.so"
+    SMPASS="$ROOT/build/llvm/libGocPasses.so"
   fi
   [[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
   "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap -S "$LL" \

@@ -49,16 +49,10 @@
 #include <tuple>
 #include <vector>
 
+#include "Goc/ColorEscape.h"
+
 using namespace llvm;
 
-static cl::opt<std::string> InputFilename(cl::Positional, cl::desc("<input ll/bc>"),
-                                          cl::Required);
-static cl::opt<std::string> OutputFilename("o", cl::desc("Output annotated IR"),
-                                          cl::value_desc("filename"),
-                                          cl::init("-"));
-static cl::opt<bool> FatalErrors("fatal-errors",
-                                 cl::desc("Exit non-zero if color/escape errors"),
-                                 cl::init(true));
 static cl::opt<bool> Verbose("verbose", cl::desc("Verbose diagnostics"),
                              cl::init(false));
 static cl::opt<std::string> DefaultPtrColor(
@@ -2341,7 +2335,7 @@ static void emitColorReport(Module &M, ColorEscapeState &S) {
   }
 }
 
-static int runOnModule(Module &M) {
+int goc::runColorEscape(Module &M) {
   unsigned DynamicAllocas = lowerDynamicAllocas(M);
   ColorEscapeState S;
   seedAnnotations(M, S);
@@ -2391,32 +2385,4 @@ static int runOnModule(Module &M) {
          << M.getModuleIdentifier() << "'\n";
   emitColorReport(M, S);
   return (int)S.ErrorCount;
-}
-
-int main(int argc, char **argv) {
-  InitLLVM X(argc, argv);
-  cl::ParseCommandLineOptions(argc, argv, "goc P17 color/escape analysis\n");
-
-  LLVMContext Ctx;
-  SMDiagnostic Err;
-  std::unique_ptr<Module> M = parseIRFile(InputFilename, Err, Ctx);
-  if (!M) {
-    Err.print(argv[0], errs());
-    return 2;
-  }
-
-  int Errors = runOnModule(*M);
-
-  std::error_code EC;
-  raw_fd_ostream OS(OutputFilename, EC, sys::fs::OF_Text);
-  if (EC) {
-    errs() << "unable to open output '" << OutputFilename << "': " << EC.message()
-           << "\n";
-    return 2;
-  }
-  M->print(OS, nullptr);
-
-  if (Errors && FatalErrors)
-    return 1;
-  return 0;
 }

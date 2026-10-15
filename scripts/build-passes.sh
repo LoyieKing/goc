@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build goc-color-escape, goc-llc and GocStackMap.so against the patched clang.
+# Build goc-color-escape, goc-llc and libGocPasses.so (CMake, llvm/CMakeLists.txt)
+# against the patched clang's LLVM.
 # Skips a pass that is already executable unless GOC_REBUILD_PASSES=1.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -18,6 +19,15 @@ if [[ -z "$CXX" ]]; then
   else CXX="$(command -v g++ || true)"
   fi
 fi
+COLOR="$ROOT/build/llvm/goc-color-escape"
+LLC="$ROOT/build/llvm/goc-llc"
+SM="$ROOT/build/llvm/libGocPasses.so"
+
+if [[ "${GOC_REBUILD_PASSES:-}" != 1 && -x "$COLOR" && -x "$LLC" && -f "$SM" ]]; then
+  echo "build-passes: already built"
+  exit 0
+fi
+
 [[ -x "$LLVM_CFG" ]] || { echo "build-passes: missing $LLVM_CFG (run scripts/build-clang.sh)" >&2; exit 1; }
 [[ -n "$CXX" && -x "$CXX" ]] || { echo "build-passes: missing a C++ compiler" >&2; exit 1; }
 
@@ -32,33 +42,15 @@ fi
   exit 1
 }
 
-COLOR="$ROOT/build/llvm/goc-color-escape"
-LLC="$ROOT/build/llvm/goc-llc"
-SM="$ROOT/build/llvm/GocStackMap.so"
 
-if [[ "${GOC_REBUILD_PASSES:-}" != 1 && -x "$COLOR" && -x "$LLC" && -f "$SM" ]]; then
-  echo "build-passes: already built"
-  exit 0
-fi
-
-libdir="$("$LLVM_CFG" --libdir)"
-if [[ -e "$libdir/libLLVM-19.so" || -e "$libdir/libLLVM-19.a" ]]; then
-  LIBS="-lLLVM-19"
-elif [[ -e "$libdir/libLLVM.so" || -e "$libdir/libLLVM.so.19.1" ]]; then
-  LIBS="-lLLVM"
-else
-  echo "build-passes: no libLLVM in $libdir" >&2
-  exit 1
-fi
-
-make -C "$ROOT/llvm/lib/Transforms/ColorEscape" all \
-  CXX="$CXX" LLVM_CFG="$LLVM_CFG" LIBS="$LIBS"
-# Goals must be the makefile's relative paths. An absolute path is a
-# different target, and make has no rule for it when the file is absent.
-make -C "$ROOT/llvm" \
-  CXX="$CXX" LLVM_CFG="$LLVM_CFG" LIBS="$LIBS" \
-  LLVM_X86_SRC="$X86_SRC" LLVM_X86_BUILD="$X86_BUILD" \
-  ../build/llvm/GocStackMap.so ../build/llvm/goc-llc
+command -v cmake >/dev/null || { echo "build-passes: cmake not found" >&2; exit 1; }
+GEN=()
+command -v ninja >/dev/null && GEN=(-G Ninja)
+cmake -S "$ROOT/llvm" -B "$ROOT/build/llvm" "${GEN[@]}" \
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="$CXX" \
+  -DLLVM_DIR="$("$LLVM_CFG" --cmakedir)" \
+  -DGOC_X86_SRC="$X86_SRC" -DGOC_X86_BUILD="$X86_BUILD"
+cmake --build "$ROOT/build/llvm"
 
 [[ -x "$COLOR" && -x "$LLC" && -f "$SM" ]] || {
   echo "build-passes: outputs missing" >&2

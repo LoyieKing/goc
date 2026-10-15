@@ -13,9 +13,9 @@ goc-color-escape        llvm/lib/Transforms/ColorEscape   IR → IR：逃逸细�
   ▼
 tools/goc/realbody.sh   （由 cmd/goc build / scripts/goc-go.sh 调用）
   ├─ goc-lower fix-ir                tools/goc-lower + goobj/lower   Go ABI 包装、IR 修正
-  ├─ opt -load-pass-plugin=GocStackMap.so -passes=goc-inline-gate
+  ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-inline-gate
   ├─ opt default<O{0..3}>
-  ├─ opt -load-pass-plugin=GocStackMap.so -passes=goc-stackmap    llvm/lib/Transforms/StackMap
+  ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-stackmap    llvm/lib/Transforms/StackMap
   ├─ goc-llc -filetype=asm           llvm/tools/goc-llc   llc + GocFrameAddrFix + GocStackmapPlacement
   ├─ goc-lower align-asm → llvm-mc → ELF .o（再用 llvm-objdump 反汇编给 meta 用）
   ├─ goc-lower meta                  生成 meta.json（符号、调用点、分支、参数溢出）
@@ -34,7 +34,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `cmd/goc` | 命令行入口（bash）：`goc go`、`goc build`、`goc test`、`goc check`、`goc toolchain` |
 | `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`）、发布（`pack-release.sh`）、测试入口（`ci-test.sh`、`test-p27/p28/p29*.sh`、`qjs-*.sh`、`test262-sample.py`、`qjs-official-tests.py`） |
 | `clang/` | Clang 补丁、`SemaGocColors.cpp`、树外插件（p27 测试用） |
-| `llvm/` | goc 自己的 LLVM 代码。`lib/Transforms/ColorEscape` 编成独立工具 `goc-color-escape`；`lib/Transforms/StackMap` 是 opt 插件 `GocStackMap.so`；`tools/goc-llc` 是加了两个机器 pass 的 llc。构建：`scripts/build-passes.sh`，产物在 `build/llvm/` |
+| `llvm/` | goc 自己的 LLVM 代码。`lib/Transforms/ColorEscape` 编成独立工具 `goc-color-escape`；`lib/Transforms/StackMap` 是 opt 插件 `libGocPasses.so`；`tools/goc-llc` 是加了两个机器 pass 的 llc。构建：`scripts/build-passes.sh`，产物在 `build/llvm/` |
 | `goobj/enc` | 从 Go 1.24 源码 vendored 的目标文件写入器（`goobj/enc/vendorize.sh` 负责同步） |
 | `goobj/lower` | Go ABI 降级：thunk、签名、meta.json |
 | `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子、默认栈图 |

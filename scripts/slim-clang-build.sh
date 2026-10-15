@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Drop the bulky parts of an LLVM build tree after the passes are built.
 # Keeps the binaries, libLLVM, the clang resource dir, generated X86 .inc
-# files, and a copy of the X86 headers the pass Makefile needs.
+# files, and a copy of the X86 headers llvm/CMakeLists.txt needs (goc-llc).
 # GOC_KEEP_CLANG_BUILD=1 leaves the tree alone.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"

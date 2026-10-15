@@ -8,7 +8,7 @@ CLANG="${CLANG:-clang-19}"
 export LD_LIBRARY_PATH="$(llvm-config-19 --libdir)${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 if [[ ! -x "$PASS" ]]; then
-  make -C "$ROOT/llvm/lib/Transforms/ColorEscape"
+  "$ROOT/scripts/build-passes.sh"
 fi
 
 TMP="$(mktemp -d)"

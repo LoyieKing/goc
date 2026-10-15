@@ -253,7 +253,7 @@ cmd_build() {
       echo "goc build: missing color-escape pass $COLOR_ESC" >&2
       exit 1
     fi
-    make -C "$ROOT/llvm/lib/Transforms/ColorEscape" all
+    "$ROOT/scripts/build-passes.sh"
     [[ -x "$COLOR_ESC" ]] || { echo "goc build: missing color-escape pass" >&2; exit 1; }
   fi
 
@@ -350,10 +350,10 @@ cmd_build() {
   if [[ "$OPT_LEVEL" != 0 ]]; then
     [[ -n "$OPT" && -x "$OPT" ]] || { echo "goc build: opt missing" >&2; cleanup_build_tmp; exit 1; }
     local SMPASS="${GOC_STACKMAP:-}"
-    if [[ -z "$SMPASS" && -f "$ROOT/passes/GocStackMap.so" ]]; then
-      SMPASS="$ROOT/passes/GocStackMap.so"
+    if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
+      SMPASS="$ROOT/passes/libGocPasses.so"
     fi
-    SMPASS="${SMPASS:-$ROOT/build/llvm/GocStackMap.so}"
+    SMPASS="${SMPASS:-$ROOT/build/llvm/libGocPasses.so}"
     [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
     # goc-inline-gate is a no-op: call-bearing functions may inline. Maps are
     # recorded after O3 on the merged frame. Stack-pointer arguments and slots
@@ -391,10 +391,10 @@ cmd_build() {
     # verbatim.
     if [[ "${GOC_SPTR_MAPS:-0}" == 1 ]]; then
       local SMPASS="${GOC_STACKMAP:-}"
-      if [[ -z "$SMPASS" && -f "$ROOT/passes/GocStackMap.so" ]]; then
-        SMPASS="$ROOT/passes/GocStackMap.so"
+      if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
+        SMPASS="$ROOT/passes/libGocPasses.so"
       fi
-      SMPASS="${SMPASS:-$ROOT/build/llvm/GocStackMap.so}"
+      SMPASS="${SMPASS:-$ROOT/build/llvm/libGocPasses.so}"
       [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
       if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap \
           -S "$BODY_LL" -o "$TMP/a.sm.ll"; then

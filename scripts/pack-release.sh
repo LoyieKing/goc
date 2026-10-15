@@ -18,7 +18,7 @@ clang="$(goc_resolve_clang)"
 goc_export_tools
 [[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). Run scripts/build-passes.sh"
 [[ -x "${GOC_COLOR_ESCAPE:-}" ]] || goc_die "goc-color-escape missing. Run scripts/build-passes.sh"
-[[ -f "$GOC_STACKMAP" ]] || goc_die "GocStackMap.so missing ($GOC_STACKMAP)"
+[[ -f "$GOC_STACKMAP" ]] || goc_die "libGocPasses.so missing ($GOC_STACKMAP)"
 [[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. Run scripts/build-clang.sh"
 
 copy_tool() {
@@ -78,7 +78,7 @@ copy_tool llvm-mc
 copy_tool llvm-objdump
 cp -a "$LLC" "$stage/passes/goc-llc"
 cp -a "$GOC_COLOR_ESCAPE" "$stage/passes/goc-color-escape"
-cp -a "$GOC_STACKMAP" "$stage/passes/GocStackMap.so"
+cp -a "$GOC_STACKMAP" "$stage/passes/libGocPasses.so"
 chmod a+rx "$stage/passes/goc-llc" "$stage/passes/goc-color-escape"
 
 ( cd "$ROOT/backend" && go build -o "$stage/bin/elfpack" ./goobj/elfpack/ )

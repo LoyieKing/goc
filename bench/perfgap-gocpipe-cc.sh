@@ -52,7 +52,7 @@ PIPELINE="${PIPELINE//,globalopt/}"
 "$OPT" "-passes=$PIPELINE" ${GOCPIPE_OPT_EXTRA:-} "$t/a.bc" -o "$t/b.bc"
 LLC=llc-19
 if [[ "$MODE" == pipe-sm ]]; then
-  SM="$ROOT/build/llvm/GocStackMap.so"
+  SM="$ROOT/build/llvm/libGocPasses.so"
   "$OPT" -load-pass-plugin="$SM" -passes=goc-stackmap "$t/b.bc" -o "$t/c.bc"
   "$OPT" -load-pass-plugin="$SM" -passes=goc-reanchor "$t/c.bc" -o "$t/b.bc"
   LLC="$ROOT/build/llvm/goc-llc"

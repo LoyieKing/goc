@@ -46,7 +46,7 @@ clang-19 -emit-llvm -S -O0 -I include foo.c|.goc
   → goc-color-escape foo.ll -o foo.color.ll
 ```
 
-The product path does not read `!goc.color` after this pass: `GocStackMap.so` records live sptr/gptr slots at call sites, and elfpack turns those records into Go stack maps.
+The product path does not read `!goc.color` after this pass: `libGocPasses.so` records live sptr/gptr slots at call sites, and elfpack turns those records into Go stack maps.
 
 ## P19 uptr MSB
 

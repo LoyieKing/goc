@@ -56,7 +56,7 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 
 没有 `--clang`，也没有 `--toolchain`。
 
-`opt`、`llc`、`llvm-mc`、`llvm-objdump` 用 clang 旁边的同名文件。pass 在发布包的 `passes/`，在仓库里则是已编好的 `build/llvm/`（goc-llc、GocStackMap.so、goc-color-escape）。
+`opt`、`llc`、`llvm-mc`、`llvm-objdump` 用 clang 旁边的同名文件。pass 在发布包的 `passes/`，在仓库里则是已编好的 `build/llvm/`（goc-llc、libGocPasses.so、goc-color-escape）。
 
 打包（本机已经编好 clang 和 pass 时）打出的是完整的 goc，不是单独的 clang 目录：
 

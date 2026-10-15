@@ -52,7 +52,7 @@ jobs:
             third_party/llvm-19.1.7-clang-build/x86-src
             build/llvm/goc-color-escape
             build/llvm/goc-llc
-            build/llvm/GocStackMap.so
+            build/llvm/libGocPasses.so
           key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'llvm/lib/Transforms/ColorEscape/**', 'llvm/**') }}
 
       - name: Build clang and passes
@@ -76,7 +76,7 @@ jobs:
             third_party/llvm-19.1.7-clang-build/x86-src
             build/llvm/goc-color-escape
             build/llvm/goc-llc
-            build/llvm/GocStackMap.so
+            build/llvm/libGocPasses.so
           key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'llvm/lib/Transforms/ColorEscape/**', 'llvm/**') }}
 
       - name: Test

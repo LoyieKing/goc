@@ -383,7 +383,7 @@ There is no --clang and no --toolchain.
   --llc PATH             llc binary
   --opt-bin PATH         LLVM opt binary
   --color-escape PATH    goc-color-escape pass
-  --stackmap PATH        GocStackMap.so
+  --stackmap PATH        libGocPasses.so
   --frameaddr gep|asm    Frame-address mode (arm64 forces asm)
   --fixed-g              Reserve r14 for g (off unless this flag is passed)
   --no-fixed-g
