@@ -13,9 +13,9 @@ offset 8  n * ceil(nbit/8) bytes of bitmap
 FUNCDATA `$0` is ArgsPointerMaps. FUNCDATA `$1` is LocalsPointerMaps.
 Symbols use the `gclocals·` prefix so the linker accepts them.
 
-Locals bits come from `GocEmitPointerMaps` (live gptr frame indexes at a
-call). Args bits come from IR pointer parameters. `goc-live-gptr-sp-offs`
-overrides those bits only when `goc-live-gptr-debug-override=1`.
+Locals bits come from the LLVM stack map records requested by
+`GocStackMap.so` (live gptr/sptr slots at each call), parsed by elfpack's
+`parseLLVMStackMaps`. Args bits come from IR pointer parameters.
 
 A bit `i` means the word at `SP+i*8`. Do not derive the offset from frame-index
 creation order.

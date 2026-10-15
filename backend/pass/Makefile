@@ -1,4 +1,4 @@
-# Build libGocMachinePasses.so + goc-pass-driver (LLVM 19)
+# Build GocStackMap.so (opt plugin) + goc-llc (LLVM 19)
 CXX      := clang++-19
 LLVM_CFG ?= llvm-config-19
 
@@ -30,17 +30,9 @@ OUTDIR := ../build/pass-out
 STACKMAP_SO := $(OUTDIR)/GocStackMap.so
 GOC_LLC     := $(OUTDIR)/goc-llc
 
-OBJS := $(OBJDIR)/GocInsertStackCheck.o \
-        $(OBJDIR)/GocExpandStoreGptr.o \
-        $(OBJDIR)/GocSpillGptrsAtSafepoints.o \
-        $(OBJDIR)/GocRebuildLISAfterStackCheck.o \
-        $(OBJDIR)/GocEmitPointerMaps.o \
-        $(OBJDIR)/goc_pass_driver.o \
-        $(OBJDIR)/goc_mir_export.o
+.PHONY: all clean show-x86-paths
 
-.PHONY: all clean run show-x86-paths
-
-all: $(OBJDIR)/goc-pass-driver $(OBJDIR)/libGocMachinePasses.so $(STACKMAP_SO) $(GOC_LLC)
+all: $(STACKMAP_SO) $(GOC_LLC)
 
 $(OBJDIR)/GocStackMap.o: GocStackMap.cpp
 	@mkdir -p $(OBJDIR)
@@ -63,24 +55,5 @@ show-x86-paths:
 	@echo "LLVM_X86_SRC_INCLUDE=$(LLVM_X86_SRC_INCLUDE)"
 	@echo "LLVM_X86_BUILD_INCLUDE=$(LLVM_X86_BUILD_INCLUDE)"
 
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
-
-$(OBJDIR)/%.o: %.cpp goc_passes.h goc_x86.h | $(OBJDIR)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-$(OBJDIR)/libGocMachinePasses.so: $(OBJDIR)/GocInsertStackCheck.o \
-    $(OBJDIR)/GocExpandStoreGptr.o $(OBJDIR)/GocSpillGptrsAtSafepoints.o \
-    $(OBJDIR)/GocRebuildLISAfterStackCheck.o \
-    $(OBJDIR)/GocEmitPointerMaps.o
-	$(CXX) -shared -o $@ $^ $(LDFLAGS) $(LIBS)
-
-$(OBJDIR)/goc-pass-driver: $(OBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS) $(LIBS)
-
-run: all
-	mkdir -p $(OUTDIR)
-	$(OBJDIR)/goc-pass-driver --outdir $(OUTDIR) --wb
-
 clean:
-	rm -rf $(OBJDIR)
+	rm -rf $(OBJDIR) $(OUTDIR)

@@ -12,7 +12,7 @@ Needs: the patched clang next to goc (bin/clang, else
 third_party/llvm-19.1.7-clang-build/bin/clang), opt beside that clang or
 opt-19 (OPT), frontend/color-escape/build/goc-color-escape (built
 with make if missing) and backend/build/pass-out/GocStackMap.so (from
-backend/build.sh).  The QuickJS tree (third_party/quickjs-bellard or
+scripts/build-passes.sh).  The QuickJS tree (third_party/quickjs-bellard or
 quickjs-ng, gitignored) must exist with scripts/qjs-gstack*.patch applied;
 scripts/qjs-build.sh applies it.  build/qjs*/shim.goobj is optional (shim -D
 redirects).
@@ -138,7 +138,7 @@ def cmd_build(a):
     print(open(o("color-escape.log")).read().strip(), file=sys.stderr)
     sm = os.path.join(ROOT, "backend/build/pass-out/GocStackMap.so")
     if not os.path.exists(sm):
-        sys.exit("missing %s (run backend/build.sh first)" % sm)
+        sys.exit("missing %s (run scripts/build-passes.sh first)" % sm)
     env = dict(os.environ, GOC_INLINE_DYNALLOC="1", GOC_SPTR_MAPS="1")
     sh([opt, "-load-pass-plugin=" + sm, "-passes=goc-inline-gate", "-S", o("a.color.ll"), "-o", o("a.gate.ll")], env=env)
     pipe = subprocess.run([opt, "-passes=default<O%s>" % lvl, "-print-pipeline-passes", "-disable-output", "/dev/null"],
