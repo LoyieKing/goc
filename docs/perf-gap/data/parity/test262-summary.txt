@@ -1,0 +1,55 @@
+goc-ng: 1502/1526 pass
+  test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js FAIL undefined: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKe
+  test/language/eval-code/indirect/lex-env-heritage.js FAIL ReferenceError: ReferenceError: x is not defined
+  test/language/eval-code/indirect/var-env-global-lex-non-strict.js FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false
+  test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js FAIL Error: Error: $262.createRealm
+  test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js FAIL SyntaxError: SyntaxError: unsupported keyword: export
+  test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js FAIL SyntaxError: SyntaxError: meta expected
+  test/language/global-code/S10.4.1_A1_T1.js FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete
+  test/language/global-code/decl-func.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/global-code/decl-var.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/global-code/script-decl-func.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/global-code/script-decl-lex-deletion.js FAIL ReferenceError: ReferenceError: test262let is not defined
+  test/language/global-code/script-decl-lex-lex.js FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-lex-restricted-global.js FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-lex-var-declared-via-eval.js FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true
+  test/language/global-code/script-decl-lex-var.js FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-lex.js FAIL ReferenceError: ReferenceError: test262let is not defined
+  test/language/global-code/script-decl-var-collision.js FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-var.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/identifier-resolution/assign-to-global-undefined.js FAIL expected ReferenceError
+  test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'
+  test/language/types/reference/S8.7.1_A2.js FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true
+  test/language/types/reference/S8.7_A5_T1.js FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true
+  test/language/types/reference/get-value-prop-base-primitive-realm.js FAIL Error: Error: $262.createRealm
+  test/language/types/reference/put-value-prop-base-primitive-realm.js FAIL Error: Error: $262.createRealm
+goc-bellard: 1501/1526 pass
+  test/language/eval-code/indirect/lex-env-heritage.js FAIL ReferenceError: ReferenceError: 'x' is not defined
+  test/language/eval-code/indirect/var-env-global-lex-non-strict.js FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false
+  test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js FAIL Error: Error: $262.createRealm
+  test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js FAIL SyntaxError: SyntaxError: unsupported keyword: export
+  test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js FAIL SyntaxError: SyntaxError: meta expected
+  test/language/global-code/S10.4.1_A1_T1.js FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete
+  test/language/global-code/decl-func.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/global-code/decl-lex-restricted-global.js FAIL expected SyntaxError
+  test/language/global-code/decl-var.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/global-code/script-decl-func.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/global-code/script-decl-lex-deletion.js FAIL ReferenceError: ReferenceError: 'test262let' is not defined
+  test/language/global-code/script-decl-lex-lex.js FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-lex-restricted-global.js FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-lex-var-declared-via-eval.js FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true
+  test/language/global-code/script-decl-lex-var.js FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-lex.js FAIL ReferenceError: ReferenceError: 'test262let' is not defined
+  test/language/global-code/script-decl-var-collision.js FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all
+  test/language/global-code/script-decl-var.js FAIL undefined: Test262Error: brandNew descriptor should not be configurable
+  test/language/identifier-resolution/assign-to-global-undefined.js FAIL expected ReferenceError
+  test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'
+  test/language/statements/using/static-init-await-binding-valid.js FAIL SyntaxError: SyntaxError: expecting ';'
+  test/language/types/reference/S8.7.1_A2.js FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true
+  test/language/types/reference/S8.7_A5_T1.js FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true
+  test/language/types/reference/get-value-prop-base-primitive-realm.js FAIL Error: Error: $262.createRealm
+  test/language/types/reference/put-value-prop-base-primitive-realm.js FAIL Error: Error: $262.createRealm
+goc-bellard vs goc-ng: 3 files differ in pass/fail
+  DIFF test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js: goc-ng=FAIL undefined: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKe | goc-bellard=PASS
+  DIFF test/language/global-code/decl-lex-restricted-global.js: goc-ng=PASS | goc-bellard=FAIL expected SyntaxError
+  DIFF test/language/statements/using/static-init-await-binding-valid.js: goc-ng=PASS | goc-bellard=FAIL SyntaxError: SyntaxError: expecting ';'

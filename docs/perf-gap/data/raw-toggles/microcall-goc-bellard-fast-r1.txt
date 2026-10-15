@@ -1,0 +1,12 @@
+arith ms=76 ns/call=0 sink=-1526072448
+propget ms=73 ns/call=0 sink=148000000
+empty ms=63 ns/call=31 sink=2000000
+id ms=71 ns/call=35 sink=1999999000000
+six ms=59 ns/call=59 sink=500014500000
+eight ms=66 ns/call=66 sink=500027500000
+method ms=68 ns/call=68 sink=4500065500000
+depth4 ms=47 ns/call=23 sink=500000
+closure ms=40 ns/call=40 sink=4500064500000
+mutual ms=57 ns/call=28 sink=0
+sched ms=132 ns/call=66 sink=1500000
+MICROCALL {"score":23150,"calls":14000000,"ms":603,"cases":[{"name":"arith","ms":76,"n":4000000,"calls":0,"ns":0,"control":true,"sink":-1526072448},{"name":"propget","ms":73,"n":2000000,"calls":0,"ns":0,"control":true,"sink":148000000},{"name":"empty","ms":63,"n":2000000,"calls":2000000,"ns":31.5,"control":false,"sink":2000000},{"name":"id","ms":71,"n":2000000,"calls":2000000,"ns":35.5,"control":false,"sink":1999999000000},{"name":"six","ms":59,"n":1000000,"calls":1000000,"ns":59,"control":false,"sink":500014500000},{"name":"eight","ms":66,"n":1000000,"calls":1000000,"ns":66,"control":false,"sink":500027500000},{"name":"method","ms":68,"n":1000000,"calls":1000000,"ns":68,"control":false,"sink":4500065500000},{"name":"depth4","ms":47,"n":500000,"calls":2000000,"ns":23.5,"control":false,"sink":500000},{"name":"closure","ms":40,"n":1000000,"calls":1000000,"ns":40,"control":false,"sink":4500064500000},{"name":"mutual","ms":57,"n":400000,"calls":2000000,"ns":28.5,"control":false,"sink":0},{"name":"sched","ms":132,"n":1000000,"calls":2000000,"ns":66,"control":false,"sink":1500000}]}

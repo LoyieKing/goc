@@ -1,0 +1,5950 @@
+{
+ "env": {
+  "env-mem": [
+   "date: 2026-10-09 00:19:36 CST",
+   "host: Linux 6.8.0-49-generic x86_64, 24 vCPU; RSS runs pinned to CPU 3, instance runs not pinned",
+   "goc commit: fb30848d072099cf37e4e0d90b0c5a25b14950ef",
+   "go: go version go1.24.4 linux/amd64",
+   "GOGC=<unset, default 100> GOMEMLIMIT=<unset>",
+   "goc-ng: /home/wangyilei/my_sources/goc/build/qjs/qjscli --stack-size 16384 --script  sha256=2b1c96587af88f4e",
+   "goc-bellard: /home/wangyilei/my_sources/goc/build/qjs-bellard/qjscli --stack-size 16384 --script  sha256=62a98d80b439f078",
+   "ng: /tmp/goc-perf/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=dc515fea77052c5d",
+   "bellard: /tmp/goc-perf/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=bf9721414ae3c5f4",
+   "goja: /tmp/goc-perf/perf-study/goja-cli/gojacli  sha256=67b2c767347b6137",
+   "harness: build/qjs/qjsmem  sha256=3bb0a7acd7eea927",
+   "harness: build/qjs-bellard/qjsmem  sha256=ed81a39c90c5ec61",
+   "harness: build/qjsmem/threads-ng  sha256=7f7d34d9b73efa0b",
+   "harness: build/qjsmem/threads-bellard  sha256=514718bcd3aafaac",
+   "harness: build/qjsmem/gojamem  sha256=b56cb7fe3a48a2db",
+   "rounds: 3; N: 0 1 10 100 1000; C harness thread stack: 1024 KiB"
+  ],
+  "env": [
+   "date: 2026-10-08 23:19:12 CST",
+   "host: Linux 6.8.0-49-generic x86_64, 24 vCPU, pinned to CPU 3",
+   "goc commit: fb30848d072099cf37e4e0d90b0c5a25b14950ef",
+   "goc-ng: /home/wangyilei/my_sources/goc/build/qjs/qjscli --stack-size 16384 --script  sha256=2b1c96587af88f4e",
+   "goc-bellard: /home/wangyilei/my_sources/goc/build/qjs-bellard/qjscli --stack-size 16384 --script  sha256=62a98d80b439f078",
+   "ng: /tmp/goc-perf/perf-study/native/b-O2/qjs -C --stack-size 16384  sha256=dc515fea77052c5d",
+   "bellard: /tmp/goc-perf/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=bf9721414ae3c5f4",
+   "goja: /tmp/goc-perf/perf-study/goja-cli/gojacli  sha256=67b2c767347b6137",
+   "rounds: v8=5 ss=3 micro=3 microcall=5"
+  ]
+ },
+ "v8": {
+  "rounds": {
+   "goc-ng": [
+    {
+     "Richards": 1034,
+     "DeltaBlue": 1021,
+     "Crypto": 987,
+     "RayTrace": 2423,
+     "EarleyBoyer": 2882,
+     "RegExp": 496,
+     "Splay": 4372,
+     "NavierStokes": 1948,
+     "Score": 1534,
+     "wall_s": 34.12
+    },
+    {
+     "Richards": 1040,
+     "DeltaBlue": 1022,
+     "Crypto": 993,
+     "RayTrace": 2378,
+     "EarleyBoyer": 2941,
+     "RegExp": 489,
+     "Splay": 4290,
+     "NavierStokes": 1974,
+     "Score": 1533,
+     "wall_s": 34.11
+    },
+    {
+     "Richards": 1038,
+     "DeltaBlue": 1022,
+     "Crypto": 940,
+     "RayTrace": 2389,
+     "EarleyBoyer": 2896,
+     "RegExp": 479,
+     "Splay": 4286,
+     "NavierStokes": 1953,
+     "Score": 1515,
+     "wall_s": 34.65
+    },
+    {
+     "Richards": 1033,
+     "DeltaBlue": 1051,
+     "Crypto": 956,
+     "RayTrace": 2476,
+     "EarleyBoyer": 2989,
+     "RegExp": 507,
+     "Splay": 4433,
+     "NavierStokes": 1978,
+     "Score": 1555,
+     "wall_s": 33.88
+    },
+    {
+     "Richards": 1033,
+     "DeltaBlue": 1027,
+     "Crypto": 1005,
+     "RayTrace": 2427,
+     "EarleyBoyer": 2922,
+     "RegExp": 493,
+     "Splay": 4307,
+     "NavierStokes": 1962,
+     "Score": 1539,
+     "wall_s": 34.02
+    }
+   ],
+   "goc-bellard": [
+    {
+     "Richards": 1097,
+     "DeltaBlue": 1049,
+     "Crypto": 1284,
+     "RayTrace": 2627,
+     "EarleyBoyer": 3059,
+     "RegExp": 622,
+     "Splay": 4860,
+     "NavierStokes": 2587,
+     "Score": 1762,
+     "wall_s": 30.18
+    },
+    {
+     "Richards": 1130,
+     "DeltaBlue": 1081,
+     "Crypto": 1273,
+     "RayTrace": 2674,
+     "EarleyBoyer": 3017,
+     "RegExp": 596,
+     "Splay": 4787,
+     "NavierStokes": 2577,
+     "Score": 1760,
+     "wall_s": 30.38
+    },
+    {
+     "Richards": 1124,
+     "DeltaBlue": 1083,
+     "Crypto": 1303,
+     "RayTrace": 2692,
+     "EarleyBoyer": 3102,
+     "RegExp": 628,
+     "Splay": 4950,
+     "NavierStokes": 2647,
+     "Score": 1798,
+     "wall_s": 29.92
+    },
+    {
+     "Richards": 1145,
+     "DeltaBlue": 1107,
+     "Crypto": 1300,
+     "RayTrace": 2627,
+     "EarleyBoyer": 3103,
+     "RegExp": 616,
+     "Splay": 4751,
+     "NavierStokes": 2646,
+     "Score": 1787,
+     "wall_s": 30.09
+    },
+    {
+     "Richards": 1121,
+     "DeltaBlue": 1087,
+     "Crypto": 1273,
+     "RayTrace": 2585,
+     "EarleyBoyer": 3029,
+     "RegExp": 629,
+     "Splay": 4917,
+     "NavierStokes": 2693,
+     "Score": 1781,
+     "wall_s": 30.05
+    }
+   ],
+   "ng": [
+    {
+     "Richards": 1094,
+     "DeltaBlue": 1096,
+     "Crypto": 1060,
+     "RayTrace": 2776,
+     "EarleyBoyer": 3213,
+     "RegExp": 548,
+     "Splay": 4987,
+     "NavierStokes": 1987,
+     "Score": 1674,
+     "wall_s": 33.27
+    },
+    {
+     "Richards": 1085,
+     "DeltaBlue": 1063,
+     "Crypto": 1029,
+     "RayTrace": 2703,
+     "EarleyBoyer": 3145,
+     "RegExp": 538,
+     "Splay": 4819,
+     "NavierStokes": 1959,
+     "Score": 1636,
+     "wall_s": 33.24
+    },
+    {
+     "Richards": 1101,
+     "DeltaBlue": 1104,
+     "Crypto": 1064,
+     "RayTrace": 2824,
+     "EarleyBoyer": 3281,
+     "RegExp": 558,
+     "Splay": 4982,
+     "NavierStokes": 2036,
+     "Score": 1694,
+     "wall_s": 33.04
+    },
+    {
+     "Richards": 1072,
+     "DeltaBlue": 1086,
+     "Crypto": 1036,
+     "RayTrace": 2743,
+     "EarleyBoyer": 3215,
+     "RegExp": 517,
+     "Splay": 4889,
+     "NavierStokes": 1876,
+     "Score": 1632,
+     "wall_s": 33.6
+    },
+    {
+     "Richards": 1088,
+     "DeltaBlue": 1106,
+     "Crypto": 1049,
+     "RayTrace": 2790,
+     "EarleyBoyer": 3169,
+     "RegExp": 556,
+     "Splay": 4808,
+     "NavierStokes": 1953,
+     "Score": 1662,
+     "wall_s": 33.42
+    }
+   ],
+   "bellard": [
+    {
+     "Richards": 1349,
+     "DeltaBlue": 1268,
+     "Crypto": 1436,
+     "RayTrace": 2948,
+     "EarleyBoyer": 3537,
+     "RegExp": 648,
+     "Splay": 5454,
+     "NavierStokes": 2702,
+     "Score": 1988,
+     "wall_s": 29.56
+    },
+    {
+     "Richards": 1354,
+     "DeltaBlue": 1276,
+     "Crypto": 1420,
+     "RayTrace": 2948,
+     "EarleyBoyer": 3632,
+     "RegExp": 643,
+     "Splay": 5582,
+     "NavierStokes": 2827,
+     "Score": 2010,
+     "wall_s": 30.46
+    },
+    {
+     "Richards": 1334,
+     "DeltaBlue": 1221,
+     "Crypto": 1378,
+     "RayTrace": 2931,
+     "EarleyBoyer": 3574,
+     "RegExp": 677,
+     "Splay": 5528,
+     "NavierStokes": 2588,
+     "Score": 1971,
+     "wall_s": 29.39
+    },
+    {
+     "Richards": 1340,
+     "DeltaBlue": 1242,
+     "Crypto": 1410,
+     "RayTrace": 2866,
+     "EarleyBoyer": 3536,
+     "RegExp": 659,
+     "Splay": 5378,
+     "NavierStokes": 2680,
+     "Score": 1969,
+     "wall_s": 29.47
+    },
+    {
+     "Richards": 1361,
+     "DeltaBlue": 1272,
+     "Crypto": 1427,
+     "RayTrace": 3031,
+     "EarleyBoyer": 3650,
+     "RegExp": 673,
+     "Splay": 5566,
+     "NavierStokes": 2882,
+     "Score": 2036,
+     "wall_s": 29.23
+    }
+   ],
+   "goja": [
+    {
+     "Richards": 365,
+     "DeltaBlue": 370,
+     "Crypto": 170,
+     "RayTrace": 379,
+     "EarleyBoyer": 641,
+     "RegExp": 317,
+     "Splay": 772,
+     "NavierStokes": 262,
+     "Score": 371,
+     "wall_s": 89.31
+    },
+    {
+     "Richards": 364,
+     "DeltaBlue": 374,
+     "Crypto": 173,
+     "RayTrace": 390,
+     "EarleyBoyer": 665,
+     "RegExp": 324,
+     "Splay": 789,
+     "NavierStokes": 263,
+     "Score": 377,
+     "wall_s": 87.83
+    },
+    {
+     "Richards": 357,
+     "DeltaBlue": 368,
+     "Crypto": 170,
+     "RayTrace": 381,
+     "EarleyBoyer": 652,
+     "RegExp": 322,
+     "Splay": 853,
+     "NavierStokes": 267,
+     "Score": 377,
+     "wall_s": 88.61
+    },
+    {
+     "Richards": 367,
+     "DeltaBlue": 376,
+     "Crypto": 173,
+     "RayTrace": 385,
+     "EarleyBoyer": 653,
+     "RegExp": 322,
+     "Splay": 866,
+     "NavierStokes": 271,
+     "Score": 382,
+     "wall_s": 88.02
+    },
+    {
+     "Richards": 363,
+     "DeltaBlue": 374,
+     "Crypto": 173,
+     "RayTrace": 390,
+     "EarleyBoyer": 662,
+     "RegExp": 322,
+     "Splay": 782,
+     "NavierStokes": 274,
+     "Score": 378,
+     "wall_s": 87.89
+    }
+   ]
+  },
+  "median": {
+   "goc-ng": {
+    "Richards": 1034,
+    "DeltaBlue": 1022,
+    "Crypto": 987,
+    "RayTrace": 2423,
+    "EarleyBoyer": 2922,
+    "RegExp": 493,
+    "Splay": 4307,
+    "NavierStokes": 1962,
+    "Score": 1534
+   },
+   "goc-bellard": {
+    "Richards": 1124,
+    "DeltaBlue": 1083,
+    "Crypto": 1284,
+    "RayTrace": 2627,
+    "EarleyBoyer": 3059,
+    "RegExp": 622,
+    "Splay": 4860,
+    "NavierStokes": 2646,
+    "Score": 1781
+   },
+   "ng": {
+    "Richards": 1088,
+    "DeltaBlue": 1096,
+    "Crypto": 1049,
+    "RayTrace": 2776,
+    "EarleyBoyer": 3213,
+    "RegExp": 548,
+    "Splay": 4889,
+    "NavierStokes": 1959,
+    "Score": 1662
+   },
+   "bellard": {
+    "Richards": 1349,
+    "DeltaBlue": 1268,
+    "Crypto": 1420,
+    "RayTrace": 2948,
+    "EarleyBoyer": 3574,
+    "RegExp": 659,
+    "Splay": 5528,
+    "NavierStokes": 2702,
+    "Score": 1988
+   },
+   "goja": {
+    "Richards": 364,
+    "DeltaBlue": 374,
+    "Crypto": 173,
+    "RayTrace": 385,
+    "EarleyBoyer": 653,
+    "RegExp": 322,
+    "Splay": 789,
+    "NavierStokes": 267,
+    "Score": 377
+   }
+  },
+  "score_min": {
+   "goc-ng": 1515,
+   "goc-bellard": 1760,
+   "ng": 1632,
+   "bellard": 1969,
+   "goja": 371
+  },
+  "score_max": {
+   "goc-ng": 1555,
+   "goc-bellard": 1798,
+   "ng": 1694,
+   "bellard": 2036,
+   "goja": 382
+  },
+  "wall_s_median": {
+   "goc-ng": 34.11,
+   "goc-bellard": 30.09,
+   "ng": 33.27,
+   "bellard": 29.47,
+   "goja": 88.02
+  }
+ },
+ "sunspider": {
+  "rounds": {
+   "goc-ng": 3,
+   "goc-bellard": 3,
+   "ng": 3,
+   "bellard": 3,
+   "goja": 3
+  },
+  "ms": {
+   "goc-ng": {
+    "3d-cube": 21.125,
+    "3d-morph": 15.7,
+    "3d-raytrace": 1.1818,
+    "access-binary-trees": 10.7143,
+    "access-fannkuch": 56.3333,
+    "access-nbody": 13.1667,
+    "access-nsieve": 26.8333,
+    "bitops-3bit-bits-in-byte": 7.4,
+    "bitops-bits-in-byte": 13.25,
+    "bitops-bitwise-and": 8.6667,
+    "bitops-nsieve-bits": 13.5833,
+    "controlflow-recursive": 6.04,
+    "crypto-aes": 18.2222,
+    "crypto-md5": 6.16,
+    "crypto-sha1": 6.04,
+    "date-format-tofte": 4.1667,
+    "date-format-xparb": 1.0833,
+    "math-cordic": 18.1111,
+    "math-partial-sums": 9.875,
+    "math-spectral-norm": 8.2105,
+    "regexp-dna": 22.6667,
+    "string-base64": 12.8333,
+    "string-fasta": 41.75,
+    "string-tagcloud": 24.6667,
+    "string-unpack-code": 40.5,
+    "string-validate-input": 10.7143
+   },
+   "goc-bellard": {
+    "3d-cube": 18.3333,
+    "3d-morph": 11.6154,
+    "3d-raytrace": 0.9231,
+    "access-binary-trees": 9.8125,
+    "access-fannkuch": 30.4,
+    "access-nbody": 12.75,
+    "access-nsieve": 15.6,
+    "bitops-3bit-bits-in-byte": 7.55,
+    "bitops-bits-in-byte": 12.6667,
+    "bitops-bitwise-and": 6.375,
+    "bitops-nsieve-bits": 13.0,
+    "controlflow-recursive": 6.16,
+    "crypto-aes": 12.3077,
+    "crypto-md5": 5.6667,
+    "crypto-sha1": 5.4815,
+    "date-format-tofte": 3.1429,
+    "date-format-xparb": 1.1818,
+    "math-cordic": 18.1111,
+    "math-partial-sums": 8.9412,
+    "math-spectral-norm": 10.2667,
+    "regexp-dna": 20.0,
+    "string-base64": 12.75,
+    "string-fasta": 18.1111,
+    "string-tagcloud": 19.25,
+    "string-unpack-code": 35.4,
+    "string-validate-input": 8.8824
+   },
+   "ng": {
+    "3d-cube": 19.875,
+    "3d-morph": 16.2,
+    "3d-raytrace": 1.0833,
+    "access-binary-trees": 9.9333,
+    "access-fannkuch": 55.0,
+    "access-nbody": 13.9091,
+    "access-nsieve": 27.1667,
+    "bitops-3bit-bits-in-byte": 8.7778,
+    "bitops-bits-in-byte": 15.8,
+    "bitops-bitwise-and": 10.0,
+    "bitops-nsieve-bits": 16.3,
+    "controlflow-recursive": 5.6296,
+    "crypto-aes": 17.3333,
+    "crypto-md5": 6.08,
+    "crypto-sha1": 6.2,
+    "date-format-tofte": 3.1429,
+    "date-format-xparb": 1.5,
+    "math-cordic": 18.4444,
+    "math-partial-sums": 9.1765,
+    "math-spectral-norm": 7.55,
+    "regexp-dna": 22.0,
+    "string-base64": 11.2143,
+    "string-fasta": 35.8,
+    "string-tagcloud": 21.2857,
+    "string-unpack-code": 33.8,
+    "string-validate-input": 9.1765
+   },
+   "bellard": {
+    "3d-cube": 14.9091,
+    "3d-morph": 11.1429,
+    "3d-raytrace": 0.7857,
+    "access-binary-trees": 8.5882,
+    "access-fannkuch": 28.5,
+    "access-nbody": 11.5385,
+    "access-nsieve": 13.4167,
+    "bitops-3bit-bits-in-byte": 7.25,
+    "bitops-bits-in-byte": 12.5,
+    "bitops-bitwise-and": 5.6154,
+    "bitops-nsieve-bits": 11.2143,
+    "controlflow-recursive": 5.2759,
+    "crypto-aes": 11.5385,
+    "crypto-md5": 5.4286,
+    "crypto-sha1": 5.1379,
+    "date-format-tofte": 2.5,
+    "date-format-xparb": 1.2727,
+    "math-cordic": 17.4444,
+    "math-partial-sums": 8.0526,
+    "math-spectral-norm": 6.3913,
+    "regexp-dna": 12.25,
+    "string-base64": 10.7143,
+    "string-fasta": 18.0,
+    "string-tagcloud": 15.9,
+    "string-unpack-code": 29.6,
+    "string-validate-input": 7.7
+   },
+   "goja": {
+    "3d-cube": null,
+    "3d-morph": 98.5,
+    "3d-raytrace": 39.5,
+    "access-binary-trees": 38.0,
+    "access-fannkuch": 123.5,
+    "access-nbody": 104.0,
+    "access-nsieve": 80.0,
+    "bitops-3bit-bits-in-byte": 56.0,
+    "bitops-bits-in-byte": 75.0,
+    "bitops-bitwise-and": 88.0,
+    "bitops-nsieve-bits": 149.0,
+    "controlflow-recursive": 19.25,
+    "crypto-aes": 66.0,
+    "crypto-md5": 52.6667,
+    "crypto-sha1": 48.5,
+    "date-format-tofte": 17.0,
+    "date-format-xparb": 4.8333,
+    "math-cordic": 99.5,
+    "math-partial-sums": 73.6667,
+    "math-spectral-norm": 41.0,
+    "regexp-dna": 60.0,
+    "string-base64": 89.5,
+    "string-fasta": 91.5,
+    "string-tagcloud": 140.0,
+    "string-unpack-code": 54.0,
+    "string-validate-input": 211.0
+   }
+  },
+  "fail": {
+   "goc-ng": {},
+   "goc-bellard": {},
+   "ng": {},
+   "bellard": {},
+   "goja": {
+    "3d-cube": "Error: bad vector sum for CubeSize = 20; expected 2889.0000000000045 but got 2889.0000000000086 at Init (/tmp/goc-perf/perf-study/ss/w/3d-cube.js:343:5(507))"
+   }
+  },
+  "tests": [
+   "3d-cube",
+   "3d-morph",
+   "3d-raytrace",
+   "access-binary-trees",
+   "access-fannkuch",
+   "access-nbody",
+   "access-nsieve",
+   "bitops-3bit-bits-in-byte",
+   "bitops-bits-in-byte",
+   "bitops-bitwise-and",
+   "bitops-nsieve-bits",
+   "controlflow-recursive",
+   "crypto-aes",
+   "crypto-md5",
+   "crypto-sha1",
+   "date-format-tofte",
+   "date-format-xparb",
+   "math-cordic",
+   "math-partial-sums",
+   "math-spectral-norm",
+   "regexp-dna",
+   "string-base64",
+   "string-fasta",
+   "string-tagcloud",
+   "string-unpack-code",
+   "string-validate-input"
+  ],
+  "common_all": [
+   "3d-morph",
+   "3d-raytrace",
+   "access-binary-trees",
+   "access-fannkuch",
+   "access-nbody",
+   "access-nsieve",
+   "bitops-3bit-bits-in-byte",
+   "bitops-bits-in-byte",
+   "bitops-bitwise-and",
+   "bitops-nsieve-bits",
+   "controlflow-recursive",
+   "crypto-aes",
+   "crypto-md5",
+   "crypto-sha1",
+   "date-format-tofte",
+   "date-format-xparb",
+   "math-cordic",
+   "math-partial-sums",
+   "math-spectral-norm",
+   "regexp-dna",
+   "string-base64",
+   "string-fasta",
+   "string-tagcloud",
+   "string-unpack-code",
+   "string-validate-input"
+  ],
+  "common_nogoja": [
+   "3d-cube",
+   "3d-morph",
+   "3d-raytrace",
+   "access-binary-trees",
+   "access-fannkuch",
+   "access-nbody",
+   "access-nsieve",
+   "bitops-3bit-bits-in-byte",
+   "bitops-bits-in-byte",
+   "bitops-bitwise-and",
+   "bitops-nsieve-bits",
+   "controlflow-recursive",
+   "crypto-aes",
+   "crypto-md5",
+   "crypto-sha1",
+   "date-format-tofte",
+   "date-format-xparb",
+   "math-cordic",
+   "math-partial-sums",
+   "math-spectral-norm",
+   "regexp-dna",
+   "string-base64",
+   "string-fasta",
+   "string-tagcloud",
+   "string-unpack-code",
+   "string-validate-input"
+  ],
+  "geomean_all": {
+   "goc-ng": 11.176032321247273,
+   "goc-bellard": 9.385718037976563,
+   "ng": 10.98966394573806,
+   "bellard": 8.237978778819265,
+   "goja": 61.492469783420006
+  },
+  "geomean_nogoja": {
+   "goc-ng": 11.453088412114452,
+   "goc-bellard": 9.630549893443929,
+   "ng": 11.242980053481629,
+   "bellard": 8.428097366742037
+  },
+  "geomean_all_by_round": {
+   "goc-ng": [
+    11.226089527756255,
+    11.309256328965153,
+    11.122438840101387
+   ],
+   "goc-bellard": [
+    9.460910638712614,
+    9.360273100577379,
+    9.363758048984527
+   ],
+   "ng": [
+    11.119737851191477,
+    11.010313884940885,
+    10.996788254368408
+   ],
+   "bellard": [
+    8.359806674639039,
+    8.222957947416486,
+    8.23346690880607
+   ],
+   "goja": [
+    61.43061521104938,
+    61.51366760406854,
+    61.292114632324484
+   ]
+  }
+ },
+ "micro": {
+  "rounds": {
+   "goc-ng": 3,
+   "goc-bellard": 3,
+   "ng": 3,
+   "bellard": 3,
+   "goja": 3
+  },
+  "ns": {
+   "goc-ng": {
+    "empty_loop": 12.75,
+    "empty_down_loop": 13.37,
+    "empty_down_loop2": 16.25,
+    "empty_do_loop": 12.25,
+    "date_now": 70.43,
+    "date_parse": 428.87,
+    "prop_read": 9.84,
+    "prop_write": 14.17,
+    "prop_update": 15.4,
+    "prop_create": 55.95,
+    "prop_clone": 45.91,
+    "prop_delete": 72.54,
+    "array_read": 10.24,
+    "array_write": 27.24,
+    "array_update": 13.58,
+    "array_prop_create": 31.0,
+    "array_slice": 14.37,
+    "array_length_read": 10.13,
+    "array_length_decr": 38.24,
+    "array_hole_length_decr": 52.69,
+    "array_push": 32.23,
+    "array_pop": 66.05,
+    "typed_array_read": 11.43,
+    "typed_array_write": 29.28,
+    "arguments_read": 149.83,
+    "arguments_strict_read": 119.73,
+    "global_read": 8.81,
+    "global_write": 8.45,
+    "global_write_strict": 8.82,
+    "local_destruct": 26.48,
+    "global_destruct": 36.44,
+    "global_destruct_strict": 36.6,
+    "global_func_call": 26.05,
+    "func_call": 22.39,
+    "func_closure_call": 23.85,
+    "int_arith": 15.85,
+    "float_arith": 22.32,
+    "map_set_string": 183.74,
+    "map_set_int": 2625.11,
+    "map_set_bigint": 3222.01,
+    "map_delete": 181.22,
+    "weak_map_set": 120.32,
+    "weak_map_delete": 250.92,
+    "array_for": 15.84,
+    "array_for_in": 53.29,
+    "array_for_of": 19.56,
+    "math_min": 30.78,
+    "regexp_ascii": 210.63,
+    "regexp_utf16": 227.07,
+    "regexp_replace": 1469.16,
+    "string_length": 11.07,
+    "string_build1": 41.68,
+    "string_build1x": 40.9,
+    "string_build2c": 48.25,
+    "string_build2": 44.53,
+    "string_build3": 43.32,
+    "string_build4": 44.25,
+    "string_build_large1": 57.44,
+    "string_build_large2": 52.31,
+    "int_to_string": 36.05,
+    "int_toString": 49.98,
+    "float_to_string": 174.53,
+    "float_toString": 186.92,
+    "float_toFixed": 90.44,
+    "float_toPrecision": 99.39,
+    "float_toExponential": 103.04,
+    "string_to_int": 68.13,
+    "string_to_float": 89.08,
+    "bigint32_arith": 36.75,
+    "bigint64_arith": 51.62,
+    "bigint256_arith": 97.88,
+    "sort_bench": 16.84
+   },
+   "goc-bellard": {
+    "empty_loop": 11.7,
+    "empty_down_loop": 14.32,
+    "empty_down_loop2": 17.5,
+    "empty_do_loop": 13.76,
+    "date_now": 66.17,
+    "date_parse": 410.55,
+    "prop_read": 9.34,
+    "prop_write": 13.65,
+    "prop_update": 14.94,
+    "prop_create": 42.95,
+    "prop_clone": 40.54,
+    "prop_delete": 66.23,
+    "array_read": 9.35,
+    "array_write": 7.04,
+    "array_update": 9.71,
+    "array_prop_create": 14.95,
+    "array_slice": 16.86,
+    "array_length_read": 9.95,
+    "array_length_decr": 40.14,
+    "array_hole_length_decr": 46.89,
+    "array_push": 33.88,
+    "array_pop": 68.22,
+    "typed_array_read": 13.98,
+    "typed_array_write": 11.6,
+    "arguments_read": 116.6,
+    "arguments_strict_read": 91.88,
+    "global_read": 7.16,
+    "global_write": 7.55,
+    "global_write_strict": 7.59,
+    "local_destruct": 23.0,
+    "global_destruct": 31.07,
+    "global_destruct_strict": 31.15,
+    "global_func_call": 23.26,
+    "func_call": 22.36,
+    "func_closure_call": 23.55,
+    "int_arith": 14.39,
+    "float_arith": 18.76,
+    "map_set_string": 176.99,
+    "map_set_int": 94.89,
+    "map_set_bigint": 127.2,
+    "map_delete": 184.57,
+    "weak_map_set": 66.11,
+    "weak_map_delete": 157.89,
+    "array_for": 17.06,
+    "array_for_in": 41.58,
+    "array_for_of": 17.76,
+    "math_min": 29.17,
+    "regexp_ascii": 158.22,
+    "regexp_utf16": 169.57,
+    "regexp_replace": 560.02,
+    "string_length": 10.88,
+    "string_build1": 19.02,
+    "string_build1x": 18.89,
+    "string_build2c": 22.16,
+    "string_build2": 39.69,
+    "string_build3": 35.36,
+    "string_build4": 43.33,
+    "string_build_large1": 46.93,
+    "string_build_large2": 40.66,
+    "int_to_string": 30.02,
+    "int_toString": 46.26,
+    "float_to_string": 165.2,
+    "float_toString": 180.5,
+    "float_toFixed": 82.77,
+    "float_toPrecision": 91.92,
+    "float_toExponential": 96.53,
+    "string_to_int": 64.36,
+    "string_to_float": 86.09,
+    "bigint32_arith": 26.39,
+    "bigint64_arith": 34.35,
+    "bigint256_arith": 76.28,
+    "sort_bench": 16.34
+   },
+   "ng": {
+    "empty_loop": 11.97,
+    "empty_down_loop": 14.0,
+    "empty_down_loop2": 16.01,
+    "empty_do_loop": 13.8,
+    "date_now": 46.0,
+    "date_parse": 403.46,
+    "prop_read": 10.74,
+    "prop_write": 14.31,
+    "prop_update": 15.16,
+    "prop_create": 51.19,
+    "prop_clone": 37.86,
+    "prop_delete": 65.25,
+    "array_read": 10.14,
+    "array_write": 26.33,
+    "array_update": 15.14,
+    "array_prop_create": 31.02,
+    "array_slice": 11.66,
+    "array_length_read": 10.65,
+    "array_length_decr": 33.51,
+    "array_hole_length_decr": 44.11,
+    "array_push": 30.41,
+    "array_pop": 58.6,
+    "typed_array_read": 11.08,
+    "typed_array_write": 28.95,
+    "arguments_read": 133.89,
+    "arguments_strict_read": 105.7,
+    "global_read": 9.16,
+    "global_write": 8.92,
+    "global_write_strict": 8.85,
+    "local_destruct": 22.47,
+    "global_destruct": 31.3,
+    "global_destruct_strict": 31.4,
+    "global_func_call": 22.26,
+    "func_call": 18.22,
+    "func_closure_call": 20.39,
+    "int_arith": 17.3,
+    "float_arith": 23.42,
+    "map_set_string": 151.72,
+    "map_set_int": 2603.69,
+    "map_set_bigint": 2807.38,
+    "map_delete": 153.71,
+    "weak_map_set": 109.15,
+    "weak_map_delete": 224.1,
+    "array_for": 16.49,
+    "array_for_in": 46.05,
+    "array_for_of": 18.55,
+    "math_min": 30.0,
+    "regexp_ascii": 176.13,
+    "regexp_utf16": 180.45,
+    "regexp_replace": 1199.47,
+    "string_length": 12.36,
+    "string_build1": 37.9,
+    "string_build1x": 37.21,
+    "string_build2c": 49.23,
+    "string_build2": 40.87,
+    "string_build3": 39.41,
+    "string_build4": 41.3,
+    "string_build_large1": 48.8,
+    "string_build_large2": 46.3,
+    "int_to_string": 31.56,
+    "int_toString": 38.2,
+    "float_to_string": 155.04,
+    "float_toString": 166.95,
+    "float_toFixed": 78.85,
+    "float_toPrecision": 87.81,
+    "float_toExponential": 87.91,
+    "string_to_int": 61.91,
+    "string_to_float": 82.29,
+    "bigint32_arith": 36.97,
+    "bigint64_arith": 49.85,
+    "bigint256_arith": 87.75,
+    "sort_bench": 12.96
+   },
+   "bellard": {
+    "empty_loop": 9.5,
+    "empty_down_loop": 12.92,
+    "empty_down_loop2": 15.76,
+    "empty_do_loop": 12.87,
+    "date_now": 39.67,
+    "date_parse": 414.73,
+    "prop_read": 8.59,
+    "prop_write": 6.47,
+    "prop_update": 9.96,
+    "prop_create": 35.65,
+    "prop_clone": 38.03,
+    "prop_delete": 61.71,
+    "array_read": 8.63,
+    "array_write": 7.04,
+    "array_update": 9.84,
+    "array_prop_create": 13.99,
+    "array_slice": 13.8,
+    "array_length_read": 9.54,
+    "array_length_decr": 34.14,
+    "array_hole_length_decr": 35.27,
+    "array_push": 29.83,
+    "array_pop": 60.11,
+    "typed_array_read": 11.02,
+    "typed_array_write": 10.11,
+    "arguments_read": 107.83,
+    "arguments_strict_read": 83.62,
+    "global_read": 7.06,
+    "global_write": 6.67,
+    "global_write_strict": 6.75,
+    "local_destruct": 21.37,
+    "global_destruct": 29.05,
+    "global_destruct_strict": 29.08,
+    "global_func_call": 21.05,
+    "func_call": 19.93,
+    "func_closure_call": 20.97,
+    "int_arith": 14.26,
+    "float_arith": 18.26,
+    "map_set_string": 156.45,
+    "map_set_int": 86.11,
+    "map_set_bigint": 111.37,
+    "map_delete": 152.12,
+    "weak_map_set": 55.81,
+    "weak_map_delete": 141.04,
+    "array_for": 15.36,
+    "array_for_in": 39.81,
+    "array_for_of": 18.01,
+    "math_min": 26.46,
+    "regexp_ascii": 127.95,
+    "regexp_utf16": 132.88,
+    "regexp_replace": 461.26,
+    "string_length": 10.47,
+    "string_build1": 18.58,
+    "string_build1x": 18.58,
+    "string_build2c": 21.86,
+    "string_build2": 33.95,
+    "string_build3": 32.65,
+    "string_build4": 35.94,
+    "string_build_large1": 38.29,
+    "string_build_large2": 39.83,
+    "int_to_string": 29.92,
+    "int_toString": 38.29,
+    "float_to_string": 159.17,
+    "float_toString": 171.88,
+    "float_toFixed": 74.53,
+    "float_toPrecision": 84.1,
+    "float_toExponential": 82.79,
+    "string_to_int": 60.64,
+    "string_to_float": 83.72,
+    "bigint32_arith": 22.51,
+    "bigint64_arith": 30.41,
+    "bigint256_arith": 77.15,
+    "sort_bench": 11.95
+   },
+   "goja": {
+    "empty_loop": 43.03,
+    "empty_down_loop": 42.36,
+    "empty_down_loop2": 51.15,
+    "empty_do_loop": 47.23,
+    "date_now": 125.93,
+    "date_parse": 635.55,
+    "prop_read": 50.0,
+    "prop_write": 39.27,
+    "prop_update": 70.23,
+    "prop_create": 106.2,
+    "prop_clone": 203.39,
+    "prop_delete": 285.15,
+    "array_read": 44.27,
+    "array_write": 27.56,
+    "array_update": 60.84,
+    "array_prop_create": 121.01,
+    "array_slice": 59.2,
+    "array_length_read": 48.39,
+    "array_length_decr": 136.89,
+    "array_hole_length_decr": 124.41,
+    "array_push": 179.19,
+    "array_pop": 159.99,
+    "typed_array_read": 45.65,
+    "typed_array_write": 42.21,
+    "arguments_read": 801.44,
+    "arguments_strict_read": 764.7,
+    "global_read": 43.15,
+    "global_write": 59.19,
+    "global_write_strict": 81.15,
+    "local_destruct": 153.82,
+    "global_destruct": 268.29,
+    "global_destruct_strict": 291.08,
+    "global_func_call": 76.39,
+    "func_call": 68.6,
+    "func_closure_call": 69.77,
+    "int_arith": 87.56,
+    "float_arith": 143.16,
+    "map_set_string": 442.08,
+    "map_set_int": 271.48,
+    "map_set_bigint": 448.93,
+    "map_delete": 475.96,
+    "weak_map_set": 198.02,
+    "weak_map_delete": 592.53,
+    "array_for": 79.56,
+    "array_for_in": 259.66,
+    "array_for_of": 272.5,
+    "math_min": 114.46,
+    "regexp_ascii": 796.71,
+    "regexp_utf16": 1177.51,
+    "regexp_replace": 956.77,
+    "string_length": 88.65,
+    "string_build1": 105.25,
+    "string_build1x": 111.02,
+    "string_build2c": 199.26,
+    "string_build2": 110.74,
+    "string_build3": 110.51,
+    "string_build4": 118.23,
+    "string_build_large1": 4906.94,
+    "string_build_large2": 5040.0,
+    "int_to_string": 75.16,
+    "int_toString": 120.21,
+    "float_to_string": 154.79,
+    "float_toString": 166.08,
+    "float_toFixed": 419.64,
+    "float_toPrecision": 208.97,
+    "float_toExponential": 192.91,
+    "string_to_int": 118.25,
+    "string_to_float": 156.86,
+    "bigint32_arith": 176.55,
+    "bigint64_arith": 177.23,
+    "bigint256_arith": 193.26,
+    "sort_bench": 45.76
+   }
+  },
+  "total_median": {
+   "goc-ng": 11694.54,
+   "goc-bellard": 4502.32,
+   "ng": 10534.58,
+   "bellard": 4010.5,
+   "goja": 24741.56
+  },
+  "missing": {
+   "goc-ng": [],
+   "goc-bellard": [],
+   "ng": [],
+   "bellard": [],
+   "goja": []
+  },
+  "tests": [
+   "arguments_read",
+   "arguments_strict_read",
+   "array_for",
+   "array_for_in",
+   "array_for_of",
+   "array_hole_length_decr",
+   "array_length_decr",
+   "array_length_read",
+   "array_pop",
+   "array_prop_create",
+   "array_push",
+   "array_read",
+   "array_slice",
+   "array_update",
+   "array_write",
+   "bigint256_arith",
+   "bigint32_arith",
+   "bigint64_arith",
+   "date_now",
+   "date_parse",
+   "empty_do_loop",
+   "empty_down_loop",
+   "empty_down_loop2",
+   "empty_loop",
+   "float_arith",
+   "float_toExponential",
+   "float_toFixed",
+   "float_toPrecision",
+   "float_toString",
+   "float_to_string",
+   "func_call",
+   "func_closure_call",
+   "global_destruct",
+   "global_destruct_strict",
+   "global_func_call",
+   "global_read",
+   "global_write",
+   "global_write_strict",
+   "int_arith",
+   "int_toString",
+   "int_to_string",
+   "local_destruct",
+   "map_delete",
+   "map_set_bigint",
+   "map_set_int",
+   "map_set_string",
+   "math_min",
+   "prop_clone",
+   "prop_create",
+   "prop_delete",
+   "prop_read",
+   "prop_update",
+   "prop_write",
+   "regexp_ascii",
+   "regexp_replace",
+   "regexp_utf16",
+   "sort_bench",
+   "string_build1",
+   "string_build1x",
+   "string_build2",
+   "string_build2c",
+   "string_build3",
+   "string_build4",
+   "string_build_large1",
+   "string_build_large2",
+   "string_length",
+   "string_to_float",
+   "string_to_int",
+   "typed_array_read",
+   "typed_array_write",
+   "weak_map_delete",
+   "weak_map_set"
+  ],
+  "common": [
+   "arguments_read",
+   "arguments_strict_read",
+   "array_for",
+   "array_for_in",
+   "array_for_of",
+   "array_hole_length_decr",
+   "array_length_decr",
+   "array_length_read",
+   "array_pop",
+   "array_prop_create",
+   "array_push",
+   "array_read",
+   "array_slice",
+   "array_update",
+   "array_write",
+   "bigint256_arith",
+   "bigint32_arith",
+   "bigint64_arith",
+   "date_now",
+   "date_parse",
+   "empty_do_loop",
+   "empty_down_loop",
+   "empty_down_loop2",
+   "empty_loop",
+   "float_arith",
+   "float_toExponential",
+   "float_toFixed",
+   "float_toPrecision",
+   "float_toString",
+   "float_to_string",
+   "func_call",
+   "func_closure_call",
+   "global_destruct",
+   "global_destruct_strict",
+   "global_func_call",
+   "global_read",
+   "global_write",
+   "global_write_strict",
+   "int_arith",
+   "int_toString",
+   "int_to_string",
+   "local_destruct",
+   "map_delete",
+   "map_set_bigint",
+   "map_set_int",
+   "map_set_string",
+   "math_min",
+   "prop_clone",
+   "prop_create",
+   "prop_delete",
+   "prop_read",
+   "prop_update",
+   "prop_write",
+   "regexp_ascii",
+   "regexp_replace",
+   "regexp_utf16",
+   "sort_bench",
+   "string_build1",
+   "string_build1x",
+   "string_build2",
+   "string_build2c",
+   "string_build3",
+   "string_build4",
+   "string_build_large1",
+   "string_build_large2",
+   "string_length",
+   "string_to_float",
+   "string_to_int",
+   "typed_array_read",
+   "typed_array_write",
+   "weak_map_delete",
+   "weak_map_set"
+  ],
+  "geomean": {
+   "goc-ng": 46.68195577565984,
+   "goc-bellard": 35.46233272049538,
+   "ng": 42.917229214726966,
+   "bellard": 31.407555451566743,
+   "goja": 152.12493791300446
+  },
+  "groups": {
+   "loop": [
+    "empty_do_loop",
+    "empty_down_loop",
+    "empty_down_loop2",
+    "empty_loop"
+   ],
+   "prop": [
+    "prop_clone",
+    "prop_create",
+    "prop_delete",
+    "prop_read",
+    "prop_update",
+    "prop_write"
+   ],
+   "var": [
+    "arguments_read",
+    "arguments_strict_read",
+    "global_destruct",
+    "global_destruct_strict",
+    "global_read",
+    "global_write",
+    "global_write_strict",
+    "local_destruct"
+   ],
+   "call": [
+    "func_call",
+    "func_closure_call",
+    "global_func_call"
+   ],
+   "array": [
+    "array_for",
+    "array_for_in",
+    "array_for_of",
+    "array_hole_length_decr",
+    "array_length_decr",
+    "array_length_read",
+    "array_pop",
+    "array_prop_create",
+    "array_push",
+    "array_read",
+    "array_slice",
+    "array_update",
+    "array_write",
+    "sort_bench",
+    "typed_array_read",
+    "typed_array_write"
+   ],
+   "string": [
+    "string_build1",
+    "string_build1x",
+    "string_build2",
+    "string_build2c",
+    "string_build3",
+    "string_build4",
+    "string_build_large1",
+    "string_build_large2",
+    "string_length",
+    "string_to_float",
+    "string_to_int"
+   ],
+   "numconv": [
+    "float_toExponential",
+    "float_toFixed",
+    "float_toPrecision",
+    "float_toString",
+    "float_to_string",
+    "int_toString",
+    "int_to_string"
+   ],
+   "arith": [
+    "float_arith",
+    "int_arith",
+    "math_min"
+   ],
+   "bigint": [
+    "bigint256_arith",
+    "bigint32_arith",
+    "bigint64_arith"
+   ],
+   "map": [
+    "map_delete",
+    "map_set_bigint",
+    "map_set_int",
+    "map_set_string",
+    "weak_map_delete",
+    "weak_map_set"
+   ],
+   "regexp": [
+    "regexp_ascii",
+    "regexp_replace",
+    "regexp_utf16"
+   ],
+   "date": [
+    "date_now",
+    "date_parse"
+   ]
+  },
+  "group_geomean": {
+   "loop": {
+    "goc-ng": 13.572434720825722,
+    "goc-bellard": 14.172495917986076,
+    "ng": 13.871491212822786,
+    "bellard": 12.561173657585178,
+    "goja": 45.80867396049837
+   },
+   "prop": {
+    "goc-ng": 27.145328442532964,
+    "goc-bellard": 24.56340857446999,
+    "ng": 25.795754115539943,
+    "bellard": 18.950312008217647,
+    "goja": 97.31508743155845
+   },
+   "var": {
+    "goc-ng": 28.339034497045223,
+    "goc-bellard": 23.649314314972933,
+    "ng": 26.258080366163508,
+    "bellard": 21.83879351916241,
+    "goja": 187.47297810442936
+   },
+   "call": {
+    "goc-ng": 24.050091602528557,
+    "goc-bellard": 23.051055003526017,
+    "ng": 20.22228621247088,
+    "bellard": 20.643624134036425,
+    "goja": 71.50610400428681
+   },
+   "array": {
+    "goc-ng": 23.15375549438392,
+    "goc-bellard": 18.74714373750856,
+    "ng": 21.6911389335905,
+    "bellard": 16.64919166842138,
+    "goja": 84.07800819383473
+   },
+   "string": {
+    "goc-ng": 44.682088639812115,
+    "goc-bellard": 33.292495438075996,
+    "ng": 41.66614901503603,
+    "bellard": 30.8827355006301,
+    "goja": 237.7193873348844
+   },
+   "numconv": {
+    "goc-ng": 91.68042955569459,
+    "goc-bellard": 84.36257644065576,
+    "ng": 78.87600900629076,
+    "bellard": 77.1471324572611,
+    "goja": 168.949766271298
+   },
+   "arith": {
+    "goc-ng": 22.164810576178446,
+    "goc-bellard": 19.89497292106861,
+    "ng": 22.99242346538591,
+    "bellard": 19.028448515096464,
+    "goja": 112.78735050295921
+   },
+   "bigint": {
+    "goc-ng": 57.05010325297782,
+    "goc-bellard": 41.04487512098435,
+    "ng": 54.48210925543329,
+    "bellard": 37.51825364726723,
+    "goja": 182.18627020076258
+   },
+   "map": {
+    "goc-ng": 451.7791893038511,
+    "goc-bellard": 126.59207840333805,
+    "ng": 401.1900668122934,
+    "bellard": 110.25704171259268,
+    "goja": 379.95707177879416
+   },
+   "regexp": {
+    "goc-ng": 412.65111958206836,
+    "goc-bellard": 246.75804031102246,
+    "ng": 336.55796309256067,
+    "bellard": 198.67744582143257,
+    "goja": 964.6226914505052
+   },
+   "date": {
+    "goc-ng": 173.7967609019225,
+    "goc-bellard": 164.82139879275385,
+    "ng": 136.23200798637595,
+    "bellard": 128.26667182085916,
+    "goja": 282.9042444008218
+   }
+  }
+ },
+ "microcall": {
+  "rounds": [
+   {
+    "goc-ng": {
+     "score": 27942,
+     "calls": 14000000,
+     "ms": 505,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 47,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 63,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 59,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 45,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 45,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 50,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 50,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 40,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 20,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 32,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 32,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 115,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 57.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 29096,
+     "calls": 14000000,
+     "ms": 496,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 45,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 64,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 49,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 24.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 52,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 65,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 65,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 57,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 57,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 122,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 27657,
+     "calls": 14000000,
+     "ms": 511,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 54,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 32,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 32,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 121,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 60.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31270,
+     "calls": 14000000,
+     "ms": 448,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 39,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 43,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 43,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 49,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 49,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 33,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 28,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 28,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 43,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 97,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 48.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6620,
+     "calls": 14000000,
+     "ms": 2099,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 422,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 332,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 247,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 123.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 257,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 128.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 267,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 267,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 328,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 328,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 195,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 195,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 128,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 144,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 144,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 193,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 340,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 170,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc-ng": {
+     "score": 27312,
+     "calls": 14000000,
+     "ms": 517,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 44,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 62,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 61,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 40,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 20,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 32,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 32,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 118,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 59,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 28471,
+     "calls": 14000000,
+     "ms": 507,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 47,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 69,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 48,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 48,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 65,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 65,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 125,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 62.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 26782,
+     "calls": 14000000,
+     "ms": 526,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 52,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 59,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 29.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 46,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 46,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 55,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 55,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 61,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 61,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 45,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 33,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 33,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 48,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 24,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 122,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31221,
+     "calls": 14000000,
+     "ms": 449,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 37,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 52,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 51,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 51,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 49,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 49,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 33,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 28,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 28,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 43,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 98,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 49,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6710,
+     "calls": 14000000,
+     "ms": 2070,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 425,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 350,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 235,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 117.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 267,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 133.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 269,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 269,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 315,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 315,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 192,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 192,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 128,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 139,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 139,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 192,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 333,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 166.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc-ng": {
+     "score": 27957,
+     "calls": 14000000,
+     "ms": 507,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 46,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 62,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 60,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 54,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 54,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 39,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 19.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 115,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 57.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 28588,
+     "calls": 14000000,
+     "ms": 506,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 48,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 67,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 48,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 24,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 49,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 49,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 68,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 68,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 45,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 124,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 62,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 27772,
+     "calls": 14000000,
+     "ms": 509,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 52,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 54,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 52,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 52,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 32,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 32,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 121,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 60.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31277,
+     "calls": 14000000,
+     "ms": 451,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 39,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 42,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 42,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 50,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 50,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 42,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 103,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 51.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6882,
+     "calls": 14000000,
+     "ms": 2011,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 419,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 337,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 233,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 116.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 239,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 119.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 255,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 255,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 306,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 306,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 193,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 193,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 128,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 139,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 139,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 187,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 93.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 331,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 165.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc-ng": {
+     "score": 27907,
+     "calls": 14000000,
+     "ms": 507,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 48,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 62,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 61,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 63,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 63,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 39,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 19.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 30,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 30,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 115,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 57.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 29549,
+     "calls": 14000000,
+     "ms": 491,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 45,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 65,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 45,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 45,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 57,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 57,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 28,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 28,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 124,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 62,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 27867,
+     "calls": 14000000,
+     "ms": 511,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 51,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 54,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 59,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 59,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 43,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 21.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 31,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 31,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 126,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 63,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31643,
+     "calls": 14000000,
+     "ms": 445,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 39,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 50,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 52,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 52,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 48,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 48,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 27,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 27,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 42,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 99,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 49.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6828,
+     "calls": 14000000,
+     "ms": 2032,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 420,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 338,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 234,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 117,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 247,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 123.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 259,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 259,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 316,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 316,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 189,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 189,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 126,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 63,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 139,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 139,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 192,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 330,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 165,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   },
+   {
+    "goc-ng": {
+     "score": 27695,
+     "calls": 14000000,
+     "ms": 511,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 47,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 62,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 55,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 61,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 30.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 47,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 47,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 54,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 54,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 63,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 63,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 39,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 19.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 31,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 31,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 117,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 58.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "ng": {
+     "score": 29325,
+     "calls": 14000000,
+     "ms": 493,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 44,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 65,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 47,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 23.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 52,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 26,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 46,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 46,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 64,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 57,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 57,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 31,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 15.5,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 29,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 29,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 44,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 123,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goc-bellard": {
+     "score": 27788,
+     "calls": 14000000,
+     "ms": 510,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 54,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 57,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 54,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 27,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 56,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 28,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 44,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 44,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 53,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 53,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 60,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 60,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 44,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 22,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 31,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 31,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 46,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 23,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 122,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 61,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "bellard": {
+     "score": 31998,
+     "calls": 14000000,
+     "ms": 438,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 38,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 53,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 49,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 24.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 51,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 25.5,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 42,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 42,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 50,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 50,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 48,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 48,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 32,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 16,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 28,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 28,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 42,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 21,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 96,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 48,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    },
+    "goja": {
+     "score": 6840,
+     "calls": 14000000,
+     "ms": 2024,
+     "cases": [
+      {
+       "name": "arith",
+       "ms": 418,
+       "n": 4000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": -1526072448
+      },
+      {
+       "name": "propget",
+       "ms": 335,
+       "n": 2000000,
+       "calls": 0,
+       "ns": 0,
+       "control": true,
+       "sink": 148000000
+      },
+      {
+       "name": "empty",
+       "ms": 229,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 114.5,
+       "control": false,
+       "sink": 2000000
+      },
+      {
+       "name": "id",
+       "ms": 240,
+       "n": 2000000,
+       "calls": 2000000,
+       "ns": 120,
+       "control": false,
+       "sink": 1999999000000
+      },
+      {
+       "name": "six",
+       "ms": 257,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 257,
+       "control": false,
+       "sink": 500014500000
+      },
+      {
+       "name": "eight",
+       "ms": 314,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 314,
+       "control": false,
+       "sink": 500027500000
+      },
+      {
+       "name": "method",
+       "ms": 191,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 191,
+       "control": false,
+       "sink": 4500065500000
+      },
+      {
+       "name": "depth4",
+       "ms": 128,
+       "n": 500000,
+       "calls": 2000000,
+       "ns": 64,
+       "control": false,
+       "sink": 500000
+      },
+      {
+       "name": "closure",
+       "ms": 141,
+       "n": 1000000,
+       "calls": 1000000,
+       "ns": 141,
+       "control": false,
+       "sink": 4500064500000
+      },
+      {
+       "name": "mutual",
+       "ms": 193,
+       "n": 400000,
+       "calls": 2000000,
+       "ns": 96.5,
+       "control": false,
+       "sink": 0
+      },
+      {
+       "name": "sched",
+       "ms": 331,
+       "n": 1000000,
+       "calls": 2000000,
+       "ns": 165.5,
+       "control": false,
+       "sink": 1500000
+      }
+     ]
+    }
+   }
+  ],
+  "engines": [
+   "goc-ng",
+   "goc-bellard",
+   "ng",
+   "bellard",
+   "goja"
+  ],
+  "score_median": {
+   "goc-ng": 27907,
+   "goc-bellard": 27772,
+   "ng": 29096,
+   "bellard": 31277,
+   "goja": 6828
+  },
+  "score_min": {
+   "goc-ng": 27312,
+   "goc-bellard": 26782,
+   "ng": 28471,
+   "bellard": 31221,
+   "goja": 6620
+  },
+  "score_max": {
+   "goc-ng": 27957,
+   "goc-bellard": 27867,
+   "ng": 29549,
+   "bellard": 31998,
+   "goja": 6882
+  },
+  "case_ms_median": {
+   "arith": {
+    "goc-ng": 47,
+    "goc-bellard": 52,
+    "ng": 45,
+    "bellard": 39,
+    "goja": 420
+   },
+   "propget": {
+    "goc-ng": 62,
+    "goc-bellard": 56,
+    "ng": 65,
+    "bellard": 53,
+    "goja": 337
+   },
+   "empty": {
+    "goc-ng": 55,
+    "goc-bellard": 54,
+    "ng": 48,
+    "bellard": 50,
+    "goja": 234
+   },
+   "id": {
+    "goc-ng": 61,
+    "goc-bellard": 57,
+    "ng": 52,
+    "bellard": 51,
+    "goja": 247
+   },
+   "six": {
+    "goc-ng": 47,
+    "goc-bellard": 44,
+    "ng": 47,
+    "bellard": 43,
+    "goja": 259
+   },
+   "eight": {
+    "goc-ng": 53,
+    "goc-bellard": 53,
+    "ng": 65,
+    "bellard": 51,
+    "goja": 315
+   },
+   "method": {
+    "goc-ng": 64,
+    "goc-bellard": 59,
+    "ng": 57,
+    "bellard": 49,
+    "goja": 192
+   },
+   "depth4": {
+    "goc-ng": 39,
+    "goc-bellard": 44,
+    "ng": 31,
+    "bellard": 32,
+    "goja": 128
+   },
+   "closure": {
+    "goc-ng": 31,
+    "goc-bellard": 32,
+    "ng": 29,
+    "bellard": 28,
+    "goja": 139
+   },
+   "mutual": {
+    "goc-ng": 44,
+    "goc-bellard": 46,
+    "ng": 44,
+    "bellard": 42,
+    "goja": 192
+   },
+   "sched": {
+    "goc-ng": 115,
+    "goc-bellard": 122,
+    "ng": 124,
+    "bellard": 98,
+    "goja": 331
+   }
+  }
+ },
+ "test262": {
+  "ran": 1526,
+  "pass": {
+   "goc-ng": 1502,
+   "goc-bellard": 1501,
+   "ng": 1502,
+   "bellard": 1501,
+   "goja": 1453
+  },
+  "dirs": {
+   "arguments-object": {
+    "eligible_pos": 200,
+    "eligible_neg": 1,
+    "ran": 81,
+    "goc-ng": 81,
+    "goc-bellard": 81,
+    "ng": 81,
+    "bellard": 81,
+    "goja": 81
+   },
+   "asi": {
+    "eligible_pos": 67,
+    "eligible_neg": 35,
+    "ran": 102,
+    "goc-ng": 102,
+    "goc-bellard": 102,
+    "ng": 102,
+    "bellard": 102,
+    "goja": 102
+   },
+   "block-scope": {
+    "eligible_pos": 43,
+    "eligible_neg": 102,
+    "ran": 83,
+    "goc-ng": 83,
+    "goc-bellard": 83,
+    "ng": 83,
+    "bellard": 83,
+    "goja": 83
+   },
+   "comments": {
+    "eligible_pos": 21,
+    "eligible_neg": 8,
+    "ran": 29,
+    "goc-ng": 29,
+    "goc-bellard": 29,
+    "ng": 29,
+    "bellard": 29,
+    "goja": 28
+   },
+   "computed-property-names": {
+    "eligible_pos": 48,
+    "eligible_neg": 0,
+    "ran": 48,
+    "goc-ng": 48,
+    "goc-bellard": 48,
+    "ng": 48,
+    "bellard": 48,
+    "goja": 48
+   },
+   "destructuring": {
+    "eligible_pos": 19,
+    "eligible_neg": 0,
+    "ran": 19,
+    "goc-ng": 18,
+    "goc-bellard": 19,
+    "ng": 18,
+    "bellard": 19,
+    "goja": 16
+   },
+   "directive-prologue": {
+    "eligible_pos": 51,
+    "eligible_neg": 6,
+    "ran": 57,
+    "goc-ng": 57,
+    "goc-bellard": 57,
+    "ng": 57,
+    "bellard": 57,
+    "goja": 57
+   },
+   "eval-code": {
+    "eligible_pos": 292,
+    "eligible_neg": 3,
+    "ran": 83,
+    "goc-ng": 81,
+    "goc-bellard": 81,
+    "ng": 81,
+    "bellard": 81,
+    "goja": 67
+   },
+   "expressions": {
+    "eligible_pos": 6903,
+    "eligible_neg": 2015,
+    "ran": 120,
+    "goc-ng": 117,
+    "goc-bellard": 117,
+    "ng": 117,
+    "bellard": 117,
+    "goja": 112
+   },
+   "function-code": {
+    "eligible_pos": 217,
+    "eligible_neg": 0,
+    "ran": 80,
+    "goc-ng": 80,
+    "goc-bellard": 80,
+    "ng": 80,
+    "bellard": 80,
+    "goja": 80
+   },
+   "future-reserved-words": {
+    "eligible_pos": 29,
+    "eligible_neg": 26,
+    "ran": 55,
+    "goc-ng": 55,
+    "goc-bellard": 55,
+    "ng": 55,
+    "bellard": 55,
+    "goja": 55
+   },
+   "global-code": {
+    "eligible_pos": 27,
+    "eligible_neg": 15,
+    "ran": 42,
+    "goc-ng": 30,
+    "goc-bellard": 29,
+    "ng": 30,
+    "bellard": 29,
+    "goja": 29
+   },
+   "identifier-resolution": {
+    "eligible_pos": 12,
+    "eligible_neg": 2,
+    "ran": 14,
+    "goc-ng": 13,
+    "goc-bellard": 13,
+    "ng": 13,
+    "bellard": 13,
+    "goja": 14
+   },
+   "identifiers": {
+    "eligible_pos": 152,
+    "eligible_neg": 116,
+    "ran": 120,
+    "goc-ng": 120,
+    "goc-bellard": 120,
+    "ng": 120,
+    "bellard": 120,
+    "goja": 107
+   },
+   "keywords": {
+    "eligible_pos": 0,
+    "eligible_neg": 25,
+    "ran": 25,
+    "goc-ng": 25,
+    "goc-bellard": 25,
+    "ng": 25,
+    "bellard": 25,
+    "goja": 25
+   },
+   "line-terminators": {
+    "eligible_pos": 17,
+    "eligible_neg": 24,
+    "ran": 41,
+    "goc-ng": 41,
+    "goc-bellard": 41,
+    "ng": 41,
+    "bellard": 41,
+    "goja": 41
+   },
+   "literals": {
+    "eligible_pos": 215,
+    "eligible_neg": 321,
+    "ran": 120,
+    "goc-ng": 120,
+    "goc-bellard": 120,
+    "ng": 120,
+    "bellard": 120,
+    "goja": 111
+   },
+   "punctuators": {
+    "eligible_pos": 1,
+    "eligible_neg": 10,
+    "ran": 11,
+    "goc-ng": 11,
+    "goc-bellard": 11,
+    "ng": 11,
+    "bellard": 11,
+    "goja": 11
+   },
+   "reserved-words": {
+    "eligible_pos": 14,
+    "eligible_neg": 12,
+    "ran": 26,
+    "goc-ng": 26,
+    "goc-bellard": 26,
+    "ng": 26,
+    "bellard": 26,
+    "goja": 26
+   },
+   "rest-parameters": {
+    "eligible_pos": 10,
+    "eligible_neg": 1,
+    "ran": 11,
+    "goc-ng": 11,
+    "goc-bellard": 11,
+    "ng": 11,
+    "bellard": 11,
+    "goja": 11
+   },
+   "source-text": {
+    "eligible_pos": 1,
+    "eligible_neg": 0,
+    "ran": 1,
+    "goc-ng": 1,
+    "goc-bellard": 1,
+    "ng": 1,
+    "bellard": 1,
+    "goja": 1
+   },
+   "statementList": {
+    "eligible_pos": 80,
+    "eligible_neg": 0,
+    "ran": 80,
+    "goc-ng": 80,
+    "goc-bellard": 80,
+    "ng": 80,
+    "bellard": 80,
+    "goja": 80
+   },
+   "statements": {
+    "eligible_pos": 5316,
+    "eligible_neg": 1513,
+    "ran": 120,
+    "goc-ng": 119,
+    "goc-bellard": 118,
+    "ng": 119,
+    "bellard": 118,
+    "goja": 114
+   },
+   "types": {
+    "eligible_pos": 102,
+    "eligible_neg": 11,
+    "ran": 91,
+    "goc-ng": 87,
+    "goc-bellard": 87,
+    "ng": 87,
+    "bellard": 87,
+    "goja": 87
+   },
+   "white-space": {
+    "eligible_pos": 61,
+    "eligible_neg": 6,
+    "ran": 67,
+    "goc-ng": 67,
+    "goc-bellard": 67,
+    "ng": 67,
+    "bellard": 67,
+    "goja": 67
+   }
+  },
+  "fail": {
+   "goc-ng": {
+    "test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js": "FAIL undefined: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKe",
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: x is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: unsupported keyword: export",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: meta expected",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifier-resolution/assign-to-global-undefined.js": "FAIL expected ReferenceError",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   },
+   "goc-bellard": {
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: 'x' is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: unsupported keyword: export",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: meta expected",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-lex-restricted-global.js": "FAIL expected SyntaxError",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: 'test262let' is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: 'test262let' is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifier-resolution/assign-to-global-undefined.js": "FAIL expected ReferenceError",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'",
+    "test/language/statements/using/static-init-await-binding-valid.js": "FAIL SyntaxError: SyntaxError: expecting ';'",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   },
+   "ng": {
+    "test/language/destructuring/binding/keyed-destructuring-property-reference-target-evaluation-order-with-bindings.js": "FAIL undefined: Test262Error: Actual [binding::source, binding::sourceKey, sourceKey, get source, binding::defaultValue, binding::varTarget] and expected [binding::source, binding::sourceKey, sourceKe",
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: x is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: unsupported keyword: export",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: meta expected",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifier-resolution/assign-to-global-undefined.js": "FAIL expected ReferenceError",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   },
+   "bellard": {
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: 'x' is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: unsupported keyword: export",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: meta expected",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-lex-restricted-global.js": "FAIL expected SyntaxError",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: 'test262let' is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: 'test262let' is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifier-resolution/assign-to-global-undefined.js": "FAIL expected ReferenceError",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: unexpected token in expression: '@'",
+    "test/language/statements/using/static-init-await-binding-valid.js": "FAIL SyntaxError: SyntaxError: expecting ';'",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   },
+   "goja": {
+    "test/language/comments/hashbang/function-constructor.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:16:33",
+    "test/language/destructuring/binding/syntax/destructuring-array-parameters-function-arguments-length.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:34:19",
+    "test/language/destructuring/binding/syntax/destructuring-object-parameters-function-arguments-length.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:34:19",
+    "test/language/destructuring/binding/typedarray-backed-by-resizable-buffer.js": "FAIL TypeError: TypeError: Object has no member 'resize'",
+    "test/language/eval-code/direct/async-gen-func-decl-a-preceding-parameter-is-named-arguments-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1",
+    "test/language/eval-code/direct/async-gen-func-decl-fn-body-cntns-arguments-lex-bind-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1",
+    "test/language/eval-code/direct/async-gen-func-decl-no-pre-existing-arguments-bindings-are-present-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:1",
+    "test/language/eval-code/direct/async-gen-func-expr-a-preceding-parameter-is-named-arguments-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-func-expr-fn-body-cntns-arguments-var-bind-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-meth-a-following-parameter-is-named-arguments-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 9 more errors)",
+    "test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-func-decl-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 12 more errors)",
+    "test/language/eval-code/direct/async-gen-meth-fn-body-cntns-arguments-var-bind-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 12:18 Unexpected token * (and 16 more errors)",
+    "test/language/eval-code/direct/async-gen-named-func-expr-a-following-parameter-is-named-arguments-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-func-decl-declare-arguments-and-assign.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-named-func-expr-fn-body-cntns-arguments-lex-bind-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/async-gen-named-func-expr-no-pre-existing-arguments-bindings-are-present-declare-arguments.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:12:9",
+    "test/language/eval-code/direct/var-env-global-lex-non-strict.js": "FAIL expected SyntaxError",
+    "test/language/eval-code/indirect/lex-env-heritage.js": "FAIL ReferenceError: ReferenceError: x is not defined",
+    "test/language/eval-code/indirect/var-env-global-lex-non-strict.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «undefined») to be false",
+    "test/language/expressions/async-generator/dstr/dflt-ary-ptrn-elision-step-err.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:43:9",
+    "test/language/expressions/async-generator/named-dflt-params-ref-self.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:35:5",
+    "test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-prop-id-init-unresolvable.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:62:3",
+    "test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/expressions/dynamic-import/assignment-expression/module-code-other_FIXTURE.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 6:1 Unexpected reserved word (and 2 more errors)",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-async-arrow-function-await-nested-imports.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 26:9 Unexpected reserved word (and 2 more errors)",
+    "test/language/expressions/dynamic-import/syntax/valid/nested-else-import-defer-script-code-valid.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 28:3 Unexpected reserved word (and 1 more errors)",
+    "test/language/expressions/object/dstr/async-gen-meth-obj-init-undefined.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 32:10 Unexpected token * (and 4 more errors)",
+    "test/language/global-code/S10.4.1_A1_T1.js": "FAIL undefined: Test262Error: #2: variable x has property attribute DontDelete",
+    "test/language/global-code/decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/decl-lex-restricted-global.js": "FAIL expected SyntaxError",
+    "test/language/global-code/decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-func.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/global-code/script-decl-lex-deletion.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-lex-lex.js": "FAIL undefined: Test262Error: `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-restricted-global.js": "FAIL undefined: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex-var-declared-via-eval.js": "FAIL undefined: Test262Error: Expected SameValue(«undefined», «1») to be true",
+    "test/language/global-code/script-decl-lex-var.js": "FAIL undefined: Test262Error: variable Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-lex.js": "FAIL ReferenceError: ReferenceError: test262let is not defined",
+    "test/language/global-code/script-decl-var-collision.js": "FAIL undefined: Test262Error: `var` on `let` binding Expected a SyntaxError to be thrown but no exception was thrown at all",
+    "test/language/global-code/script-decl-var.js": "FAIL undefined: Test262Error: brandNew descriptor should not be configurable",
+    "test/language/identifiers/part-unicode-15.1.0-class-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:22 Unexpected token ILLEGAL (and 1 more errors)",
+    "test/language/identifiers/part-unicode-15.1.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:11 Unexpected token ILLEGAL (and 4 more errors)",
+    "test/language/identifiers/part-unicode-15.1.0.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:12 Unexpected token ILLEGAL (and 3 more errors)",
+    "test/language/identifiers/part-unicode-16.0.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 133 more errors)",
+    "test/language/identifiers/part-unicode-16.0.0.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:6 Unexpected token ILLEGAL (and 132 more errors)",
+    "test/language/identifiers/part-unicode-17.0.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 54 more errors)",
+    "test/language/identifiers/part-unicode-17.0.0.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 14:6 Unexpected token ILLEGAL (and 53 more errors)",
+    "test/language/identifiers/start-unicode-15.1.0-class.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:4 Unexpected token ILLEGAL (and 1865 more errors)",
+    "test/language/identifiers/start-unicode-15.1.0-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 1242 more errors)",
+    "test/language/identifiers/start-unicode-16.0.0-class-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:9 Unexpected token ILLEGAL (and 9 more errors)",
+    "test/language/identifiers/start-unicode-16.0.0-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 8602 more errors)",
+    "test/language/identifiers/start-unicode-17.0.0-class-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 19:9 Unexpected token ILLEGAL (and 9 more errors)",
+    "test/language/identifiers/start-unicode-17.0.0-escaped.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 16:5 Unexpected token ILLEGAL (and 9292 more errors)",
+    "test/language/literals/regexp/S7.8.5_A1.4_T2.js": "FAIL undefined: Test262Error: Code unit: d800 Expected SameValue(«\"\\\\\\\\\\\\ud800\"», «\"\\\\\\ud800\"») to be true",
+    "test/language/literals/regexp/S7.8.5_A2.1_T2.js": "FAIL undefined: Test262Error: Code unit: d800 Expected SameValue(«\"nnnn\\\\ud800\"», «\"nnnn\\ud800\"») to be true",
+    "test/language/literals/regexp/invalid-range-lookbehind.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/regexp/u-case-mapping.js": "FAIL undefined: Test262Error: Case mapping is not applied in the absence of the `u` flag Expected SameValue(«true», «false») to be true",
+    "test/language/literals/regexp/u-invalid-range-lookahead.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/S7.8.4_A4.3_T2.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/legacy-non-octal-escape-sequence-2-strict-explicit-pragma.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/legacy-non-octal-escape-sequence-9-strict-explicit-pragma.js": "FAIL expected SyntaxError got String: Test262: This statement should not be evaluated.",
+    "test/language/literals/string/legacy-octal-escape-sequence.js": "FAIL undefined: Test262Error: \\400 Expected SameValue(«\"Ā\"», «\" 0\"») to be true",
+    "test/language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 54:1 Unexpected token ILLEGAL (and 7 more errors)",
+    "test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-elem-id-iter-val-err.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:74:3",
+    "test/language/statements/class/dstr/async-gen-meth-static-dflt-obj-ptrn-prop-id-init-throws.js": "FAIL SyntaxError: SyntaxError: SyntaxError: Async generators are not supported yet at <eval>:57:10",
+    "test/language/statements/for-await-of/let-block-with-newline.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 17:7 Unexpected token await (and 10 more errors)",
+    "test/language/statements/let/global-closure-set-before-initialization.js": "FAIL undefined: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all",
+    "test/language/statements/using/static-init-await-binding-valid.js": "FAIL SyntaxError: SyntaxError: SyntaxError: <eval>: Line 17:20 Unexpected token await (and 5 more errors)",
+    "test/language/types/reference/S8.7.1_A2.js": "FAIL undefined: Test262Error: #1: y = 1; (delete y) === false. Actual: true",
+    "test/language/types/reference/S8.7_A5_T1.js": "FAIL undefined: Test262Error: #3: obj = new Object(); var __ref = obj; delete __ref === false. Actual: true",
+    "test/language/types/reference/get-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm",
+    "test/language/types/reference/put-value-prop-base-primitive-realm.js": "FAIL Error: Error: $262.createRealm"
+   }
+  }
+ },
+ "qjs_tests": {
+  "total": 77,
+  "pass": {
+   "goc-ng": 73,
+   "goc-bellard": 77,
+   "ng": 73,
+   "bellard": 77,
+   "goja": 58
+  },
+  "files": {
+   "test_language.js": {
+    "n": 27,
+    "goc-ng": 26,
+    "goc-bellard": 27,
+    "ng": 26,
+    "bellard": 27,
+    "goja": 23
+   },
+   "test_closure.js": {
+    "n": 7,
+    "goc-ng": 7,
+    "goc-bellard": 7,
+    "ng": 7,
+    "bellard": 7,
+    "goja": 6
+   },
+   "test_loop.js": {
+    "n": 18,
+    "goc-ng": 17,
+    "goc-bellard": 18,
+    "ng": 17,
+    "bellard": 18,
+    "goja": 17
+   },
+   "test_bigint.js": {
+    "n": 4,
+    "goc-ng": 4,
+    "goc-bellard": 4,
+    "ng": 4,
+    "bellard": 4,
+    "goja": 3
+   },
+   "test_builtin.js": {
+    "n": 21,
+    "goc-ng": 19,
+    "goc-bellard": 21,
+    "ng": 19,
+    "bellard": 21,
+    "goja": 9
+   }
+  },
+  "fn": {
+   "goc-ng": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "pass",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "pass",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "pass",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "pass",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "FAIL qjscli:runtime: <t>: Error: assertion failed: got |number|, expected |undefined|",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "pass",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "pass",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "FAIL qjscli:runtime: <t>: Error: assertion failed: got |false|, expected |true|",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "pass",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "pass",
+    "test_builtin.js:test_math": "pass",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "pass",
+    "test_builtin.js:test_typed_array": "pass",
+    "test_builtin.js:test_json": "FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 ",
+    "test_builtin.js:test_date": "pass",
+    "test_builtin.js:test_regexp": "pass",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "FAIL qjscli:runtime: <t>: Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2"
+   },
+   "goc-bellard": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "pass",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "pass",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "pass",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "pass",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "pass",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "pass",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "pass",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "pass",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "pass",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "pass",
+    "test_builtin.js:test_math": "pass",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "pass",
+    "test_builtin.js:test_typed_array": "pass",
+    "test_builtin.js:test_json": "pass",
+    "test_builtin.js:test_date": "pass",
+    "test_builtin.js:test_regexp": "pass",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "pass"
+   },
+   "ng": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "pass",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "pass",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "pass",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "pass",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "FAIL Error: assertion failed: got |number|, expected |undefined|",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "pass",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "pass",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "FAIL Error: assertion failed: got |false|, expected |true|",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "pass",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "pass",
+    "test_builtin.js:test_math": "pass",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "pass",
+    "test_builtin.js:test_typed_array": "pass",
+    "test_builtin.js:test_json": "FAIL Error: unexpected line or column number. error=Bad escaped character in JSON at position 5 (line 2 column 5).got |    at",
+    "test_builtin.js:test_date": "pass",
+    "test_builtin.js:test_regexp": "pass",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "FAIL Error: unexpected line or column number. error=hello.got |    at <eval> (<input>:2:3|, expected |:2:8|"
+   },
+   "bellard": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "pass",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "pass",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "pass",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "pass",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "pass",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "pass",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "pass",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "pass",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "pass",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "pass",
+    "test_builtin.js:test_math": "pass",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "pass",
+    "test_builtin.js:test_typed_array": "pass",
+    "test_builtin.js:test_json": "pass",
+    "test_builtin.js:test_date": "pass",
+    "test_builtin.js:test_regexp": "pass",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "pass",
+    "test_builtin.js:test_weak_map_cycles": "pass",
+    "test_builtin.js:test_weak_ref": "pass",
+    "test_builtin.js:test_finalization_registry": "pass",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "pass"
+   },
+   "goja": {
+    "test_language.js:test_op1": "pass",
+    "test_language.js:test_cvt": "pass",
+    "test_language.js:test_eq": "pass",
+    "test_language.js:test_inc_dec": "pass",
+    "test_language.js:test_op2": "pass",
+    "test_language.js:test_constructor": "FAIL Error: assertion failed: got |Value is not a constructor|, expected |G is not a constructor| at Error (native)",
+    "test_language.js:test_delete": "pass",
+    "test_language.js:test_prototype": "pass",
+    "test_language.js:test_arguments": "pass",
+    "test_language.js:test_class": "FAIL SyntaxError: SyntaxError: <t>: Line 91:15 Unexpected token = (and 3 more errors)",
+    "test_language.js:test_template": "pass",
+    "test_language.js:test_template_skip": "pass",
+    "test_language.js:test_object_literal": "pass",
+    "test_language.js:test_regexp_skip": "pass",
+    "test_language.js:test_labels": "pass",
+    "test_language.js:test_labels2": "pass",
+    "test_language.js:test_destructuring": "pass",
+    "test_language.js:test_spread": "pass",
+    "test_language.js:test_function_length": "pass",
+    "test_language.js:test_argument_scope": "FAIL Error: assertion failed: got |undefined|, expected |12| at Error (native)",
+    "test_language.js:test_function_expr_name": "pass",
+    "test_language.js:test_parse_semicolon": "pass",
+    "test_language.js:test_optional_chaining": "FAIL Error: assertion failed: got |{\"b\":{\"c\":2}}|, expected |{\"b\":{}}| (optional chaining delete) at Error (native)",
+    "test_language.js:test_parse_arrow_function": "pass",
+    "test_language.js:test_unicode_ident": "pass",
+    "test_language.js:test_global_var_opt": "pass",
+    "test_language.js:test_number_literals": "pass",
+    "test_closure.js:test_closure1": "pass",
+    "test_closure.js:test_closure2": "pass",
+    "test_closure.js:test_closure3": "pass",
+    "test_closure.js:test_arrow_function": "FAIL Error: assertion failed: got |4|, expected |2| at Error (native)",
+    "test_closure.js:test_with": "pass",
+    "test_closure.js:test_eval_closure": "pass",
+    "test_closure.js:test_eval_const": "pass",
+    "test_loop.js:test_while": "pass",
+    "test_loop.js:test_while_break": "pass",
+    "test_loop.js:test_do_while": "pass",
+    "test_loop.js:test_for": "pass",
+    "test_loop.js:test_for_break": "pass",
+    "test_loop.js:test_switch1": "pass",
+    "test_loop.js:test_switch2": "pass",
+    "test_loop.js:test_for_in": "FAIL SyntaxError: SyntaxError: <t>: Line 90:17 for-in loop variable declaration may not have an initializer",
+    "test_loop.js:test_for_in2": "pass",
+    "test_loop.js:test_for_in_proxy": "pass",
+    "test_loop.js:test_try_catch1": "pass",
+    "test_loop.js:test_try_catch2": "pass",
+    "test_loop.js:test_try_catch3": "pass",
+    "test_loop.js:test_try_catch4": "pass",
+    "test_loop.js:test_try_catch5": "pass",
+    "test_loop.js:test_try_catch6": "pass",
+    "test_loop.js:test_try_catch7": "pass",
+    "test_loop.js:test_try_catch8": "pass",
+    "test_bigint.js:test_bigint1": "pass",
+    "test_bigint.js:test_bigint2": "pass",
+    "test_bigint.js:test_bigint3": "FAIL Error: assertion failed: got |-1|, expected |18446744073709552000| at Error (native)",
+    "test_bigint.js:test_pi": "pass",
+    "test_builtin.js:test": "pass",
+    "test_builtin.js:test_function": "pass",
+    "test_builtin.js:test_enum": "pass",
+    "test_builtin.js:test_array": "pass",
+    "test_builtin.js:test_string": "FAIL panic: unexpected unicode length while parsing '\\u{10ffff}'",
+    "test_builtin.js:test_math": "FAIL TypeError: Object has no member 'sumPrecise' at test_math (<t>:68:27(137))",
+    "test_builtin.js:test_number": "pass",
+    "test_builtin.js:test_eval": "FAIL TypeError: Cannot read property 'length' of undefined at <eval>:1:11(2)",
+    "test_builtin.js:test_typed_array": "FAIL ReferenceError: Float16Array is not defined at test_typed_array (<t>:139:13(155))",
+    "test_builtin.js:test_json": "FAIL Error: unexpected line or column number. error=invalid character 'x' in string escape code.got |SyntaxError: invalid cha",
+    "test_builtin.js:test_date": "FAIL Error: assertion failed: got number:|29256|, expected number:|29312| (order of operations / precision in MakeTime) at Er",
+    "test_builtin.js:test_regexp": "FAIL SyntaxError: SyntaxError: Invalid flags supplied to RegExp constructor 'gvi' at <t>:165:31",
+    "test_builtin.js:test_symbol": "pass",
+    "test_builtin.js:test_map": "pass",
+    "test_builtin.js:test_weak_map": "FAIL TypeError: Value is not an object: x1 at set (native)",
+    "test_builtin.js:test_weak_map_cycles": "FAIL ReferenceError: std is not defined at test_weak_map_cycles (<t>:24:5(15))",
+    "test_builtin.js:test_weak_ref": "FAIL ReferenceError: WeakRef is not defined at test_weak_ref (<t>:61:18(18))",
+    "test_builtin.js:test_finalization_registry": "FAIL ReferenceError: FinalizationRegistry is not defined at test_finalization_registry (<t>:57:26(6))",
+    "test_builtin.js:test_generator": "pass",
+    "test_builtin.js:test_rope": "pass",
+    "test_builtin.js:test_line_column_numbers": "FAIL Error: unexpected line or column number. error=SyntaxError: <eval>: Line 2:6 Unexpected identifier.got |SyntaxError: Syn"
+   }
+  }
+ },
+ "parity": {
+  "goc-ng": {
+   "native": "ng",
+   "test262_diff": [],
+   "qjs_diff": []
+  },
+  "goc-bellard": {
+   "native": "bellard",
+   "test262_diff": [],
+   "qjs_diff": []
+  }
+ },
+ "memory": {
+  "rss_kb": {
+   "goc-ng": {
+    "empty": 8448,
+    "v8-Richards": 12672,
+    "v8-DeltaBlue": 12864,
+    "v8-Crypto": 12288,
+    "v8-RayTrace": 12288,
+    "v8-EarleyBoyer": 24768,
+    "v8-RegExp": 14784,
+    "v8-Splay": 168192,
+    "v8-NavierStokes": 14592,
+    "v8-all": 168384,
+    "ss-3d-cube": 9408,
+    "ss-3d-morph": 11328,
+    "ss-3d-raytrace": 9600,
+    "ss-access-binary-trees": 9024,
+    "ss-access-fannkuch": 8832,
+    "ss-access-nbody": 8832,
+    "ss-access-nsieve": 14208,
+    "ss-bitops-3bit-bits-in-byte": 8640,
+    "ss-bitops-bits-in-byte": 8640,
+    "ss-bitops-bitwise-and": 8640,
+    "ss-bitops-nsieve-bits": 9024,
+    "ss-controlflow-recursive": 8832,
+    "ss-crypto-aes": 9216,
+    "ss-crypto-md5": 9216,
+    "ss-crypto-sha1": 8832,
+    "ss-date-format-tofte": 9216,
+    "ss-date-format-xparb": 9216,
+    "ss-math-cordic": 8832,
+    "ss-math-partial-sums": 9216,
+    "ss-math-spectral-norm": 8640,
+    "ss-regexp-dna": 11328,
+    "ss-string-base64": 9024,
+    "ss-string-fasta": 8832,
+    "ss-string-tagcloud": 14976,
+    "ss-string-unpack-code": 14592,
+    "ss-string-validate-input": 9600,
+    "micro": 10944,
+    "ss-max": 14976
+   },
+   "goc-bellard": {
+    "empty": 8256,
+    "v8-Richards": 12480,
+    "v8-DeltaBlue": 12864,
+    "v8-Crypto": 11712,
+    "v8-RayTrace": 11712,
+    "v8-EarleyBoyer": 24576,
+    "v8-RegExp": 14400,
+    "v8-Splay": 174144,
+    "v8-NavierStokes": 14208,
+    "v8-all": 159552,
+    "ss-3d-cube": 9024,
+    "ss-3d-morph": 10944,
+    "ss-3d-raytrace": 9216,
+    "ss-access-binary-trees": 8832,
+    "ss-access-fannkuch": 8448,
+    "ss-access-nbody": 8832,
+    "ss-access-nsieve": 13824,
+    "ss-bitops-3bit-bits-in-byte": 8448,
+    "ss-bitops-bits-in-byte": 8448,
+    "ss-bitops-bitwise-and": 8448,
+    "ss-bitops-nsieve-bits": 8640,
+    "ss-controlflow-recursive": 8640,
+    "ss-crypto-aes": 9024,
+    "ss-crypto-md5": 8832,
+    "ss-crypto-sha1": 8832,
+    "ss-date-format-tofte": 9024,
+    "ss-date-format-xparb": 9024,
+    "ss-math-cordic": 8640,
+    "ss-math-partial-sums": 9024,
+    "ss-math-spectral-norm": 8448,
+    "ss-regexp-dna": 11712,
+    "ss-string-base64": 8832,
+    "ss-string-fasta": 8640,
+    "ss-string-tagcloud": 15744,
+    "ss-string-unpack-code": 14016,
+    "ss-string-validate-input": 10368,
+    "micro": 10752,
+    "ss-max": 15744
+   },
+   "ng": {
+    "empty": 2880,
+    "v8-Richards": 6844,
+    "v8-DeltaBlue": 7104,
+    "v8-Crypto": 6144,
+    "v8-RayTrace": 6144,
+    "v8-EarleyBoyer": 19300,
+    "v8-RegExp": 8832,
+    "v8-Splay": 158592,
+    "v8-NavierStokes": 8192,
+    "v8-all": 159380,
+    "ss-3d-cube": 3648,
+    "ss-3d-morph": 4224,
+    "ss-3d-raytrace": 3648,
+    "ss-access-binary-trees": 3264,
+    "ss-access-fannkuch": 3072,
+    "ss-access-nbody": 3264,
+    "ss-access-nsieve": 6596,
+    "ss-bitops-3bit-bits-in-byte": 3072,
+    "ss-bitops-bits-in-byte": 3072,
+    "ss-bitops-bitwise-and": 3072,
+    "ss-bitops-nsieve-bits": 3264,
+    "ss-controlflow-recursive": 3456,
+    "ss-crypto-aes": 3456,
+    "ss-crypto-md5": 3456,
+    "ss-crypto-sha1": 3264,
+    "ss-date-format-tofte": 3456,
+    "ss-date-format-xparb": 3456,
+    "ss-math-cordic": 3072,
+    "ss-math-partial-sums": 3456,
+    "ss-math-spectral-norm": 3072,
+    "ss-regexp-dna": 5324,
+    "ss-string-base64": 3264,
+    "ss-string-fasta": 3072,
+    "ss-string-tagcloud": 7160,
+    "ss-string-unpack-code": 8216,
+    "ss-string-validate-input": 3840,
+    "micro": 4608,
+    "ss-max": 8216
+   },
+   "bellard": {
+    "empty": 2880,
+    "v8-Richards": 6720,
+    "v8-DeltaBlue": 7068,
+    "v8-Crypto": 5760,
+    "v8-RayTrace": 5952,
+    "v8-EarleyBoyer": 18944,
+    "v8-RegExp": 8448,
+    "v8-Splay": 149760,
+    "v8-NavierStokes": 8020,
+    "v8-all": 150420,
+    "ss-3d-cube": 3648,
+    "ss-3d-morph": 4032,
+    "ss-3d-raytrace": 3456,
+    "ss-access-binary-trees": 3072,
+    "ss-access-fannkuch": 2880,
+    "ss-access-nbody": 3072,
+    "ss-access-nsieve": 6380,
+    "ss-bitops-3bit-bits-in-byte": 2880,
+    "ss-bitops-bits-in-byte": 2880,
+    "ss-bitops-bitwise-and": 2880,
+    "ss-bitops-nsieve-bits": 3072,
+    "ss-controlflow-recursive": 3264,
+    "ss-crypto-aes": 3456,
+    "ss-crypto-md5": 3264,
+    "ss-crypto-sha1": 3072,
+    "ss-date-format-tofte": 3264,
+    "ss-date-format-xparb": 3264,
+    "ss-math-cordic": 2880,
+    "ss-math-partial-sums": 3264,
+    "ss-math-spectral-norm": 2880,
+    "ss-regexp-dna": 5952,
+    "ss-string-base64": 3072,
+    "ss-string-fasta": 2880,
+    "ss-string-tagcloud": 6552,
+    "ss-string-unpack-code": 7552,
+    "ss-string-validate-input": 3648,
+    "micro": 4416,
+    "ss-max": 7552
+   },
+   "goja": {
+    "empty": 5760,
+    "v8-Richards": 23616,
+    "v8-DeltaBlue": 24576,
+    "v8-Crypto": 25184,
+    "v8-RayTrace": 28148,
+    "v8-EarleyBoyer": 130444,
+    "v8-RegExp": 39052,
+    "v8-Splay": 1497320,
+    "v8-NavierStokes": 34388,
+    "v8-all": 1505972,
+    "ss-3d-morph": 15440,
+    "ss-3d-raytrace": 17260,
+    "ss-access-binary-trees": 12860,
+    "ss-access-fannkuch": 7872,
+    "ss-access-nbody": 12672,
+    "ss-access-nsieve": 18268,
+    "ss-bitops-3bit-bits-in-byte": 12864,
+    "ss-bitops-bits-in-byte": 12480,
+    "ss-bitops-bitwise-and": 12288,
+    "ss-bitops-nsieve-bits": 13388,
+    "ss-controlflow-recursive": 7872,
+    "ss-crypto-aes": 13780,
+    "ss-crypto-md5": 13532,
+    "ss-crypto-sha1": 13384,
+    "ss-date-format-tofte": 13356,
+    "ss-date-format-xparb": 13392,
+    "ss-math-cordic": 12672,
+    "ss-math-partial-sums": 14592,
+    "ss-math-spectral-norm": 12480,
+    "ss-regexp-dna": 14008,
+    "ss-string-base64": 15184,
+    "ss-string-fasta": 17172,
+    "ss-string-tagcloud": 23532,
+    "ss-string-unpack-code": 19884,
+    "ss-string-validate-input": 14464,
+    "micro": 580892,
+    "ss-max": 23532
+   }
+  },
+  "rss_rounds": {
+   "goc-ng": 3,
+   "goc-bellard": 3,
+   "ng": 3,
+   "bellard": 3,
+   "goja": 3
+  },
+  "rss_fail": {
+   "goc-ng": {},
+   "goc-bellard": {},
+   "ng": {},
+   "bellard": {},
+   "goja": {
+    "ss-3d-cube": "exit 1"
+   }
+  },
+  "workloads": [
+   "empty",
+   "v8-Richards",
+   "v8-DeltaBlue",
+   "v8-Crypto",
+   "v8-RayTrace",
+   "v8-EarleyBoyer",
+   "v8-RegExp",
+   "v8-Splay",
+   "v8-NavierStokes",
+   "v8-all",
+   "ss-3d-cube",
+   "ss-3d-morph",
+   "ss-3d-raytrace",
+   "ss-access-binary-trees",
+   "ss-access-fannkuch",
+   "ss-access-nbody",
+   "ss-access-nsieve",
+   "ss-bitops-3bit-bits-in-byte",
+   "ss-bitops-bits-in-byte",
+   "ss-bitops-bitwise-and",
+   "ss-bitops-nsieve-bits",
+   "ss-controlflow-recursive",
+   "ss-crypto-aes",
+   "ss-crypto-md5",
+   "ss-crypto-sha1",
+   "ss-date-format-tofte",
+   "ss-date-format-xparb",
+   "ss-math-cordic",
+   "ss-math-partial-sums",
+   "ss-math-spectral-norm",
+   "ss-regexp-dna",
+   "ss-string-base64",
+   "ss-string-fasta",
+   "ss-string-tagcloud",
+   "ss-string-unpack-code",
+   "ss-string-validate-input",
+   "micro",
+   "ss-max"
+  ],
+  "instances": {
+   "goc-ng": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 4800,
+     "1": 6144,
+     "10": 8064,
+     "100": 27840,
+     "1000": 230400
+    },
+    "after_kind": "after_gc",
+    "after_rss_kb": {
+     "0": 5184,
+     "1": 6528,
+     "10": 8404,
+     "100": 26976,
+     "1000": 218788
+    },
+    "live_HeapSys": {
+     "0": 3866624,
+     "1": 3833856,
+     "10": 3538944,
+     "100": 4784128,
+     "1000": 4653056
+    },
+    "after_HeapSys": {
+     "0": 3637248,
+     "1": 3670016,
+     "10": 3538944,
+     "100": 6750208,
+     "1000": 49184768
+    },
+    "live_HeapInuse": {
+     "0": 573440,
+     "1": 630784,
+     "10": 712704,
+     "100": 794624,
+     "1000": 1728512
+    },
+    "after_HeapInuse": {
+     "0": 548864,
+     "1": 557056,
+     "10": 565248,
+     "100": 712704,
+     "1000": 1744896
+    },
+    "live_StackSys": {
+     "0": 327680,
+     "1": 360448,
+     "10": 655360,
+     "100": 3604480,
+     "1000": 33095680
+    },
+    "after_StackSys": {
+     "0": 557056,
+     "1": 524288,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9535488
+    },
+    "live_StackInuse": {
+     "0": 327680,
+     "1": 360448,
+     "10": 655360,
+     "100": 3604480,
+     "1000": 33095680
+    },
+    "after_StackInuse": {
+     "0": 557056,
+     "1": 524288,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9535488
+    },
+    "live_Sys": {
+     "0": 6380560,
+     "1": 6380560,
+     "10": 6642704,
+     "100": 10837008,
+     "1000": 40459280
+    },
+    "after_Sys": {
+     "0": 7298064,
+     "1": 7298064,
+     "10": 7560208,
+     "100": 12278800,
+     "1000": 65559568
+    },
+    "per_instance_kb": {
+     "1": 1344.0,
+     "10": 326.4,
+     "100": 230.4,
+     "1000": 225.6
+    },
+    "slope_1_1000_kb": 224.48048048048048,
+    "slope_1_1000_after_kb": 212.47247247247248,
+    "slope_lsq_kb": 224.65244541946907,
+    "stack_per_goroutine_b": {
+     "1": 32768.0,
+     "10": 32768.0,
+     "100": 32768.0,
+     "1000": 32768.0
+    },
+    "stack_per_goroutine_after_gc_b": {
+     "1": -32768.0,
+     "10": 9830.4,
+     "100": 10813.44,
+     "1000": 8978.432
+    }
+   },
+   "goc-bellard": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 4608,
+     "1": 5952,
+     "10": 7872,
+     "100": 25152,
+     "1000": 204672
+    },
+    "after_kind": "after_gc",
+    "after_rss_kb": {
+     "0": 4992,
+     "1": 6336,
+     "10": 8044,
+     "100": 24328,
+     "1000": 193716
+    },
+    "live_HeapSys": {
+     "0": 3866624,
+     "1": 3833856,
+     "10": 3538944,
+     "100": 4784128,
+     "1000": 4653056
+    },
+    "after_HeapSys": {
+     "0": 3670016,
+     "1": 3637248,
+     "10": 3538944,
+     "100": 6750208,
+     "1000": 49217536
+    },
+    "live_HeapInuse": {
+     "0": 573440,
+     "1": 630784,
+     "10": 712704,
+     "100": 819200,
+     "1000": 1736704
+    },
+    "after_HeapInuse": {
+     "0": 540672,
+     "1": 557056,
+     "10": 565248,
+     "100": 745472,
+     "1000": 1736704
+    },
+    "live_StackSys": {
+     "0": 327680,
+     "1": 360448,
+     "10": 655360,
+     "100": 3604480,
+     "1000": 33095680
+    },
+    "after_StackSys": {
+     "0": 524288,
+     "1": 557056,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9502720
+    },
+    "live_StackInuse": {
+     "0": 327680,
+     "1": 360448,
+     "10": 655360,
+     "100": 3604480,
+     "1000": 33095680
+    },
+    "after_StackInuse": {
+     "0": 524288,
+     "1": 557056,
+     "10": 655360,
+     "100": 1638400,
+     "1000": 9502720
+    },
+    "live_Sys": {
+     "0": 6380560,
+     "1": 6380560,
+     "10": 6642704,
+     "100": 10837008,
+     "1000": 40459280
+    },
+    "after_Sys": {
+     "0": 7298064,
+     "1": 7298064,
+     "10": 7298064,
+     "100": 12016656,
+     "1000": 65297424
+    },
+    "per_instance_kb": {
+     "1": 1344.0,
+     "10": 326.4,
+     "100": 205.44,
+     "1000": 200.064
+    },
+    "slope_1_1000_kb": 198.9189189189189,
+    "slope_1_1000_after_kb": 187.56756756756758,
+    "slope_lsq_kb": 198.99431342551165,
+    "stack_per_goroutine_b": {
+     "1": 32768.0,
+     "10": 32768.0,
+     "100": 32768.0,
+     "1000": 32768.0
+    },
+    "stack_per_goroutine_after_gc_b": {
+     "1": 32768.0,
+     "10": 13107.2,
+     "100": 11141.12,
+     "1000": 8978.432
+    }
+   },
+   "ng": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 22464,
+     "1000": 211776
+    },
+    "after_kind": "after_trim",
+    "after_rss_kb": {
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 22464,
+     "1000": 211776
+    },
+    "per_instance_kb": {
+     "1": 960.0,
+     "10": 268.8,
+     "100": 207.36,
+     "1000": 210.048
+    },
+    "slope_1_1000_kb": 209.2972972972973,
+    "slope_1_1000_after_kb": 209.2972972972973,
+    "slope_lsq_kb": 209.59601266249075
+   },
+   "ng-arena1": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 21888,
+     "1000": 210816
+    },
+    "after_kind": "after_trim",
+    "after_rss_kb": {
+     "0": 1728,
+     "1": 2688,
+     "10": 4416,
+     "100": 21888,
+     "1000": 210816
+    },
+    "per_instance_kb": {
+     "1": 960.0,
+     "10": 268.8,
+     "100": 201.6,
+     "1000": 209.088
+    },
+    "slope_1_1000_kb": 208.33633633633633,
+    "slope_1_1000_after_kb": 208.33633633633633,
+    "slope_lsq_kb": 208.75359139412484
+   },
+   "bellard": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 1728,
+     "1": 2496,
+     "10": 4224,
+     "100": 21504,
+     "1000": 191424
+    },
+    "after_kind": "after_trim",
+    "after_rss_kb": {
+     "0": 1728,
+     "1": 2496,
+     "10": 4224,
+     "100": 21504,
+     "1000": 191424
+    },
+    "per_instance_kb": {
+     "1": 768.0,
+     "10": 249.6,
+     "100": 197.76,
+     "1000": 189.696
+    },
+    "slope_1_1000_kb": 189.11711711711712,
+    "slope_1_1000_after_kb": 189.11711711711712,
+    "slope_lsq_kb": 189.03489882515947
+   },
+   "goja": {
+    "n": [
+     0,
+     1,
+     10,
+     100,
+     1000
+    ],
+    "rounds": {
+     "0": 3,
+     "1": 3,
+     "10": 3,
+     "100": 3,
+     "1000": 3
+    },
+    "live_rss_kb": {
+     "0": 5952,
+     "1": 7872,
+     "10": 9984,
+     "100": 18432,
+     "1000": 112320
+    },
+    "after_kind": "after_gc",
+    "after_rss_kb": {
+     "0": 6336,
+     "1": 8256,
+     "10": 9664,
+     "100": 16444,
+     "1000": 92652
+    },
+    "live_HeapSys": {
+     "0": 3899392,
+     "1": 3866624,
+     "10": 7929856,
+     "100": 14581760,
+     "1000": 109936640
+    },
+    "after_HeapSys": {
+     "0": 3670016,
+     "1": 3571712,
+     "10": 7438336,
+     "100": 14843904,
+     "1000": 111706112
+    },
+    "live_HeapInuse": {
+     "0": 1130496,
+     "1": 1343488,
+     "10": 3260416,
+     "100": 10829824,
+     "1000": 82493440
+    },
+    "after_HeapInuse": {
+     "0": 1007616,
+     "1": 1138688,
+     "10": 2088960,
+     "100": 9224192,
+     "1000": 80871424
+    },
+    "live_StackSys": {
+     "0": 294912,
+     "1": 327680,
+     "10": 458752,
+     "100": 2195456,
+     "1000": 7503872
+    },
+    "after_StackSys": {
+     "0": 524288,
+     "1": 622592,
+     "10": 950272,
+     "100": 1966080,
+     "1000": 5865472
+    },
+    "live_StackInuse": {
+     "0": 294912,
+     "1": 327680,
+     "10": 458752,
+     "100": 2195456,
+     "1000": 7503872
+    },
+    "after_StackInuse": {
+     "0": 524288,
+     "1": 622592,
+     "10": 950272,
+     "100": 1966080,
+     "1000": 5865472
+    },
+    "live_Sys": {
+     "0": 6642704,
+     "1": 6904848,
+     "10": 11099152,
+     "100": 24075280,
+     "1000": 127248416
+    },
+    "after_Sys": {
+     "0": 7822352,
+     "1": 8084496,
+     "10": 13327376,
+     "100": 24075280,
+     "1000": 127510560
+    },
+    "per_instance_kb": {
+     "1": 1920.0,
+     "10": 403.2,
+     "100": 124.8,
+     "1000": 106.368
+    },
+    "slope_1_1000_kb": 104.55255255255256,
+    "slope_1_1000_after_kb": 84.48048048048048,
+    "slope_lsq_kb": 104.05257435364528,
+    "stack_per_goroutine_b": {
+     "1": 32768.0,
+     "10": 16384.0,
+     "100": 19005.44,
+     "1000": 7208.96
+    },
+    "stack_per_goroutine_after_gc_b": {
+     "1": 98304.0,
+     "10": 42598.4,
+     "100": 14417.92,
+     "1000": 5341.184
+    }
+   }
+  }
+ },
+ "bellard_clang_ref": {
+  "engines": [
+   "bellard-clang",
+   "bellard",
+   "goc-bellard"
+  ],
+  "env": [
+   "date: 2026-10-08 23:59:05 CST",
+   "host: Linux 6.8.0-49-generic x86_64, 24 vCPU, pinned to CPU 3",
+   "goc commit: fb30848d072099cf37e4e0d90b0c5a25b14950ef",
+   "bellard-clang: /tmp/goc-perf/perf-study/bellard/clang-O2/qjs --stack-size 16M  sha256=333f46fdf7769710",
+   "bellard: /tmp/goc-perf/perf-study/bellard/quickjs-2026-06-04/qjs --stack-size 16M  sha256=bf9721414ae3c5f4",
+   "goc-bellard: /home/wangyilei/my_sources/goc/build/qjs-bellard/qjscli --stack-size 16384 --script  sha256=62a98d80b439f078",
+   "rounds: v8=5 ss=3 micro=3 microcall=5"
+  ],
+  "v8_median": {
+   "bellard-clang": {
+    "Richards": 1198,
+    "DeltaBlue": 1194,
+    "Crypto": 1259,
+    "RayTrace": 3004,
+    "EarleyBoyer": 3636,
+    "RegExp": 581,
+    "Splay": 5623,
+    "NavierStokes": 2432,
+    "Score": 1883
+   },
+   "bellard": {
+    "Richards": 1354,
+    "DeltaBlue": 1264,
+    "Crypto": 1426,
+    "RayTrace": 2974,
+    "EarleyBoyer": 3636,
+    "RegExp": 662,
+    "Splay": 5452,
+    "NavierStokes": 2699,
+    "Score": 2008
+   },
+   "goc-bellard": {
+    "Richards": 1139,
+    "DeltaBlue": 1104,
+    "Crypto": 1293,
+    "RayTrace": 2659,
+    "EarleyBoyer": 3091,
+    "RegExp": 628,
+    "Splay": 4963,
+    "NavierStokes": 2612,
+    "Score": 1793
+   }
+  },
+  "v8_rounds": {
+   "bellard-clang": [
+    1886,
+    1884,
+    1865,
+    1852,
+    1883
+   ],
+   "bellard": [
+    2008,
+    1965,
+    2019,
+    2015,
+    2003
+   ],
+   "goc-bellard": [
+    1786,
+    1793,
+    1808,
+    1808,
+    1754
+   ]
+  },
+  "ss_geomean": {
+   "bellard-clang": 9.217976037459895,
+   "bellard": 8.397141422572373,
+   "goc-bellard": 9.40408517177762
+  },
+  "micro_geomean": {
+   "bellard-clang": 32.98931189204362,
+   "bellard": 31.168019929059373,
+   "goc-bellard": 35.73408974207909
+  }
+ }
+}

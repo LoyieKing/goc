@@ -1,0 +1,432 @@
+Ir A 6248638634  B 4495205198  delta +1753433436 (+39.0% of B)
+count=  24421283 A= 48 B= 22 delta=   635.0M cum= 14.1% of B  A classes {'framemem': 3, 'rest': 22, 'tls': 23}
+   A 5c9aad framemem   mov    -0x40(%rbp),%rax
+   A 5c9ab1 rest       movslq (%rax),%rax
+   A 5c9ab4 rest       lea    0x5(%r14),%r15
+   A 5c9ab8 rest       cmp    $0xf,%edi
+   A 5c9abb rest       lea    0x5(%r14,%rax,1),%rax
+   A 5c9ac0 rest       mov    %r15,%rbx
+   A 5c9ac3 rest       cmove  %rax,%rbx
+   A 5c9ac7 rest       cmp    $0xf,%rdi
+   A 5c9acb rest       cmovne %rax,%r15
+   A 5c9acf framemem   mov    -0x48(%rbp),%rax
+   A 5c9ad3 rest       sub    %r12,%rax
+   A 5c9ad6 rest       cmp    $0x10,%rax
+   A 5c9ada rest       jle    5cb05f <main.lre_exec.impl+0x1ebf>
+   A 5c9ae9 tls        mov    %fs:0xfffffffffffffff8,%rax
+   A 5c9af2 tls        mov    (%rax),%rcx
+   A 5c9af5 tls        mov    %fs:0xfffffffffffffff8,%rax
+   A 5c9afe tls        mov    0x8(%rax),%rax
+   A 5c9b02 tls        dec    %rcx
+   A 5c9b05 tls        cmp    %rbx,%rcx
+   A 5c9b08 tls        setae  %cl
+   A 5c9b0b tls        cmp    %rbx,%rax
+   A 5c9b0e tls        setbe  %dl
+   A 5c9b11 tls        or     %cl,%dl
+   A 5c9b13 tls        jne    5c9b1e <main.lre_exec.impl+0x97e>
+   A 5c9b1e rest       mov    %rbx,(%r12)
+   A 5c9b22 rest       test   %r9,%r9
+   A 5c9b25 rest       je     5cb0d5 <main.lre_exec.impl+0x1f35>
+   A 5c9b2b tls        mov    %fs:0xfffffffffffffff8,%rax
+   A 5c9b34 tls        mov    (%rax),%rcx
+   A 5c9b37 tls        mov    %fs:0xfffffffffffffff8,%rax
+   A 5c9b40 tls        mov    0x8(%rax),%rax
+   A 5c9b44 tls        dec    %rcx
+   A 5c9b47 tls        cmp    %r9,%rcx
+   A 5c9b4a tls        setae  %cl
+   A 5c9b4d tls        cmp    %r9,%rax
+   A 5c9b50 tls        setbe  %dl
+   A 5c9b53 tls        or     %cl,%dl
+   A 5c9b55 tls        mov    %r9,%rcx
+   A 5c9b58 tls        jne    5cb0d7 <main.lre_exec.impl+0x1f37>
+   A 5cb0d7 rest       mov    %rcx,0x8(%r12)
+   A 5cb0dc framemem   sub    -0x208(%rbp),%r13
+   A 5cb0e3 rest       shr    $0x3,%r13
+   A 5cb0e7 rest       mov    %r13,0x10(%r12)
+   A 5cb0ec rest       add    $0x18,%r12
+   A 5cb0f0 rest       mov    %r12,%r13
+   A 5cb0f3 rest       mov    %r12,%rbx
+   A 5cb0f6 rest       mov    %r9,%r8
+   A 5cb0f9 rest       jmp    5c934b <main.lre_exec.impl+0x1ab>
+   B defe5 rest       movslq 0x1(%r11),%rax
+   B defe9 rest       lea    0x5(%r11),%rsi
+   B defed rest       cmp    $0xf,%r13d
+   B deff1 rest       lea    0x5(%r11,%rax,1),%rax
+   B deff6 rest       mov    %rsi,%r12
+   B deff9 rest       cmove  %rax,%r12
+   B deffd rest       cmp    $0xf,%r13
+   B df001 rest       cmovne %rax,%rsi
+   B df005 framemem   mov    -0x48(%rbp),%rax
+   B df009 rest       sub    %r15,%rax
+   B df00c rest       cmp    $0x10,%rax
+   B df010 rest       jle    e01b5 <lre_exec+0x1885>
+   B df016 rest       mov    %r12,(%r15)
+   B df019 rest       mov    %r8,0x8(%r15)
+   B df01d framemem   sub    -0x198(%rbp),%r14
+   B df024 rest       shr    $0x3,%r14
+   B df028 rest       mov    %r14,0x10(%r15)
+   B df02c rest       add    $0x18,%r15
+   B df030 rest       mov    %r15,%r14
+   B df033 rest       mov    %r15,%r12
+   B df036 rest       mov    %r8,%r10
+   B df039 rest       jmp    dea80 <lre_exec+0x150>
+count=  26601480 A= 34 B= 17 delta=   452.2M cum= 24.2% of B  A classes {'framemem': 3, 'rest': 19, 'tls': 12}
+   A 5c9bf1 framemem   mov    -0x40(%rbp),%rax
+   A 5c9bf5 rest       movzbl (%rax),%ebx
+   A 5c9bf8 framemem   mov    -0x48(%rbp),%rax
+   A 5c9bfc rest       sub    %r12,%rax
+   A 5c9bff rest       cmp    $0x8,%rax
+   A 5c9c03 rest       jle    5cb0fe <main.lre_exec.impl+0x1f5e>
+   A 5c9c09 rest       lea    (%rdi,%rbx,2),%eax
+   A 5c9c0c rest       add    $0xffffffed,%eax
+   A 5c9c0f rest       mov    %eax,%eax
+   A 5c9c11 rest       mov    %rax,(%r12)
+   A 5c9c15 framemem   mov    -0x38(%rbp),%rcx
+   A 5c9c19 rest       mov    (%rcx,%rax,8),%rdx
+   A 5c9c1d rest       mov    %rdx,0x8(%r12)
+   A 5c9c22 rest       test   %r9,%r9
+   A 5c9c25 rest       je     5ca7fc <main.lre_exec.impl+0x165c>
+   A 5c9c2b tls        mov    %fs:0xfffffffffffffff8,%rdx
+   A 5c9c34 tls        mov    (%rdx),%rdx
+   A 5c9c37 tls        mov    %fs:0xfffffffffffffff8,%rsi
+   A 5c9c40 tls        mov    0x8(%rsi),%rsi
+   A 5c9c44 tls        dec    %rdx
+   A 5c9c47 tls        cmp    %r9,%rdx
+   A 5c9c4a tls        setae  %dl
+   A 5c9c4d tls        cmp    %r9,%rsi
+   A 5c9c50 tls        setbe  %dil
+   A 5c9c54 tls        or     %dl,%dil
+   A 5c9c57 tls        mov    %r9,%rdx
+   A 5c9c5a tls        jne    5ca7fe <main.lre_exec.impl+0x165e>
+   A 5ca7fe rest       add    $0x2,%r14
+   A 5ca802 rest       add    $0x10,%r12
+   A 5ca806 rest       mov    %rdx,(%rcx,%rax,8)
+   A 5ca80a rest       mov    %r12,%rbx
+   A 5ca80d rest       mov    %r9,%r8
+   A 5ca810 rest       mov    %r14,%r15
+   A 5ca813 rest       jmp    5c934b <main.lre_exec.impl+0x1ab>
+   B df0c2 rest       movzbl 0x1(%r11),%r12d
+   B df0c7 framemem   mov    -0x48(%rbp),%rax
+   B df0cb rest       sub    %r15,%rax
+   B df0ce rest       cmp    $0x8,%rax
+   B df0d2 rest       jle    e021c <lre_exec+0x18ec>
+   B df0d8 rest       add    $0x2,%r11
+   B df0dc rest       lea    -0x13(%r13,%r12,2),%eax
+   B df0e1 rest       mov    %eax,%eax
+   B df0e3 rest       mov    %rax,(%r15)
+   B df0e6 rest       mov    (%rbx,%rax,8),%rcx
+   B df0ea rest       mov    %rcx,0x8(%r15)
+   B df0ee rest       add    $0x10,%r15
+   B df0f2 rest       mov    %r8,(%rbx,%rax,8)
+   B df0f6 rest       mov    %r15,%r12
+   B df0f9 rest       mov    %r8,%r10
+   B df0fc rest       mov    %r11,%rsi
+   B df0ff rest       jmp    dea80 <lre_exec+0x150>
+count=  23063360 A= 26 B= 19 delta=   161.4M cum= 27.8% of B  A classes {'rest': 17, 'framemem': 6, 'tls': 3}
+   A 5cac6b rest       mov    -0x8(%rbx),%rcx
+   A 5cac6f rest       add    $0xffffffffffffffe8,%rbx
+   A 5cac73 framemem   mov    -0x208(%rbp),%rax
+   A 5cac7a rest       mov    %rcx,%rdx
+   A 5cac7d rest       and    %r14,%rdx
+   A 5cac80 rest       lea    (%rax,%rdx,8),%rdx
+   A 5cac84 framemem   mov    %rdx,-0x80(%rbp)
+   A 5cac88 rest       and    %r9,%rcx
+   A 5cac8b rest       lea    0x1(%r14),%rdx
+   A 5cac8f framemem   mov    -0x80(%rbp),%r13
+   A 5cac93 rest       cmp    %rdx,%rcx
+   A 5cac96 rest       jne    5cad90 <main.lre_exec.impl+0x1bf0>
+   A 5caca5 rest       cmp    %r13,%rbx
+   A 5caca8 rest       jbe    5cad5b <main.lre_exec.impl+0x1bbb>
+   A 5cad5b rest       mov    -0x18(%rbx),%r15
+   A 5cad5f rest       test   %r15,%r15
+   A 5cad62 rest       jns    5cad71 <main.lre_exec.impl+0x1bd1>
+   A 5cad71 tls        mov    -0x10(%rbx),%r8
+   A 5cad75 tls        test   %r8,%r8
+   A 5cad78 tls        jns    5cac6b <main.lre_exec.impl+0x1acb>
+   A 5cad90 framemem   mov    -0x214(%rbp),%eax
+   A 5cad96 rest       dec    %eax
+   A 5cad98 framemem   mov    %eax,-0x214(%rbp)
+   A 5cad9e framemem   mov    -0x80(%rbp),%r13
+   A 5cada2 rest       test   %eax,%eax
+   A 5cada4 rest       jg     5c934b <main.lre_exec.impl+0x1ab>
+   B dff00 rest       lea    -0x18(%rcx),%r12
+   B dff04 rest       mov    -0x8(%rcx),%rdx
+   B dff08 rest       mov    %rdx,%rsi
+   B dff0b rest       and    %rdi,%rsi
+   B dff0e rest       lea    (%rax,%rsi,8),%r14
+   B dff12 rest       and    %r9,%rdx
+   B dff15 rest       lea    0x1(%rdi),%rsi
+   B dff19 rest       cmp    %rsi,%rdx
+   B dff1c rest       jne    dff47 <lre_exec+0x1617>
+   B dff27 rest       mov    %r12,%rcx
+   B dff2a rest       cmp    %r14,%r12
+   B dff2d rest       jbe    dff00 <lre_exec+0x15d0>
+   B dff47 rest       mov    -0x18(%rcx),%rsi
+   B dff4b rest       mov    -0x10(%rcx),%r10
+   B dff4f framemem   mov    -0x1a4(%rbp),%eax
+   B dff55 rest       dec    %eax
+   B dff57 framemem   mov    %eax,-0x1a4(%rbp)
+   B dff5d rest       test   %eax,%eax
+   B dff5f rest       jg     dea80 <lre_exec+0x150>
+count=  25390690 A=  5 B=  0 delta=   127.0M cum= 30.6% of B  A classes {'rest': 2, 'tls': 3}
+   A 5caced rest       test   %rax,%rax
+   A 5cacf0 rest       jns    5cad02 <main.lre_exec.impl+0x1b62>
+   A 5cad02 tls        mov    -0x38(%rbp),%rdx
+   A 5cad06 tls        test   %rax,%rax
+   A 5cad09 tls        je     5cad4e <main.lre_exec.impl+0x1bae>
+count= 117507679 A= 13 B= 12 delta=   117.5M cum= 33.2% of B  A classes {'rest': 12, 'framemem': 1}
+   A 5c934b rest       lea    0x1(%r15),%rax
+   A 5c934f framemem   mov    %rax,-0x40(%rbp)
+   A 5c9353 rest       movzbl (%r15),%edi
+   A 5c9357 rest       lea    -0x1(%rdi),%eax
+   A 5c935a rest       cmp    $0x2b,%eax
+   A 5c935d rest       ja     5cb5a3 <main.lre_exec.impl+0x2403>
+   A 5c9363 rest       mov    %r15,%r14
+   A 5c9366 rest       mov    %r8,%r9
+   A 5c9369 rest       mov    %rbx,%r12
+   A 5c936c rest       lea    0x95189(%rip),%rcx        # 65e4fc <goc.data.libregexp_c..rodata+0x17c>
+   A 5c9373 rest       movslq (%rcx,%rax,4),%rax
+   A 5c9377 rest       add    %rcx,%rax
+   A 5c937a rest       jmp    *%rax
+   B dea80 rest       movzbl (%rsi),%r13d
+   B dea84 rest       lea    -0x1(%r13),%eax
+   B dea88 rest       cmp    $0x2b,%eax
+   B dea8b rest       ja     e0680 <lre_exec+0x1d50>
+   B dea91 rest       mov    %rsi,%r11
+   B dea94 rest       mov    %r10,%r8
+   B dea97 rest       mov    %r12,%r15
+   B dea9a rest       inc    %rsi
+   B dea9d rest       lea    0x23f48(%rip),%rcx        # 1029ec <pow5h_table+0x188>
+   B deaa4 rest       movslq (%rcx,%rax,4),%rax
+   B deaa8 rest       add    %rcx,%rax
+   B deaab rest       jmp    *%rax
+count=  25380200 A=  4 B=  0 delta=   101.5M cum= 35.5% of B  A classes {'rest': 4}
+   A 5cad4e rest       xor    %eax,%eax
+   A 5cad50 rest       mov    %rax,(%rdx,%rcx,8)
+   A 5cad54 rest       cmp    %r13,%rbx
+   A 5cad57 rest       ja     5cacdc <main.lre_exec.impl+0x1b3c>
+count=  18365943 A= 14 B= 11 delta=    55.1M cum= 36.7% of B  A classes {'framemem': 6, 'rest': 8}
+   A 5c9fd5 framemem   mov    -0x40(%rbp),%rax
+   A 5c9fd9 rest       mov    (%rax),%eax
+   A 5c9fdb rest       add    $0x4,%eax
+   A 5c9fde rest       cltq
+   A 5c9fe0 framemem   add    -0x40(%rbp),%rax
+   A 5c9fe4 framemem   mov    %rax,-0x98(%rbp)
+   A 5c9feb framemem   mov    -0x214(%rbp),%eax
+   A 5c9ff1 rest       dec    %eax
+   A 5c9ff3 framemem   mov    %eax,-0x214(%rbp)
+   A 5c9ff9 framemem   mov    -0x98(%rbp),%r15
+   A 5ca000 rest       mov    %r12,%rbx
+   A 5ca003 rest       mov    %r9,%r8
+   A 5ca006 rest       test   %eax,%eax
+   A 5ca008 rest       jg     5c934b <main.lre_exec.impl+0x1ab>
+   B df34f rest       mov    (%rsi),%eax
+   B df351 rest       add    $0x4,%eax
+   B df354 rest       cltq
+   B df356 rest       add    %rax,%rsi
+   B df359 framemem   mov    -0x1a4(%rbp),%eax
+   B df35f rest       dec    %eax
+   B df361 framemem   mov    %eax,-0x1a4(%rbp)
+   B df367 rest       mov    %r15,%r12
+   B df36a rest       mov    %r8,%r10
+   B df36d rest       test   %eax,%eax
+   B df36f rest       jg     dea80 <lre_exec+0x150>
+count=  24332323 A=  2 B=  0 delta=    48.7M cum= 37.8% of B  A classes {'rest': 2}
+   A 5c9ae0 rest       test   %rbx,%rbx
+   A 5c9ae3 rest       je     5cb0c6 <main.lre_exec.impl+0x1f26>
+count=  19099140 A=  6 B=  4 delta=    38.2M cum= 38.6% of B  A classes {'framemem': 3, 'rest': 3}
+   A 5c9a0c framemem   mov    %r14,-0x70(%rbp)
+   A 5c9a10 framemem   mov    -0x40(%rbp),%rax
+   A 5c9a14 rest       movzwl (%rax),%esi
+   A 5c9a17 rest       mov    $0x3,%r14d
+   A 5c9a1d framemem   cmp    -0x50(%rbp),%r9
+   A 5c9a21 rest       jae    5cac4b <main.lre_exec.impl+0x1aab>
+   B def57 rest       movzwl (%rsi),%edi
+   B def5a rest       mov    $0x3,%esi
+   B def5f framemem   cmp    -0x50(%rbp),%r8
+   B def63 rest       jae    dfee0 <lre_exec+0x15b0>
+count=  24054590 A=  7 B=  6 delta=    24.1M cum= 39.2% of B  A classes {'framemem': 1, 'rest': 6}
+   A 5cac4b framemem   mov    -0x208(%rbp),%rax
+   A 5cac52 rest       mov    %r12,%rbx
+   A 5cac55 rest       movabs $0xe000000000000000,%r9
+   A 5cac5f rest       movabs $0x1fffffffffffffff,%r14
+   A 5cac69 rest       jmp    5cac9c <main.lre_exec.impl+0x1afc>
+   A 5cac9c rest       cmp    %rax,%r13
+   A 5cac9f rest       je     5cb4ab <main.lre_exec.impl+0x230b>
+   B dfee0 framemem   mov    -0x198(%rbp),%rax
+   B dfee7 rest       mov    %r15,%r12
+   B dfeea rest       movabs $0x1fffffffffffffff,%rdi
+   B dfef4 rest       jmp    dff1e <lre_exec+0x15ee>
+   B dff1e rest       cmp    %rax,%r14
+   B dff21 rest       je     e0548 <lre_exec+0x1c18>
+count=  17739680 A=  1 B=  0 delta=    17.7M cum= 39.6% of B  A classes {'rest': 1}
+   A 5cad59 rest       xchg   %ax,%ax
+count=   1219050 A= 90 B= 78 delta=    14.6M cum= 39.9% of B  A classes {'pushpop': 12, 'rest': 44, 'framemem': 32, 'call': 2}
+   A 5c91bb pushpop    push   %rbp
+   A 5c91bc rest       mov    %rsp,%rbp
+   A 5c91bf pushpop    push   %r15
+   A 5c91c1 pushpop    push   %r14
+   A 5c91c3 pushpop    push   %r13
+   A 5c91c5 pushpop    push   %r12
+   A 5c91c7 pushpop    push   %rbx
+   A 5c91c8 rest       sub    $0x648,%rsp
+   A 5c91cf rest       mov    %r9d,%r15d
+   A 5c91d2 rest       mov    %r8d,%ebx
+   A 5c91d5 rest       mov    %ecx,%r12d
+   A 5c91d8 framemem   mov    0x10(%rbp),%rax
+   A 5c91dc framemem   mov    %rdx,-0xf8(%rbp)
+   A 5c91e3 framemem   mov    %rsi,-0xb8(%rbp)
+   A 5c91ea framemem   mov    %rdi,-0x38(%rbp)
+   A 5c91ee framemem   movq   $0x0,-0x208(%rbp)
+   A 5c91f9 rest       movzwl (%rsi),%ecx
+   A 5c91fc rest       xor    %edi,%edi
+   A 5c91fe rest       test   $0x110,%ecx
+   A 5c9204 rest       setne  %dil
+   A 5c9208 framemem   mov    %edi,-0x218(%rbp)
+   A 5c920e rest       mov    %r15d,%ecx
+   A 5c9211 rest       shl    %cl,%r8d
+   A 5c9214 rest       movzbl 0x2(%rsi),%ecx
+   A 5c9218 rest       movslq %r8d,%rsi
+   A 5c921b rest       add    %rdx,%rsi
+   A 5c921e rest       test   $0x1,%dil
+   A 5c9222 rest       mov    $0x2,%edi
+   A 5c9227 rest       cmove  %r9d,%edi
+   A 5c922b rest       cmp    $0x1,%r9d
+   A 5c922f rest       cmovne %r9d,%edi
+   A 5c9233 framemem   mov    %ecx,-0x21c(%rbp)
+   A 5c9239 framemem   mov    %rdx,-0x230(%rbp)
+   A 5c9240 framemem   mov    %rsi,-0x50(%rbp)
+   A 5c9244 framemem   mov    %rsi,-0x228(%rbp)
+   A 5c924b framemem   mov    %edi,-0x220(%rbp)
+   A 5c9251 framemem   movl   $0x2710,-0x214(%rbp)
+   A 5c925b framemem   mov    %rax,-0x210(%rbp)
+   A 5c9262 framemem   lea    -0x1f8(%rbp),%r13
+   A 5c9269 framemem   mov    %r13,-0x208(%rbp)
+   A 5c9270 framemem   movq   $0x20,-0x200(%rbp)
+   A 5c927b rest       test   %ecx,%ecx
+   A 5c927d framemem   mov    %edi,-0x2c(%rbp)
+   A 5c9280 rest       je     5c92a6 <main.lre_exec.impl+0x106>
+   A 5c9282 rest       lea    -0x2(,%rcx,2),%eax
+   A 5c9289 rest       lea    0x10(,%rax,8),%rdx
+   A 5c9291 framemem   mov    -0x38(%rbp),%rdi
+   A 5c9295 rest       xor    %esi,%esi
+   A 5c9297 call       call   5e5420 <main.memset.impl>
+   A 5c929c framemem   lea    -0x1f8(%rbp),%r13
+   A 5c92a3 framemem   mov    -0x2c(%rbp),%edi
+   A 5c92a6 rest       mov    %r12d,%eax
+   A 5c92a9 rest       mov    %r15d,%ecx
+   A 5c92ac rest       shl    %cl,%eax
+   A 5c92ae rest       movslq %eax,%r14
+   A 5c92b1 framemem   add    -0xf8(%rbp),%r14
+   A 5c92b8 rest       test   %r12d,%r12d
+   A 5c92bb rest       jle    5c92f0 <main.lre_exec.impl+0x150>
+   A 5c92f0 rest       movabs $0xfffffffeffffffff,%rbx
+   A 5c92fa framemem   mov    -0xb8(%rbp),%r15
+   A 5c9301 rest       add    $0x8,%r15
+   A 5c9305 framemem   mov    -0xb8(%rbp),%rax
+   A 5c930c rest       movzbl 0x3(%rax),%edx
+   A 5c9310 rest       shl    $0x2,%edx
+   A 5c9313 framemem   lea    -0x668(%rbp),%rdi
+   A 5c931a rest       xor    %esi,%esi
+   A 5c931c call       call   5e5420 <main.memset.impl>
+   A 5c9321 framemem   lea    -0x1f8(%rbp),%r13
+   A 5c9328 rest       mov    %rbx,%r11
+   A 5c932b framemem   lea    -0xf8(%rbp),%rax
+   A 5c9332 framemem   mov    %rax,-0x48(%rbp)
+   A 5c9336 rest       mov    %r13,%rbx
+   A 5c9339 framemem   mov    -0x2c(%rbp),%r10d
+   A 5c933d rest       mov    %r14,%r8
+   A 5c9340 rest       data16 cs nopw 0x0(%rax,%rax,1)
+   A 5cb4ad framemem   mov    -0x208(%rbp),%rax
+   A 5cb4b4 framemem   mov    %rax,-0xb0(%rbp)
+   A 5cb4bb framemem   mov    -0xb0(%rbp),%rax
+   A 5cb4c2 framemem   lea    -0x1f8(%rbp),%rcx
+   A 5cb4c9 rest       cmp    %rcx,%rax
+   A 5cb4cc rest       je     5cb4e3 <main.lre_exec.impl+0x2343>
+   A 5cb4e3 rest       mov    %ebx,%eax
+   A 5cb4e5 rest       add    $0x648,%rsp
+   A 5cb4ec pushpop    pop    %rbx
+   A 5cb4ed pushpop    pop    %r12
+   A 5cb4ef pushpop    pop    %r13
+   A 5cb4f1 pushpop    pop    %r14
+   A 5cb4f3 pushpop    pop    %r15
+   A 5cb4f5 pushpop    pop    %rbp
+   A 5cb4f6 rest       ret
+   B de930 pushpop    push   %rbp
+   B de931 rest       mov    %rsp,%rbp
+   B de934 pushpop    push   %r15
+   B de936 pushpop    push   %r14
+   B de938 pushpop    push   %r13
+   B de93a pushpop    push   %r12
+   B de93c pushpop    push   %rbx
+   B de93d rest       sub    $0x1e0,%rsp
+   B de944 rest       mov    %r9d,%r14d
+   B de947 rest       mov    %r8d,%r15d
+   B de94a rest       mov    %ecx,%r13d
+   B de94d rest       mov    %rdx,%r10
+   B de950 rest       mov    %rdi,%rbx
+   B de953 framemem   mov    0x10(%rbp),%rax
+   B de957 rest       movzwl (%rsi),%ecx
+   B de95a rest       xor    %r9d,%r9d
+   B de95d rest       test   $0x110,%ecx
+   B de963 rest       setne  %r9b
+   B de967 framemem   mov    %r9d,-0x1a8(%rbp)
+   B de96e rest       mov    %r8d,%edi
+   B de971 rest       mov    %r14d,%ecx
+   B de974 rest       shl    %cl,%edi
+   B de976 framemem   mov    %rsi,-0x40(%rbp)
+   B de97a rest       movzbl 0x2(%rsi),%ecx
+   B de97e rest       movslq %edi,%rsi
+   B de981 rest       add    %rdx,%rsi
+   B de984 rest       test   $0x1,%r9b
+   B de988 rest       mov    $0x2,%edx
+   B de98d rest       cmove  %r14d,%edx
+   B de991 rest       cmp    $0x1,%r14d
+   B de995 rest       cmovne %r14d,%edx
+   B de999 framemem   mov    %ecx,-0x1ac(%rbp)
+   B de99f framemem   mov    %r10,-0x1c0(%rbp)
+   B de9a6 framemem   mov    %rsi,-0x50(%rbp)
+   B de9aa framemem   mov    %rsi,-0x1b8(%rbp)
+   B de9b1 framemem   mov    %edx,-0x1b0(%rbp)
+   B de9b7 framemem   movl   $0x2710,-0x1a4(%rbp)
+   B de9c1 framemem   mov    %rax,-0x1a0(%rbp)
+   B de9c8 framemem   lea    -0x188(%rbp),%r12
+   B de9cf framemem   mov    %r12,-0x198(%rbp)
+   B de9d6 framemem   movq   $0x20,-0x190(%rbp)
+   B de9e1 rest       test   %ecx,%ecx
+   B de9e3 framemem   mov    %edx,-0x2c(%rbp)
+   B de9e6 rest       je     dea11 <lre_exec+0xe1>
+   B de9e8 rest       lea    -0x2(,%rcx,2),%eax
+   B de9ef rest       lea    0x10(,%rax,8),%rdx
+   B de9f7 rest       mov    %r10,%r12
+   B de9fa rest       mov    %rbx,%rdi
+   B de9fd rest       xor    %esi,%esi
+   B dea04 rest       mov    %r12,%r10
+   B dea07 framemem   lea    -0x188(%rbp),%r12
+   B dea0e framemem   mov    -0x2c(%rbp),%edx
+   B dea11 rest       mov    %r13d,%eax
+   B dea14 rest       mov    %r14d,%ecx
+   B dea17 rest       shl    %cl,%eax
+   B dea19 rest       cltq
+   B dea1b rest       add    %rax,%r10
+   B dea1e rest       test   %r13d,%r13d
+   B dea21 framemem   mov    -0x40(%rbp),%rsi
+   B dea25 rest       jle    dea5a <lre_exec+0x12a>
+   B dea5a rest       movabs $0xe000000000000000,%r9
+   B dea64 rest       add    $0x8,%rsi
+   B dea68 framemem   lea    -0x88(%rbp),%rax
+   B dea6f framemem   mov    %rax,-0x48(%rbp)
+   B dea73 rest       mov    %r12,%r14
+   B dea76 rest       cs nopw 0x0(%rax,%rax,1)
+   B e0551 framemem   mov    -0x198(%rbp),%rsi
+   B e0558 rest       cmp    %rax,%rsi
+   B e055b rest       je     e056b <lre_exec+0x1c3b>
+   B e056b rest       mov    %ebx,%eax
+   B e056d rest       add    $0x1e0,%rsp
+   B e0574 pushpop    pop    %rbx
+   B e0575 pushpop    pop    %r12
+   B e0577 pushpop    pop    %r13
+   B e0579 pushpop    pop    %r14
+   B e057b pushpop    pop    %r15
+   B e057d pushpop    pop    %rbp
+   B e057e rest       ret

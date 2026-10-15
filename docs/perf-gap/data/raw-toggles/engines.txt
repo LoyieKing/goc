@@ -1,0 +1,28 @@
+bellard-gcc-O2-NDEBUG /workspace/perf-study/bellard/gcc-O2-NDEBUG/qjs --stack-size 16M
+bellard-clang-O2-NDEBUG /workspace/perf-study/bellard/clang-O2-NDEBUG/qjs --stack-size 16M
+bellard-clang-O2-taildup /workspace/perf-study/bellard/clang-O2-NDEBUG-taildup/qjs --stack-size 16M
+bellard-clang-O3 /workspace/perf-study/bellard/clang-O3-NDEBUG/qjs --stack-size 16M
+bellard-clang-O3-taildup /workspace/perf-study/bellard/clang-O3-NDEBUG-taildup/qjs --stack-size 16M
+bellard-clang-O3-gocflags /workspace/perf-study/bellard/clang-O3-gocfull/qjs --stack-size 16M
+bellard-clang-O3-gocflags-taildup /workspace/perf-study/bellard/clang-O3-gocfull-taildup/qjs --stack-size 16M
+bellard-gocpipe /workspace/perf-study/bellard/gocpipe/qjs --stack-size 16M
+bellard-gocpipe-sm /workspace/perf-study/bellard/gocpipe-sm/qjs --stack-size 16M
+bellard-gocpipe-inl250 /workspace/perf-study/bellard/gocpipe-inl250/qjs --stack-size 16M
+bellard-gocpipe-sm-inl250 /workspace/perf-study/bellard/gocpipe-sm-inl250/qjs --stack-size 16M
+goc-bellard /workspace/goc/build/qjs-bellard/qjscli --stack-size 16384
+goc-bellard-taildup /workspace/perf-study/goc-variants/bellard-taildup/qjscli --stack-size 16384
+goc-bellard-fast /workspace/perf-study/goc-variants/bellard-fast/qjscli --stack-size 16384
+goc-bellard-fast-taildup /workspace/perf-study/goc-variants/bellard-fast-taildup/qjscli --stack-size 16384
+goc-bellard-inl250 /workspace/perf-study/goc-variants/bellard-inl250/qjscli --stack-size 16384
+goc-bellard-best /workspace/perf-study/goc-variants/bellard-best/qjscli --stack-size 16384
+ng-clang-O2 /workspace/perf-study/native/b-O2/qjs -C --stack-size 16384
+ng-clang-O3 /workspace/perf-study/native/b-O3/qjs -C --stack-size 16384
+ng-clang-O3-taildup /workspace/perf-study/native/b-O3-taildup/qjs -C --stack-size 16384
+ng-clang-O3-gocflags /workspace/perf-study/native/b-gocfull/qjs -C --stack-size 16384
+ng-clang-O3-gocflags-taildup /workspace/perf-study/native/b-gocfull-taildup/qjs -C --stack-size 16384
+goc-ng /workspace/goc/build/qjs/qjscli --stack-size 16384
+goc-ng-taildup /workspace/perf-study/goc-variants/ng-taildup/qjscli --stack-size 16384
+goc-ng-fast /workspace/perf-study/goc-variants/ng-fast/qjscli --stack-size 16384
+goc-ng-fast-taildup /workspace/perf-study/goc-variants/ng-fast-taildup/qjscli --stack-size 16384
+goc-ng-inl250 /workspace/perf-study/goc-variants/ng-inl250/qjscli --stack-size 16384
+goc-ng-best /workspace/perf-study/goc-variants/ng-best/qjscli --stack-size 16384

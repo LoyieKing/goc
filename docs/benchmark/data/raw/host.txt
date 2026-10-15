@@ -1,0 +1,7 @@
+uname: Linux 6.8.0-49-generic x86_64
+cpu: AMD Ryzen 9 7900X 12-Core Processor
+nproc: 24
+gcc: 11.4.0 x86_64-linux-gnu
+clang: clang version 19.1.7 (/home/runner/work/llvm-project/llvm-project/clang cd708029e0b2869e80abe31ddb175f7c35361f90)
+go: go version go1.24.4 linux/amd64
+goc: fb30848d072099cf37e4e0d90b0c5a25b14950ef
