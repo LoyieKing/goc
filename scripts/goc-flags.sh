@@ -24,7 +24,7 @@ goc_isolate_product_env() {
   unset GOC_OPT_LEVEL GOC_DEFAULT_PTR_COLOR GOC_INLINE_DYNALLOC GOC_FIXED_G GOC_OPT_EXTRA \
     GOC_LLC_EXTRA GOC_COLOR_REPORT GOC_CSR_ADJUST GOC_FRAMEADDR_MODE \
     GOC_ARCH GOC_LLC_OPT GOC_IR_RENAMES GOC_LIBCALL_IMPL GOC_KEEP_TMP \
-    LLC OPT GOC_COLOR_ESCAPE GOC_STACKMAP GOC_PKG
+    LLC OPT GOC_STACKMAP GOC_PKG
 }
 
 goc_need_arg() {
@@ -158,19 +158,6 @@ goc_consume_flag() {
       export OPT="${1#--opt-bin=}"
       [[ -n "$OPT" ]] || goc_die "--opt-bin needs a path"
       goc_flag_mark opt-bin
-      GOC_FLAG_SHIFT=1
-      ;;
-    --color-escape)
-      local p
-      p="$(goc_need_arg --color-escape "${2:-}")"
-      export GOC_COLOR_ESCAPE="$p"
-      goc_flag_mark color-escape
-      GOC_FLAG_SHIFT=2
-      ;;
-    --color-escape=*)
-      export GOC_COLOR_ESCAPE="${1#--color-escape=}"
-      [[ -n "$GOC_COLOR_ESCAPE" ]] || goc_die "--color-escape needs a path"
-      goc_flag_mark color-escape
       GOC_FLAG_SHIFT=1
       ;;
     --stackmap)
@@ -316,7 +303,6 @@ goc_append_resolved_flags() {
   fi
   [[ -n "${LLC:-}" ]] && _dest+=(--llc "$LLC")
   [[ -n "${OPT:-}" ]] && _dest+=(--opt-bin "$OPT")
-  [[ -n "${GOC_COLOR_ESCAPE:-}" ]] && _dest+=(--color-escape "$GOC_COLOR_ESCAPE")
   [[ -n "${GOC_STACKMAP:-}" ]] && _dest+=(--stackmap "$GOC_STACKMAP")
   [[ "${GOC_COLOR_REPORT:-}" == 1 ]] && _dest+=(--color-report)
   [[ -n "${GOC_ARCH:-}" ]] && _dest+=(--arch "$GOC_ARCH")
@@ -357,8 +343,7 @@ There is no --clang and no --toolchain.
   --arch amd64|arm64     `goc go` accepts amd64 only
   --llc PATH             llc binary
   --opt-bin PATH         LLVM opt binary
-  --color-escape PATH    goc-color-escape pass
-  --stackmap PATH        libGocPasses.so
+  --stackmap PATH        libGocPasses.so (all goc IR passes)
   --fixed-g              Reserve r14 for g (off unless this flag is passed)
   --no-fixed-g
   --csr-adjust           Adjust frame addresses kept in callee-saved registers

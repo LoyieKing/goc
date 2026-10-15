@@ -4,18 +4,18 @@
 //===----------------------------------------------------------------------===//
 //
 // The pass is split by phase; ColorEscapeInternal.h holds the shared state:
-//   CEAnalysis.cpp  seeding from annotations/producers, propagation
 //   CERewrite.cpp   implicit uptr encodes/decodes and guarded returns
 //   CECheck.cpp     escape/mix checks, metadata, formals, default color
-//   CEReport.cpp    the goc-color-report table
+//   lib/Analysis/GocColor: ColorAnalysis.cpp (seeding, propagation) and
+//   ColorPrinter.cpp (the print<goc-color> table)
 
-#include "ColorEscapeInternal.h"
+#include "Goc/Internal/ColorEscape.h"
 #include "Goc/ColorEscape.h"
 
 using namespace llvm;
 using namespace goc::ce;
 
-int goc::runColorEscape(Module &M) {
+int goc::runColorEscape(Module &M, raw_ostream *Report) {
   // Register goc metadata kinds up front: printed attachment order follows
   // kind IDs, and later passes would otherwise register them in DenseMap
   // (pointer-hash) order, making the output IR nondeterministic.
@@ -62,12 +62,15 @@ int goc::runColorEscape(Module &M) {
   }
   attachMetadata(M, S);
 
+  if (Report) {
+    emitColorReport(M, S, *Report);
+    return (int)S.ErrorCount;
+  }
   errs() << "goc-color-escape: summary: " << S.ErrorCount
          << " error(s), scoped dynamic allocas=" << DynamicAllocas
          << ", implicit uptr stores=" << EncodedStores
          << ", decoded pointer loads=" << DecodedLoads
          << ", guarded returns=" << GuardedReturns << " in module '"
          << M.getModuleIdentifier() << "'\n";
-  emitColorReport(M, S);
   return (int)S.ErrorCount;
 }

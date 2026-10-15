@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# GOC_COLOR_REPORT=1 lists resolved pointer colors without changing the IR.
+# print<goc-color> (GOC_COLOR_REPORT=1 in color-escape.sh) lists resolved
+# pointer colors without changing the IR.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-PASS="$ROOT/build/llvm/goc-color-escape"
+PASS="$ROOT/test/color-escape/color-escape.sh"
 SRC="$ROOT/test/color-escape/color_report.c"
 CLANG="${CLANG:-clang-19}"
 export LD_LIBRARY_PATH="$(llvm-config-19 --libdir)${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
-if [[ ! -x "$PASS" ]]; then
+if [[ ! -f "$ROOT/build/llvm/libGocPasses.so" ]]; then
   "$ROOT/scripts/build-passes.sh"
 fi
 

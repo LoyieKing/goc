@@ -65,7 +65,7 @@ resolve_clang() { goc_resolve_clang; }
 is_intree_clang() { return 0; }
 
 # In-tree and packed clangs need their own libLLVM. Prepend that lib dir so
-# goc-llc and goc-color-escape start without a hand-set LD_LIBRARY_PATH.
+# goc-llc and opt (with libGocPasses.so) start without a hand-set LD_LIBRARY_PATH.
 prepend_clang_lib() {
   local clang="$1" bin libdir
   bin="$(readlink -f "$clang" 2>/dev/null || true)"
@@ -196,11 +196,6 @@ cmd_build() {
     USE_PLUGIN=1
   fi
   local INC="$ROOT/include"
-  local COLOR_ESC="${GOC_COLOR_ESCAPE:-}"
-  if [[ -z "$COLOR_ESC" && -x "$ROOT/passes/goc-color-escape" ]]; then
-    COLOR_ESC="$ROOT/passes/goc-color-escape"
-  fi
-  COLOR_ESC="${COLOR_ESC:-$ROOT/build/llvm/goc-color-escape}"
   # amd64 gep remat is only safe with goc-llc's GocFrameAddrFix. Passing
   # stock llc-19 here used to skip realbody's missing-binary check, so tail
   # duplication kept frame addresses in callee-saved registers across calls.
@@ -220,13 +215,25 @@ cmd_build() {
     *) echo "goc build: GOC_OPT_LEVEL must be 0, 1, 2, or 3" >&2; exit 1 ;;
   esac
 
-  if [[ ! -x "$COLOR_ESC" ]]; then
-    if [[ -n "${GOC_COLOR_ESCAPE:-}" ]]; then
-      echo "goc build: missing color-escape pass $COLOR_ESC" >&2
+  local OPT="${OPT:-}"
+  if [[ -z "$OPT" || ! -x "$OPT" ]]; then
+    OPT="$(goc_beside opt 2>/dev/null || true)"
+    [[ -n "$OPT" ]] || OPT="$(command -v opt-19 || command -v opt || true)"
+  fi
+  [[ -n "$OPT" && -x "$OPT" ]] || { echo "goc build: opt missing" >&2; exit 1; }
+  # libGocPasses.so: every goc IR pass, color/escape included.
+  local SMPASS="${GOC_STACKMAP:-}"
+  if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
+    SMPASS="$ROOT/passes/libGocPasses.so"
+  fi
+  SMPASS="${SMPASS:-$ROOT/build/llvm/libGocPasses.so}"
+  if [[ ! -f "$SMPASS" ]]; then
+    if [[ -n "${GOC_STACKMAP:-}" ]]; then
+      echo "goc build: missing pass plugin $SMPASS" >&2
       exit 1
     fi
     "$ROOT/scripts/build-passes.sh"
-    [[ -x "$COLOR_ESC" ]] || { echo "goc build: missing color-escape pass" >&2; exit 1; }
+    [[ -f "$SMPASS" ]] || { echo "goc build: missing pass plugin $SMPASS" >&2; exit 1; }
   fi
 
   local TMP
@@ -297,23 +304,21 @@ cmd_build() {
     exit 1
   fi
 
-  local COLOR_ESC_ARGS=(-fatal-errors=true)
+  local COLOR_ESC_ARGS=()
   if [[ -n "${GOC_DEFAULT_PTR_COLOR:-}" ]]; then
     COLOR_ESC_ARGS+=("-default-ptr-color=$GOC_DEFAULT_PTR_COLOR")
   fi
-  if ! "$COLOR_ESC" "$TMP/a.ll" -o "$TMP/a.color.ll" "${COLOR_ESC_ARGS[@]}"; then
+  local COLOR_PASSES=goc-color-escape
+  [[ "${GOC_COLOR_REPORT:-}" == 1 ]] && COLOR_PASSES="print<goc-color>,goc-color-escape"
+  if ! "$OPT" -load-pass-plugin="$SMPASS" "-passes=$COLOR_PASSES" "${COLOR_ESC_ARGS[@]}" \
+      -S "$TMP/a.ll" -o "$TMP/a.color.ll"; then
     echo "goc build: pointer-color/escape analysis failed for $SRC" >&2
     cleanup_build_tmp
     exit 1
   fi
   local BODY_LL="$TMP/a.color.ll"
-  local OPT="${OPT:-}"
-  if [[ -z "$OPT" || ! -x "$OPT" ]]; then
-    OPT="$(goc_beside opt 2>/dev/null || true)"
-    [[ -n "$OPT" ]] || OPT="$(command -v opt-19 || command -v opt || true)"
-  fi
   if [[ "${GOC_COLOR_REPORT:-}" == 1 ]]; then
-    # The report already ran inside the pass. -g leaves !dbg on the define
+    # print<goc-color> already ran. -g leaves !dbg on the define
     # line, and realbody appends "no-realign-stack" after that attachment,
     # which llc rejects. Drop debug only. Keep names and !goc.color.
     local STRIP="$OPT"
@@ -326,13 +331,6 @@ cmd_build() {
   fi
   local STACKMAP_PREPARED=0
   if [[ "$OPT_LEVEL" != 0 ]]; then
-    [[ -n "$OPT" && -x "$OPT" ]] || { echo "goc build: opt missing" >&2; cleanup_build_tmp; exit 1; }
-    local SMPASS="${GOC_STACKMAP:-}"
-    if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
-      SMPASS="$ROOT/passes/libGocPasses.so"
-    fi
-    SMPASS="${SMPASS:-$ROOT/build/llvm/libGocPasses.so}"
-    [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
     # goc-inline-gate is a no-op: call-bearing functions may inline. Maps are
     # recorded after O3 on the merged frame. Stack-pointer arguments and slots
     # that keep &s->token are reanchored so copystack adjusts them.
@@ -372,12 +370,6 @@ cmd_build() {
     # verbatim.
     # Both arches record sptr maps and repair frame addresses (goc-llc).
     if [[ "$GOC_ARCH" == amd64 || "$GOC_ARCH" == arm64 ]]; then
-      local SMPASS="${GOC_STACKMAP:-}"
-      if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
-        SMPASS="$ROOT/passes/libGocPasses.so"
-      fi
-      SMPASS="${SMPASS:-$ROOT/build/llvm/libGocPasses.so}"
-      [[ -f "$SMPASS" ]] || { echo "goc build: missing $SMPASS" >&2; cleanup_build_tmp; exit 1; }
       if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap \
           -S "$BODY_LL" -o "$TMP/a.sm.ll"; then
         cleanup_build_tmp

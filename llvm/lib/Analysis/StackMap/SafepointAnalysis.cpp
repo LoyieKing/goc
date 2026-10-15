@@ -1,10 +1,16 @@
-//===- SMLiveness.cpp - stack maps: safepoints, liveness, remat -------===//
+//===- SafepointAnalysis.cpp - stack maps: safepoints and stack addresses ---===//
+//
+// Read-only queries the stack-map passes share: which calls are safepoints,
+// which values are stack addresses or frame addresses, the uses of a value
+// that lie across a safepoint, and pointer words passed on the stack.
+//===----------------------------------------------------------------------===//
 
-#include "StackMapInternal.h"
+#include "Goc/Internal/StackMap.h"
 
 using namespace llvm;
 
 namespace goc::sm {
+
 
 // The in-tree Sema pass attaches !goc.color !N to values, where !N is a node
 // holding the color name ("sptr" / "cptr" / "uptr").
@@ -31,40 +37,6 @@ bool isNonSafepointIntrinsic(const CallBase &CB) {
   default:
     return false;
   }
-}
-
-CallBase *stackmapBefore(Instruction *Safepoint) {
-  for (Instruction *Prev = Safepoint->getPrevNode(); Prev;
-       Prev = Prev->getPrevNode()) {
-    if (Prev->isDebugOrPseudoInst())
-      continue;
-    auto *CB = dyn_cast<CallBase>(Prev);
-    if (CB && CB->getIntrinsicID() == Intrinsic::experimental_stackmap)
-      return CB;
-    return nullptr;
-  }
-  return nullptr;
-}
-
-void ensureStackmapRoot(CallBase *Safepoint, Value *Root, uint64_t &NextId) {
-  if (CallBase *SM = stackmapBefore(Safepoint)) {
-    for (Value *Op : SM->args())
-      if (Op == Root)
-        return;
-    SmallVector<Value *, 16> Args(SM->arg_begin(), SM->arg_end());
-    Args.push_back(Root);
-    IRBuilder<> B(SM);
-    CallInst *New = B.CreateCall(SM->getCalledFunction(), Args);
-    New->copyMetadata(*SM);
-    SM->eraseFromParent();
-    return;
-  }
-  Function *Decl = Intrinsic::getDeclaration(
-      Safepoint->getModule(), Intrinsic::experimental_stackmap);
-  IRBuilder<> B(Safepoint);
-  B.CreateCall(Decl,
-               {ConstantInt::get(B.getInt64Ty(), GocStackMapTag | NextId++),
-                ConstantInt::get(B.getInt32Ty(), 0), Root});
 }
 
 // A stack aggregate is often referenced through a local T* initialized with
@@ -166,34 +138,6 @@ bool outgoingPointerWords(const CallBase &CB, const DataLayout &DL,
   return true;
 }
 
-// g is one value for the whole goroutine. O3 often leaves a separate
-// FS:-8 / x28 read at each inlined stack check. Fold them to a single read
-// in the entry block. stack.lo / stack.hi loads stay volatile.
-bool hoistTlsG(Function &F) {
-  SmallVector<CallInst *, 8> Reads;
-  for (Instruction &I : instructions(F)) {
-    auto *CI = dyn_cast<CallInst>(&I);
-    if (!CI || !CI->isInlineAsm())
-      continue;
-    const auto *IA = dyn_cast<InlineAsm>(CI->getCalledOperand());
-    if (!IA)
-      continue;
-    StringRef Asm = IA->getAsmString();
-    if (Asm == "movq %fs:-8, $0" || Asm == "mov $0, x28")
-      Reads.push_back(CI);
-  }
-  if (Reads.size() <= 1)
-    return false;
-  IRBuilder<> B(&*F.getEntryBlock().getFirstInsertionPt());
-  CallInst *Keep = cast<CallInst>(Reads[0]->clone());
-  B.Insert(Keep);
-  for (CallInst *CI : Reads) {
-    CI->replaceAllUsesWith(Keep);
-    CI->eraseFromParent();
-  }
-  return true;
-}
-
 bool isSafepoint(const Instruction &I) {
   auto *CB = dyn_cast<CallBase>(&I);
   if (!CB || CB->isDebugOrPseudoInst())
@@ -284,58 +228,6 @@ pureFrameAddress(Value *V, const DataLayout &DL) {
   return std::nullopt;
 }
 
-// Frame-address rematerialization: a plain GEP of the alloca / byval
-// argument at the use, which llc folds into addressing modes. Plain IR is not
-// enough on its own: DAG/Machine CSE, LICM and the register allocator may
-// still compute the LEA before the call and keep it in a callee-saved
-// register or spill slot. goc-llc's GocFrameAddrFix pass repairs exactly
-// those: after every call it re-derives each live callee-saved register /
-// spill slot that holds RBP/RSP+const. realbody refuses a stock llc.
-Value *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
-  Value *Addr = nullptr;
-  int64_t Off = 0;
-  if (auto Frame = pureFrameAddress(V, DL)) {
-    Addr = Frame->first;
-    Off = Frame->second;
-  } else {
-    // byval (and a constant GEP of it) is an address in this frame. llc
-    // lowers a plain use to one prologue LEA; the *m asm recomputes it
-    // from rbp at the use, after morestack.
-    Value *Cur = V;
-    while (Cur && !Addr) {
-      if (auto *A = dyn_cast<Argument>(Cur)) {
-        if (A->hasByValAttr())
-          Addr = A;
-        break;
-      }
-      if (auto *BC = dyn_cast<BitCastInst>(Cur)) {
-        Cur = BC->getOperand(0);
-        continue;
-      }
-      if (auto *ASC = dyn_cast<AddrSpaceCastInst>(Cur)) {
-        Cur = ASC->getOperand(0);
-        continue;
-      }
-      auto *GEP = dyn_cast<GetElementPtrInst>(Cur);
-      if (!GEP)
-        break;
-      APInt Acc(DL.getIndexSizeInBits(GEP->getPointerAddressSpace()), 0);
-      if (!GEP->accumulateConstantOffset(DL, Acc))
-        break;
-      Off += Acc.getSExtValue();
-      Cur = GEP->getPointerOperand();
-    }
-  }
-  if (!Addr)
-    return nullptr;
-  Value *R = Addr;
-  if (Off != 0)
-    R = B.CreateInBoundsGEP(B.getInt8Ty(), Addr, B.getInt64(Off), "goc.fa");
-  if (R->getType() != V->getType())
-    R = B.CreatePointerBitCastOrAddrSpaceCast(R, V->getType());
-  return R;
-}
-
 bool rematerializableFrameAddress(Value *V, const DataLayout &DL) {
   if (pureFrameAddress(V, DL))
     return true;
@@ -360,62 +252,6 @@ bool rematerializableFrameAddress(Value *V, const DataLayout &DL) {
     Cur = GEP->getPointerOperand();
   }
   return false;
-}
-
-unsigned rematCrossSafepointUses(Value *V, const DataLayout &DL, Function &F) {
-  if (!rematerializableFrameAddress(V, DL))
-    return 0;
-  auto *Def = dyn_cast<Instruction>(V);
-  SmallVector<Use *, 16> uses;
-  for (Use &U : V->uses())
-    uses.push_back(&U);
-  DenseMap<std::pair<PHINode *, BasicBlock *>, Value *> shared;
-  unsigned n = 0;
-  for (Use *U : uses) {
-    auto *User = dyn_cast<Instruction>(U->getUser());
-    if (!User || ignoreUse(User))
-      continue;
-    if (auto *CB = dyn_cast<CallBase>(User))
-      if (CB->isInlineAsm())
-        continue;
-    Instruction *At = usePoint(*U);
-    bool cross = false;
-    if (Def) {
-      cross = separatedBySafepoint(Def, At);
-    } else if (At->getParent() != &F.getEntryBlock()) {
-      cross = true;
-    } else {
-      for (const Instruction &I : F.getEntryBlock()) {
-        if (&I == At)
-          break;
-        if (isSafepoint(I)) {
-          cross = true;
-          break;
-        }
-      }
-    }
-    if (!cross)
-      continue;
-    Value *R = nullptr;
-    if (auto *Phi = dyn_cast<PHINode>(User)) {
-      BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
-      auto Key = std::make_pair(Phi, Inc);
-      R = shared.lookup(Key);
-      if (!R) {
-        IRBuilder<> B(Inc->getTerminator());
-        R = rematFrameAddress(B, V, DL);
-        shared[Key] = R;
-      }
-    } else {
-      IRBuilder<> B(At);
-      R = rematFrameAddress(B, V, DL);
-    }
-    if (!R)
-      report_fatal_error("goc-stackmap: frame address did not rematerialize");
-    U->set(R);
-    ++n;
-  }
-  return n;
 }
 
 // Stack addresses O3 may cache in SSA: static allocas, GEPs of them, and
@@ -501,4 +337,140 @@ const DenseSet<const Argument *> &stackPointerArguments(const Module &M,
   return Cached;
 }
 
+DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL) {
+  struct SlotInfo {
+    bool Seeded = false;
+    SmallVector<Value *, 4> Stored;
+    SmallVector<LoadInst *, 4> Loads;
+  };
+  DenseMap<AllocaInst *, DenseMap<int64_t, SlotInfo>> slots;
+  auto infoFor = [&](Value *Ptr) -> SlotInfo * {
+    int64_t Off = 0;
+    auto *AI = dyn_cast<AllocaInst>(GetPointerBaseWithConstantOffset(Ptr, Off, DL));
+    if (!AI || !AI->isStaticAlloca())
+      return nullptr;
+    return &slots[AI][Off];
+  };
+
+  for (Instruction &I : instructions(F)) {
+    if (auto *S = dyn_cast<StoreInst>(&I)) {
+      if (!S->getValueOperand()->getType()->isPointerTy())
+        continue;
+      if (SlotInfo *Info = infoFor(S->getPointerOperand()))
+        Info->Stored.push_back(S->getValueOperand());
+    } else if (auto *LI = dyn_cast<LoadInst>(&I)) {
+      if (!LI->getType()->isPointerTy())
+        continue;
+      if (SlotInfo *Info = infoFor(LI->getPointerOperand()))
+        Info->Loads.push_back(LI);
+    }
+  }
+
+  DenseSet<Value *> stack;
+  for (Instruction &I : instructions(F))
+    if (auto *AI = dyn_cast<AllocaInst>(&I))
+      if (AI->isStaticAlloca())
+        stack.insert(AI);
+  const DenseSet<const Argument *> &stackArgs =
+      stackPointerArguments(*F.getParent(), DL);
+  for (Argument &A : F.args())
+    if (stackArgs.count(&A))
+      stack.insert(&A);
+
+  auto close = [&]() {
+    bool Grew = true;
+    while (Grew) {
+      Grew = false;
+      for (Instruction &I : instructions(F)) {
+        if (stack.count(&I))
+          continue;
+        if (auto *GEP = dyn_cast<GetElementPtrInst>(&I)) {
+          if (stack.count(GEP->getPointerOperand())) {
+            stack.insert(GEP);
+            Grew = true;
+          }
+        } else if (auto *BC = dyn_cast<BitCastInst>(&I)) {
+          if (stack.count(BC->getOperand(0))) {
+            stack.insert(BC);
+            Grew = true;
+          }
+        } else if (auto *ASC = dyn_cast<AddrSpaceCastInst>(&I)) {
+          if (stack.count(ASC->getOperand(0))) {
+            stack.insert(ASC);
+            Grew = true;
+          }
+        } else if (auto *Fr = dyn_cast<FreezeInst>(&I)) {
+          if (Fr->getType()->isPointerTy() && stack.count(Fr->getOperand(0))) {
+            stack.insert(Fr);
+            Grew = true;
+          }
+        } else if (auto *Phi = dyn_cast<PHINode>(&I)) {
+          if (!Phi->getType()->isPointerTy())
+            continue;
+          bool Any = false, All = true;
+          for (Value *Inc : Phi->incoming_values()) {
+            if (isa<ConstantPointerNull>(Inc) || isa<UndefValue>(Inc))
+              continue;
+            if (!stack.count(Inc)) {
+              All = false;
+              break;
+            }
+            Any = true;
+          }
+          if (Any && All) {
+            stack.insert(Phi);
+            Grew = true;
+          }
+        } else if (auto *Sel = dyn_cast<SelectInst>(&I)) {
+          if (!Sel->getType()->isPointerTy())
+            continue;
+          Value *T = Sel->getTrueValue(), *Fa = Sel->getFalseValue();
+          auto known = [&](Value *V) {
+            return isa<ConstantPointerNull>(V) || isa<UndefValue>(V) || stack.count(V);
+          };
+          if (known(T) && known(Fa) && (stack.count(T) || stack.count(Fa))) {
+            stack.insert(Sel);
+            Grew = true;
+          }
+        } else if (auto *CB = dyn_cast<CallBase>(&I)) {
+          if (CB->getIntrinsicID() == Intrinsic::frameaddress &&
+              CB->getType()->isPointerTy()) {
+            stack.insert(CB);
+            Grew = true;
+          }
+        }
+      }
+    }
+  };
+
+  close();
+  bool Progress = true;
+  while (Progress) {
+    Progress = false;
+    for (auto &AIEntry : slots) {
+      for (auto &OffEntry : AIEntry.second) {
+        if (OffEntry.second.Seeded)
+          continue;
+        // Do not seed from the color tag alone: every sptr-colored slot,
+        // including the bytecode pc, carries goc.frame.words. Seeding those
+        // spills heap pointers that do not move. A real frame address stored
+        // into the slot (or copied from one that was) is the seed.
+        bool Seed = false;
+        for (Value *Stored : OffEntry.second.Stored)
+          if (!isa<ConstantPointerNull>(Stored) && !isa<UndefValue>(Stored) &&
+              stack.count(Stored))
+            Seed = true;
+        if (!Seed)
+          continue;
+        OffEntry.second.Seeded = true;
+        for (LoadInst *LI : OffEntry.second.Loads)
+          if (stack.insert(LI).second)
+            Progress = true;
+      }
+    }
+    if (Progress)
+      close();
+  }
+  return stack;
+}
 } // namespace goc::sm

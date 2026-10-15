@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# goc-color-escape golden tests (build the pass, then run every case in EXPECTATIONS)
+# goc-color-escape golden tests (build libGocPasses.so, then run every case in EXPECTATIONS)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$ROOT/../.." && pwd)"
 cd "$ROOT"
 
-echo "=== color-escape: build goc-color-escape ==="
+echo "=== color-escape: build libGocPasses.so ==="
 "$REPO/scripts/build-passes.sh"
 
-PASS_BIN="$REPO/build/llvm/goc-color-escape"
+PASS_BIN="$ROOT/color-escape.sh"
 CLANG="${CLANG:-clang-19}"
 INCDIR="$REPO/include"
 OUT="$REPO/build/test/color-escape"

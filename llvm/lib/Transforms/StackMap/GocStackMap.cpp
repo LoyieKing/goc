@@ -56,7 +56,7 @@
 //   SMPinI64.cpp      goc-pin-i64
 //   SMUptrInline.cpp  goc-inline-gate (inlined uptr helpers), goc-name-blocks
 
-#include "StackMapInternal.h"
+#include "Goc/Internal/StackMap.h"
 #include "Goc/StackMap.h"
 
 using namespace llvm;

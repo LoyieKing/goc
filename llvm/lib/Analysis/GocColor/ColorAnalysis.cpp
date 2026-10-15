@@ -1,6 +1,6 @@
 //===- CEAnalysis.cpp - colors: seeding and per-function propagation -===//
 
-#include "ColorEscapeInternal.h"
+#include "Goc/Internal/ColorEscape.h"
 
 using namespace llvm;
 

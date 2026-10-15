@@ -17,7 +17,6 @@ name="goc-${ver}-linux-amd64"
 clang="$(goc_resolve_clang)"
 goc_export_tools
 [[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). Run scripts/build-passes.sh"
-[[ -x "${GOC_COLOR_ESCAPE:-}" ]] || goc_die "goc-color-escape missing. Run scripts/build-passes.sh"
 [[ -f "$GOC_STACKMAP" ]] || goc_die "libGocPasses.so missing ($GOC_STACKMAP)"
 [[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. Run scripts/build-clang.sh"
 
@@ -77,9 +76,8 @@ copy_tool llc
 copy_tool llvm-mc
 copy_tool llvm-objdump
 cp -a "$LLC" "$stage/passes/goc-llc"
-cp -a "$GOC_COLOR_ESCAPE" "$stage/passes/goc-color-escape"
 cp -a "$GOC_STACKMAP" "$stage/passes/libGocPasses.so"
-chmod a+rx "$stage/passes/goc-llc" "$stage/passes/goc-color-escape"
+chmod a+rx "$stage/passes/goc-llc"
 
 ( cd "$ROOT" && go build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
 chmod a+rx "$stage/bin/gocobj2goobj"
@@ -128,7 +126,7 @@ for bin in "$stage/bin/clang-19" "$stage/bin/opt" "$stage/bin/llc" \
   rpath_origin "$bin"
 done
 if command -v patchelf >/dev/null 2>&1; then
-  for bin in "$stage/passes/goc-llc" "$stage/passes/goc-color-escape"; do
+  for bin in "$stage/passes/goc-llc"; do
     patchelf --set-rpath '$ORIGIN/../lib' "$bin"
   done
 fi

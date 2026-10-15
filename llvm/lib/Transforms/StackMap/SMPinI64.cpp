@@ -1,6 +1,6 @@
 //===- SMPinI64.cpp - the goc-pin-i64 pass ---------------------------===//
 
-#include "StackMapInternal.h"
+#include "Goc/Internal/StackMap.h"
 
 using namespace llvm;
 

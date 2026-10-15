@@ -1,15 +1,14 @@
-//===- CEReport.cpp - colors: the goc-color-report table --------------===//
+//===- ColorPrinter.cpp - print<goc-color>: the resolved-color table ------===//
+//
+// One row per source-level pointer (field, global, param, return, local):
+// its resolved color, whether it was explicit or inferred, and the spelling
+// in the source. Debug info (-g) supplies names and lines.
 
-#include "ColorEscapeInternal.h"
+#include "Goc/Internal/ColorEscape.h"
 
 using namespace llvm;
 
 namespace goc::ce {
-
-bool colorReportEnabled() {
-  const char *E = std::getenv("GOC_COLOR_REPORT");
-  return E && StringRef(E) == "1";
-}
 
 const char *spellingOf(Color C) {
   switch (C) {
@@ -265,10 +264,7 @@ void addRow(std::vector<ReportRow> &Rows, std::set<std::string> &Seen,
   Rows.push_back(std::move(R));
 }
 
-void emitColorReport(Module &M, ColorEscapeState &S) {
-  if (!colorReportEnabled())
-    return;
-
+void emitColorReport(Module &M, ColorEscapeState &S, raw_ostream &OS) {
   DenseMap<Value *, ReportAnn> ValueAnn;
   std::map<std::string, ReportAnn> FieldAnn;
   auto readAnn = [](Value *StrV, Value *FileV, Value *LineV) {
@@ -725,9 +721,9 @@ void emitColorReport(Module &M, ColorEscapeState &S) {
            std::tie(B.File, B.Line, B.Col, B.Kind, B.Name);
   });
 
-  errs() << "goc-color-report\tkind\tname\tloc\tcolor\tsource\tspelling\n";
+  OS << "goc-color-report\tkind\tname\tloc\tcolor\tsource\tspelling\n";
   for (const ReportRow &R : Rows) {
-    errs() << "goc-color-report\t" << R.Kind << '\t' << R.Name << '\t' << R.Loc
+    OS << "goc-color-report\t" << R.Kind << '\t' << R.Name << '\t' << R.Loc
            << '\t' << colorName(R.C) << '\t' << R.Source << '\t' << R.Spelling
            << '\n';
   }

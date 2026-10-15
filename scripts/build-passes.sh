@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build goc-color-escape, goc-llc and libGocPasses.so (CMake, llvm/CMakeLists.txt)
+# Build goc-llc and libGocPasses.so (CMake, llvm/CMakeLists.txt)
 # against the patched clang's LLVM.
 # Skips a pass that is already executable unless GOC_REBUILD_PASSES=1.
 set -euo pipefail
@@ -19,11 +19,10 @@ if [[ -z "$CXX" ]]; then
   else CXX="$(command -v g++ || true)"
   fi
 fi
-COLOR="$ROOT/build/llvm/goc-color-escape"
 LLC="$ROOT/build/llvm/goc-llc"
 SM="$ROOT/build/llvm/libGocPasses.so"
 
-if [[ "${GOC_REBUILD_PASSES:-}" != 1 && -x "$COLOR" && -x "$LLC" && -f "$SM" ]]; then
+if [[ "${GOC_REBUILD_PASSES:-}" != 1 && -x "$LLC" && -f "$SM" ]]; then
   echo "build-passes: already built"
   exit 0
 fi
@@ -52,7 +51,7 @@ cmake -S "$ROOT/llvm" -B "$ROOT/build/llvm" "${GEN[@]}" \
   -DGOC_X86_SRC="$X86_SRC" -DGOC_X86_BUILD="$X86_BUILD"
 cmake --build "$ROOT/build/llvm"
 
-[[ -x "$COLOR" && -x "$LLC" && -f "$SM" ]] || {
+[[ -x "$LLC" && -f "$SM" ]] || {
   echo "build-passes: outputs missing" >&2
   exit 1
 }

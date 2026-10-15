@@ -1,6 +1,6 @@
 //===- CECheck.cpp - colors: escape checks, metadata, formals, allocas -===//
 
-#include "ColorEscapeInternal.h"
+#include "Goc/Internal/ColorEscape.h"
 
 using namespace llvm;
 

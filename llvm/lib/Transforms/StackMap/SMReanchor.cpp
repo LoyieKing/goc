@@ -1,6 +1,6 @@
 //===- SMReanchor.cpp - the goc-reanchor pass ------------------------===//
 
-#include "StackMapInternal.h"
+#include "Goc/Internal/StackMap.h"
 
 using namespace llvm;
 

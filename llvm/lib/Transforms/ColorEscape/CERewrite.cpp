@@ -1,6 +1,6 @@
 //===- CERewrite.cpp - colors: implicit uptr encode/decode rewrites ---===//
 
-#include "ColorEscapeInternal.h"
+#include "Goc/Internal/ColorEscape.h"
 
 using namespace llvm;
 

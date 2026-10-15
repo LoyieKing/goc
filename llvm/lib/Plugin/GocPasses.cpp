@@ -1,7 +1,7 @@
 //===- libGocPasses.so: goc's IR passes as one new-PM plugin ---------------===//
 //
 // opt -load-pass-plugin=libGocPasses.so -passes=<name>
-//   module:   goc-color-escape
+//   module:   goc-color-escape, print<goc-color>
 //   function: goc-inline-gate, goc-stackmap, goc-reanchor, goc-pin-i64
 //
 //===----------------------------------------------------------------------===//
@@ -13,6 +13,8 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 
 using namespace llvm;
 
@@ -24,6 +26,19 @@ struct GocColorEscapePass : PassInfoMixin<GocColorEscapePass> {
                          /*gen_crash_diag=*/false);
     return PreservedAnalyses::none();
   }
+};
+
+// print<goc-color>: the color each source-level pointer resolves to, as the
+// transform would decide it. Runs the transform on a clone, so the module is
+// unchanged and color errors are listed, not fatal. Build with -g for names
+// and lines.
+struct GocColorPrinterPass : PassInfoMixin<GocColorPrinterPass> {
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
+    std::unique_ptr<Module> Clone = CloneModule(M);
+    goc::runColorEscape(*Clone, &errs());
+    return PreservedAnalyses::all();
+  }
+  static bool isRequired() { return true; }
 };
 } // namespace
 
@@ -37,6 +52,10 @@ llvmGetPassPluginInfo() {
                    ArrayRef<PassBuilder::PipelineElement>) {
                   if (Name == "goc-color-escape") {
                     MPM.addPass(GocColorEscapePass());
+                    return true;
+                  }
+                  if (Name == "print<goc-color>") {
+                    MPM.addPass(GocColorPrinterPass());
                     return true;
                   }
                   return false;

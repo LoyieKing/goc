@@ -1,6 +1,6 @@
 //===- SMUptrInline.cpp - inline uptr helpers, block naming ----------===//
 
-#include "StackMapInternal.h"
+#include "Goc/Internal/StackMap.h"
 
 using namespace llvm;
 

@@ -59,7 +59,7 @@ goc_beside() {
   goc_first_exec "$bin/$name" "$ROOT/bin/$name"
 }
 
-# Fill LD_LIBRARY_PATH, OPT, LLC, GOC_COLOR_ESCAPE, GOC_STACKMAP.
+# Fill LD_LIBRARY_PATH, OPT, LLC, GOC_STACKMAP.
 # Clang itself is found by goc_resolve_clang. Callers do not export a path.
 goc_export_tools() {
   local clang libdir toolroot=""
@@ -70,7 +70,6 @@ goc_export_tools() {
   toolroot="$(cd "$(dirname "$(readlink -f "$clang")")/.." && pwd)"
   if [[ -x "$toolroot/passes/goc-llc" ]]; then
     export LLC="${LLC:-$toolroot/passes/goc-llc}"
-    export GOC_COLOR_ESCAPE="${GOC_COLOR_ESCAPE:-$toolroot/passes/goc-color-escape}"
     export GOC_STACKMAP="${GOC_STACKMAP:-$toolroot/passes/libGocPasses.so}"
     export OPT="${OPT:-$toolroot/bin/opt}"
   fi
@@ -82,14 +81,6 @@ goc_export_tools() {
     export GOC_STACKMAP="$ROOT/passes/libGocPasses.so"
   fi
   export GOC_STACKMAP="${GOC_STACKMAP:-$ROOT/build/llvm/libGocPasses.so}"
-  # Leave GOC_COLOR_ESCAPE unset when the repo pass is not built yet.
-  # `goc build` compiles that pass on first use. A packed pass is exported above.
-  if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/passes/goc-color-escape" ]]; then
-    export GOC_COLOR_ESCAPE="$ROOT/passes/goc-color-escape"
-  fi
-  if [[ -z "${GOC_COLOR_ESCAPE:-}" && -x "$ROOT/build/llvm/goc-color-escape" ]]; then
-    export GOC_COLOR_ESCAPE="$ROOT/build/llvm/goc-color-escape"
-  fi
   if [[ -z "${OPT:-}" || ! -x "${OPT:-}" ]]; then
     OPT="$(goc_beside opt 2>/dev/null || true)"
     if [[ -z "$OPT" ]]; then
@@ -132,11 +123,7 @@ goc_require_tools() {
   [[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). See docs/build-from-source.md."
   [[ -f "$GOC_STACKMAP" ]] || goc_die "libGocPasses.so missing ($GOC_STACKMAP)."
   [[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. See docs/build-from-source.md."
-  if [[ -n "${GOC_COLOR_ESCAPE:-}" && ! -x "$GOC_COLOR_ESCAPE" ]]; then
-    goc_die "goc-color-escape missing ($GOC_COLOR_ESCAPE)."
-  fi
   local missing ldd_args=("$LLC")
-  [[ -n "${GOC_COLOR_ESCAPE:-}" && -x "$GOC_COLOR_ESCAPE" ]] && ldd_args+=("$GOC_COLOR_ESCAPE")
   missing="$(ldd "${ldd_args[@]}" 2>/dev/null | awk '/not found/{print $1}' | sort -u)"
   if [[ -n "$missing" ]]; then
     goc_die "LLVM libraries not loaded ($missing). The clang lib dir was prepended to LD_LIBRARY_PATH; libLLVM does not match these passes."

@@ -1,7 +1,6 @@
 # goc's LLVM-side code, built against an installed LLVM 19:
-#   libGocPasses.so   opt plugin: goc-color-escape, goc-inline-gate,
-#                     goc-stackmap, goc-reanchor, goc-pin-i64
-#   goc-color-escape  standalone driver for the color/escape transform
+#   libGocPasses.so   opt plugin: goc-color-escape, print<goc-color>,
+#                     goc-inline-gate, goc-stackmap, goc-reanchor, goc-pin-i64
 #   goc-llc           llc plus GocFrameAddrFix / GocStackmapPlacement, the Go
 #                     stack check (X86 and AArch64 hooks) and the .goc.* tables
 #
@@ -52,26 +51,24 @@ else()
     core irreader support passes codegen mc target x86 all-targets asmparser)
 endif()
 
-# Shared core, compiled once and linked into both the plugin and the tool.
-add_library(GocCore OBJECT
+# The IR passes, all linked into the plugin.
+#   lib/Analysis    read-only: pointer colors, safepoints, stack addresses
+#   lib/Transforms  the IR rewrites built on them
+set(GOC_COLOR_SRCS
+  lib/Analysis/GocColor/ColorAnalysis.cpp lib/Analysis/GocColor/ColorPrinter.cpp
   lib/Transforms/ColorEscape/GocColorEscape.cpp
-  lib/Transforms/ColorEscape/CEAnalysis.cpp lib/Transforms/ColorEscape/CERewrite.cpp
-  lib/Transforms/ColorEscape/CECheck.cpp lib/Transforms/ColorEscape/CEReport.cpp
-  lib/Transforms/StackMap/GocStackMap.cpp
-  lib/Transforms/StackMap/SMLiveness.cpp lib/Transforms/StackMap/SMAddresses.cpp
-  lib/Transforms/StackMap/SMStackMap.cpp lib/Transforms/StackMap/SMReanchor.cpp lib/Transforms/StackMap/SMPinI64.cpp lib/Transforms/StackMap/SMUptrInline.cpp)
+  lib/Transforms/ColorEscape/CERewrite.cpp lib/Transforms/ColorEscape/CECheck.cpp)
+add_library(GocCore OBJECT ${GOC_COLOR_SRCS}
+  lib/Analysis/StackMap/SafepointAnalysis.cpp
+  lib/Transforms/StackMap/GocStackMap.cpp lib/Transforms/StackMap/SMRoots.cpp
+  lib/Transforms/StackMap/SMStackMap.cpp lib/Transforms/StackMap/SMReanchor.cpp
+  lib/Transforms/StackMap/SMPinI64.cpp lib/Transforms/StackMap/SMUptrInline.cpp)
 
 # No LLVM libraries: the plugin resolves LLVM symbols from the loading opt.
 # Linking libLLVM in would run its static initializers a second time and
 # crash dlopen.
 add_library(GocPasses MODULE lib/Plugin/GocPasses.cpp $<TARGET_OBJECTS:GocCore>)
 set_target_properties(GocPasses PROPERTIES PREFIX "lib" OUTPUT_NAME GocPasses)
-
-add_executable(goc-color-escape tools/goc-color-escape/goc_color_escape.cpp
-  lib/Transforms/ColorEscape/GocColorEscape.cpp
-  lib/Transforms/ColorEscape/CEAnalysis.cpp lib/Transforms/ColorEscape/CERewrite.cpp
-  lib/Transforms/ColorEscape/CECheck.cpp lib/Transforms/ColorEscape/CEReport.cpp)
-target_link_libraries(goc-color-escape PRIVATE ${GOC_LLVM_LIBS})
 
 # goc-llc: llc plus goc's machine passes (Goc/MachinePasses.h).
 add_executable(goc-llc tools/goc-llc/goc_llc.cpp

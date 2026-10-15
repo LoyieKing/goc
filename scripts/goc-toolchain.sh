@@ -34,7 +34,6 @@ clang: $clang
 libdir: $libdir
 opt: $OPT
 llc: $LLC
-color-escape: ${GOC_COLOR_ESCAPE:-<built on first goc build>}
 stackmap: $GOC_STACKMAP
 goc go: ${flags[*]}
 arch: ${GOC_ARCH:-amd64}

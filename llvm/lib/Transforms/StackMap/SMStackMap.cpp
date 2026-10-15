@@ -1,6 +1,6 @@
 //===- SMStackMap.cpp - the goc-stackmap pass ------------------------===//
 
-#include "StackMapInternal.h"
+#include "Goc/Internal/StackMap.h"
 
 using namespace llvm;
 

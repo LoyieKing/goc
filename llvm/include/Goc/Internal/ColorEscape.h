@@ -183,7 +183,6 @@ bool provenStackActual(Value *Actual,
 void proveStackOnlyFormals(Module &M, ColorEscapeState &S);
 void applyDefaultPtrColor(Module &M, ColorEscapeState &S);
 unsigned lowerDynamicAllocas(Module &M);
-bool colorReportEnabled();
 const char *spellingOf(Color C);
 const PtrInfo *findInfo(ColorEscapeState &S, Value *V);
 std::string filePath(const DIFile *File);
@@ -204,7 +203,7 @@ void resolveField(Color Ann, bool Promoted, Color SeenStore, Color &Out,
                          const char *&Source, const char *&Spelling);
 void addRow(std::vector<ReportRow> &Rows, std::set<std::string> &Seen,
                    ReportRow R);
-void emitColorReport(Module &M, ColorEscapeState &S);
+void emitColorReport(Module &M, ColorEscapeState &S, raw_ostream &OS);
 
 } // namespace goc::ce
 

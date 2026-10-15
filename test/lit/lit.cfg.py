@@ -22,10 +22,12 @@ def tool(path):
         lit_config.fatal("missing %s (build it with scripts/build-passes.sh)" % path)
     return path
 
-config.substitutions.append(("%goc-color-escape", tool(os.path.join(build, "goc-color-escape"))))
 config.substitutions.append(("%goc-llc", tool(os.path.join(build, "goc-llc"))))
-config.substitutions.append(("%opt-goc", "%s -load-pass-plugin=%s" % (
-    tool(os.path.join(llvm_bin, "opt")), tool(os.path.join(build, "libGocPasses.so")))))
+opt_goc = "%s -load-pass-plugin=%s" % (
+    tool(os.path.join(llvm_bin, "opt")), tool(os.path.join(build, "libGocPasses.so")))
+# Longest first: lit substitutes in order.
+config.substitutions.append(("%goc-color-escape", opt_goc + " -passes=goc-color-escape -S"))
+config.substitutions.append(("%opt-goc", opt_goc))
 # FileCheck and not come from LLVM_BIN, ahead of anything else on PATH.
 for t in ("FileCheck", "not"):
     tool(os.path.join(llvm_bin, t))
