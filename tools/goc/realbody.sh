@@ -340,6 +340,8 @@ fi
 # goc-llc also writes the .goc.* tables (docs/gocobj-format.md) as assembler
 # text. They are assembled into the same ELF object, which makes it a
 # .gocobj; elfpack ignores those sections (they are not SHF_ALLOC).
+# Until gocobj2goobj reads the tables only, elfpack still adds the check.
+LLC_ARGS+=(-goc-no-stack-check)
 "$LLC" "${LLC_ARGS[@]}" "${GOC_TABLES_ARGS[@]}" -filetype=asm \
   -o "$TMP/body.s" "$LL"
 

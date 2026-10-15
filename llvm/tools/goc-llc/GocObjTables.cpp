@@ -30,6 +30,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "Goc/StackCheck.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/IR/Module.h"
@@ -47,20 +48,6 @@ using namespace llvm;
 
 namespace {
 
-struct CallSite {
-  std::string Pre;    // label at the call instruction
-  std::string Ret;    // label right after the call instruction
-  std::string Target; // empty for an indirect call
-  bool Safepoint;
-};
-
-// A rip-relative LEA of a function address (lea f(%rip), r64).
-struct FuncAddr {
-  std::string Ret;    // label after the LEA; its disp32 is the last 4 bytes
-  std::string Target;
-  int64_t Offset;
-};
-
 // One STACKMAP, in the location encoding of .llvm_stackmaps (version 3).
 struct SMLoc {
   uint8_t Type;
@@ -74,7 +61,24 @@ struct SMRec {
   std::vector<SMLoc> Locs;
 };
 
+struct CallSite {
+  std::string Pre;    // label at the call instruction
+  std::string Ret;    // label right after the call instruction
+  bool Morestack = false; // the cold block's call: its stub slots are the roots
+  std::string Target; // empty for an indirect call
+  bool Safepoint;
+  std::vector<SMLoc> Roots; // locations of the STACKMAPs whose site this call is
+};
+
+// A rip-relative LEA of a function address (lea f(%rip), r64).
+struct FuncAddr {
+  std::string Ret;    // label after the LEA; its disp32 is the last 4 bytes
+  std::string Target;
+  int64_t Offset;
+};
+
 struct FuncInfo {
+  goc::FuncStackInfo Stack;
   std::string Name, End;
   uint64_t FrameSize;
   uint64_t Flags = 0;
@@ -195,6 +199,7 @@ static bool sysvPointerRegs(const Function &F, uint64_t &Mask) {
 struct GocObjTables : MachineFunctionPass {
   static char ID;
   std::string Path;
+  std::string Profile;
   std::vector<FuncInfo> Funcs;
   // Computed on the IR as goc-llc received it: CodeGenPrepare and friends
   // later rewrite or drop instructions that carry the colors.
@@ -206,6 +211,10 @@ struct GocObjTables : MachineFunctionPass {
   // own) are invisible to machine passes. Put a label pair around each one
   // in the asm text itself; labels emit no bytes, so the code is unchanged.
   // Returns false when the string was left alone.
+  // STACKMAP locations not yet given to a call: a record belongs to the first
+  // call at or after it in code order (elfpack's "site").
+  std::vector<SMLoc> Pending;
+
   bool labelInlineAsmCalls(MachineFunction &MF, MachineInstr &MI, FuncInfo &FI) {
     MachineOperand &Op = MI.getOperand(0);
     if (!Op.isSymbol())
@@ -237,6 +246,8 @@ struct GocObjTables : MachineFunctionPass {
             CS.Ret = R;
             CS.Target = Rest.str();
             CS.Safepoint = false;
+            CS.Roots = std::move(Pending);
+            Pending.clear();
             FI.Calls.push_back(std::move(CS));
             Changed = true;
             if (I + 1 < Lines.size())
@@ -274,7 +285,8 @@ struct GocObjTables : MachineFunctionPass {
     return false;
   }
 
-  explicit GocObjTables(StringRef P) : MachineFunctionPass(ID), Path(P.str()) {}
+  GocObjTables(StringRef P, StringRef Prof)
+      : MachineFunctionPass(ID), Path(P.str()), Profile(Prof.str()) {}
   StringRef getPassName() const override { return "goc .gocobj tables"; }
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
@@ -353,6 +365,7 @@ struct GocObjTables : MachineFunctionPass {
     MCSymbol *S = MF.getContext().createTempSymbol("goc_sm");
     MI.setPreInstrSymbol(MF, S);
     R.Label = S->getName().str();
+    Pending.insert(Pending.end(), R.Locs.begin(), R.Locs.end());
     FI.Stackmaps.push_back(std::move(R));
     return true;
   }
@@ -370,6 +383,12 @@ struct GocObjTables : MachineFunctionPass {
     FI.FrameSize = MF.getFrameInfo().getStackSize();
     FI.Flags = IRFlags.lookup(MF.getFunction().getName());
     FI.SysvPtrRegs = IRSysv.lookup(MF.getFunction().getName());
+    if (auto It = goc::stackInfo().find(FI.Name); It != goc::stackInfo().end())
+      FI.Stack = It->second;
+    if (FI.Stack.HasCheck && FI.Stack.ABI == goc::EntryABI::C && (FI.Flags & (1u << 7)))
+      report_fatal_error("goc: " + Twine(FI.Name) +
+                         ": stack check needs the pointer-ness of its SysV argument "
+                         "registers, and this signature is not modelled");
     if (auto It = IRSptr.find(MF.getFunction().getName()); It != IRSptr.end()) {
       const MachineFrameInfo &MFI = MF.getFrameInfo();
       StringMap<int64_t> Obj;
@@ -391,6 +410,7 @@ struct GocObjTables : MachineFunctionPass {
       std::sort(FI.SptrSlots.begin(), FI.SptrSlots.end());
     }
     MachineInstr *Last = nullptr;
+    Pending.clear();
     for (MachineBasicBlock &MBB : MF) {
       bool SawStackmap = false;
       for (MachineInstr &MI : MBB) {
@@ -421,8 +441,11 @@ struct GocObjTables : MachineFunctionPass {
         if (!isRealCall(MI))
           continue;
         CallSite CS;
-        CS.Safepoint = SawStackmap;
+        CS.Morestack = &MI == FI.Stack.MorestackCall;
+        CS.Safepoint = SawStackmap || CS.Morestack;
         SawStackmap = false;
+        CS.Roots = std::move(Pending);
+        Pending.clear();
         unsigned Opc = MI.getOpcode();
         if ((Opc == X86::CALL64pcrel32 || Opc == X86::CALLpcrel32) && MI.getNumOperands()) {
           const MachineOperand &MO = MI.getOperand(0);
@@ -506,22 +529,90 @@ bool GocObjTables::doFinalization(Module &M) {
   W.section(".goc.gcmaps");
   OS << ".Lgoc_gcbase:\n";
   for (size_t I = 0; I < Funcs.size(); ++I) {
+    // 1.3: one safepoint per call, with the locals bitmap the frame has
+    // there: bit i is the word at SP+8*i, SP = BP-(frame-8). Set are the
+    // sptr slots, and the roots of the STACKMAPs whose site this call is
+    // (Direct BP-relative slots and Constant SP offsets of stack-passed
+    // pointers), as elfpack builds them.
     const FuncInfo &F = Funcs[I];
-    unsigned N = 0;
-    for (const CallSite &C : F.Calls)
-      N += C.Safepoint;
-    if (!N)
+    if (F.Calls.empty())
       continue;
+    int64_t Words = F.FrameSize > 8 ? (int64_t)(F.FrameSize - 8) / 8 : 0;
+    // At the morestack call the frame is the entry one plus the cold
+    // block's saves; the locals bitmap must reach the deepest stub slot.
+    for (const goc::StubSlot &S : F.Stack.StubSlots)
+      Words = std::max<int64_t>(Words, S.WordBelowVarp);
+    std::vector<uint8_t> Base((Words + 7) / 8);
+    auto Set = [&](std::vector<uint8_t> &B, int64_t Off) {
+      if (Off < 8 || Off % 8 != 0 || Off / 8 > Words)
+        return;
+      int64_t Bit = Words - Off / 8;
+      if (Bit >= 0 && Bit < Words)
+        B[Bit / 8] |= 1u << (Bit % 8);
+    };
+    for (uint64_t O : F.SptrSlots)
+      Set(Base, (int64_t)O);
     std::string L = W.begin();
     GC[I] = L;
     W.uleb("0");
-    W.uleb("0");
-    W.uleb(Twine(N));
-    for (const CallSite &C : F.Calls)
-      if (C.Safepoint) {
-        W.uleb(C.Ret + "-" + F.Name);
-        W.uleb("0");
+    W.uleb(Twine(Words));
+    W.uleb(Twine(F.Calls.size()));
+    for (const CallSite &C : F.Calls) {
+      std::vector<uint8_t> B = Base;
+      if (C.Morestack) {
+        // Only the spilled pointer arguments are live; the body's slots
+        // are not set up yet.
+        B.assign(B.size(), 0);
+        for (const goc::StubSlot &S : F.Stack.StubSlots)
+          if (F.SysvPtrRegs & (1ull << S.ArgReg))
+            Set(B, 8 * (int64_t)S.WordBelowVarp);
       }
+      for (const SMLoc &Lc : C.Roots) {
+        if (Lc.Type == 2 && Lc.Reg == 6 && Lc.Off < 0 && Lc.Size == 8)
+          Set(B, -(int64_t)Lc.Off);
+        else if (Lc.Type == 4 && Lc.Off >= 0 && Lc.Off % 8 == 0)
+          Set(B, (int64_t)F.FrameSize - 8 - Lc.Off);
+      }
+      W.uleb(C.Ret + "-" + F.Name);
+      for (uint8_t V : B)
+        W.u8(V);
+      W.uleb("0"); // ncolor
+    }
+    W.end(L);
+  }
+
+  std::vector<std::string> PCV(Funcs.size());
+  W.section(".goc.pcvalue");
+  OS << ".Lgoc_pcvbase:\n";
+  for (size_t I = 0; I < Funcs.size(); ++I) {
+    const FuncInfo &F = Funcs[I];
+    std::string L = W.begin();
+    PCV[I] = L;
+    auto Entry = [&](const std::string &PC, int64_t V) {
+      W.uleb(PC.empty() ? std::string("0") : PC + "-" + F.Name);
+      W.sleb(Twine(V));
+    };
+    int64_t Frame = (int64_t)F.FrameSize;
+    if (!F.Stack.HasCheck) {
+      W.uleb("1");
+      W.u8(1); // SP_DELTA: the body frame from the first instruction
+      W.uleb("1");
+      Entry("", Frame);
+    } else {
+      W.uleb("2");
+      W.u8(1); // SP_DELTA: entry, body, then the cold block's pushes
+      W.uleb(Twine(3 + F.Stack.SPChanges.size()));
+      Entry("", 0);
+      Entry(F.Stack.BodyStart, Frame);
+      Entry(F.Stack.StubStart, 0);
+      for (const auto &C : F.Stack.SPChanges)
+        Entry(C.first, C.second);
+      W.u8(4); // UNSAFE_POINT: the check and the cold block
+      W.uleb("3");
+      Entry("", -2);
+      Entry(F.Stack.BodyStart, -1);
+      Entry(F.Stack.StubStart, -2);
+    }
     W.end(L);
   }
 
@@ -540,13 +631,20 @@ bool GocObjTables::doFinalization(Module &M) {
     W.uleb(F.End + "-" + F.Name);
     W.uleb(Twine(F.FrameSize));
     W.uleb("0");          // arg_size: still in meta.json
-    W.u8(1);              // ABIInternal; meta.json lists the ABI0 exceptions
-    W.u8(0);              // kind normal
-    W.uleb(Twine(F.Flags)); // stack-check decision still in elfpack
+    W.u8(F.Stack.ABI == goc::EntryABI::C ? 0 : 1);
+    W.u8(0); // kind normal
+    uint64_t Flags = F.Flags & ~uint64_t(7);
+    if (F.Stack.HasCheck)
+      Flags |= 1;
+    if (F.Stack.NoSplit)
+      Flags |= 4;
+    if (F.Calls.empty())
+      Flags |= 2;
+    W.uleb(Twine(Flags | 8));
     W.u8(0);              // func_id
     W.uleb("0");          // file: the translation unit
     W.uleb("0");          // start_line
-    W.uleb("0");          // pcv: none yet
+    W.uleb(PCV[I] + "-.Lgoc_pcvbase+1");
     W.uleb(GC[I].empty() ? std::string("0") : GC[I] + "-.Lgoc_gcbase+1");
     W.uleb("0");          // inl
     W.uleb(Twine(F.SysvPtrRegs)); // 1.1: sysv_ptr_regs
@@ -628,12 +726,12 @@ bool GocObjTables::doFinalization(Module &M) {
     W.end(L);
   }
 
-  unsigned Prof = W.str("go1.24-amd64");
+  unsigned Prof = W.str(Profile);
   unsigned Prod = W.str("goc-llc (LLVM " LLVM_VERSION_STRING ")");
   W.section(".goc.header");
   OS << "\t.byte 0x47,0x4f,0x43,0x4f,0x42,0x4a,0,0\n"
      << "\t.short 1\n\t.short 3\n"
-     << "\t.byte 1\n\t.byte 0\n\t.short 0\n"
+     << "\t.byte 1\n\t.byte " << (goc::stackInfo().empty() ? 0 : 1) << "\n\t.short 0\n"
      << "\t.long .Lgoc_s" << Prof << "-.Lgoc_strtab\n"
      << "\t.long .Lgoc_s" << Prod << "-.Lgoc_strtab\n"
      << "\t.long 0\n";
@@ -650,6 +748,6 @@ bool GocObjTables::doFinalization(Module &M) {
 
 } // namespace
 
-MachineFunctionPass *goc::createGocObjTablesPass(StringRef Path) {
-  return new GocObjTables(Path);
+MachineFunctionPass *goc::createGocObjTablesPass(StringRef Path, StringRef Profile) {
+  return new GocObjTables(Path, Profile);
 }

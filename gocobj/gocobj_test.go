@@ -21,7 +21,7 @@ var wantErr = map[string]string{
 	"bad-no-gc-record":  "safepoint call without gc record at pc 17",
 	"bad-pc-order":      "SP_DELTA table not increasing",
 	"bad-locals-bits":   "locals bits do not fit frame",
-	"bad-no-stackcheck": "does not start with the go1.24-amd64 stack check",
+	"bad-no-stackcheck": "tables show no go1.24-amd64 entry check",
 }
 
 func TestGolden(t *testing.T) {

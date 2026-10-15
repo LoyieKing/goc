@@ -54,6 +54,7 @@ func valid() *gocobj.Builder {
 			PCValue: []gocobj.PCTable{
 				{Kind: gocobj.PCSPDelta, Entries: []gocobj.PCEntry{{0, 0}, {5, 8}, {12, 24}, {21, 8}, {22, 0}}},
 				{Kind: gocobj.PCLine, Entries: []gocobj.PCEntry{{0, 3}, {12, 4}, {17, 5}}},
+				{Kind: gocobj.PCUnsafePoint, Entries: []gocobj.PCEntry{{0, -2}, {4, -1}}},
 			},
 			GC: &gocobj.GCMap{NArgs: 2, NLocals: 2, Safepoints: []gocobj.Safepoint{
 				{PC: 17, Args: []byte{0x1}, Locals: []byte{0x2}}}},
@@ -72,11 +73,9 @@ var broken = map[string]func(b *gocobj.Builder){
 	"bad-reloc-target":  func(b *gocobj.Builder) { b.Relocs[0].Target = "runtime.nosuch" },
 	"bad-no-gc-record":  func(b *gocobj.Builder) { b.Funcs[0].GC.Safepoints[0].PC = 18 },
 	"bad-pc-order":      func(b *gocobj.Builder) { b.Funcs[0].PCValue[0].Entries[2].PC = 5 },
-	"bad-locals-bits":   func(b *gocobj.Builder) { b.Funcs[0].GC.NLocals = 3 },
-	"bad-no-stackcheck": func(*gocobj.Builder) { noCheck = true },
+	"bad-locals-bits":   func(b *gocobj.Builder) { b.Funcs[0].GC.NLocals = 4 },
+	"bad-no-stackcheck": func(b *gocobj.Builder) { b.Funcs[0].PCValue = b.Funcs[0].PCValue[:2] },
 }
-
-var noCheck bool
 
 func main() {
 	mc := flag.String("mc", "llvm-mc-19", "llvm-mc to assemble with")
@@ -87,23 +86,10 @@ func main() {
 	}
 	write(*mc, *out, "valid", valid(), textAsm)
 	for name, mut := range broken {
-		noCheck = false
 		b := valid()
 		mut(b)
-		text := textAsm
-		if noCheck { // replace the stack check with nops
-			text = replaceOnce(text, "0x49,0x3b,0x66,0x10", "0x0f,0x1f,0x40,0x00")
-		}
-		write(*mc, *out, name, b, text)
+		write(*mc, *out, name, b, textAsm)
 	}
-}
-
-func replaceOnce(s, old, new string) string {
-	i := bytes.Index([]byte(s), []byte(old))
-	if i < 0 {
-		log.Fatalf("replace: %q not found", old)
-	}
-	return s[:i] + new + s[i+len(old):]
 }
 
 func write(mc, dir, name string, b *gocobj.Builder, text string) {

@@ -117,6 +117,7 @@
 
 #include "GocObjTables.h"
 
+#include "Goc/StackCheck.h"
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -131,6 +132,16 @@ static cl::opt<std::string> OutputFilename("o", cl::desc("Output filename"), cl:
 static cl::opt<std::string> GocTables(
     "goc-tables", cl::desc("Write the .goc.* sections (assembler text) to this file"),
     cl::value_desc("filename"));
+static cl::opt<std::string> GocProfile(
+    "goc-profile", cl::desc("Go ABI profile (Goc/AbiProfiles.def) the code targets"),
+    cl::init("go1.24-amd64"));
+static cl::opt<std::string> GocCABI(
+    "goc-c-abi", cl::desc("Entry ABI of the C functions: c (Go ABI thunks wrap them) or go"),
+    cl::init("c"));
+static cl::opt<bool> GocFixedG("goc-fixed-g",
+                               cl::desc("g stays in the profile's G register (-reserve-goc-r14)"));
+static cl::opt<bool> GocNoStackCheck("goc-no-stack-check",
+                                     cl::desc("Do not emit the Go stack check (tests only)"));
 static cl::opt<char> OptLevel("O", cl::desc("Optimization level"), cl::Prefix, cl::init('2'));
 
 namespace {
@@ -1205,8 +1216,22 @@ int main(int argc, char **argv) {
   if (TargetPassConfig::willCompleteCodeGenPipeline()) {
     PM.add(new GocStackmapPlacement());
     PM.add(new GocFrameAddrFix());
+    if (!GocNoStackCheck && Triple(M->getTargetTriple()).getArch() == Triple::x86_64) {
+      const goc::AbiProfile *Prof = goc::lookupProfile(GocProfile);
+      if (!Prof || StringRef(Prof->Arch) != "amd64") {
+        errs() << "goc-llc: unknown or non-amd64 profile " << GocProfile << "\n";
+        return 1;
+      }
+      if (GocCABI != "c" && GocCABI != "go") {
+        errs() << "goc-llc: -goc-c-abi wants c or go\n";
+        return 1;
+      }
+      goc::StackCheckOptions SO{Prof, GocCABI == "c" ? goc::EntryABI::C : goc::EntryABI::GoInternal,
+                                GocFixedG};
+      PM.add(goc::createGocStackCheckPass(SO, goc::createX86StackCheckTarget()));
+    }
     if (!GocTables.empty())
-      PM.add(goc::createGocObjTablesPass(GocTables));
+      PM.add(goc::createGocObjTablesPass(GocTables, GocProfile));
     if (LLVMTM.addAsmPrinter(PM, *OS, nullptr, codegen::getFileType(),
                              MMIWP->getMMI().getContext())) {
       errs() << "goc-llc: target does not support this file type\n";

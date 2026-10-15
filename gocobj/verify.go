@@ -1,7 +1,6 @@
 package gocobj
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -82,7 +81,18 @@ func Verify(f *File) []error {
 			}
 		}
 		if g := fn.GC; g != nil {
-			if g.NLocals*ptr > fn.FrameSize {
+			// The morestack call's map covers the cold block's saves too.
+			maxSP := fn.FrameSize
+			for _, t := range fn.PCValue {
+				if t.Kind == PCSPDelta {
+					for _, e := range t.Entries {
+						if e.Value > 0 && uint64(e.Value) > maxSP {
+							maxSP = uint64(e.Value)
+						}
+					}
+				}
+			}
+			if g.NLocals*ptr > maxSP {
 				bad("%s: %d locals bits do not fit frame of %d bytes", w, g.NLocals, fn.FrameSize)
 			}
 			for j, sp := range g.Safepoints {
@@ -95,8 +105,8 @@ func Verify(f *File) []error {
 			}
 		}
 		if ok && f.Header.Flags&HeaderStackChecksInCode != 0 && fn.Flags&FuncNeedsStackCheck != 0 {
-			if code := f.Text[fn.Name]; !hasStackCheck(prof, code) {
-				bad("%s: needs_stack_check but code does not start with the %s stack check", w, prof.Name)
+			if !hasStackCheck(fn) {
+				bad("%s: needs_stack_check but the tables show no %s entry check", w, prof.Name)
 			}
 		}
 	}
@@ -172,29 +182,21 @@ func Verify(f *File) []error {
 	return errs
 }
 
-// hasStackCheck reports whether code starts with the profile's stack check.
-// amd64, g in R14, stackguard0 at 16:
-//
-//	cmp rsp, [r14+16]          49 3b 66 10
-//	lea r12, [rsp-n]; cmp r12, [r14+16]
-//	                           4c 8d 64 24 xx / 4c 8d a4 24 xx xx xx xx ; 4d 3b 66 10
-func hasStackCheck(p Profile, code []byte) bool {
-	if p.Arch != "amd64" || p.GReg != "R14" || p.StackGuard0Off != 16 {
-		return false // no matcher for this profile yet
-	}
-	cmp := []byte{0x3b, 0x66, 0x10}
-	if len(code) >= 4 && code[0] == 0x49 && bytes.Equal(code[1:4], cmp) {
-		return true
-	}
-	for _, lea := range []struct {
-		pfx []byte
-		n   int
-	}{{[]byte{0x4c, 0x8d, 0x64, 0x24}, 1}, {[]byte{0x4c, 0x8d, 0xa4, 0x24}, 4}} {
-		k := len(lea.pfx) + lea.n
-		if len(code) >= k+4 && bytes.Equal(code[:len(lea.pfx)], lea.pfx) &&
-			code[k] == 0x4d && bytes.Equal(code[k+1:k+4], cmp) {
-			return true
+// hasStackCheck reports whether the tables describe an entry stack check:
+// the code from pc 0 is an unsafe point (the check), and SP_DELTA starts at
+// the entry SP. The backend emits the check; the bytes are its business.
+func hasStackCheck(fn *Func) bool {
+	var sp, up bool
+	for _, t := range fn.PCValue {
+		if len(t.Entries) == 0 || t.Entries[0].PC != 0 {
+			continue
+		}
+		switch t.Kind {
+		case PCSPDelta:
+			sp = t.Entries[0].Value == 0
+		case PCUnsafePoint:
+			up = t.Entries[0].Value == -2
 		}
 	}
-	return false
+	return sp && up
 }

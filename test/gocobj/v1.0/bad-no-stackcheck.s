@@ -3,7 +3,7 @@
 	.globl main.add
 	.type main.add,@function
 main.add:
-	.byte 0x0f,0x1f,0x40,0x00        # cmp rsp,[r14+16]      0
+	.byte 0x49,0x3b,0x66,0x10        # cmp rsp,[r14+16]      0
 	.byte 0x55                       # push rbp              4
 	.byte 0x48,0x89,0xe5             # mov rbp,rsp           5
 	.byte 0x48,0x83,0xec,0x10        # sub rsp,16            8
