@@ -14,6 +14,7 @@ step "clang"             ./test/clang/run.sh
 step "color-escape"      ./test/color-escape/run.sh
 step "lit"               ./test/lit/run.sh
 step "realbody"          ./test/e2e/realbody/run.sh
+step "reproducible"      ./test/e2e/repro/run.sh
 step "goabi"             ./test/e2e/goabi/run.sh
 step "stress"            ./test/e2e/stress/run.sh
 step "lines"             ./test/e2e/lines/run.sh
