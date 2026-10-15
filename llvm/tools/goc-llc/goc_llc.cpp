@@ -115,6 +115,8 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/TargetParser/Host.h"
 
+#include "GocObjTables.h"
+
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -126,6 +128,9 @@ using namespace llvm;
 static codegen::RegisterCodeGenFlags CGF;
 static cl::opt<std::string> InputFilename(cl::Positional, cl::desc("<input>"), cl::init("-"));
 static cl::opt<std::string> OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
+static cl::opt<std::string> GocTables(
+    "goc-tables", cl::desc("Write the .goc.* sections (assembler text) to this file"),
+    cl::value_desc("filename"));
 static cl::opt<char> OptLevel("O", cl::desc("Optimization level"), cl::Prefix, cl::init('2'));
 
 namespace {
@@ -1200,6 +1205,8 @@ int main(int argc, char **argv) {
   if (TargetPassConfig::willCompleteCodeGenPipeline()) {
     PM.add(new GocStackmapPlacement());
     PM.add(new GocFrameAddrFix());
+    if (!GocTables.empty())
+      PM.add(goc::createGocObjTablesPass(GocTables));
     if (LLVMTM.addAsmPrinter(PM, *OS, nullptr, codegen::getFileType(),
                              MMIWP->getMMI().getContext())) {
       errs() << "goc-llc: target does not support this file type\n";

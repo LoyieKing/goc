@@ -118,6 +118,9 @@ func Verify(f *File) []error {
 			bad("%s: unknown kind %d", w, r.Kind)
 		}
 		sym(w, r.Target)
+		if t, ok := f.ELFRelocs[fmt.Sprintf("%s+%d", r.Func, r.Offset)]; ok && t != r.Target {
+			bad("%s: ELF relocation there targets %q, table says %q", w, t, r.Target)
+		}
 		if r.Flags&RelocSafepoint != 0 && fn != nil {
 			pc := r.Offset + uint64(r.Width)
 			found := false

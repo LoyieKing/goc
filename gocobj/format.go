@@ -193,6 +193,9 @@ type File struct {
 	Symbols map[string]*Symbol
 	// Text returns a function's machine code (nil if unknown).
 	Text map[string][]byte
+	// ELFRelocs maps "function+offset" to the target of the ELF relocation
+	// there (only R_X86_64_PLT32/PC32 in text), for cross-checking.
+	ELFRelocs map[string]string
 	// record-start offsets, for checking pcv/gc references
 	pcvStarts, gcStarts map[uint64]bool
 }

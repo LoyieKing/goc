@@ -1,7 +1,7 @@
 # gocobj format, version 1.0
 
 A `.gocobj` is what goc's LLVM backend will write for one C file. It is a
-normal relocatable ELF file (machine code in `.text.<sym>`, data in
+normal relocatable ELF file (machine code in `.text` or `.text.<sym>`, data in
 `.data.*`/`.rodata.*`/`.bss.*`, ELF symbols and relocations) plus a few
 `.goc.*` sections that carry what Go's linker needs and ELF cannot say:
 frame sizes, pointer maps, pc-value tables, and relocations in a Go-neutral
@@ -148,3 +148,25 @@ specified when the backend emits them (a minor version bump).
   the profile's stack check (amd64: `cmp rsp,[r14+16]` or
   `lea r12,[rsp-n]; cmp r12,[r14+16]`)
 - data: symbol exists, bitmap fits `size`
+
+## Producer today
+
+`goc-llc -goc-tables=FILE` writes the `.goc.*` sections as assembler text;
+`tools/goc/realbody.sh` appends it to the function assembly before `llvm-mc`,
+so the object it hands to elfpack is also the `.gocobj` (saved as
+`foo.gocobj` next to `foo.goobj`; `GOC_GOCOBJ=0` turns it off). This is the
+transitional content of plan row 4:
+
+- `.goc.funcs`: every function goc-llc compiled, with `text_size` and
+  `frame_size`. `arg_size`, ABI, flags and lines are not filled yet (they
+  still come from `meta.json`). Go ABI thunks are not listed; they are
+  generated outside LLVM.
+- `.goc.relocs`: every direct call, including calls `llvm-mc` resolved inside
+  `.text` and left without an ELF relocation.
+- `.goc.gcmaps`: one record per safepoint call (a call that follows a
+  `STACKMAP`), with empty bitmaps. The bits are still in `.llvm_stackmaps`.
+- `.goc.data`: every non-private global, without pointer bitmaps.
+
+`test/gocobj/verify-real.sh` runs `goc-objdump verify` on every `.gocobj`
+under `build/`. `verify` also checks each table relocation against the ELF
+relocation at the same place, when there is one.

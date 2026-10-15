@@ -104,6 +104,8 @@ func Parse(ra io.ReaderAt) (*File, error) {
 		}
 	}
 
+	out.ELFRelocs = elfCallRelocs(ef, syms)
+
 	files, _ := sec(SecFiles)
 	if err := records(SecFiles, files, func(_ uint64, r *buf) error {
 		out.Files = append(out.Files, str(r.uleb()))
@@ -198,4 +200,47 @@ func Parse(ra io.ReaderAt) (*File, error) {
 		return nil, fmt.Errorf("%s: %w", SecStrtab, strErr)
 	}
 	return out, nil
+}
+
+// elfCallRelocs indexes the 4-byte PC-relative relocations of every text
+// section by "function+offset", where function is the enclosing STT_FUNC.
+func elfCallRelocs(ef *elf.File, syms []elf.Symbol) map[string]string {
+	out := map[string]string{}
+	if ef.Machine != elf.EM_X86_64 {
+		return out
+	}
+	for si, s := range ef.Sections {
+		if s.Flags&elf.SHF_EXECINSTR == 0 {
+			continue
+		}
+		rs := ef.Section(".rela" + s.Name)
+		if rs == nil {
+			continue
+		}
+		data, err := rs.Data()
+		if err != nil {
+			continue
+		}
+		var funcs []elf.Symbol
+		for _, y := range syms {
+			if int(y.Section) == si && elf.ST_TYPE(y.Info) == elf.STT_FUNC {
+				funcs = append(funcs, y)
+			}
+		}
+		for i := 0; i+24 <= len(data); i += 24 {
+			off := binary.LittleEndian.Uint64(data[i:])
+			info := binary.LittleEndian.Uint64(data[i+8:])
+			typ := elf.R_X86_64(info & 0xffffffff)
+			idx := info >> 32
+			if (typ != elf.R_X86_64_PLT32 && typ != elf.R_X86_64_PC32) || idx == 0 || int(idx) > len(syms) {
+				continue
+			}
+			for _, f := range funcs {
+				if off >= f.Value && off < f.Value+f.Size {
+					out[fmt.Sprintf("%s+%d", f.Name, off-f.Value)] = syms[idx-1].Name
+				}
+			}
+		}
+	}
+	return out
 }

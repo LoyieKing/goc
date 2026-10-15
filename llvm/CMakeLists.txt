@@ -66,6 +66,6 @@ add_executable(goc-color-escape tools/goc-color-escape/goc_color_escape.cpp
   lib/Transforms/ColorEscape/GocColorEscape.cpp)
 target_link_libraries(goc-color-escape PRIVATE ${GOC_LLVM_LIBS})
 
-add_executable(goc-llc tools/goc-llc/goc_llc.cpp)
+add_executable(goc-llc tools/goc-llc/goc_llc.cpp tools/goc-llc/GocObjTables.cpp)
 target_include_directories(goc-llc PRIVATE ${GOC_X86_SRC} ${GOC_X86_BUILD})
 target_link_libraries(goc-llc PRIVATE ${GOC_LLVM_LIBS})
