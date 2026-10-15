@@ -107,7 +107,6 @@ bool separatedBySafepoint(const Instruction *Def, const Instruction *UsePoint);
 Instruction *usePoint(Use &U);
 std::optional<std::pair<AllocaInst *, int64_t>>
 pureFrameAddress(Value *V, const DataLayout &DL);
-bool frameAddrAsmMode();
 Value *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL);
 bool rematerializableFrameAddress(Value *V, const DataLayout &DL);
 unsigned rematCrossSafepointUses(Value *V, const DataLayout &DL, Function &F);

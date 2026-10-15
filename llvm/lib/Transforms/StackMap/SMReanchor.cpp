@@ -11,10 +11,8 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
     if (F.isDeclaration())
       return PreservedAnalyses::all();
     bool Changed = false;
-    if (!frameAddrAsmMode()) {
-      Changed |= unmergeReportedAllocas(F);
-      Changed |= addOldFramePointerSlot(F);
-    }
+    Changed |= unmergeReportedAllocas(F);
+    Changed |= addOldFramePointerSlot(F);
     PreservedAnalyses PA = run2(F, FAM);
     return Changed ? PreservedAnalyses::none() : PA;
   }

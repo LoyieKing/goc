@@ -37,7 +37,7 @@ fail() { echo "FAIL $*" >&2; exit 1; }
 
 # A caller's environment must not leak into a case.
 clean_env() {
-  env -u GOC_ARCH -u GOC_FRAMEADDR_MODE -u GOC_CSR_ADJUST -u GOC_KEEP_TMP \
+  env -u GOC_ARCH -u GOC_CSR_ADJUST -u GOC_KEEP_TMP \
       -u GOC_FIXED_G "$@"
 }
 

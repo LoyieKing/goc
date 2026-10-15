@@ -57,41 +57,30 @@ if [[ "$GOC_ARCH" == arm64 && "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
   echo "realbody: FATAL GOC_CSR_ADJUST is x86-only; arm64 has no frame-address repair" >&2
   exit 1
 fi
-# GOC_FRAMEADDR_MODE=gep (default): goc-reanchor rematerializes frame
-# addresses as plain GEPs, which is only safe with goc-llc's post-RA
-# GocFrameAddrFix pass (llvm/tools/goc-llc/goc_llc.cpp). asm: the old opaque leaq
-# per use; stock llc is enough.
+# goc-reanchor rematerializes frame addresses as plain GEPs, which is only
+# safe with goc-llc's post-RA GocFrameAddrFix pass (llvm/lib/CodeGen).
+# Stock llc CSEs the GEP into a callee-saved register and keeps it across the
+# call; only GocFrameAddrFix re-derives it, so a stock LLC is refused.
+if [[ -n "${GOC_FRAMEADDR_MODE:-}" && "$GOC_FRAMEADDR_MODE" != gep ]]; then
+  echo "realbody: FATAL GOC_FRAMEADDR_MODE=$GOC_FRAMEADDR_MODE was removed; frame addresses are always GEPs repaired by goc-llc" >&2
+  exit 1
+fi
 if [[ -x "$ROOT/passes/goc-llc" ]]; then
   GOC_LLC_BIN="$ROOT/passes/goc-llc"
 else
   GOC_LLC_BIN="$ROOT/build/llvm/goc-llc"
 fi
-if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" || "$GOC_ARCH" == arm64 ]]; then
-  if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
-    "$ROOT/scripts/build-passes.sh" >&2 || true
-  fi
-  if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
-    echo "realbody: FATAL missing $GOC_LLC_BIN; GOC_FRAMEADDR_MODE=gep needs its" \
-         "frame-address fix (build it, or set GOC_FRAMEADDR_MODE=asm)" >&2
-    exit 1
-  fi
-  LLC="${LLC:-$GOC_LLC_BIN}"
-else
-  if [[ -z "${LLC:-}" ]]; then
-    LLC="$(goc_beside llc 2>/dev/null || true)"
-    [[ -n "$LLC" ]] || LLC="$(command -v llc-19 || command -v llc || true)"
-  fi
-  [[ -n "${LLC:-}" ]] || { echo "realbody: FATAL llc missing" >&2; exit 1; }
+if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
+  "$ROOT/scripts/build-passes.sh" >&2 || true
 fi
-# gep remat is a plain GEP. Stock llc CSEs it into a callee-saved register
-# and keeps that register across the call; tail duplication makes that
-# live range common. Only goc-llc's post-RA GocFrameAddrFix re-derives it.
-# A pre-set LLC=llc-19 used to skip the missing-binary check above.
-if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" || "$GOC_ARCH" == arm64 ]]; then
-  if ! grep -a -q 'goc-frameaddr-fix' "$LLC" 2>/dev/null; then
-    echo "realbody: FATAL $LLC has no GocFrameAddrFix; frame-address GEPs would stay stale across calls. Build build/llvm/goc-llc, or set GOC_FRAMEADDR_MODE=asm." >&2
-    exit 1
-  fi
+if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
+  echo "realbody: FATAL missing $GOC_LLC_BIN (frame-address repair); run scripts/build-passes.sh" >&2
+  exit 1
+fi
+LLC="${LLC:-$GOC_LLC_BIN}"
+if ! grep -a -q 'goc-frameaddr-fix' "$LLC" 2>/dev/null; then
+  echo "realbody: FATAL $LLC has no GocFrameAddrFix; frame-address GEPs would stay stale across calls. Build build/llvm/goc-llc." >&2
+  exit 1
 fi
 if [[ -z "${LLVM_MC:-}" || ! -x "${LLVM_MC:-}" ]]; then
   LLVM_MC="$(goc_beside llvm-mc 2>/dev/null || true)"

@@ -205,15 +205,12 @@ cmd_build() {
   # stock llc-19 here used to skip realbody's missing-binary check, so tail
   # duplication kept frame addresses in callee-saved registers across calls.
   local LLC="${LLC:-}"
-  if [[ -z "$LLC" && ( "${GOC_FRAMEADDR_MODE:-gep}" != "asm" || "$GOC_ARCH" == arm64 ) ]]; then
+  if [[ -z "$LLC" ]]; then
     if [[ -x "$ROOT/passes/goc-llc" ]]; then
       LLC="$ROOT/passes/goc-llc"
     else
       LLC="$ROOT/build/llvm/goc-llc"
     fi
-  elif [[ -z "$LLC" ]]; then
-    LLC="$(goc_beside llc 2>/dev/null || true)"
-    [[ -n "$LLC" ]] || LLC="$(command -v llc-19 || true)"
   fi
   local REALBODY="$ROOT/tools/goc/realbody.sh"
   local PLUGIN="$ROOT/build/libGocClang.so"

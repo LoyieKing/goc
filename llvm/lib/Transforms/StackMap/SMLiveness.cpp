@@ -284,30 +284,14 @@ pureFrameAddress(Value *V, const DataLayout &DL) {
   return std::nullopt;
 }
 
-// Frame-address rematerialization mode. "gep" (default): a plain GEP of the
-// alloca / byval argument at the use, which llc folds into addressing modes.
-// Plain IR is not enough on its own: DAG/Machine CSE, LICM and the register
-// allocator may still compute the LEA before the call and keep it in a
-// callee-saved register or spill slot. goc-llc's GocFrameAddrFix pass
-// (llvm/tools/goc-llc/goc_llc.cpp) repairs exactly those: after every call it
-// re-derives each live callee-saved register / spill slot that holds
-// RBP/RSP+const. realbody refuses to use this mode with a stock llc.
-// "asm": the previous opaque `asm sideeffect "leaq"` per use (no MI pass
-// needed, but it blocks folding and CSE everywhere).
-bool frameAddrAsmMode() {
-  static int Mode = -1;
-  if (Mode < 0) {
-    const char *E = std::getenv("GOC_FRAMEADDR_MODE");
-    Mode = (E && std::strcmp(E, "asm") == 0) ? 1 : 0;
-  }
-  return Mode == 1;
-}
-
+// Frame-address rematerialization: a plain GEP of the alloca / byval
+// argument at the use, which llc folds into addressing modes. Plain IR is not
+// enough on its own: DAG/Machine CSE, LICM and the register allocator may
+// still compute the LEA before the call and keep it in a callee-saved
+// register or spill slot. goc-llc's GocFrameAddrFix pass repairs exactly
+// those: after every call it re-derives each live callee-saved register /
+// spill slot that holds RBP/RSP+const. realbody refuses a stock llc.
 Value *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
-  // The x86 `leaq $1, $0` asm mode does not assemble on arm64; arm64
-  // always uses the GEP form, which goc-llc's frame-address repair covers.
-  if (gocArchArm64() && frameAddrAsmMode())
-    report_fatal_error("goc: GOC_FRAMEADDR_MODE=asm is x86-only");
   Value *Addr = nullptr;
   int64_t Off = 0;
   if (auto Frame = pureFrameAddress(V, DL)) {
@@ -344,23 +328,12 @@ Value *rematFrameAddress(IRBuilder<> &B, Value *V, const DataLayout &DL) {
   }
   if (!Addr)
     return nullptr;
-  if (!frameAddrAsmMode()) {
-    Value *R = Addr;
-    if (Off != 0)
-      R = B.CreateInBoundsGEP(B.getInt8Ty(), Addr, B.getInt64(Off), "goc.fa");
-    if (R->getType() != V->getType())
-      R = B.CreatePointerBitCastOrAddrSpaceCast(R, V->getType());
-    return R;
-  }
+  Value *R = Addr;
   if (Off != 0)
-    Addr = B.CreateGEP(B.getInt8Ty(), Addr, B.getInt64(Off));
-  FunctionType *FT = FunctionType::get(V->getType(), {Addr->getType()}, false);
-  InlineAsm *IA = InlineAsm::get(FT, "leaq $1, $0", "=r,*m",
-                                  /*hasSideEffects=*/true);
-  CallInst *CI = B.CreateCall(IA, {Addr});
-  CI->addParamAttr(0, Attribute::get(CI->getContext(), Attribute::ElementType,
-                                     Type::getInt8Ty(CI->getContext())));
-  return CI;
+    R = B.CreateInBoundsGEP(B.getInt8Ty(), Addr, B.getInt64(Off), "goc.fa");
+  if (R->getType() != V->getType())
+    R = B.CreatePointerBitCastOrAddrSpaceCast(R, V->getType());
+  return R;
 }
 
 bool rematerializableFrameAddress(Value *V, const DataLayout &DL) {

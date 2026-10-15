@@ -19,8 +19,8 @@
 // rewrites stack words that a stack map marks. Previously goc-reanchor
 // re-derived every such address with an opaque `asm sideeffect "leaq"` at each
 // use after a safepoint; that blocked addressing-mode folding everywhere.
-// goc-reanchor now emits a plain GEP and this pass restores the invariant on
-// the final machine code:
+// goc-reanchor emits a plain GEP instead and this pass restores the invariant
+// on the final machine code:
 //
 //   After every call, no callee-saved register and no spill slot that is live
 //   holds a frame address computed before the call.
@@ -376,30 +376,6 @@ struct GocFrameAddrFix : MachineFunctionPass {
     bool Exact = true;
     if (Op == TargetOpcode::IMPLICIT_DEF) {
       V = mk(Bot);
-    } else if (MI.isInlineAsm() &&
-               StringRef(MI.getOperand(InlineAsm::MIOp_AsmString).getSymbolName()) ==
-                   "leaq $1, $0") {
-      // GOC_FRAMEADDR_MODE=asm remat: def, then a 5-operand memory operand.
-      V = taint(&MI);
-      for (unsigned i = InlineAsm::MIOp_FirstOperand; i + 5 < MI.getNumOperands(); ++i) {
-        const MachineOperand &F = MI.getOperand(i);
-        if (!F.isImm())
-          continue;
-        InlineAsm::Flag Fl(F.getImm());
-        if (!Fl.isMemKind())
-          continue;
-        const MachineOperand &Bs = MI.getOperand(i + 1 + X86::AddrBaseReg);
-        const MachineOperand &Ix = MI.getOperand(i + 1 + X86::AddrIndexReg);
-        const MachineOperand &Dp = MI.getOperand(i + 1 + X86::AddrDisp);
-        if (Bs.isReg() && Ix.isReg() && !Ix.getReg() && Dp.isImm()) {
-          Val VB = readReg(S, Bs.getReg());
-          if (VB.K == FA)
-            V = fa(VB.Base, VB.Off + Dp.getImm());
-          else if (VB.repairable())
-            V = VB.K == MS ? mk(MS) : mk(D1);
-        }
-        break;
-      }
     } else if (Op == X86::LEA64r) {
       unsigned B = MI.getOperand(1 + X86::AddrBaseReg).getReg();
       int64_t Sc = MI.getOperand(1 + X86::AddrScaleAmt).getImm();

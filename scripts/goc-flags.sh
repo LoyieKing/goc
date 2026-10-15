@@ -186,25 +186,6 @@ goc_consume_flag() {
       goc_flag_mark stackmap
       GOC_FLAG_SHIFT=1
       ;;
-    --frameaddr)
-      local m
-      m="$(goc_need_arg --frameaddr "${2:-}")"
-      case "$m" in
-        gep|asm) export GOC_FRAMEADDR_MODE="$m" ;;
-        *) goc_die "--frameaddr wants gep or asm" ;;
-      esac
-      goc_flag_mark frameaddr
-      GOC_FLAG_SHIFT=2
-      ;;
-    --frameaddr=*)
-      local m="${1#--frameaddr=}"
-      case "$m" in
-        gep|asm) export GOC_FRAMEADDR_MODE="$m" ;;
-        *) goc_die "--frameaddr wants gep or asm" ;;
-      esac
-      goc_flag_mark frameaddr
-      GOC_FLAG_SHIFT=1
-      ;;
     --fixed-g)
       export GOC_FIXED_G=1
       goc_flag_mark fixed-g
@@ -339,7 +320,6 @@ goc_append_resolved_flags() {
   [[ -n "${GOC_STACKMAP:-}" ]] && _dest+=(--stackmap "$GOC_STACKMAP")
   [[ "${GOC_COLOR_REPORT:-}" == 1 ]] && _dest+=(--color-report)
   [[ -n "${GOC_ARCH:-}" ]] && _dest+=(--arch "$GOC_ARCH")
-  [[ -n "${GOC_FRAMEADDR_MODE:-}" ]] && _dest+=(--frameaddr "$GOC_FRAMEADDR_MODE")
   [[ "${GOC_FIXED_G:-0}" == 1 ]] && _dest+=(--fixed-g)
   [[ "${GOC_CSR_ADJUST:-0}" == 1 ]] && _dest+=(--csr-adjust)
   [[ -n "${GOC_OPT_EXTRA:-}" ]] && _dest+=(--opt-extra "$GOC_OPT_EXTRA")
@@ -379,7 +359,6 @@ There is no --clang and no --toolchain.
   --opt-bin PATH         LLVM opt binary
   --color-escape PATH    goc-color-escape pass
   --stackmap PATH        libGocPasses.so
-  --frameaddr gep|asm    Frame-address mode (arm64 forces asm)
   --fixed-g              Reserve r14 for g (off unless this flag is passed)
   --no-fixed-g
   --csr-adjust           Adjust frame addresses kept in callee-saved registers
