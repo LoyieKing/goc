@@ -45,7 +45,7 @@ func (bd *Builder) Sections() map[string][]byte {
 	le.PutUint32(h[20:], uint32(s(bd.Header.Producer)))
 	out[SecHeader] = h
 
-	var files, funcs, relocs, stackmaps, pcv, gcm, data enc
+	var files, funcs, relocs, stackmaps, pcv, gcm, data, inl enc
 	for _, f := range bd.Files {
 		var r enc
 		r.uleb(s(f))
@@ -80,6 +80,20 @@ func (bd *Builder) Sections() map[string][]byte {
 			}
 			gcOff = gcm.record(r.b) + 1
 		}
+		var inlOff uint64
+		if fn.Inl != nil {
+			var r enc
+			r.uleb(uint64(len(fn.Inl)))
+			for _, n := range fn.Inl {
+				r.sleb(n.Parent)
+				r.uleb(n.File)
+				r.uleb(n.Line)
+				r.uleb(s(n.Func))
+				r.uleb(n.ParentPC)
+				r.uleb(n.StartLine)
+			}
+			inlOff = inl.record(r.b) + 1
+		}
 		var r enc
 		r.uleb(s(fn.Name))
 		r.uleb(fn.TextSize)
@@ -93,7 +107,7 @@ func (bd *Builder) Sections() map[string][]byte {
 		r.uleb(fn.StartLine)
 		r.uleb(pcvOff)
 		r.uleb(gcOff)
-		r.uleb(0)
+		r.uleb(inlOff)
 		if bd.Header.Minor >= 1 {
 			r.uleb(fn.SysvPtrRegs)
 		}
@@ -141,7 +155,7 @@ func (bd *Builder) Sections() map[string][]byte {
 		data.record(r.b)
 	}
 	for name, e := range map[string]*enc{SecFiles: &files, SecFuncs: &funcs, SecRelocs: &relocs, SecStackmaps: &stackmaps,
-		SecPCValue: &pcv, SecGCMaps: &gcm, SecData: &data} {
+		SecPCValue: &pcv, SecGCMaps: &gcm, SecData: &data, SecInlTree: &inl} {
 		if len(e.b) > 0 {
 			out[name] = e.b
 		}

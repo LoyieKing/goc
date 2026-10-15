@@ -1,4 +1,4 @@
-# gocobj format, version 1.3
+# gocobj format, version 1.4
 
 A `.gocobj` is what goc's LLVM backend will write for one C file. It is a
 normal relocatable ELF file (machine code in `.text` or `.text.<sym>`, data in
@@ -59,7 +59,9 @@ String pool. Not a record list.
 
 ### `.goc.files`
 
-One record per source file: `strref path`. Index = record number.
+One record per source file: `strref path`. Index = record number. Record 0
+is the translation unit; 1.4 adds every other file a line row or an inlined
+call refers to (headers), with the directory joined to relative names.
 
 ### `.goc.funcs`
 
@@ -75,11 +77,11 @@ One record per Go-visible function:
 | kind | u8 | 0 normal, 1 ABI wrapper |
 | flags | uleb | bit 0 needs_stack_check, 1 leaf, 2 nosplit, 3 has_frame_pointer, 4 unsafe_entry; 1.1: 5 internal linkage, 6 has an sptr color, 7 sysv_ptr_regs not modelled |
 | func_id | u8 | 0 normal; other values reserved |
-| file | uleb | index into `.goc.files` |
-| start_line | uleb | |
+| file | uleb | index into `.goc.files` (1.4: the file of the C definition) |
+| start_line | uleb | 1.4: line of the C definition (0 when unknown) |
 | pcv | uleb | offset of its `.goc.pcvalue` record |
 | gc | uleb | offset of its `.goc.gcmaps` record |
-| inl | uleb | offset of its `.goc.inltree` record (reserved; 0) |
+| inl | uleb | 1.4: offset of its `.goc.inltree` record |
 | sysv_ptr_regs | uleb | 1.1: bit i set when SysV integer argument register i (rdi rsi rdx rcx r8 r9) holds a pointer on entry |
 | sptr_slots | uleb n, n × uleb | 1.2: frame-pointer-relative offsets (`BP - off`, positive, multiples of 8, sorted) of the frame slots that hold sptr values |
 
@@ -139,6 +141,34 @@ Kinds: 1 SP_DELTA, 2 FILE, 3 LINE, 4 UNSAFE_POINT, 5 INL_INDEX,
 
 Values are plain, not Go's delta encoding; the converter encodes.
 
+1.4: FILE (index into `.goc.files`), LINE and INL_INDEX (index into the
+function's `.goc.inltree` record, -1 outside inlined code) come from the
+instructions' debug locations (clang `-gline-tables-only`); code without a
+location (the stack check, spills) keeps the previous row. In these three
+kinds a row may share its `pc_start` with the next one (its instruction
+emits no bytes); the later row wins and the reader drops the earlier.
+
+### `.goc.inltree` (1.4)
+
+One record per function with inlined calls: `uleb n`, then `n` entries of
+
+| field | type | meaning |
+|---|---|---|
+| parent | sleb | index of the enclosing inlined call, -1 for the function itself |
+| file | uleb | index into `.goc.files` of the call site |
+| line | uleb | line of the call site |
+| func | strref | the inlined C function (its C name, not an ELF symbol) |
+| parent_pc | uleb | offset from the function start whose FILE/LINE/INL_INDEX rows are the call site |
+| start_line | uleb | line of the inlined function's definition |
+
+Go's runtime finds the call site of an inlined frame by looking up the rows
+at `parent_pc`. As Go's compiler does with its inline marks, goc-llc gives
+the first non-call instruction of each inlined body the call site's rows.
+A body that starts with a direct call uses the call's second byte instead
+(a return address minus one is the call's last byte, so its interior bytes
+are never looked up). Otherwise `parent_pc` is the last row of the parent
+before the body.
+
 ### `.goc.gcmaps`
 
 One record per function: `uleb nargs_bits, uleb nlocals_bits, uleb n`, then
@@ -156,8 +186,8 @@ ceil(nbits/8) bytes pointer bitmap` (bit `i` = pointer word `i`).
 
 ### Reserved names
 
-`.goc.inltree`, `.goc.wrappers`, `.goc.types` are reserved and will be
-specified when the backend emits them (a minor version bump).
+`.goc.types` is reserved and will be specified when the backend emits it
+(a minor version bump).
 
 ## What `goc-objdump verify` checks
 
@@ -166,7 +196,10 @@ specified when the backend emits them (a minor version bump).
 - functions: symbol is a defined STT_FUNC whose size equals `text_size`;
   `file` is in range; `pcv`/`gc` offsets point at a record start
 - relocs: function known, `offset + width <= text_size`, width and kind valid
-- pcvalue: known kinds, first start 0, strictly increasing, inside the function
+- pcvalue: known kinds, first start 0, strictly increasing, inside the function;
+  FILE values index `.goc.files`, INL_INDEX values the function's inline tree
+- inltree: parents precede children, files in range, `parent_pc` inside the
+  function
 - gcmaps: pcs sorted and inside `(0, text_size]`; the locals bitmap fits the
   frame (`nlocals_bits * ptr_size <= frame_size`); every safepoint_call reloc
   has a gc record at `offset + width`
@@ -180,11 +213,15 @@ specified when the backend emits them (a minor version bump).
 `goc-llc -function-sections -goc-tables=FILE` writes the `.goc.*` sections as
 assembler text, including the stack check and morestack block it emitted
 (shared `GocStackCheck` pass plus the per-arch hook), the SP_DELTA and
-UNSAFE_POINT pc tables and the gcmap bitmaps. `goc-lower goabi` appends the Go
+UNSAFE_POINT pc tables, the gcmap bitmaps, and (1.4) the FILE, LINE and
+INL_INDEX tables and inline tree from the debug locations. `goc-lower goabi` appends the Go
 ABI thunks and their records. `tools/goc/realbody.sh` assembles everything
 with `llvm-mc` into one ELF, which is the `.gocobj` (saved next to the
 `.goobj`), and runs `gocobj2goobj -symabis`. The converter does not decode or
 emit instructions; `.llvm_stackmaps` and `meta.json` are no longer read.
+For an inlined static function that has no body in the object, the
+converter defines a one-byte stub (never referenced, so not linked): Go's
+linker reads every inlined function's FuncInfo.
 
 `test/gocobj/verify-real.sh` runs `goc-objdump verify` on every `.gocobj`
 under `build/`. `verify` also checks each table relocation against the ELF

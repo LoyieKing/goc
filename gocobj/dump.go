@@ -23,6 +23,10 @@ func Dump(w io.Writer, f *File) {
 			}
 			fmt.Fprintln(w)
 		}
+		for j, n := range fn.Inl {
+			fmt.Fprintf(w, "  inl %d parent=%d %s at file=%d line=%d parentpc=%d startline=%d\n",
+				j, n.Parent, n.Func, n.File, n.Line, n.ParentPC, n.StartLine)
+		}
 		if g := fn.GC; g != nil {
 			fmt.Fprintf(w, "  gcmaps args=%d locals=%d\n", g.NArgs, g.NLocals)
 			for _, sp := range g.Safepoints {

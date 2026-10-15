@@ -6,7 +6,7 @@ package gocobj
 const (
 	Magic        = "GOCOBJ\x00\x00"
 	Major        = 1
-	Minor        = 3
+	Minor        = 4
 	HeaderSize   = 28
 	SecHeader    = ".goc.header"
 	SecStrtab    = ".goc.strtab"
@@ -18,6 +18,7 @@ const (
 	SecPCValue   = ".goc.pcvalue"
 	SecGCMaps    = ".goc.gcmaps"
 	SecData      = ".goc.data"
+	SecInlTree   = ".goc.inltree" // 1.4
 )
 
 // Arch values in the header.
@@ -96,6 +97,9 @@ const (
 
 var pcNames = [...]string{"", "SP_DELTA", "FILE", "LINE", "UNSAFE_POINT", "INL_INDEX", "STACKMAP_INDEX"}
 
+// lineKind reports the kinds whose rows come from debug locations.
+func (k PCKind) lineKind() bool { return k == PCFile || k == PCLine || k == PCInlIndex }
+
 func (k PCKind) String() string {
 	if k > 0 && k < pcLast {
 		return pcNames[k]
@@ -133,9 +137,23 @@ type Func struct {
 	SysvPtrRegs uint64    // 1.1: bit i = SysV integer argument register i holds a pointer
 	SptrSlots   []uint64  // 1.2: frame-pointer-relative offsets of sptr-holding slots (BP-off)
 	PCValue     []PCTable // decoded from the pcv record (nil if none)
+	Inl         []InlNode // 1.4: decoded from the inl record (nil if none)
 	GC          *GCMap    // decoded from the gc record (nil if none)
 	pcvOff      uint64
 	gcOff       uint64
+	inlOff      uint64
+}
+
+// InlNode is one inlined call in a function (1.4). Func is the inlined C
+// function; File and Line are the call site in the parent. ParentPC is an
+// offset whose FILE/LINE/INL_INDEX rows are that call site.
+type InlNode struct {
+	Parent    int64 // index of the enclosing call, -1 for the function itself
+	File      uint64
+	Line      uint64
+	Func      string
+	ParentPC  uint64
+	StartLine uint64
 }
 
 // Stackmap is one LLVM STACKMAP site (1.3), with locations encoded as in

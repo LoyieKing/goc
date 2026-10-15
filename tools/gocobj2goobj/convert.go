@@ -14,6 +14,7 @@ import (
 
 	"github.com/LoyieKing/goc/gocobj"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/bio"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj/x86"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
@@ -588,6 +589,16 @@ func pctab(ctxt *obj.Link, size int64, ents []gocobj.PCEntry) *obj.LSym {
 	return sym
 }
 
+// inlSym names an inlined C function in the inline tree: the Go symbol of
+// its body in this object if it has one, else (a static function inlined
+// everywhere) the name a body of it would have, which gets a stub.
+func (c *converter) inlSym(name string) *obj.LSym {
+	if gn, ok := c.goName[name]; ok {
+		return c.ctxt.LookupABI(gn, c.abiByGoSym[gn])
+	}
+	return c.ctxt.Lookup(c.pkg + "." + c.tu + "." + name)
+}
+
 func pcTable(t *gocobj.Func, k gocobj.PCKind) []gocobj.PCEntry {
 	for _, p := range t.PCValue {
 		if p.Kind == k {
@@ -658,6 +669,20 @@ func (c *converter) write(out string) error {
 	}
 	fileBase := src.NewFileBase(file, file)
 	pos := ctxt.PosTable.XPos(src.MakePos(fileBase, 1, 0))
+	// 1.4: every .goc.files entry gets a PosBase, so FILE values and
+	// inline-tree call sites map to the object's file table.
+	fileBases := []*src.PosBase{fileBase}
+	for _, f := range c.f.Files[min(1, len(c.f.Files)):] {
+		b := src.NewFileBase(f, f)
+		ctxt.PosTable.XPos(src.MakePos(b, 1, 0))
+		fileBases = append(fileBases, b)
+	}
+	goFile := func(i int64) int64 {
+		if i < 0 || i >= int64(len(fileBases)) {
+			return 0
+		}
+		return int64(fileBases[i].FileIndex())
+	}
 
 	for _, x := range c.fns {
 		x.sym = ctxt.LookupABI(c.goName[x.name], x.abi)
@@ -721,7 +746,55 @@ func (c *converter) write(out string) error {
 		p.To = obj.Addr{Type: obj.TYPE_CONST, Offset: -1}
 		add(p)
 	}
+	// 1.4: Go's linker reads the FuncID and start line of every inlined
+	// function from its FuncInfo. A static C function inlined everywhere
+	// has no body here, so it gets a one-byte stub (never referenced, so
+	// the linker leaves it out of the binary).
+	type stub struct {
+		sym  *obj.LSym
+		line uint64
+	}
+	var stubs []stub
+	for _, x := range c.fns {
+		for _, n := range x.tab.Inl {
+			if _, ok := c.goName[n.Func]; ok {
+				continue
+			}
+			ls := c.inlSym(n.Func)
+			if ls.Func() != nil && ls.Func().Text != nil {
+				continue
+			}
+			ctxt.InitTextSym(ls, obj.NOSPLIT|obj.DUPOK, pos)
+			tp := ctxt.NewProg()
+			tp.As = obj.ATEXT
+			tp.Ctxt = ctxt
+			tp.From = obj.Addr{Type: obj.TYPE_MEM, Name: obj.NAME_EXTERN, Sym: ls}
+			tp.To = obj.Addr{Type: obj.TYPE_TEXTSIZE, Offset: 0}
+			tp.To.Val = int32(0)
+			ls.Func().Text = tp
+			add(tp)
+			stubs = append(stubs, stub{ls, n.StartLine})
+		}
+	}
 	obj.Flushplist(ctxt, &obj.Plist{Firstpc: head}, nil)
+	for _, st := range stubs {
+		st.sym.P = []byte{0xcc} // int3
+		if c.arm64 {
+			st.sym.P = []byte{0, 0, 0x20, 0xd4} // brk #0
+		}
+		st.sym.Size = int64(len(st.sym.P))
+		st.sym.Set(obj.AttrNoFrame, true)
+		fi := st.sym.Func()
+		fi.StartLine = int32(st.line)
+		fi.Pcln.Pcdata = make([]*obj.LSym, abi.PCDATA_StackMapIndex+1)
+		for i := range fi.Pcln.Pcdata {
+			fi.Pcln.Pcdata[i] = pctab(ctxt, 0, nil)
+		}
+		fi.Pcln.Pcsp = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: 0}})
+		fi.Pcln.Pcfile = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: 0}})
+		fi.Pcln.Pcline = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: int64(st.line)}})
+		fi.Pcln.UsedFiles = map[goobj.CUFileIndex]struct{}{0: {}}
+	}
 
 	// Calls, by function and offset of their relocated field: the tables
 	// list every call, so R_CALL vs R_PCREL is read from them.
@@ -818,6 +891,29 @@ func (c *converter) write(out string) error {
 			fi.Pcln.Pcdata[abi.PCDATA_StackMapIndex] = pctab(ctxt, s.Size, stackIdx[x])
 			fi.Pcln.Pcfile = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: 1}})
 			fi.Pcln.Pcline = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: 1}})
+			if t.StartLine != 0 {
+				fi.StartLine = int32(t.StartLine)
+			}
+			if ft, lt := pcTable(t, gocobj.PCFile), pcTable(t, gocobj.PCLine); ft != nil && lt != nil {
+				// 1.4: real C files and lines from the debug locations.
+				fi.Pcln.UsedFiles = map[goobj.CUFileIndex]struct{}{}
+				gf := make([]gocobj.PCEntry, len(ft))
+				for i, e := range ft {
+					gf[i] = gocobj.PCEntry{PC: e.PC, Value: goFile(e.Value)}
+					fi.Pcln.UsedFiles[goobj.CUFileIndex(gf[i].Value)] = struct{}{}
+				}
+				fi.Pcln.Pcfile = pctab(ctxt, s.Size, gf)
+				fi.Pcln.Pcline = pctab(ctxt, s.Size, lt)
+				fi.Pcln.InlTree = obj.InlTree{}
+				for _, n := range t.Inl {
+					p := ctxt.PosTable.XPos(src.MakePos(fileBases[min(int(n.File), len(fileBases)-1)], uint(n.Line), 0))
+					k := fi.Pcln.InlTree.Add(int(n.Parent), p, c.inlSym(n.Func), n.Func)
+					fi.Pcln.InlTree.SetParentPC(k, int32(n.ParentPC))
+				}
+				if it := pcTable(t, gocobj.PCInlIndex); it != nil && len(t.Inl) > 0 {
+					fi.Pcln.Pcinline = pctab(ctxt, s.Size, it)
+				}
+			}
 		}
 	}
 

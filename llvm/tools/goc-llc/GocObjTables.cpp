@@ -33,6 +33,8 @@
 #include "llvm/IR/Instructions.h"
 #include "Goc/StackCheck.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
@@ -78,8 +80,28 @@ struct FuncAddr {
   int64_t Offset;
 };
 
+// 1.4: one row of the FILE/LINE/INL_INDEX tables, from the label on.
+struct LineRow {
+  std::string PC; // empty: function start
+  unsigned File;
+  unsigned Line;
+  int Inl;
+};
+
+// 1.4: one inlined call (a .goc.inltree entry).
+struct InlNode {
+  int Parent;
+  unsigned File, Line; // the call site, in the parent
+  std::string Func;    // the inlined function (C name)
+  std::string ParentPC; // label of an instruction attributed to the call site
+  unsigned StartLine;
+};
+
 struct FuncInfo {
   goc::FuncStackInfo Stack;
+  unsigned File = 0, StartLine = 0;
+  std::vector<LineRow> Lines;
+  std::vector<InlNode> Inl;
   bool A64 = false; // AArch64: BL relocations at the instruction, no stack-map roots
   std::string Name, End;
   uint64_t FrameSize;
@@ -210,6 +232,147 @@ struct GocObjTables : MachineFunctionPass {
   StringMap<std::vector<SptrTarget>> IRSptr;
   unsigned InlineAsmLabels = 0;
   bool A64 = false;
+  // 1.4: .goc.files; index 0 is the translation unit.
+  StringMap<unsigned> FileIdx;
+  std::vector<std::string> FileList;
+
+  unsigned fileIndex(const DIFile *F) {
+    if (!F)
+      return 0;
+    SmallString<256> P(F->getFilename());
+    if (!sys::path::is_absolute(P) && !F->getDirectory().empty()) {
+      P = F->getDirectory();
+      sys::path::append(P, F->getFilename());
+    }
+    auto [It, New] = FileIdx.try_emplace(P, FileList.size());
+    if (New)
+      FileList.push_back(P.str().str());
+    return It->second;
+  }
+
+  static std::string inlName(const DISubprogram *SP) {
+    if (!SP)
+      return "?";
+    if (!SP->getLinkageName().empty())
+      return SP->getLinkageName().str();
+    return SP->getName().str();
+  }
+
+  // Index in FI.Inl of the call that inlined the code at C, or -1.
+  int inlIndex(FuncInfo &FI, DenseMap<const DILocation *, int> &Map, const DILocation *C) {
+    const DILocation *IA = C->getInlinedAt();
+    if (!IA)
+      return -1;
+    if (auto It = Map.find(IA); It != Map.end())
+      return It->second;
+    int P = inlIndex(FI, Map, IA);
+    const DISubprogram *SP = C->getScope()->getSubprogram();
+    FI.Inl.push_back({P, fileIndex(IA->getFile()), IA->getLine(), inlName(SP), "",
+                      SP ? SP->getLine() : 0});
+    int I = (int)FI.Inl.size() - 1;
+    Map[IA] = I;
+    return I;
+  }
+
+  // 1.4: FILE, LINE and INL_INDEX rows from the instructions' debug
+  // locations (clang -gline-tables-only). Instructions without a location
+  // (the stack check, spills) keep the previous row. As Go's compiler does
+  // with its inline marks, the first non-call instruction of each inlined
+  // body is attributed to the call site in the parent: the runtime finds
+  // the call site's line through ParentPC.
+  void recordLines(MachineFunction &MF, FuncInfo &FI) {
+    const DISubprogram *SP = MF.getFunction().getSubprogram();
+    if (!SP)
+      return;
+    FI.File = fileIndex(SP->getFile());
+    FI.StartLine = SP->getLine();
+    MCContext &Ctx = MF.getContext();
+    DenseMap<const DILocation *, int> Map;
+    unsigned CurF = FI.File, CurL = FI.StartLine;
+    int CurI = -1;
+    FI.Lines.push_back({"", CurF, CurL, CurI});
+    auto Label = [&](MachineInstr &MI) {
+      if (MCSymbol *S = MI.getPreInstrSymbol())
+        return S->getName().str();
+      MCSymbol *S = Ctx.createTempSymbol("goc_ln");
+      MI.setPreInstrSymbol(MF, S);
+      return S->getName().str();
+    };
+    for (MachineBasicBlock &MBB : MF)
+      for (MachineInstr &MI : MBB) {
+        if (MI.isMetaInstruction() || MI.getOpcode() == TargetOpcode::STACKMAP)
+          continue;
+        const DILocation *DL = MI.getDebugLoc().get();
+        if (!DL || DL->getLine() == 0)
+          continue;
+        unsigned F = fileIndex(DL->getFile()), L = DL->getLine();
+        int I = inlIndex(FI, Map, DL);
+        if (I >= 0 && MI.isCall() && isDirectCall(MF, MI)) {
+          // An inlined body that starts with a direct call: its interior
+          // bytes are never looked up (a return address minus one is the
+          // last byte), so pc+1 can carry the call site.
+          int Pick = -1;
+          for (int J = I; J >= 0; J = FI.Inl[J].Parent)
+            if (FI.Inl[J].ParentPC.empty())
+              Pick = J;
+          if (Pick >= 0) {
+            std::string P = Label(MI);
+            if (F != CurF || L != CurL || I != CurI)
+              FI.Lines.push_back({P, F, L, I});
+            const InlNode &N = FI.Inl[Pick];
+            FI.Lines.push_back({P + "+1", N.File, N.Line, N.Parent});
+            FI.Lines.push_back({P + "+2", F, L, I});
+            FI.Inl[Pick].ParentPC = P + "+1";
+            CurF = F, CurL = L, CurI = I;
+            continue;
+          }
+        }
+        if (I >= 0 && !MI.isCall()) {
+          // Outermost call on the chain still without a ParentPC.
+          int Pick = -1;
+          for (int J = I; J >= 0; J = FI.Inl[J].Parent)
+            if (FI.Inl[J].ParentPC.empty())
+              Pick = J;
+          if (Pick >= 0) {
+            FI.Inl[Pick].ParentPC = Label(MI);
+            F = FI.Inl[Pick].File;
+            L = FI.Inl[Pick].Line;
+            I = FI.Inl[Pick].Parent;
+          }
+        }
+        if (F == CurF && L == CurL && I == CurI)
+          continue;
+        FI.Lines.push_back({Label(MI), F, L, I});
+        CurF = F, CurL = L, CurI = I;
+      }
+    // Otherwise: the last row of the parent before the body.
+    for (int K = 0, E = (int)FI.Inl.size(); K < E; ++K) {
+      InlNode &N = FI.Inl[K];
+      if (!N.ParentPC.empty())
+        continue;
+      std::string Best;
+      bool Found = false;
+      for (const LineRow &R : FI.Lines) {
+        bool In = false;
+        for (int J = R.Inl; J >= 0; J = FI.Inl[J].Parent)
+          if (J == K)
+            In = true;
+        if (In)
+          break;
+        if (R.Inl == N.Parent)
+          Best = R.PC, Found = true;
+      }
+      if (Found)
+        N.ParentPC = Best;
+    }
+  }
+
+  static bool isDirectCall(MachineFunction &MF, const MachineInstr &MI) {
+    unsigned Opc = MI.getOpcode();
+    if (MF.getTarget().getTargetTriple().isAArch64())
+      return MF.getSubtarget().getInstrInfo()->getName(Opc) == "BL";
+    return Opc == X86::CALL64pcrel32 || Opc == X86::CALLpcrel32;
+  }
 
   // Direct calls written in inline assembly ("call sym" on a line of its
   // own) are invisible to machine passes. Put a label pair around each one
@@ -271,6 +434,8 @@ struct GocObjTables : MachineFunctionPass {
   }
 
   bool doInitialization(Module &M) override {
+    FileIdx[M.getSourceFileName()] = 0;
+    FileList.push_back(M.getSourceFileName());
     for (const Function &F : M) {
       if (F.isDeclaration())
         continue;
@@ -484,6 +649,7 @@ struct GocObjTables : MachineFunctionPass {
     }
     if (!Last)
       return false;
+    recordLines(MF, FI);
     if (MCSymbol *S = Last->getPostInstrSymbol()) {
       FI.End = S->getName().str();
     } else {
@@ -610,13 +776,14 @@ bool GocObjTables::doFinalization(Module &M) {
       W.sleb(Twine(V));
     };
     int64_t Frame = (int64_t)F.FrameSize;
+    unsigned NLine = F.Lines.empty() ? 0 : (F.Inl.empty() ? 2 : 3);
     if (!F.Stack.HasCheck) {
-      W.uleb("1");
+      W.uleb(Twine(1 + NLine));
       W.u8(1); // SP_DELTA: the body frame from the first instruction
       W.uleb("1");
       Entry("", Frame);
     } else {
-      W.uleb("2");
+      W.uleb(Twine(2 + NLine));
       W.u8(1); // SP_DELTA: entry, body, then the cold block's pushes
       W.uleb(Twine(3 + F.Stack.SPChanges.size()));
       Entry("", 0);
@@ -630,13 +797,47 @@ bool GocObjTables::doFinalization(Module &M) {
       Entry(F.Stack.BodyStart, -1);
       Entry(F.Stack.StubStart, -2);
     }
+    if (NLine) {
+      // 1.4: FILE, LINE, INL_INDEX. A row whose label lands on the same pc
+      // as the next one (an instruction that emits no bytes) is replaced
+      // by it.
+      for (unsigned K : {2u, 3u, 5u}) {
+        if (K == 5 && F.Inl.empty())
+          continue;
+        W.u8(K);
+        W.uleb(Twine(F.Lines.size()));
+        for (const LineRow &R : F.Lines)
+          Entry(R.PC, K == 2 ? (int64_t)R.File : K == 3 ? (int64_t)R.Line : (int64_t)R.Inl);
+      }
+    }
+    W.end(L);
+  }
+
+  std::vector<std::string> INL(Funcs.size());
+  W.section(".goc.inltree");
+  OS << ".Lgoc_inlbase:\n";
+  for (size_t I = 0; I < Funcs.size(); ++I) {
+    const FuncInfo &F = Funcs[I];
+    if (F.Inl.empty())
+      continue;
+    std::string L = W.begin();
+    INL[I] = L;
+    W.uleb(Twine(F.Inl.size()));
+    for (const InlNode &N : F.Inl) {
+      W.sleb(Twine(N.Parent));
+      W.uleb(Twine(N.File));
+      W.uleb(Twine(N.Line));
+      W.uleb(W.ref(N.Func));
+      W.uleb(N.ParentPC.empty() ? std::string("0") : N.ParentPC + "-" + F.Name);
+      W.uleb(Twine(N.StartLine));
+    }
     W.end(L);
   }
 
   W.section(".goc.files");
-  {
+  for (const std::string &P : FileList) {
     std::string L = W.begin();
-    W.uleb(W.ref(M.getSourceFileName()));
+    W.uleb(W.ref(P));
     W.end(L);
   }
 
@@ -659,11 +860,11 @@ bool GocObjTables::doFinalization(Module &M) {
       Flags |= 2;
     W.uleb(Twine(Flags | 8));
     W.u8(0);              // func_id
-    W.uleb("0");          // file: the translation unit
-    W.uleb("0");          // start_line
+    W.uleb(Twine(F.File));
+    W.uleb(Twine(F.StartLine));
     W.uleb(PCV[I] + "-.Lgoc_pcvbase+1");
     W.uleb(GC[I].empty() ? std::string("0") : GC[I] + "-.Lgoc_gcbase+1");
-    W.uleb("0");          // inl
+    W.uleb(INL[I].empty() ? std::string("0") : INL[I] + "-.Lgoc_inlbase+1"); // 1.4: inl
     W.uleb(Twine(F.SysvPtrRegs)); // 1.1: sysv_ptr_regs
     W.uleb(Twine(F.SptrSlots.size())); // 1.2: sptr_slots
     for (uint64_t O : F.SptrSlots)
@@ -758,7 +959,7 @@ bool GocObjTables::doFinalization(Module &M) {
   unsigned Prod = W.str("goc-llc (LLVM " LLVM_VERSION_STRING ")");
   W.section(".goc.header");
   OS << "\t.byte 0x47,0x4f,0x43,0x4f,0x42,0x4a,0,0\n"
-     << "\t.short 1\n\t.short 3\n"
+     << "\t.short 1\n\t.short 4\n"
      << "\t.byte " << (A64 ? 2 : 1) << "\n\t.byte " << (goc::stackInfo().empty() ? 0 : 1) << "\n\t.short 0\n"
      << "\t.long .Lgoc_s" << Prof << "-.Lgoc_strtab\n"
      << "\t.long .Lgoc_s" << Prod << "-.Lgoc_strtab\n"

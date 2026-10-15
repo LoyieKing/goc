@@ -14,8 +14,13 @@ echo "=== p28 ==="
 echo "=== p29 ==="
 ./scripts/test-p29-goabi.sh
 
-echo "=== arm64 ==="
+echo "=== stress ==="
 ./scripts/test-stress.sh
+
+echo "=== lines ==="
+./scripts/test-lines.sh
+
+echo "=== arm64 ==="
 ./test/arm64/check_arm64.sh
 
 echo "=== gocobj ==="

@@ -255,6 +255,10 @@ cmd_build() {
     # Names and declaration lines for bare T* live in debug info. Coloring
     # ignores dbg records; the report is printed from the same pass tables.
     CLANG_ARGS+=(-g)
+  else
+    # File and line rows of the .goc tables (and the inline tree) come from
+    # line-table debug locations; they do not change the generated code.
+    CLANG_ARGS+=(-gline-tables-only)
   fi
   if [[ "$OPT_LEVEL" == 0 ]]; then
     CLANG_ARGS+=(-Xclang -disable-O0-optnone)

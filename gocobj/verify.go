@@ -64,7 +64,26 @@ func Verify(f *File) []error {
 		if fn.gcOff != 0 && !f.gcStarts[fn.gcOff-1] {
 			bad("%s: gc offset %d is not a record start", w, fn.gcOff-1)
 		}
+		for j, n := range fn.Inl {
+			if n.Parent < -1 || n.Parent >= int64(j) {
+				bad("%s: inltree %d: parent %d", w, j, n.Parent)
+			}
+			if n.File >= uint64(len(f.Files)) {
+				bad("%s: inltree %d: file %d out of range", w, j, n.File)
+			}
+			if fn.TextSize > 0 && n.ParentPC >= fn.TextSize {
+				bad("%s: inltree %d: parent pc %d outside function", w, j, n.ParentPC)
+			}
+		}
 		for _, t := range fn.PCValue {
+			for _, e := range t.Entries {
+				if t.Kind == PCFile && (e.Value < 0 || e.Value >= int64(len(f.Files))) {
+					bad("%s: FILE %d out of range", w, e.Value)
+				}
+				if t.Kind == PCInlIndex && (e.Value < -1 || e.Value >= int64(len(fn.Inl))) {
+					bad("%s: INL_INDEX %d out of range", w, e.Value)
+				}
+			}
 			if t.Kind == 0 || t.Kind >= pcLast {
 				bad("%s: unknown pcvalue kind %d", w, t.Kind)
 			}

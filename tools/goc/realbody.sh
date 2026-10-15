@@ -164,8 +164,9 @@ else
     TARGET_ARGS=(-target aarch64-unknown-linux-gnu -ffixed-x28)
   fi
   # -fno-discard-value-names: see cmd/goc. The passes match stack slots by name.
+  # -gline-tables-only: the FILE/LINE/INL_INDEX rows and the inline tree.
   "$CLANG" "${NATIVE_DEFS[@]}" "${TARGET_ARGS[@]}" -mno-red-zone -fno-stack-protector \
-    -fno-asynchronous-unwind-tables -fno-discard-value-names -I "$INC" \
+    -fno-asynchronous-unwind-tables -fno-discard-value-names -gline-tables-only -I "$INC" \
     -emit-llvm -S "${OPT_FLAGS[@]}" \
     -o "$LL" "$IN"
 fi

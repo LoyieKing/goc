@@ -127,7 +127,14 @@ func Parse(ra io.ReaderAt) (*File, error) {
 				return errShort
 			}
 			for j := uint64(0); j < c && r.err == nil; j++ {
-				t.Entries = append(t.Entries, PCEntry{r.uleb(), r.sleb()})
+				e := PCEntry{r.uleb(), r.sleb()}
+				// 1.4: a FILE/LINE/INL_INDEX row on an instruction that
+				// emits no bytes shares its pc with the next row, which wins.
+				if n := len(t.Entries); n > 0 && t.Entries[n-1].PC == e.PC && t.Kind.lineKind() {
+					t.Entries[n-1] = e
+					continue
+				}
+				t.Entries = append(t.Entries, e)
 			}
 			ts = append(ts, t)
 		}
@@ -159,14 +166,32 @@ func Parse(ra io.ReaderAt) (*File, error) {
 		return nil, err
 	}
 
+	inls := map[uint64][]InlNode{}
+	b, _ = sec(SecInlTree)
+	if err := records(SecInlTree, b, func(off uint64, r *buf) error {
+		n := r.uleb()
+		if n > uint64(len(r.b)) {
+			return errShort
+		}
+		var ns []InlNode
+		for i := uint64(0); i < n && r.err == nil; i++ {
+			ns = append(ns, InlNode{Parent: r.sleb(), File: r.uleb(), Line: r.uleb(), Func: str(r.uleb()),
+				ParentPC: r.uleb(), StartLine: r.uleb()})
+		}
+		inls[off] = ns
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
 	b, _ = sec(SecFuncs)
 	if err := records(SecFuncs, b, func(_ uint64, r *buf) error {
 		fn := Func{Name: str(r.uleb()), TextSize: r.uleb(), FrameSize: r.uleb(), ArgSize: r.uleb(),
 			ABI: r.u8(), Kind: r.u8(), Flags: r.uleb(), FuncID: r.u8(), File: r.uleb(), StartLine: r.uleb()}
 		fn.pcvOff = r.uleb()
 		fn.gcOff = r.uleb()
-		r.uleb()          // inl, reserved
-		if len(r.b) > 0 { // 1.1
+		fn.inlOff = r.uleb() // 1.4; 0 before
+		if len(r.b) > 0 {    // 1.1
 			fn.SysvPtrRegs = r.uleb()
 		}
 		if len(r.b) > 0 { // 1.2
@@ -179,6 +204,9 @@ func Parse(ra io.ReaderAt) (*File, error) {
 		}
 		if fn.gcOff != 0 {
 			fn.GC = gcs[fn.gcOff-1]
+		}
+		if fn.inlOff != 0 {
+			fn.Inl = inls[fn.inlOff-1]
 		}
 		out.Funcs = append(out.Funcs, fn)
 		return nil
