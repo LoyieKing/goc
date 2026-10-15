@@ -118,6 +118,7 @@
 #include "GocObjTables.h"
 
 #include "Goc/StackCheck.h"
+#include "Goc/SlotMD.h"
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -246,11 +247,7 @@ struct GocFrameAddrFix : MachineFunctionPass {
   // 8-byte stack-map roots whose address does not escape to a callee. A CSR
   // that is an exact copy has to be reloaded: the morestack stub restores the
   // register, and Go has already adjusted the slot.
-  static bool isCopiedRoot(const AllocaInst *AI) {
-    StringRef N = AI->getName();
-    return N.starts_with("goc.arganchor") || N.starts_with("goc.anchor") ||
-           N.starts_with("goc.spill.root");
-  }
+  static bool isCopiedRoot(const AllocaInst *AI) { return goc::isCopiedRoot(AI); }
   bool aliasesCopiedRoot(const Val &V) const {
     return V.Alias >= 0 && (unsigned)V.Alias < SlotIsRoot.size() &&
            SlotIsRoot[V.Alias];
@@ -293,9 +290,7 @@ struct GocFrameAddrFix : MachineFunctionPass {
   static bool loadsGocRoot(const MachineInstr &MI) {
     for (const MachineMemOperand *MMO : MI.memoperands())
       if (const Value *V = MMO->getValue())
-        if (V->hasName() && (V->getName().starts_with("goc.spill.root") ||
-                             V->getName().starts_with("goc.anchor") ||
-                             V->getName().starts_with("goc.arganchor")))
+        if (goc::isCopiedRoot(V))
           return true;
     return false;
   }

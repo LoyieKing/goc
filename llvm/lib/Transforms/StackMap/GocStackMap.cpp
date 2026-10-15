@@ -73,6 +73,7 @@
 #include "llvm/Support/ErrorHandling.h"
 
 #include "Goc/StackMap.h"
+#include "Goc/SlotMD.h"
 
 using namespace llvm;
 
@@ -391,13 +392,6 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
     bool Changed = Hoisted;
     if (!sptr.empty()) {
       Changed = true;
-      // Clang may emit numbered (nameless) allocas. MIR drops those names, but
-      // the map extractor must identify pointer slots in the post-PEI frame.
-      for (Instruction &I : instructions(F))
-        if (auto *Slot = dyn_cast<AllocaInst>(&I))
-          if (Slot->getAllocatedType()->isPointerTy() && Slot->getName().empty())
-            Slot->setName("goc.ptr.slot");
-
       // The frame map marks an sptr-holding alloca for the whole function, so
       // a slot that has not been assigned yet would hold junk — and the
       // runtime validates every marked slot ("bad pointer in frame" for
@@ -433,19 +427,11 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
       for (uint64_t off : Words)
         if (Size.isScalable() || off + 8 > Size.getFixedValue())
           report_fatal_error("goc-stackmap: pointer word outside its frame alloca");
-      if (Slot->getName().empty())
-        Slot->setName("goc.frame.field");
-      SmallVector<Metadata *, 8> tag{
-          MDString::get(F.getContext(), "goc.frame.words"),
-          MDString::get(F.getContext(), Slot->getName())};
       auto &previous = frameWords[Slot];
-      for (uint64_t off : Words) {
-        tag.push_back(ConstantAsMetadata::get(ConstantInt::get(
-            Type::getInt64Ty(F.getContext()), off)));
+      for (uint64_t off : Words)
         if (std::find(previous.begin(), previous.end(), off) == previous.end())
           previous.push_back(off);
-      }
-      Writer.setMetadata("goc.frame.words", MDNode::get(F.getContext(), tag));
+      Writer.setMetadata("goc.frame.words", goc::frameWordsTag(Slot, Words));
     };
     for (Instruction &I : instructions(F))
       if (auto *Slot = dyn_cast<AllocaInst>(&I))
@@ -666,6 +652,7 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
 
       IRBuilder<> Entry(&*F.getEntryBlock().getFirstInsertionPt());
       auto *Root = Entry.CreateAlloca(V->getType(), nullptr, "goc.spill.root");
+      goc::markRoot(Root, "spill");
       roots[V] = Root;
 
       // Remember original users before adding the save. The slot is the
@@ -1289,17 +1276,10 @@ DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL) {
 // frame-word-tagged allocas and allocas that receive a pointer or sptr store.
 bool unmergeReportedAllocas(Function &F) {
   DenseSet<AllocaInst *> keep;
-  DenseMap<StringRef, AllocaInst *> byName;
-  for (Instruction &I : instructions(F))
-    if (auto *AI = dyn_cast<AllocaInst>(&I))
-      if (AI->hasName())
-        byName[AI->getName()] = AI;
+  auto slots = goc::slotMap(F);
   auto tagged = [&](const Instruction &I) {
-    if (const MDNode *N = I.getMetadata("goc.frame.words"))
-      if (N->getNumOperands() >= 2)
-        if (const auto *S = dyn_cast<MDString>(N->getOperand(1)))
-          if (AllocaInst *AI = byName.lookup(S->getString()))
-            keep.insert(AI);
+    if (AllocaInst *AI = goc::frameWordsSlot(slots, I.getMetadata("goc.frame.words")))
+      keep.insert(AI);
   };
   for (Instruction &I : instructions(F)) {
     tagged(I);
@@ -1391,14 +1371,7 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       if (!Slot || !Slot->isStaticAlloca() || Slot->isArrayAllocation() ||
           SOff < 0 || SOff % 8)
         continue;
-      if (Slot->getName().empty())
-        Slot->setName("goc.ptr.slot");
-      SmallVector<Metadata *, 4> tag{
-          MDString::get(F.getContext(), "goc.frame.words"),
-          MDString::get(F.getContext(), Slot->getName()),
-          ConstantAsMetadata::get(
-              ConstantInt::get(Type::getInt64Ty(F.getContext()), uint64_t(SOff)))};
-      S->setMetadata("goc.frame.words", MDNode::get(F.getContext(), tag));
+      S->setMetadata("goc.frame.words", goc::frameWordsTag(Slot, {uint64_t(SOff)}));
     }
 
     struct Fix {
@@ -1406,10 +1379,12 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       SmallVector<Use *, 8> Uses; // uses that cross a safepoint
     };
     SmallVector<Fix, 16> fixes;
-    for (Value *V : stack) {
-      auto *Def = dyn_cast<Instruction>(V);
-      if (!Def)
+    // Program order, not the set's pointer order: the anchors are created in
+    // this order, and their order is the frame layout.
+    for (Instruction &DefI : instructions(F)) {
+      if (!stack.count(&DefI))
         continue;
+      Instruction *Def = &DefI;
       // An alloca is a frame index, but a use after a safepoint must not reuse
       // a LEA that was computed before the call. llc -O3 keeps that LEA in a
       // callee-saved register; morestack adjusts BP and the slot, not the
@@ -1560,11 +1535,8 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       AllocaInst *Anchor = Entry.CreateAlloca(fix.Def->getType(), nullptr,
                                               "goc.anchor");
       Anchor->setAlignment(Align(8));
-      SmallVector<Metadata *, 4> tag{
-          MDString::get(F.getContext(), "goc.frame.words"),
-          MDString::get(F.getContext(), Anchor->getName()),
-          ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(F.getContext()), 0))};
-      MDNode *Node = MDNode::get(F.getContext(), tag);
+      goc::markRoot(Anchor, "anchor");
+      MDNode *Node = goc::frameWordsTag(Anchor, {0});
       Anchor->setMetadata("goc.frame.words", Node);
 
       ++anchors;
@@ -1654,11 +1626,8 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       IRBuilder<> B(&F.getEntryBlock(), F.getEntryBlock().getFirstInsertionPt());
       auto *Anchor = B.CreateAlloca(ArgTy, nullptr, "goc.arganchor");
       Anchor->setAlignment(Align(8));
-      SmallVector<Metadata *, 4> tag{
-          MDString::get(F.getContext(), "goc.frame.words"),
-          MDString::get(F.getContext(), Anchor->getName()),
-          ConstantAsMetadata::get(ConstantInt::get(Type::getInt64Ty(F.getContext()), 0))};
-      MDNode *Node = MDNode::get(F.getContext(), tag);
+      goc::markRoot(Anchor, "arganchor");
+      MDNode *Node = goc::frameWordsTag(Anchor, {0});
       Anchor->setMetadata("goc.frame.words", Node);
       ++anchors;
       Instruction *At = Anchor->getNextNode()
@@ -1887,11 +1856,13 @@ struct GocPinI64 : PassInfoMixin<GocPinI64> {
       SmallVector<Use *, 8> Uses;
     };
     SmallVector<Fix, 16> fixes;
-    for (Value *V : pin) {
-      auto *Def = cast<Instruction>(V);
+    for (Instruction &DefI : instructions(F)) { // program order (see above)
+      if (!pin.count(&DefI))
+        continue;
+      Instruction *Def = &DefI;
       if (auto *LI = dyn_cast<LoadInst>(Def)) {
         auto *AI = dyn_cast<AllocaInst>(LI->getPointerOperand()->stripPointerCasts());
-        if (AI && AI->getName().starts_with("goc.pin"))
+        if (goc::rootKind(AI) == "pin")
           continue;
       }
       Fix fix{Def, {}};
@@ -1914,6 +1885,7 @@ struct GocPinI64 : PassInfoMixin<GocPinI64> {
     DenseMap<std::pair<Instruction *, Instruction *>, Value *> reused;
     for (Fix &fix : fixes) {
       AllocaInst *Slot = Entry.CreateAlloca(fix.Def->getType(), nullptr, "goc.pin");
+      goc::markRoot(Slot, "pin");
       Slot->setAlignment(Align(8));
       IRBuilder<> Zero(Slot->getNextNode());
       auto *Z = Zero.CreateStore(Constant::getNullValue(fix.Def->getType()), Slot);

@@ -32,6 +32,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "Goc/StackCheck.h"
+#include "Goc/SlotMD.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/Support/Path.h"
@@ -113,9 +114,9 @@ struct FuncInfo {
   std::vector<SMRec> Stackmaps;    // 1.3
 };
 
-// An alloca (by IR name) plus a byte offset inside it that holds an sptr.
+// An alloca plus a byte offset inside it that holds an sptr.
 struct SptrTarget {
-  std::string Alloca;
+  const AllocaInst *Alloca;
   int64_t Off;
   bool operator==(const SptrTarget &O) const { return Alloca == O.Alloca && Off == O.Off; }
 };
@@ -146,11 +147,6 @@ static bool hasSptr(const Function &F) {
   return false;
 }
 
-static bool compilerRoot(StringRef N) {
-  return N.starts_with("goc.anchor") || N.starts_with("goc.arganchor") ||
-         N.starts_with("goc.spill.root");
-}
-
 // The frame slots that hold sptr values (goc-lower meta: sptrSlots): every
 // (alloca, offset) named by a !goc.frame.words tag, and every alloca that
 // receives a direct store of an sptr-colored pointer.
@@ -160,17 +156,16 @@ static std::vector<SptrTarget> sptrTargets(const Function &F) {
     if (std::find(Out.begin(), Out.end(), T) == Out.end())
       Out.push_back(std::move(T));
   };
+  auto Slots = goc::slotMap(F);
   for (const BasicBlock &BB : F)
     for (const Instruction &I : BB) {
       if (const MDNode *W = I.getMetadata("goc.frame.words")) {
-        if (W->getNumOperands() < 2)
-          continue;
-        auto *Name = dyn_cast<MDString>(W->getOperand(1));
-        if (!Name || compilerRoot(Name->getString()))
+        const AllocaInst *A = goc::frameWordsSlot(Slots, W);
+        if (!A || goc::isCopiedRoot(A))
           continue;
         for (unsigned K = 2; K < W->getNumOperands(); ++K)
           if (auto *C = mdconst::dyn_extract<ConstantInt>(W->getOperand(K)))
-            Add({Name->getString().str(), C->getSExtValue()});
+            Add({A, C->getSExtValue()});
         continue;
       }
       auto *St = dyn_cast<StoreInst>(&I);
@@ -178,11 +173,11 @@ static std::vector<SptrTarget> sptrTargets(const Function &F) {
         continue;
       auto *V = dyn_cast<Instruction>(St->getValueOperand());
       auto *A = dyn_cast<AllocaInst>(St->getPointerOperand());
-      if (!V || !A || !V->getType()->isPointerTy() || !V->hasName() || !A->hasName())
+      if (!V || !A || !V->getType()->isPointerTy())
         continue;
-      if (!isSptrNode(V->getMetadata("goc.color")) || compilerRoot(A->getName()))
+      if (!isSptrNode(V->getMetadata("goc.color")) || goc::isCopiedRoot(A))
         continue;
-      Add({A->getName().str(), 0});
+      Add({A, 0});
     }
   return Out;
 }
@@ -563,12 +558,11 @@ struct GocObjTables : MachineFunctionPass {
                          "registers, and this signature is not modelled");
     if (auto It = IRSptr.find(MF.getFunction().getName()); It != IRSptr.end()) {
       const MachineFrameInfo &MFI = MF.getFrameInfo();
-      StringMap<int64_t> Obj;
+      DenseMap<const AllocaInst *, int64_t> Obj;
       for (int I = 0, E = MFI.getObjectIndexEnd(); I < E; ++I)
         if (!MFI.isDeadObjectIndex(I))
           if (const AllocaInst *A = MFI.getObjectAllocation(I))
-            if (A->hasName())
-              Obj.try_emplace(A->getName(), MFI.getObjectOffset(I));
+            Obj.try_emplace(A, MFI.getObjectOffset(I));
       for (const SptrTarget &T : It->second) {
         auto O = Obj.find(T.Alloca);
         if (O == Obj.end())

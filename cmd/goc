@@ -245,11 +245,10 @@ cmd_build() {
   }
 
   # Go-stack compatible codegen: no red zone, no stack protector, no unwind tables.
-  # -fno-discard-value-names: GocStackMap and goc-llc still find stack slots by
-  # IR value name. A Release (no-assertions) clang drops those names by default,
-  # and the unnamed slots then fall out of the stack maps.
+  # IR value names do not matter: the passes and goc-llc mark the stack slots
+  # they track with metadata (llvm/include/Goc/SlotMD.h), so a Release clang
+  # that discards names gives the same tables.
   local CLANG_ARGS=(-mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables
-                    -fno-discard-value-names
                     -I "$INC" -emit-llvm -S "-O$OPT_LEVEL")
   if [[ "${GOC_COLOR_REPORT:-}" == 1 ]]; then
     # Names and declaration lines for bare T* live in debug info. Coloring
