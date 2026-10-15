@@ -14,7 +14,7 @@ MAX="${GOC_MAX_FILE_LINES:-800}"
 ALLOW=scripts/file-size-allow.txt
 
 declare -A cap
-while read -r path n; do
+while read -r path n _; do
   [[ -z "$path" || "$path" == \#* ]] && continue
   cap[$path]=$n
 done < "$ALLOW"
