@@ -567,20 +567,30 @@ struct GocObjTables : MachineFunctionPass {
         auto O = Obj.find(T.Alloca);
         if (O == Obj.end())
           continue;
-        int64_t Off = -O->second - 16 - T.Off;
+        // Bytes below varp: x86-64 varp is the saved RBP (entry SP - 16
+        // with the return address); arm64 varp is entry SP - 8.
+        int64_t Off = -O->second - (FI.A64 ? 8 : 16) - T.Off;
         if (Off < 8 || Off % 8 != 0)
           continue;
         if (std::find(FI.SptrSlots.begin(), FI.SptrSlots.end(), (uint64_t)Off) == FI.SptrSlots.end())
           FI.SptrSlots.push_back(Off);
       }
-      std::sort(FI.SptrSlots.begin(), FI.SptrSlots.end());
-      // The BP-relative offsets above follow the x86-64 frame. arm64 has
-      // no frame-address repair and records no stack maps (as on main,
-      // whose meta.json never listed arm64 sptr slots): no slots, so no
-      // locals bits, rather than bits computed for the wrong frame.
-      if (FI.A64)
-        FI.SptrSlots.clear();
     }
+    // arm64: the saved X29 is a raw address in the caller's frame. Mark it
+    // as a pointer slot so a stack copy adjusts it (GC ignores stack
+    // addresses); epilogues and FP-relative accesses read it back.
+    if (FI.A64) {
+      const MachineFrameInfo &MFI = MF.getFrameInfo();
+      const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+      for (const CalleeSavedInfo &CS : MFI.getCalleeSavedInfo())
+        if (StringRef(TRI.getName(CS.getReg())) == "FP") {
+          int64_t Off = -MFI.getObjectOffset(CS.getFrameIdx()) - 8;
+          if (Off >= 8 && Off % 8 == 0 &&
+              std::find(FI.SptrSlots.begin(), FI.SptrSlots.end(), (uint64_t)Off) == FI.SptrSlots.end())
+            FI.SptrSlots.push_back(Off);
+        }
+    }
+    std::sort(FI.SptrSlots.begin(), FI.SptrSlots.end());
     MachineInstr *Last = nullptr;
     Pending.clear();
     for (MachineBasicBlock &MBB : MF) {
