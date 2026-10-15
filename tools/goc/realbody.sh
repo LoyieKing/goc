@@ -121,7 +121,14 @@ case "$OPT_LEVEL" in
   *) echo "realbody: GOC_OPT_LEVEL must be 0, 1, 2, or 3" >&2; exit 1 ;;
 esac
 
-TMP="${GOC_KEEP_TMP:-$(mktemp -d)}"
+# GOC_KEEP_TMP: a directory to work in and keep; 1 (as cmd/goc takes it)
+# keeps a fresh temp directory instead of creating ./1.
+if [[ -n "${GOC_KEEP_TMP:-}" && "$GOC_KEEP_TMP" != 1 ]]; then
+  TMP="$GOC_KEEP_TMP"
+else
+  TMP="$(mktemp -d)"
+  [[ -n "${GOC_KEEP_TMP:-}" ]] && echo "realbody: kept $TMP" >&2
+fi
 mkdir -p "$TMP"
 cleanup() { [[ -n "${GOC_KEEP_TMP:-}" ]] || rm -rf "$TMP"; }
 trap cleanup EXIT
