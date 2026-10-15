@@ -3,8 +3,8 @@
 Product lower path and the machine passes it uses.
 
 ```text
-tools/goc/     Clang IR → llc → elfpack
-tools/goc-elfpack ELF bytes and relocations → goobj (code in goobj/elfpack)
+tools/goc/     Clang IR → goc-llc → llvm-mc → gocobj2goobj
+tools/gocobj2goobj .gocobj tables → goobj
 llvm/         libGocPasses.so (opt plugin) and goc-llc (llc + GocFrameAddrFix)
 tools/goc/        toolexec packer used by the QuickJS link
 ```

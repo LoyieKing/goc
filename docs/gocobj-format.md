@@ -110,8 +110,8 @@ the function start), `uleb id`, `uleb nloc`, then `nloc` locations of
 `u8 type, uleb size, uleb reg, sleb off`, in the encoding of
 `.llvm_stackmaps` version 3 (type 1 Register, 2 Direct, 3 Indirect,
 4 Constant; `reg` is a DWARF register number). Records are in code order
-within a function. While the ELF still carries `.llvm_stackmaps`, the
-converter requires the two to agree record for record.
+within a function. The converter reads bitmaps from `.goc.gcmaps`; these
+records are kept for `verify` and debugging.
 
 ### `.goc.wrappers` (1.3)
 
@@ -177,38 +177,14 @@ specified when the backend emits them (a minor version bump).
 
 ## Producer today
 
-`goc-llc -goc-tables=FILE` writes the `.goc.*` sections as assembler text;
-`tools/goc/realbody.sh` appends it to the function assembly before `llvm-mc`,
-so the object it hands to elfpack is also the `.gocobj` (saved as
-`foo.gocobj` next to `foo.goobj`; `GOC_GOCOBJ=0` turns it off). This is the
-transitional content of plan row 4:
-
-- `.goc.funcs`: every function goc-llc compiled, with `text_size` and
-  `frame_size`. `arg_size`, ABI, flags and lines are not filled yet (they
-  still come from `meta.json`). Go ABI thunks are not listed; they are
-  generated outside LLVM.
-- `.goc.relocs`: every direct call, including calls `llvm-mc` resolved inside
-  `.text` and left without an ELF relocation.
-- `.goc.gcmaps`: one record per safepoint call (a call that follows a
-  `STACKMAP`), with empty bitmaps. The bits are still in `.llvm_stackmaps`.
-- `.goc.data`: every non-private global, without pointer bitmaps.
-- 1.1: `.goc.files` names the source file; funcs carry the internal,
-  has-sptr and SysV pointer-register facts (computed on the IR goc-llc
-  receives); relocs add indirect calls (CALL_INDIRECT_MARK) and
-  function-address LEAs (FUNC_ADDR).
-- 1.2: funcs carry `sptr_slots` (from the final frame layout, matched to the
-  IR allocas by name); relocs add direct calls written in inline assembly
-  (goc-llc puts a label pair around each `call sym` line of the asm text;
-  labels emit no bytes).
-- 1.3: `.goc.stackmaps` carries every STACKMAP record (goc-llc reads the
-  post-PEI operands the same way LLVM's StackMaps does); the converter takes
-  the records from it, after checking them against `.llvm_stackmaps`.
-  `goc-lower goabi` writes the Go ABI thunks' records (kind-1 funcs,
-  `.goc.wrappers`, their CALL relocations) as assembler text appended after
-  goc-llc's; its strings go to `.goc.strtab` under labels of their own.
-
-`gocobj2goobj -check-meta` rebuilds the per-function part of meta.json from
-these tables and lists every field that differs from goc-lower's.
+`goc-llc -function-sections -goc-tables=FILE` writes the `.goc.*` sections as
+assembler text, including the stack check and morestack block it emitted
+(shared `GocStackCheck` pass plus the per-arch hook), the SP_DELTA and
+UNSAFE_POINT pc tables and the gcmap bitmaps. `goc-lower goabi` appends the Go
+ABI thunks and their records. `tools/goc/realbody.sh` assembles everything
+with `llvm-mc` into one ELF, which is the `.gocobj` (saved next to the
+`.goobj`), and runs `gocobj2goobj -symabis`. The converter does not decode or
+emit instructions; `.llvm_stackmaps` and `meta.json` are no longer read.
 
 `test/gocobj/verify-real.sh` runs `goc-objdump verify` on every `.gocobj`
 under `build/`. `verify` also checks each table relocation against the ELF

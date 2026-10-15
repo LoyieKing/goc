@@ -16,16 +16,28 @@ tools/goc/realbody.sh   （由 cmd/goc build / scripts/goc-go.sh 调用）
   ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-inline-gate
   ├─ opt default<O{0..3}>
   ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-stackmap    llvm/lib/Transforms/StackMap
-  ├─ goc-llc -filetype=asm           llvm/tools/goc-llc   llc + GocFrameAddrFix + GocStackmapPlacement
-  ├─ goc-lower align-asm → llvm-mc → ELF .o（再用 llvm-objdump 反汇编给 meta 用）
-  ├─ goc-lower meta                  生成 meta.json（符号、调用点、分支、参数溢出）
-  └─ goc-elfpack                     tools/goc-elfpack   ELF + meta + 栈图 → Go 目标文件（.goobj）
+  ├─ goc-llc -function-sections -goc-tables   llvm/tools/goc-llc
+  │    GocFrameAddrFix、GocStackmapPlacement、GocStackCheck（栈检查 + morestack）、GocObjTables（.goc.s 表）
+  ├─ goc-lower goabi                 生成 Go ABI thunk（thunks.s + thunks.goc.s）
+  ├─ llvm-mc → 一个 ELF，即 .gocobj（机器码 + ELF 重定位 + .goc.* 表）
+  └─ gocobj2goobj -symabis           tools/gocobj2goobj   纯表 → goobj 转换
   ▼
 go build -toolexec tools/goc/toolexec_recognize_goobj.sh
   把 .goobj 打进包归档，交给 Go 链接器
 ```
 
-现在 goc-elfpack 除了做格式转换，还会自己生成栈检查和 morestack 的指令字节，并反解析 llc 的机器码来修补重定位。整改方案要把这些工作移进 LLVM，并引入不依赖 Go 版本的 `.gocobj` 中间格式，elfpack 最终删除。
+所有指令、重定位、pc 表（SP_DELTA、UNSAFE_POINT）和栈图都由 LLVM 产出。`gocobj2goobj` 不解码也不生成任何指令，只把表翻译成当前 Go 版本的目标文件；`-function-sections` 保证每个跨函数引用都有 ELF 重定位，不需要修补已烘焙的位移。
+
+### 栈检查：共享部分与架构钩子
+
+栈检查分两层，目标是让每个架构只写最少的代码：
+
+| 层 | 位置 | 负责 |
+|---|---|---|
+| 共享（与架构无关） | `llvm/include/Goc/StackCheck.h`、`llvm/lib/CodeGen/GocStackCheck.cpp` | 判定哪些函数需要检查（叶子 / 无栈帧 / 帧 ≤ 128 且无调用 → nosplit）；按 ABI profile 常量选 small（≤128）/ big（≤4096）/ huge 档；记录 body/stub 标签、每段 SP 偏移、morestack 调用点，供 GocObjTables 写表 |
+| 架构钩子 | `llvm/lib/Target/X86/GocX86StackCheck.cpp`（`createX86StackCheckTarget`） | 只发指令：读 g 和 stackguard、比较、条件跳转、stub 里保存参数寄存器、调用 `runtime.morestack_noctxt`、恢复并跳回入口 |
+
+新增一个架构只需要实现钩子接口（约 150 行），再在 `gocobj2goobj` 里加该架构的重定位映射。AArch64 钩子尚未实现，见 `progress.md`。
 
 ## 目录
 
@@ -34,12 +46,11 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `cmd/goc` | 命令行入口（bash）：`goc go`、`goc build`、`goc test`、`goc check`、`goc toolchain` |
 | `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`）、发布（`pack-release.sh`）、测试入口（`ci-test.sh`、`test-p27/p28/p29*.sh`、`qjs-*.sh`、`test262-sample.py`、`qjs-official-tests.py`） |
 | `clang/` | Clang 补丁、`SemaGocColors.cpp`、树外插件（p27 测试用） |
-| `llvm/` | goc 自己的 LLVM 代码。`lib/Transforms/ColorEscape` 编成独立工具 `goc-color-escape`；`lib/Transforms/StackMap` 是 opt 插件 `libGocPasses.so`；`tools/goc-llc` 是加了两个机器 pass 的 llc。构建：`scripts/build-passes.sh`，产物在 `build/llvm/` |
+| `llvm/` | goc 自己的 LLVM 代码。`lib/Transforms/ColorEscape` 编成独立工具 `goc-color-escape`；`lib/Transforms/StackMap` 是 opt 插件 `libGocPasses.so`；`tools/goc-llc` 是加了 goc 机器 pass 和表输出的 llc；`lib/CodeGen` 是共享栈检查，`lib/Target/<arch>` 是架构钩子。构建：`scripts/build-passes.sh`，产物在 `build/llvm/` |
 | `goobj/enc` | 从 Go 1.24 源码 vendored 的目标文件写入器（`goobj/enc/vendorize.sh` 负责同步） |
-| `goobj/lower` | Go ABI 降级：thunk、签名、meta.json |
-| `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子、默认栈图 |
-| `tools/goc-elfpack` | ELF → goobj（逻辑在 `goobj/elfpack`；栈检查拼接在 `legacy_splice.go`，方案第 6a 行删除） |
-| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，过渡期内部仍调用 `goobj/elfpack` |
+| `goobj/lower` | Go ABI 降级：thunk、签名、参数布局 |
+| `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子 |
+| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata |
 | `tools/gocobj-diff` | 两个 goobj 的语义比对（符号、reloc、解码后的 pc 表、funcdata、FuncInfo） |
 | `tools/goc-lower` | `goobj/lower` 的命令行外壳 |
 | `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
@@ -56,6 +67,6 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 
 ## 测试
 
-- `scripts/ci-test.sh`：`goc check`、`goc test --p28`、`test-p29-goabi.sh`、`test/arm64/check_arm64.sh`、`goc test --p27`。CI 跑的就是这一组。
+- `scripts/ci-test.sh`：`goc check`、`goc test --p28`、`test-p29-goabi.sh`、gocobj 单元测试、`test-stress.sh`（栈增长 + GC 压力）、`test/arm64/check_arm64.sh`、`goc test --p27`。CI 跑的就是这一组。
 - QuickJS：`scripts/qjs-cli-build.sh`（ng / `QJS_FLAVOR=bellard`），然后跑 `scripts/test262-sample.py` 和 `scripts/qjs-official-tests.py`。
 - Go 单元测试：`go test ./goobj/lower ./tools/...`。

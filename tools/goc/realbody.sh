@@ -282,7 +282,7 @@ fi
 # PUSH/POP around a call, so SP is not the constant pcsp claims and the
 # unwinder reads g as a return PC.
 # Tail merging would hoist a CALL shared by two blocks into a common tail and
-# leave each stackmap record before a JMP; elfpack attaches a record to the
+# leave each stackmap record before a JMP; the tables attach a record to the
 # next CALL in layout order, so the merged CALL would get another path's roots.
 # Tail duplication is on: QuickJS dispatch blocks are shared tails, and gcc
 # duplicates them. Stock llc accepts the thresholds on both arches.

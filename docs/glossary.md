@@ -53,7 +53,7 @@ Linux amd64 的 C 调用约定。goc 函数体按这个生成；Go 调用经 thu
 ## 产物
 
 ### goobj
-Go 链接器接受的目标文件，带 pclntab、FUNCDATA、PCDATA。`elfpack` 从 llc 的 ELF 生成它。
+Go 链接器接受的目标文件，带 pclntab、FUNCDATA、PCDATA。`gocobj2goobj` 从 `.gocobj` 的表生成它。
 
 ### FUNCDATA / PCDATA
 函数级指针 bitmap，以及随 PC 变化的 stackmap 索引。搬栈时运行时用它们找活指针。

@@ -12,7 +12,7 @@
 ./cmd/goc build test/goabi/goabi.c -o build/p29-goabi/goabi.goobj
 ```
 
-留下旁边的 `goabi.meta.json`，不要改名。这个 `.goobj` 交给 Go 链接器。`gcc` 用不了它。
+留下旁边的 `goabi.gocobj` 和 `goabi.symabis`，不要改名。这个 `.goobj` 交给 Go 链接器。`gcc` 用不了它。
 
 Go 能直接调用的是整数、指针、浮点，以及很小的结构体。变参不行。符号形如 `main.goabi_add2`。Go 包是 `package main` 时才对得上。
 
@@ -104,7 +104,7 @@ From the repository root:
 ./cmd/goc build test/goabi/goabi.c -o build/p29-goabi/goabi.goobj
 ```
 
-Leave the sibling `goabi.meta.json` in place. Do not rename it. Give this `.goobj` to the Go linker. `gcc` cannot use it.
+Leave the sibling `goabi.gocobj` and `goabi.symabis` in place. Do not rename it. Give this `.goobj` to the Go linker. `gcc` cannot use it.
 
 Go can call integers, pointers, floats, and very small structs. Variadic functions are not included. Symbols look like `main.goabi_add2`. That matches a Go `package main`.
 

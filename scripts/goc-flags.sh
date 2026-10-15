@@ -1,6 +1,6 @@
 # Command-line settings for the goc driver.
 # Source this file. Each recognized flag exports the value the passes,
-# realbody, and elfpack already read. A flag overrides an inherited value.
+# realbody and the converter already read. A flag overrides an inherited value.
 #
 # GOC_FLAG_MODE=driver accepts only --root. --clang and --toolchain are
 # rejected in every mode: the patched clang ships next to goc.

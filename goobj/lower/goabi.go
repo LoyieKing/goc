@@ -1,5 +1,5 @@
 // Package lower is the goc real-body lowering that used to run as Python
-// and ripgrep: Go ABI thunks, IR fixups, and the elfpack sidecar.
+// and ripgrep: Go ABI thunks, IR fixups, and argument layout.
 package lower
 
 import (
@@ -1465,7 +1465,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		}
 		sort.Ints(slots)
 		// A thunk is entered with the Go ABI; SysV pointer registers
-		// describe C entries only (meta.json has [] for thunks too).
+		// describe C entries only.
 		ts[i] = thunk{spills, stackPtrs, area, slots, 0}
 	}
 	b.WriteString("# .goc.* records of the Go ABI thunks (goc-lower goabi)\n")

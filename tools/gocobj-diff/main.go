@@ -2,7 +2,7 @@
 // attributes, relocations (offset, size, type, target, addend), decoded
 // pc-value tables (pcsp, pcfile, pcline, pcinline, pcdata), funcdata
 // contents and FuncInfo. It is the migration check of plan row 5: the output
-// of gocobj2goobj must have no semantic difference from elfpack's.
+// of two converter builds must have no semantic difference.
 //
 //	gocobj-diff [-v] A.goobj B.goobj
 //

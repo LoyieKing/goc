@@ -171,7 +171,7 @@ flowchart LR
 | `clang/` | Changes to the Clang frontend |
 | `llvm/` | goc's LLVM passes (color/escape transform, stack-map plugin) and `goc-llc` |
 | `goobj/` | Go-side libraries: vendored Go object writer, Go ABI lowering |
-| `tools/` | `goc` pipeline scripts, `goc-elfpack` (ELF → Go object), `goc-lower` |
+| `tools/` | `goc` pipeline scripts, `gocobj2goobj` (`.gocobj` → Go object), `goc-lower` |
 | `runtime/` | goc runtime support |
 | `test/` | Tests, including QuickJS |
 | `bench/` | Benchmarks and perf-gap studies |

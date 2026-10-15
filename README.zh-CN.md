@@ -171,7 +171,7 @@ flowchart LR
 | `clang/` | Clang 前端的修改 |
 | `llvm/` | goc 的 LLVM pass（颜色/逃逸变换、栈图插件）和 `goc-llc` |
 | `goobj/` | Go 侧的库：vendored 的 Go 目标文件写入器、Go ABI 降级 |
-| `tools/` | `goc` 流水线脚本、`goc-elfpack`（ELF → Go 目标文件）、`goc-lower` |
+| `tools/` | `goc` 流水线脚本、`gocobj2goobj`（`.gocobj` → Go 目标文件）、`goc-lower` |
 | `runtime/` | goc 运行时支持 |
 | `test/` | 测试，包括 QuickJS |
 | `bench/` | 基准测试和性能差距分析 |

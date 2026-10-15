@@ -31,7 +31,7 @@ goc-llc (llc-19 + GocStackmapPlacement + post-RA GocFrameAddrFix)  →  ELF
     │  right after the call; stack moves only happen inside calls
     │
     ▼
-elfpack  →  goobj
+gocobj2goobj  →  goobj
     │
     ▼
 Go link
@@ -48,8 +48,7 @@ Go link
 | `clang/plugin` | Same checks as an out-of-tree plugin |
 | `llvm/lib/Transforms/ColorEscape` | Escape refine; lowers dynamic `alloca`; inserts uptr encode/decode |
 | `llvm` | Stack maps, safepoint spills, morestack insertion |
-| `tools/goc-elfpack` | ELF bytes and relocations → goobj (code in `goobj/elfpack`) |
-| `tools/gocobj2goobj` | `.gocobj` → goobj; verifies, then still runs `goobj/elfpack` |
+| `tools/gocobj2goobj` | `.gocobj` → goobj; verifies, then translates the tables (no instruction decoding) |
 | `tools/gocobj-diff` | semantic diff of two goobj files |
 | `runtime/uptr` | MSB encode/decode; `g` from `FS:-8`; `goc_dynalloc` / `goc_dynrelease` |
 
