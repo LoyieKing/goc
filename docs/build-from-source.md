@@ -89,10 +89,10 @@ goc check
 
 ```bash
 ./cmd/goc check
-./cmd/goc test --p28
-./scripts/test-p29-goabi.sh
-./test/arm64/check_arm64.sh
-./cmd/goc test --p27
+./cmd/goc test
+./test/e2e/goabi/run.sh
+./test/e2e/arm64/run.sh
+./cmd/goc test --plugin
 ```
 
 `scripts/ci-test.sh` 就是这五项。GitHub Actions 在每次推送到 `main` 和每个 pull request 上跑它。打 `v*` tag 时，release workflow 先跑同样的测试，再执行 `pack-release.sh`，把压缩包传到对应的 GitHub Release。tag 必须和 `VERSION` 一致，例如 `VERSION` 是 `0.0.2` 时 tag 是 `v0.0.2`。
@@ -192,10 +192,10 @@ From the checkout, without packing:
 
 ```bash
 ./cmd/goc check
-./cmd/goc test --p28
-./scripts/test-p29-goabi.sh
-./test/arm64/check_arm64.sh
-./cmd/goc test --p27
+./cmd/goc test
+./test/e2e/goabi/run.sh
+./test/e2e/arm64/run.sh
+./cmd/goc test --plugin
 ```
 
 `scripts/ci-test.sh` is those five. GitHub Actions runs it on every push to `main` and every pull request. On a `v*` tag, the release workflow runs the same tests, then `pack-release.sh`, and uploads the archive to that GitHub Release. The tag has to match `VERSION`: `0.0.2` in the file means the tag `v0.0.2`.

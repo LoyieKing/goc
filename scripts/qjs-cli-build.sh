@@ -5,7 +5,7 @@ ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
 # QJS_FLAVOR=ng (default) or bellard, as in scripts/qjs-build.sh. The Bellard
 # CLI is build/qjs-bellard/qjscli; the host files map the ng API they use onto
-# Bellard's with test/qjs/_qjs_bellard_compat.h.
+# Bellard's with test/e2e/qjs/host/bellard_compat.h.
 QJS_FLAVOR="${QJS_FLAVOR:-ng}"
 export QJS_FLAVOR
 case "$QJS_FLAVOR" in
@@ -27,19 +27,19 @@ BIN="${QJSCLI_OUT:-$OUT/qjscli}"
 "$ROOT/scripts/qjs-build.sh"
 export GOC_DEFAULT_PTR_COLOR=cptr GOC_INLINE_DYNALLOC=1
 
-"$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_cli_host.c" \
+"$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/cli_host.c" \
   -o "$OUT/cli_host.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
-"$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_cli_std_os.c" \
+"$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/cli_std_os.c" \
   -o "$OUT/cli_std_os.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
-"$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_cli_worker.c" \
+"$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/cli_worker.c" \
   -o "$OUT/cli_worker.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
 
-LDX=""  # test/qjscli/mem_instances.go labels its JSON by flavor
+LDX=""  # test/e2e/qjs/cli/mem_instances.go labels its JSON by flavor
 [[ "$QJS_FLAVOR" == bellard ]] && LDX=" -X main.qjsFlavor=bellard"
 BINOBJ=""
 for src in $ENGINE_TUS; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
 BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/uptr.goobj $OUT/cli_host.goobj $OUT/cli_std_os.goobj $OUT/cli_worker.goobj$EXTRA_OBJS"
-( cd "$ROOT/test/qjscli" && \
+( cd "$ROOT/test/e2e/qjs/cli" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
   go build -a -tags "$TAGS" -ldflags="-extldflags=-lm$LDX" \
     -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" \

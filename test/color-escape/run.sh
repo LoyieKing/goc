@@ -10,8 +10,8 @@ echo "=== color-escape: build goc-color-escape ==="
 
 PASS_BIN="$REPO/build/llvm/goc-color-escape"
 CLANG="${CLANG:-clang-19}"
-INCDIR="$ROOT/include"
-OUT="$REPO/build/test-color-escape"
+INCDIR="$REPO/include"
+OUT="$REPO/build/test/color-escape"
 mkdir -p "$OUT"
 
 echo "=== color-escape: run golden tests ==="

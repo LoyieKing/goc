@@ -66,7 +66,7 @@ export QJS_EVAL="${QJS_EVAL:-1}" QJS_PROMISE="${QJS_PROMISE:-1}"
 echo "=== [1/4] freestanding libc shim + uptr runtime → goobj ==="
 # Same mode as the QJS TUs, so cross-TU C references agree on names
 # (main.goc_abort.impl etc.). The ABIInternal thunks are dead weight here.
-env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_libc_shim.c" \
+env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/libc_shim.c" \
   -o "$OUT/shim.goobj" "${QJS_DEFS[@]}"
 echo "  shim: $(go tool nm "$OUT/shim.goobj" | grep -c ' T ') TEXT"
 env -u GOC_PKG -u GOC_DEFAULT_PTR_COLOR -u GOC_IR_RENAMES \
@@ -95,12 +95,12 @@ for n in $SHIM_NAMES; do
 done
 export GOC_IR_RENAMES="$IR_RENAMES"
 echo "  shim redirects: $(echo $SHIM_NAMES | wc -w) symbols"
-env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_promise_probe.c" \
+env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/promise_probe.c" \
   -o "$OUT/promise_probe.goobj" "${QJS_DEFS[@]}"
 EXTRA_OBJS=""
 if [[ "$QJS_FLAVOR" == bellard ]]; then
   # Exported JS_FreeValue & co. (static inline in Bellard's quickjs.h).
-  env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/qjs/_qjs_bellard_api.c" \
+  env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/bellard_api.c" \
     -o "$OUT/bellard_api.goobj" "${QJS_DEFS[@]}" $SHIM_DEFS
   EXTRA_OBJS=" $OUT/bellard_api.goobj"
 fi
@@ -108,7 +108,7 @@ fi
 echo "=== [2/4] QuickJS ($QJS_FLAVOR) TUs → goobj (colored, Go-ABI thunks) ==="
 for src in "${QJS_TUS[@]}"; do
   TU_DEFS=()
-  # Bellard: the public JS_FreeRuntime lives in _qjs_bellard_api.c (runs the
+  # Bellard: the public JS_FreeRuntime lives in bellard_api.c (runs the
   # emulated ng runtime finalizers first); quickjs.c's own one is renamed.
   [[ "$QJS_FLAVOR" == bellard && "$src" == quickjs ]] && \
     TU_DEFS=(-DJS_FreeRuntime=goc_bellard_JS_FreeRuntime)
@@ -122,12 +122,12 @@ echo "=== [3/4] link Go caller (toolexec packs goobjs; -lm via extld) ==="
 # the Go package: cgo would compile a .S next to the .go files, and a
 # .syso of the same code would be a second definition. *.syso is gitignored;
 # both Go packages pick the file up from their directory.
-gcc -c -o "$ROOT/test/qjs/goc_libm_glibc.syso" "$ROOT/test/qjs/asm/goc_libm_glibc.S"
-cp -f "$ROOT/test/qjs/goc_libm_glibc.syso" "$ROOT/test/qjscli/goc_libm_glibc.syso"
+gcc -c -o "$ROOT/test/e2e/qjs/embed/goc_libm_glibc.syso" "$ROOT/test/e2e/qjs/host/asm/goc_libm_glibc.S"
+cp -f "$ROOT/test/e2e/qjs/embed/goc_libm_glibc.syso" "$ROOT/test/e2e/qjs/cli/goc_libm_glibc.syso"
 BINOBJ=""
 for src in "${QJS_TUS[@]}"; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
 BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/uptr.goobj $OUT/promise_probe.goobj$EXTRA_OBJS"
-( cd "$ROOT/test/qjs" && \
+( cd "$ROOT/test/e2e/qjs/embed" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
   go build -a -ldflags="-extldflags=-lm" \
     -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" \

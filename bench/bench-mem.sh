@@ -12,8 +12,8 @@
 #
 # Part 2, multi-instance scaling: N JS runtimes kept alive in one process,
 # N in $NS. goc-ng: build/qjs/qjsmem (qjscli built with -tags qjsmem, see
-# test/qjscli/mem_instances.go); goc-bellard: build/qjs-bellard/qjsmem (the
-# same probe, QJS_FLAVOR=bellard). native ng / Bellard: test/qjsmem/threads.c
+# test/e2e/qjs/cli/mem_instances.go); goc-bellard: build/qjs-bellard/qjsmem (the
+# same probe, QJS_FLAVOR=bellard). native ng / Bellard: bench/qjsmem/threads.c
 # linked against each engine's own build. Goja: bench/gojamem. Not pinned
 # (see the doc for why). ng also runs with MALLOC_ARENA_MAX=1 (engine
 # "ng-arena1").
@@ -84,12 +84,12 @@ if [[ ! -x "$GOCBMEM" || "${REBUILD:-0}" == 1 ]]; then
     > "$HB/qjsmem-bellard-build.log" 2>&1 \
     || { echo "goc-bellard qjsmem build failed, see $HB/qjsmem-bellard-build.log"; exit 1; }
 fi
-clang-19 -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"ng"' -I"$NGDIR" "$ROOT/test/qjsmem/threads.c" \
+clang-19 -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"ng"' -I"$NGDIR" "$ROOT/bench/qjsmem/threads.c" \
   "$NGDIR/b-O2/libqjs.a" -lm -lpthread -o "$HB/threads-ng" || exit 1
-gcc -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"bellard"' -I"$BDIR" "$ROOT/test/qjsmem/threads.c" \
+gcc -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"bellard"' -I"$BDIR" "$ROOT/bench/qjsmem/threads.c" \
   "$BDIR"/.obj/{quickjs,libregexp,libunicode,cutils,dtoa}.o -lm -lpthread -o "$HB/threads-bellard" || exit 1
 ( cd "$ROOT/bench/gojamem" && go build -o "$HB/gojamem" . ) || exit 1
-INST="$ROOT/test/qjscli/instance.js"
+INST="$ROOT/test/e2e/qjs/cli/instance.js"
 
 {
   echo "date: $(date '+%Y-%m-%d %H:%M:%S %Z')"

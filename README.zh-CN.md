@@ -205,10 +205,10 @@ cd goc
 ./cmd/goc check
 ```
 
-**从 Go 调用 goc**：最小例子是 `examples/hello`。黄金测试在 `test/goabi`：
+**从 Go 调用 goc**：最小例子是 `examples/hello`。黄金测试在 `test/e2e/goabi`：
 
 ```bash
-./scripts/test-p29-goabi.sh
+./test/e2e/goabi/run.sh
 ```
 
 C 这边写普通函数，Go 这边写一个没有函数体的声明，就能直接调用：

@@ -65,7 +65,7 @@ qjscli 现在和 quickjs-ng 一样，用 `JS_DetectModule` 判断文件：能作
 | goc-ng | native ng | 1502 / 1502 | 0 | 73 / 73 | 0 |
 | goc-bellard | native Bellard | 1501 / 1501 | 0 | 77 / 77 | 0 |
 
-上面的官方测试是 Bellard 的 `tests/test_*.js`，按函数拆开跑，`test_builtin.js` 加了 `--std`。goc-ng 和 native ng 都是 73/77，差的 4 个函数相同：`test_unicode_ident`、`test_for_in_proxy`、`test_json`、`test_line_column_numbers`。goc-bellard 和 native Bellard 都是 77/77。ng 自己的 `tests.conf` 套件（`scripts/qjs-cli-tests.sh`）是另一套，在这个 commit 上是 116/116，不在这张五引擎表里。
+上面的官方测试是 Bellard 的 `tests/test_*.js`，按函数拆开跑，`test_builtin.js` 加了 `--std`。goc-ng 和 native ng 都是 73/77，差的 4 个函数相同：`test_unicode_ident`、`test_for_in_proxy`、`test_json`、`test_line_column_numbers`。goc-bellard 和 native Bellard 都是 77/77。ng 自己的 `tests.conf` 套件（`test/e2e/qjs/cli-tests.sh`）是另一套，在这个 commit 上是 116/116，不在这张五引擎表里。
 
 ## 参考：clang 编译的 native Bellard
 
@@ -136,7 +136,7 @@ goc-ng 的调用速度是 native ng 的 0.96 倍。时间比最大的是 `depth4
 
 ![test262 有失败的目录](benchmark/charts/test262.png)
 
-tc39/test262 `7ab7faf` 的 `test/language`，由 `scripts/test262-sample.py` 抽样。每项一个新进程，`assert.js` + `sta.js`，直接 `eval`。跳过 `import` / `export` / `module-code`，以及 `module` / `async` / `raw` / `CanBlock`，还有 Atomics、SharedArrayBuffer、agent。每目录均匀抽取最多 80 个正例和 40 个反例。合格池 13898 正例 + 4252 反例，实跑 1526。不是官方全量 harness，也没有每项新 realm。
+tc39/test262 `7ab7faf` 的 `test/language`，由 `test/e2e/qjs/test262-sample.py` 抽样。每项一个新进程，`assert.js` + `sta.js`，直接 `eval`。跳过 `import` / `export` / `module-code`，以及 `module` / `async` / `raw` / `CanBlock`，还有 Atomics、SharedArrayBuffer、agent。每目录均匀抽取最多 80 个正例和 40 个反例。合格池 13898 正例 + 4252 反例，实跑 1526。不是官方全量 harness，也没有每项新 realm。
 
 goc-ng 与 native ng 都是 1502/1526，goc-bellard 与 native Bellard 都是 1501/1526，Goja 是 1453/1526。goc-bellard 与 native Bellard 失败的文件逐个相同。
 
@@ -350,7 +350,7 @@ goc-ng 与 native ng 的失败路径相同，goc-bellard 与 native Bellard 的�
 
 ![QuickJS 官方测试各文件通过数](benchmark/charts/qjs-tests.png)
 
-Bellard 2026-06-04 的 `tests/test_language.js`、`test_closure.js`、`test_loop.js`、`test_bigint.js`、`test_builtin.js`，由 `scripts/qjs-official-tests.py` 拆成每个函数一个进程。`test_builtin.js` 加了 `--std`（gojacli 没有这个参数，不加），QuickJS 四家因此能用到 `std` / `os`。goc-ng 与 native ng 都是 73/77，差的四个函数相同；goc-bellard 与 native Bellard 都是 77/77。失败信息前面多了 qjscli 的 `qjscli:runtime: <t>:` 前缀。Goja 是 58/77，其中 `test_weak_map_cycles` 报 `std is not defined`。
+Bellard 2026-06-04 的 `tests/test_language.js`、`test_closure.js`、`test_loop.js`、`test_bigint.js`、`test_builtin.js`，由 `test/e2e/qjs/official-tests.py` 拆成每个函数一个进程。`test_builtin.js` 加了 `--std`（gojacli 没有这个参数，不加），QuickJS 四家因此能用到 `std` / `os`。goc-ng 与 native ng 都是 73/77，差的四个函数相同；goc-bellard 与 native Bellard 都是 77/77。失败信息前面多了 qjscli 的 `qjscli:runtime: <t>:` 前缀。Goja 是 58/77，其中 `test_weak_map_cycles` 报 `std is not defined`。
 
 | 文件 | n | goc-ng | goc-bellard | native ng | native Bellard | Goja |
 |---|---:|---:|---:|---:|---:|---:|
@@ -652,7 +652,7 @@ goc-ng 各组对 native ng 在 0.96 到 1.28 之间：`arith` 是 0.96，`loop` 
 测量分两部分：
 
 - 峰值 RSS：每个负载都在一个新进程里运行，用 `/usr/bin/time -v` 读 `Maximum resident set size`。命令行和计时套件相同（goc-ng 和 goc-bellard 用 `qjscli --stack-size 16384 --script`，native ng 加 `-C`），也用 `taskset -c 3` 固定在同一个核上。每个引擎跑 3 轮，轮与轮之间轮换引擎顺序，表里是中位数。仓库里没有 `alloc.js` 和 `mapset.js`，这两项没有测。
-- 多实例：一个进程里建 N 个 JS runtime，每个都跑完一小段脚本（[`test/qjscli/instance.js`](../test/qjscli/instance.js)）后保持存活，然后读进程的 `VmRSS`。N 取 0、1、10、100、1000，每个点跑 3 次取中位数。这部分没有绑核，理由见本节末尾的注意事项。
+- 多实例：一个进程里建 N 个 JS runtime，每个都跑完一小段脚本（[`test/e2e/qjs/cli/instance.js`](../test/e2e/qjs/cli/instance.js)）后保持存活，然后读进程的 `VmRSS`。N 取 0、1、10、100、1000，每个点跑 3 次取中位数。这部分没有绑核，理由见本节末尾的注意事项。
 
 ### 空载与各负载的峰值
 
@@ -716,9 +716,9 @@ SunSpider 各文件的峰值（MiB）：
 
 这是 goc 使用场景里最关心的一项：一个 Go 进程里同时存活很多个 JS runtime 时，每多一个要多少内存。
 
-- goc-ng：`build/qjs/qjsmem`，它就是 qjscli 这个包加上构建标签 `qjsmem` 编出来的（代码在 [`test/qjscli/mem_instances.go`](../test/qjscli/mem_instances.go)），和 qjscli 走同一条 `scripts/qjs-cli-build.sh` 流程、链接同一批 goc 目标文件。`qjsmem --mem-instances N` 启动 N 个 goroutine，每个 goroutine 各自 `JS_NewRuntime` + `JS_NewContext`，求值脚本后阻塞在一个 channel 上。默认的 qjscli 二进制里没有这段代码。
+- goc-ng：`build/qjs/qjsmem`，它就是 qjscli 这个包加上构建标签 `qjsmem` 编出来的（代码在 [`test/e2e/qjs/cli/mem_instances.go`](../test/e2e/qjs/cli/mem_instances.go)），和 qjscli 走同一条 `scripts/qjs-cli-build.sh` 流程、链接同一批 goc 目标文件。`qjsmem --mem-instances N` 启动 N 个 goroutine，每个 goroutine 各自 `JS_NewRuntime` + `JS_NewContext`，求值脚本后阻塞在一个 channel 上。默认的 qjscli 二进制里没有这段代码。
 - goc-bellard：`build/qjs-bellard/qjsmem`，同一份 Go 代码，用 `QJS_FLAVOR=bellard QJSCLI_TAGS=qjsmem scripts/qjs-cli-build.sh` 构建，链接的是 goc 编译的 Bellard 目标文件，输出里的引擎名是 `goc-bellard`。
-- native ng 和 native Bellard：[`test/qjsmem/threads.c`](../test/qjsmem/threads.c)，分别链接 ng 的 `libqjs.a`（和 native qjs 同一次 CMake Release 构建）和 Bellard 上游 Makefile 编出的 `.obj/*.o`。每个 runtime 一个 pthread，线程栈设为 1 MiB（`QJSMEM_STACK_KB`），`JS_SetMaxStackSize` 设为线程栈的一半。线程栈只是预留，RSS 只算实际碰过的页。
+- native ng 和 native Bellard：[`bench/qjsmem/threads.c`](../bench/qjsmem/threads.c)，分别链接 ng 的 `libqjs.a`（和 native qjs 同一次 CMake Release 构建）和 Bellard 上游 Makefile 编出的 `.obj/*.o`。每个 runtime 一个 pthread，线程栈设为 1 MiB（`QJSMEM_STACK_KB`），`JS_SetMaxStackSize` 设为线程栈的一半。线程栈只是预留，RSS 只算实际碰过的页。
 - Goja：[`bench/gojamem`](../bench/gojamem/main.go)，每个 runtime 一个 goroutine，各持有一个 `goja.Runtime`。
 - 五家都是一个接一个地建 runtime：上一个求值完、进入阻塞之后才建下一个。goc 这样做是必须的，因为 goc 的 libc shim 堆没有锁，注释里写明同一时刻只能有一个 goroutine 在 QuickJS 里；另外几家为了可比也用同样的顺序。
 - native ng 另跑了一组 `MALLOC_ARENA_MAX=1`，用来看 glibc 每线程 malloc arena 的影响。
@@ -812,7 +812,7 @@ Goja 的同一组数字作对照。它的内存主要在 Go 堆上（N=1000 时 
 
 ## Bellard QuickJS 移植
 
-goc-bellard 是用同一套 goc 流水线编译 Fabrice Bellard 的 QuickJS 2026-06-04（和 native Bellard 同一个发布包 `quickjs-2026-06-04.tar.xz`）。构建方式和 goc-ng 平行：`QJS_FLAVOR=bellard scripts/qjs-cli-build.sh`，源码树在 `third_party/quickjs-bellard`（不入库，取法见 `third_party/README.md`），输出在 `build/qjs-bellard/`，CLI 是 `build/qjs-bellard/qjscli`。不设 `QJS_FLAVOR` 时一切和原来一样，仍然构建 goc-ng 到 `build/qjs/`。两者共用同一个 libc shim、uptr 运行时、同一组 goc 环境变量（`GOC_DEFAULT_PTR_COLOR=cptr`、morestack、stackmap 等）、同样的 O3 + `-DNDEBUG`，也共用 Go 侧的 `test/qjscli`。这次跑分的构建还设置了当时的 `GOC_CRESERVE=8192`；现在每个 Go 调 C 的 thunk 帧按该函数的栈参数计算，编译器不再读这个变量。
+goc-bellard 是用同一套 goc 流水线编译 Fabrice Bellard 的 QuickJS 2026-06-04（和 native Bellard 同一个发布包 `quickjs-2026-06-04.tar.xz`）。构建方式和 goc-ng 平行：`QJS_FLAVOR=bellard scripts/qjs-cli-build.sh`，源码树在 `third_party/quickjs-bellard`（不入库，取法见 `third_party/README.md`），输出在 `build/qjs-bellard/`，CLI 是 `build/qjs-bellard/qjscli`。不设 `QJS_FLAVOR` 时一切和原来一样，仍然构建 goc-ng 到 `build/qjs/`。两者共用同一个 libc shim、uptr 运行时、同一组 goc 环境变量（`GOC_DEFAULT_PTR_COLOR=cptr`、morestack、stackmap 等）、同样的 O3 + `-DNDEBUG`，也共用 Go 侧的 `test/e2e/qjs/cli`。这次跑分的构建还设置了当时的 `GOC_CRESERVE=8192`；现在每个 Go 调 C 的 thunk 帧按该函数的栈参数计算，编译器不再读这个变量。
 
 改了什么：
 
@@ -821,15 +821,15 @@ goc-bellard 是用同一套 goc 流水线编译 Fabrice Bellard 的 QuickJS 2026
   - `libregexp.c` 的 `lre_exec_backtrack`：和 ng 的补丁逐块相同（Bellard 和 ng 这部分代码几乎一样），回溯栈里存的指针按 uptr 解码，循环计数器不再塞进 `capture[]`。
   - `JS_AtomGetStrRT`：纯 ASCII 原子的快速路径原本直接返回原子在堆上的字节，否则返回调用者栈上的 `buf`。同一个返回值有时是栈指针、有时是堆指针，goc 的指针着色检查不接受这种混合返回（返回值槽里的指针不是从某个栈上的形参借来的）。补丁改成把 ASCII 名字也拷进 `buf` 再返回。代价是超过 63 字节的名字在用到它的错误信息里会被截断，Bellard 对非 ASCII 名字本来就这样截断。这个函数只用于错误信息、调试输出和内建构造函数的短名字。
 - 编译参数：Bellard 多一个 `cutils.c`；定义 `CONFIG_VERSION`；**不加** `-DJS_NAN_BOXING=0`。ng 用 `#if JS_NAN_BOXING`，Bellard 用 `#ifdef JS_NAN_BOXING`，定义成 0 反而会打开 NaN boxing，JSValue 变成 8 字节，和 Go 侧的 16 字节结构对不上（第一次构建就因此在启动时崩溃）。x86-64 上 Bellard 默认就是 16 字节的 `struct JSValue`。
-- `test/qjs/_qjs_bellard_api.c`（只在 Bellard 构建里）：Go 侧用 `go:linkname` 调的 `JS_FreeValue` 在 Bellard 里是头文件里的 `static inline`，这里导出成真正的函数（连同 `JS_FreeValueRT`、`JS_DupValue`）；另外模拟 ng 的 `JS_AddRuntimeFinalizer`：`quickjs.c` 编译时把自己的 `JS_FreeRuntime` 改名，这个文件提供公开的 `JS_FreeRuntime`，先按 ng 的顺序（后注册先调用）跑终结器，再释放 runtime。和 ng 的区别是终结器在 runtime 最后一次 GC 之前而不是之后运行；CLI 注册的终结器只释放自己的 C 记账结构，不受影响。
-- `test/qjs/_qjs_bellard_compat.h`：CLI 宿主（`test/qjs/_qjs_cli_*.c`）是照 ng 的 API 写的，这个头文件把用到的 ng API 映射到 Bellard 的公开 API 上，例如 `JS_NewClassID(rt, &id)` → `JS_NewClassID(&id)`、`JS_IsBigInt(v)` → `JS_IsBigInt(ctx, v)`、`JS_SetOpaque` 的返回值、`JS_ThrowPlainError`、`JS_NewArrayFrom`、`JS_GetLength`、`JS_NewUint8Array*`、`JS_IsArrayBuffer`、SharedArrayBuffer 表（`JSSABTab`）。宿主源文件本身只改了 include 和几处 `#ifdef`，ng 构建看到的预处理结果不变。
+- `test/e2e/qjs/host/bellard_api.c`（只在 Bellard 构建里）：Go 侧用 `go:linkname` 调的 `JS_FreeValue` 在 Bellard 里是头文件里的 `static inline`，这里导出成真正的函数（连同 `JS_FreeValueRT`、`JS_DupValue`）；另外模拟 ng 的 `JS_AddRuntimeFinalizer`：`quickjs.c` 编译时把自己的 `JS_FreeRuntime` 改名，这个文件提供公开的 `JS_FreeRuntime`，先按 ng 的顺序（后注册先调用）跑终结器，再释放 runtime。和 ng 的区别是终结器在 runtime 最后一次 GC 之前而不是之后运行；CLI 注册的终结器只释放自己的 C 记账结构，不受影响。
+- `test/e2e/qjs/host/bellard_compat.h`：CLI 宿主（`test/e2e/qjs/host/cli_*.c`）是照 ng 的 API 写的，这个头文件把用到的 ng API 映射到 Bellard 的公开 API 上，例如 `JS_NewClassID(rt, &id)` → `JS_NewClassID(&id)`、`JS_IsBigInt(v)` → `JS_IsBigInt(ctx, v)`、`JS_SetOpaque` 的返回值、`JS_ThrowPlainError`、`JS_NewArrayFrom`、`JS_GetLength`、`JS_NewUint8Array*`、`JS_IsArrayBuffer`、SharedArrayBuffer 表（`JSSABTab`）。宿主源文件本身只改了 include 和几处 `#ifdef`，ng 构建看到的预处理结果不变。
 - libc shim：Bellard 的 BigInt 用 `unsigned __int128` 做除法，LLVM 会生成 `__udivti3` 调用，goobj 里没有 libgcc，所以 shim 里加了一个 `__udivti3`（除数不超过 64 位时一条 `divq`，否则移位相减），只在 Bellard 构建里编译。用一批随机生成的大整数做乘除、取模和 `toString`，输出和 native Bellard 逐字节一致。除此之外 Bellard 不需要新的 libc 函数。
-- `performance.now()`：ng 在引擎里定义 `globalThis.performance`，Bellard 是在 quickjs-libc 的 `js_std_add_helpers` 里加的，goc 的 CLI 宿主不用 quickjs-libc，所以 Bellard 构建的宿主（`test/qjs/_qjs_cli_host.c`，`#ifdef GOC_QJS_BELLARD`）自己补了一个，语义和 Bellard 相同（CLOCK_MONOTONIC，毫秒，浮点）。
-- 冒烟测试 `test/qjs`：Bellard 没有 `JS_GetVersion` 和 `JS_SetPromiseHook`，探针里给了一个返回版本串的 `JS_GetVersion`，并以 `QJS_PROMISE=0` 跳过 promise hook 那一项；300 次栈增长扫描照常全部通过。
+- `performance.now()`：ng 在引擎里定义 `globalThis.performance`，Bellard 是在 quickjs-libc 的 `js_std_add_helpers` 里加的，goc 的 CLI 宿主不用 quickjs-libc，所以 Bellard 构建的宿主（`test/e2e/qjs/host/cli_host.c`，`#ifdef GOC_QJS_BELLARD`）自己补了一个，语义和 Bellard 相同（CLOCK_MONOTONIC，毫秒，浮点）。
+- 冒烟测试 `test/e2e/qjs/embed`：Bellard 没有 `JS_GetVersion` 和 `JS_SetPromiseHook`，探针里给了一个返回版本串的 `JS_GetVersion`，并以 `QJS_PROMISE=0` 跳过 promise hook 那一项；300 次栈增长扫描照常全部通过。
 
 限制：
 
-- CLI 宿主缺少 ng 独有的几项：`import ... with { type: "bytes" }` 得到的 Uint8Array 不是只读的（Bellard 没有 immutable ArrayBuffer）；`qjs:bjson` 没有 `WRITE_OBJ_STRIP_DEBUG` / `WRITE_OBJ_STRIP_SOURCE`；`qjs.getStringKind` 恒为 -1。ng 的 CLI 测试集（`scripts/qjs-cli-tests.sh`，这次是 116/116）是针对 ng 的，没有在 goc-bellard 上跑。
+- CLI 宿主缺少 ng 独有的几项：`import ... with { type: "bytes" }` 得到的 Uint8Array 不是只读的（Bellard 没有 immutable ArrayBuffer）；`qjs:bjson` 没有 `WRITE_OBJ_STRIP_DEBUG` / `WRITE_OBJ_STRIP_SOURCE`；`qjs.getStringKind` 恒为 -1。ng 的 CLI 测试集（`test/e2e/qjs/cli-tests.sh`，这次是 116/116）是针对 ng 的，没有在 goc-bellard 上跑。
 - 本页所有 goc 命令都带 `--stack-size 16384`。
 - goc 的 shim 堆没有锁，goc-bellard 和 goc-ng 一样，同一时刻只能有一个 goroutine 在 QuickJS 里。
 

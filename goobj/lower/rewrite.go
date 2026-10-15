@@ -122,17 +122,6 @@ func HasDefine(path, name string) (bool, error) {
 	return re.Match(b), nil
 }
 
-var magicRE = regexp.MustCompile(`28C0DE42|0x28c0de42|683728450`)
-
-// IRHasMagic reports the P28 source-body sentinel in LLVM IR.
-func IRHasMagic(path string) (bool, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return false, err
-	}
-	return magicRE.Match(b), nil
-}
-
 // ObjectHasMagic requires the sentinel as a little-endian u32 in the goobj.
 func ObjectHasMagic(path string) error {
 	b, err := os.ReadFile(path)
@@ -144,22 +133,6 @@ func ObjectHasMagic(path string) error {
 	if !bytes.Contains(b, pat) {
 		return fmt.Errorf("FAIL: magic 0x28C0DE42 not in goobj TEXT — body not from source")
 	}
-	fmt.Println("P28-proof: magic 0x28C0DE42 present in goobj (real ISel body)")
+	fmt.Println("realbody: magic 0x28C0DE42 present in goobj (compiled body)")
 	return nil
-}
-
-// TextCount is the number of defined TEXT symbols in `go tool nm` output.
-func TextCount(nm string) int {
-	n := 0
-	for _, line := range strings.Split(nm, "\n") {
-		if strings.Contains(line, " T ") {
-			n++
-		}
-	}
-	return n
-}
-
-// HasExternalHook reports the P28 indirect-call fixture in nm or objdump text.
-func HasExternalHook(nm, dis string) bool {
-	return strings.Contains(nm, "U p28_external_hook") || strings.Contains(dis, "p28_external_hook")
 }

@@ -6,7 +6,7 @@
 | `hello_colors.c` | OK: `sptr` out-param + `cptr` loads |
 | `sptr_escape_bad.c` | ERROR: returns a stack pointer (Sema). Storing `sptr` into a plain `T *` global is allowed and is encoded as `uptr` |
 
-Color checks only. Linking into Go is [docs/quickstart.md](../docs/quickstart.md). The verified program is `test/goabi`.
+Color checks only. Linking into Go is [docs/quickstart.md](../docs/quickstart.md). The verified program is `test/e2e/goabi`.
 
 ```bash
 ./cmd/goc cc -emit-llvm -S -o /tmp/hello.ll examples/hello_colors.c

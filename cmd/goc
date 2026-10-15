@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# goc — experimental C-on-Go-stacks driver (P28 surface)
+# goc — experimental C-on-Go-stacks driver
 set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)"
 # Resolve repo root: cmd/ -> repo, or GOC_ROOT override
@@ -26,11 +26,12 @@ Usage:
   goc toolchain status|pack DEST [flags]
       Show the tools in this tree, or pack a full release
   goc build foo.c -o foo.goobj [flags] [-- …]
-      Patched Clang Sema → real-body goobj (P28). Default -O0.
+      One C file → Go object (patched clang, IR passes, goc-llc, gocobj2goobj). Default -O0.
   goc cc [clang-args…]
       Invoke the shipped clang with goc include/attrs
-  goc test [--p27|--p28]
-      Run curated golden tests
+  goc test [--plugin]
+      Clang color tests and one file through the pipeline (test/clang,
+      test/e2e/realbody); --plugin: the out-of-tree clang plugin form only
   goc version
   goc help | -h | --help
 
@@ -119,7 +120,8 @@ cmd_cc() {
 
 cmd_build() {
   if [[ $# -eq 0 ]]; then
-    exec bash "$ROOT/scripts/test-p28.sh"
+    echo "usage: goc build foo.c [-o foo.goobj] [flags] [-- clang-args]" >&2
+    exit 2
   fi
   local SRC="" OUT_O="" EXTRA=() ABI0=0
   while [[ $# -gt 0 ]]; do
@@ -136,8 +138,7 @@ cmd_build() {
       --abi0) ABI0=1; shift ;;
       --) shift; EXTRA+=("$@"); break ;;
       -h|--help)
-        echo "usage: goc build [foo.c -o foo.goobj] [flags] [-- clang-args]"
-        echo "       goc build            # P28 test suite"
+        echo "usage: goc build foo.c [-o foo.goobj] [flags] [-- clang-args]"
         echo "  --abi0: mark the object ABI0 (C-side platform entries, e.g. a libc shim)"
         echo
         goc_flags_help
@@ -152,11 +153,8 @@ cmd_build() {
     esac
   done
   if [[ -z "$SRC" ]]; then
-    if [[ -n "${GOC_FLAG_SEEN// /}" ]]; then
-      echo "goc build: missing input file" >&2
-      exit 2
-    fi
-    exec bash "$ROOT/scripts/test-p28.sh"
+    echo "goc build: missing input file" >&2
+    exit 2
   fi
   if [[ -z "$OUT_O" ]]; then
     case "$SRC" in
@@ -428,7 +426,7 @@ cmd_build() {
 }
 
 cmd_test() {
-  local ONLY_P27=0 ONLY_P28=0
+  local PLUGIN_ONLY=0
   GOC_FLAG_MODE=driver
   while [[ $# -gt 0 ]]; do
     if goc_consume_flag "$1" "${2:-}"; then
@@ -436,32 +434,20 @@ cmd_test() {
       continue
     fi
     case "$1" in
-      --p27) ONLY_P27=1; shift ;;
-      --p28) ONLY_P28=1; shift ;;
-      --p21|--p22|--p23|--p24|--p25|--p26)
-        echo "goc test: $1 is not a product test" >&2
-        shift
-        ;;
+      --plugin) PLUGIN_ONLY=1; shift ;;
       *) echo "unknown goc test flag: $1" >&2; exit 2 ;;
     esac
   done
   unset GOC_FLAG_MODE
-  # test-p28.sh calls realbody, which runs goc-llc. That binary needs the
-  # clang tree's libLLVM, the same way goc build does.
+  if [[ $PLUGIN_ONLY -eq 1 ]]; then
+    exec bash "$ROOT/test/clang/run.sh" --plugin-only
+  fi
+  # realbody runs goc-llc, which needs the clang tree's libLLVM, the same
+  # way goc build does.
   prepend_clang_lib "$(resolve_clang)"
-  if [[ $ONLY_P27 -eq 1 ]]; then
-    exec bash "$ROOT/scripts/test-p27.sh"
-  fi
-  if [[ $ONLY_P28 -eq 1 ]]; then
-    exec bash "$ROOT/scripts/test-p28.sh"
-  fi
-  # Default: run P28 if clang available, else P27 plugin path
-  if bash "$ROOT/scripts/test-p28.sh"; then
-    echo "goc test: P28 ALL PASS"
-    return 0
-  fi
-  echo "goc test: P28 unavailable/failed — trying P27 plugin goldens" >&2
-  exec bash "$ROOT/scripts/test-p27.sh"
+  bash "$ROOT/test/clang/run.sh" --intree-only
+  bash "$ROOT/test/e2e/realbody/run.sh"
+  echo "goc test: PASS"
 }
 
 main() {

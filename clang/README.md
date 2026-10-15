@@ -12,7 +12,7 @@ The supported build is one script. It downloads LLVM 19.1.7, applies the patches
 ```bash
 ./scripts/build-clang.sh
 ./scripts/build-passes.sh
-./cmd/goc test --p28
+./cmd/goc test
 ```
 
 The whole release archive (goc plus this Clang) is `scripts/pack-release.sh`. See [docs/build-from-source.md](../docs/build-from-source.md).
@@ -28,7 +28,7 @@ The whole release archive (goc plus this Clang) is `scripts/pack-release.sh`. Se
 ```bash
 make -C clang/plugin all
 export CLANG=clang-19
-./cmd/goc test --p27
+./cmd/goc test --plugin
 # or: ./cmd/goc cc -emit-llvm -S file.c
 ```
 
@@ -43,7 +43,7 @@ loaded with `-fplugin=libGocClang.so`.
 | `patches/0003-mirror-goc-colors-before-codegen.patch` | Mirror colors in ParseAST before CodeGen |
 | `patches/0004-wire-sema-goc-colors.patch` | CMakeLists.txt, Sema.h, and the end-of-TU call |
 | `sema/SemaGocColors.cpp` | Drop-in Sema source |
-| `plugin/GocClangPlugin.cpp` | Out-of-tree plugin (`goc test --p27`) |
+| `plugin/GocClangPlugin.cpp` | Out-of-tree plugin (`goc test --plugin`) |
 
 ## Third-party notice
 

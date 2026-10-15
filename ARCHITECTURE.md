@@ -39,7 +39,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 
 新增一个架构只需要实现钩子接口（约 150 行），再在 `gocobj2goobj` 里加该架构的重定位映射（arm64 的在 `tools/gocobj2goobj/arm64.go`）。AArch64 钩子按名字在目标自己的表里查 opcode 和寄存器，不需要 AArch64 的私有头文件，所以只要 goc-llc 链接的 libLLVM 带 AArch64 后端即可。
 
-其他按架构区分的地方都很小：GocObjTables 里 x86 的调用记在返回地址前 4 字节（CALL，addend −4），AArch64 的 BL 记在指令本身（ARM64_CALL26，addend 0）；`goc-lower goabi` 为两种架构都输出 thunk 的表。arm64 另有 `llvm/lib/Target/AArch64/GocAArch64Frame.cpp`：每个有调用的帧在 0(SP) 留 LR 副本（Go 的回溯从这里读返回地址），C 的栈参数整体上移 16 字节，调用后对被调用者保存寄存器和溢出槽里的帧地址做和 copystack 相同的修正。arm64 在 qemu-aarch64 里运行测试（`test/arm64`、arm64 压力测试）。
+其他按架构区分的地方都很小：GocObjTables 里 x86 的调用记在返回地址前 4 字节（CALL，addend −4），AArch64 的 BL 记在指令本身（ARM64_CALL26，addend 0）；`goc-lower goabi` 为两种架构都输出 thunk 的表。arm64 另有 `llvm/lib/Target/AArch64/GocAArch64Frame.cpp`：每个有调用的帧在 0(SP) 留 LR 副本（Go 的回溯从这里读返回地址），C 的栈参数整体上移 16 字节，调用后对被调用者保存寄存器和溢出槽里的帧地址做和 copystack 相同的修正。arm64 在 qemu-aarch64 里运行测试（`test/e2e/arm64`、arm64 压力测试）。
 
 ## 目录
 
@@ -69,6 +69,6 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 
 ## 测试
 
-- `scripts/ci-test.sh`：`goc check`、`goc test --p28`、`test-p29-goabi.sh`、gocobj 单元测试、`test-stress.sh`（栈增长 + GC 压力）、`test/arm64/check_arm64.sh`、`goc test --p27`。CI 跑的就是这一组。
-- QuickJS：`scripts/qjs-cli-build.sh`（ng / `QJS_FLAVOR=bellard`），然后跑 `scripts/test262-sample.py` 和 `scripts/qjs-official-tests.py`。
+- `scripts/ci-test.sh`：`goc check`、`goc test`、`test-p29-goabi.sh`、gocobj 单元测试、`test-stress.sh`（栈增长 + GC 压力）、`test/e2e/arm64/run.sh`、`goc test --plugin`。CI 跑的就是这一组。
+- QuickJS：`scripts/qjs-cli-build.sh`（ng / `QJS_FLAVOR=bellard`），然后跑 `test/e2e/qjs/test262-sample.py` 和 `test/e2e/qjs/official-tests.py`。
 - Go 单元测试：`go test ./goobj/lower ./tools/...`。

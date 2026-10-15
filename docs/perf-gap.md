@@ -503,7 +503,7 @@ C 微基准（`mech.c`，ns/次调用）：
 
 ### 4.9 memcpy / memset / memcmp shim（Ir +1.8～2.1 个点）
 
-goc 的程序不链接 glibc，`memcpy` 等由 `test/qjs/_qjs_libc_shim.c` 提供：小尺寸用重叠的 8/4/2/1 字节读写，大尺寸用 `rep movsb/stosb`；glibc 用的是 AVX-512 版本。`memcmp` 是逐字节循环（第 5.3 节）。perf 采样里 RegExp 子项 `goc_memcpy` 多 8 ms（总 1122 ms）。【实测】
+goc 的程序不链接 glibc，`memcpy` 等由 `test/e2e/qjs/host/libc_shim.c` 提供：小尺寸用重叠的 8/4/2/1 字节读写，大尺寸用 `rep movsb/stosb`；glibc 用的是 AVX-512 版本。`memcmp` 是逐字节循环（第 5.3 节）。perf 采样里 RegExp 子项 `goc_memcpy` 多 8 ms（总 1122 ms）。【实测】
 
 ---
 

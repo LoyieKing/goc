@@ -161,7 +161,7 @@ if mc["rounds"]:
 out["microcall"] = mc
 
 # ---- test262 sample
-spec = importlib.util.spec_from_file_location("t262", os.path.join(ROOT, "scripts/test262-sample.py"))
+spec = importlib.util.spec_from_file_location("t262", os.path.join(ROOT, "test/e2e/qjs/test262-sample.py"))
 t262m = importlib.util.module_from_spec(spec); spec.loader.exec_module(t262m)
 tr = json.load(open(os.path.join(RAW, "test262-results.json")))
 dirs = {}

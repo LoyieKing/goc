@@ -137,7 +137,7 @@ elif ! skip microcall; then
 fi
 
 if ! skip t262; then
-  python3 "$ROOT/scripts/test262-sample.py" --test262 "$T262" \
+  python3 "$ROOT/test/e2e/qjs/test262-sample.py" --test262 "$T262" \
     --engine "goc-ng=$(cmd goc-ng)" --engine "goc-bellard=$(cmd goc-bellard)" \
     --engine "ng=$(cmd ng)" --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
     --out "$OUT/test262-results.json" > "$OUT/test262-summary.txt" 2>&1
@@ -145,7 +145,7 @@ if ! skip t262; then
 fi
 
 if ! skip qjs; then
-  python3 "$ROOT/scripts/qjs-official-tests.py" --tests "$QJSTESTS" \
+  python3 "$ROOT/test/e2e/qjs/official-tests.py" --tests "$QJSTESTS" \
     --engine "goc-ng=$(cmd goc-ng)" --engine "goc-bellard=$(cmd goc-bellard)" \
     --engine "ng=$(cmd ng)" --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
     --out "$OUT/qjs-tests-results.json" > "$OUT/qjs-tests-summary.txt" 2>&1

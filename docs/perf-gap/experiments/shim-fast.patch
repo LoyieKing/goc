@@ -1,7 +1,7 @@
-diff --git a/tests/qjs/_qjs_libc_shim.c b/tests/qjs/_qjs_libc_shim.c
+diff --git a/tests/qjs/libc_shim.c b/tests/qjs/libc_shim.c
 index eee4daa..ca5ca3d 100644
---- a/tests/qjs/_qjs_libc_shim.c
-+++ b/tests/qjs/_qjs_libc_shim.c
+--- a/tests/qjs/libc_shim.c
++++ b/tests/qjs/libc_shim.c
 @@ -317,8 +317,18 @@ void *goc_memset(void *d, int c, size_t n) {
  }
  

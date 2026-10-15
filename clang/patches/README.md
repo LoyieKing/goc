@@ -16,4 +16,4 @@ What the Sema part does:
 | Sema checks | `lib/Sema/SemaGocColors.cpp`: mirrors the Goc* attributes to `AnnotateAttr` (what the IR passes read) and reports sptr escapes |
 | Mirror before CodeGen | `lib/Parse/ParseAST.cpp` calls `MirrorGocColorAttrs` before `HandleTopLevelDecl`; the end-of-TU call in `Sema.cpp` only diagnoses, it is too late for IR |
 
-The out-of-tree plugin `../plugin/GocClangPlugin.cpp` is only for `goc test --p27`.
+The out-of-tree plugin `../plugin/GocClangPlugin.cpp` is only for `goc test --plugin`.

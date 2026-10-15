@@ -1,5 +1,5 @@
 # lit configuration for goc's LLVM passes and goc-llc. Run with
-# scripts/test-lit.sh (it finds lit and FileCheck), or
+# test/lit/run.sh (it finds lit and FileCheck), or
 #   lit -sv test/lit  with GOC_BUILD / LLVM_BIN set.
 import os
 import lit.formats

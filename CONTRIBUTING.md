@@ -19,7 +19,7 @@ Go 1.24+. Packing a release also uses `python3`. Repository tests also use `pyth
 ```bash
 ./scripts/build-clang.sh
 ./scripts/build-passes.sh
-./cmd/goc test --p28
+./cmd/goc test
 ```
 
 ## Pull requests

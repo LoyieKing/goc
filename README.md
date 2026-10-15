@@ -205,10 +205,10 @@ cd goc
 ./cmd/goc check
 ```
 
-**Call goc from Go.** The smallest program is `examples/hello`. The golden test is `test/goabi`:
+**Call goc from Go.** The smallest program is `examples/hello`. The golden test is `test/e2e/goabi`:
 
 ```bash
-./scripts/test-p29-goabi.sh
+./test/e2e/goabi/run.sh
 ```
 
 Write a normal function in C and a body-less declaration in Go, and Go can call it directly:
