@@ -4,9 +4,12 @@
 //	gocobj2goobj -in foo.gocobj -meta foo.meta.json -maps DIR -o foo.goobj [-p main]
 //
 // Plan row 5, transitional: the file is checked with gocobj.Verify and its
-// ABI profile must match this converter's Go version; the conversion itself
-// still runs the elfpack code (goobj/elfpack), with meta.json and the maps
-// directory for what the .goc.* tables do not carry yet. Later rows move
+// ABI profile must match this converter's Go version. The per-function
+// facts the tables carry (Go symbol, frame, calls, function addresses,
+// sptr slots, SysV pointer registers) replace goc-lower's text-derived
+// values in meta.json (GOC_TABLES_META=0 turns this off); the conversion
+// itself still runs the elfpack code (goobj/elfpack), with meta.json and the
+// maps directory for what the .goc.* tables do not carry yet. Later rows move
 // that information into the tables and replace elfpack piece by piece.
 package main
 
@@ -80,5 +83,22 @@ func main() {
 		}
 		return
 	}
-	elfpack.Main([]string{"-elf", *in, "-meta", *meta, "-maps", *maps, "-out-o", *out, "-p", *pkg})
+	metaPath := *meta
+	if os.Getenv("GOC_TABLES_META") != "0" {
+		syn, err := synthFuncs(f, *pkg, *flagsWord, *cABI)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, err)
+			os.Exit(1)
+		}
+		tmp, err := mergeMeta(syn, *meta)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, err)
+			os.Exit(1)
+		}
+		metaPath = tmp
+	}
+	elfpack.Main([]string{"-elf", *in, "-meta", metaPath, "-maps", *maps, "-out-o", *out, "-p", *pkg})
+	if metaPath != *meta {
+		os.Remove(metaPath)
+	}
 }

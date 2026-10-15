@@ -1,4 +1,4 @@
-# gocobj format, version 1.1
+# gocobj format, version 1.2
 
 A `.gocobj` is what goc's LLVM backend will write for one C file. It is a
 normal relocatable ELF file (machine code in `.text` or `.text.<sym>`, data in
@@ -81,6 +81,7 @@ One record per Go-visible function:
 | gc | uleb | offset of its `.goc.gcmaps` record |
 | inl | uleb | offset of its `.goc.inltree` record (reserved; 0) |
 | sysv_ptr_regs | uleb | 1.1: bit i set when SysV integer argument register i (rdi rsi rdx rcx r8 r9) holds a pointer on entry |
+| sptr_slots | uleb n, n × uleb | 1.2: frame-pointer-relative offsets (`BP - off`, positive, multiples of 8, sorted) of the frame slots that hold sptr values |
 
 ### `.goc.relocs`
 
@@ -171,6 +172,10 @@ transitional content of plan row 4:
   has-sptr and SysV pointer-register facts (computed on the IR goc-llc
   receives); relocs add indirect calls (CALL_INDIRECT_MARK) and
   function-address LEAs (FUNC_ADDR).
+- 1.2: funcs carry `sptr_slots` (from the final frame layout, matched to the
+  IR allocas by name); relocs add direct calls written in inline assembly
+  (goc-llc puts a label pair around each `call sym` line of the asm text;
+  labels emit no bytes).
 
 `gocobj2goobj -check-meta` rebuilds the per-function part of meta.json from
 these tables and lists every field that differs from goc-lower's.

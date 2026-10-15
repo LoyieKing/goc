@@ -6,7 +6,7 @@ package gocobj
 const (
 	Magic      = "GOCOBJ\x00\x00"
 	Major      = 1
-	Minor      = 0
+	Minor      = 2
 	HeaderSize = 28
 	SecHeader  = ".goc.header"
 	SecStrtab  = ".goc.strtab"
@@ -129,6 +129,7 @@ type Func struct {
 	File        uint64
 	StartLine   uint64
 	SysvPtrRegs uint64    // 1.1: bit i = SysV integer argument register i holds a pointer
+	SptrSlots   []uint64  // 1.2: frame-pointer-relative offsets of sptr-holding slots (BP-off)
 	PCValue     []PCTable // decoded from the pcv record (nil if none)
 	GC          *GCMap    // decoded from the gc record (nil if none)
 	pcvOff      uint64

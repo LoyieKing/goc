@@ -14,8 +14,8 @@ func Dump(w io.Writer, f *File) {
 		fmt.Fprintf(w, "file %d %s\n", i, p)
 	}
 	for _, fn := range f.Funcs {
-		fmt.Fprintf(w, "func %s size=%d frame=%d args=%d abi=%d kind=%d flags=%#x id=%d file=%d line=%d sysvptr=%#x\n",
-			fn.Name, fn.TextSize, fn.FrameSize, fn.ArgSize, fn.ABI, fn.Kind, fn.Flags, fn.FuncID, fn.File, fn.StartLine, fn.SysvPtrRegs)
+		fmt.Fprintf(w, "func %s size=%d frame=%d args=%d abi=%d kind=%d flags=%#x id=%d file=%d line=%d sysvptr=%#x%s\n",
+			fn.Name, fn.TextSize, fn.FrameSize, fn.ArgSize, fn.ABI, fn.Kind, fn.Flags, fn.FuncID, fn.File, fn.StartLine, fn.SysvPtrRegs, sptrStr(fn.SptrSlots))
 		for _, t := range fn.PCValue {
 			fmt.Fprintf(w, "  pcvalue %s:", t.Kind)
 			for _, e := range t.Entries {
@@ -43,4 +43,11 @@ func Dump(w io.Writer, f *File) {
 		fmt.Fprintf(w, "data %s size=%d align=%d flags=%#x ptrbits=%d bitmap=%x\n",
 			d.Name, d.Size, 1<<d.Log2Align, d.Flags, d.NBits, d.Bitmap)
 	}
+}
+
+func sptrStr(s []uint64) string {
+	if len(s) == 0 {
+		return ""
+	}
+	return fmt.Sprintf(" sptr=%v", s)
 }

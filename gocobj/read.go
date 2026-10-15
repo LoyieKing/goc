@@ -169,6 +169,11 @@ func Parse(ra io.ReaderAt) (*File, error) {
 		if len(r.b) > 0 { // 1.1
 			fn.SysvPtrRegs = r.uleb()
 		}
+		if len(r.b) > 0 { // 1.2
+			for n := r.uleb(); n > 0 && r.err == nil; n-- {
+				fn.SptrSlots = append(fn.SptrSlots, r.uleb())
+			}
+		}
 		if fn.pcvOff != 0 {
 			fn.PCValue = pcv[fn.pcvOff-1]
 		}

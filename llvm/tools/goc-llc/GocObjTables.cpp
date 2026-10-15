@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -35,6 +36,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -63,6 +65,14 @@ struct FuncInfo {
   uint64_t SysvPtrRegs = 0; // bit i: SysV integer argument register i holds a pointer
   std::vector<CallSite> Calls;
   std::vector<FuncAddr> Addrs;
+  std::vector<uint64_t> SptrSlots; // 1.2: BP-relative offsets, sorted
+};
+
+// An alloca (by IR name) plus a byte offset inside it that holds an sptr.
+struct SptrTarget {
+  std::string Alloca;
+  int64_t Off;
+  bool operator==(const SptrTarget &O) const { return Alloca == O.Alloca && Off == O.Off; }
 };
 
 // .goc.funcs flag bits (docs/gocobj-format.md).
@@ -72,14 +82,16 @@ enum : uint64_t {
   FlagSysvUnmodelled = 1u << 7,
 };
 
+static bool isSptrNode(const MDNode *N) {
+  if (!N || N->getNumOperands() != 1)
+    return false;
+  auto *S = dyn_cast<MDString>(N->getOperand(0));
+  return S && S->getString() == "sptr";
+}
+
 // Whether F carries a !goc.color !{"sptr"} attachment anywhere.
 static bool hasSptr(const Function &F) {
-  auto IsSptr = [](const MDNode *N) {
-    if (!N || N->getNumOperands() != 1)
-      return false;
-    auto *S = dyn_cast<MDString>(N->getOperand(0));
-    return S && S->getString() == "sptr";
-  };
+  auto IsSptr = isSptrNode;
   if (IsSptr(F.getMetadata("goc.color")))
     return true;
   for (const BasicBlock &BB : F)
@@ -87,6 +99,47 @@ static bool hasSptr(const Function &F) {
       if (IsSptr(I.getMetadata("goc.color")))
         return true;
   return false;
+}
+
+static bool compilerRoot(StringRef N) {
+  return N.starts_with("goc.anchor") || N.starts_with("goc.arganchor") ||
+         N.starts_with("goc.spill.root");
+}
+
+// The frame slots that hold sptr values (goc-lower meta: sptrSlots): every
+// (alloca, offset) named by a !goc.frame.words tag, and every alloca that
+// receives a direct store of an sptr-colored pointer.
+static std::vector<SptrTarget> sptrTargets(const Function &F) {
+  std::vector<SptrTarget> Out;
+  auto Add = [&](SptrTarget T) {
+    if (std::find(Out.begin(), Out.end(), T) == Out.end())
+      Out.push_back(std::move(T));
+  };
+  for (const BasicBlock &BB : F)
+    for (const Instruction &I : BB) {
+      if (const MDNode *W = I.getMetadata("goc.frame.words")) {
+        if (W->getNumOperands() < 2)
+          continue;
+        auto *Name = dyn_cast<MDString>(W->getOperand(1));
+        if (!Name || compilerRoot(Name->getString()))
+          continue;
+        for (unsigned K = 2; K < W->getNumOperands(); ++K)
+          if (auto *C = mdconst::dyn_extract<ConstantInt>(W->getOperand(K)))
+            Add({Name->getString().str(), C->getSExtValue()});
+        continue;
+      }
+      auto *St = dyn_cast<StoreInst>(&I);
+      if (!St)
+        continue;
+      auto *V = dyn_cast<Instruction>(St->getValueOperand());
+      auto *A = dyn_cast<AllocaInst>(St->getPointerOperand());
+      if (!V || !A || !V->getType()->isPointerTy() || !V->hasName() || !A->hasName())
+        continue;
+      if (!isSptrNode(V->getMetadata("goc.color")) || compilerRoot(A->getName()))
+        continue;
+      Add({A->getName().str(), 0});
+    }
+  return Out;
 }
 
 // Which SysV integer argument registers (rdi rsi rdx rcx r8 r9) carry a
@@ -129,6 +182,61 @@ struct GocObjTables : MachineFunctionPass {
   // Computed on the IR as goc-llc received it: CodeGenPrepare and friends
   // later rewrite or drop instructions that carry the colors.
   StringMap<uint64_t> IRFlags, IRSysv;
+  StringMap<std::vector<SptrTarget>> IRSptr;
+  unsigned InlineAsmLabels = 0;
+
+  // Direct calls written in inline assembly ("call sym" on a line of its
+  // own) are invisible to machine passes. Put a label pair around each one
+  // in the asm text itself; labels emit no bytes, so the code is unchanged.
+  // Returns false when the string was left alone.
+  bool labelInlineAsmCalls(MachineFunction &MF, MachineInstr &MI, FuncInfo &FI) {
+    MachineOperand &Op = MI.getOperand(0);
+    if (!Op.isSymbol())
+      return false;
+    StringRef Asm = Op.getSymbolName();
+    if (!Asm.contains("call"))
+      return false;
+    std::string Out;
+    bool Changed = false;
+    SmallVector<StringRef, 16> Lines;
+    Asm.split(Lines, '\n');
+    for (size_t I = 0; I < Lines.size(); ++I) {
+      StringRef L = Lines[I];
+      StringRef T = L.trim();
+      StringRef Rest;
+      if (T.consume_front("callq") || T.consume_front("call")) {
+        Rest = T;
+        if (!Rest.empty() && (Rest[0] == ' ' || Rest[0] == '\t')) {
+          Rest = Rest.trim();
+          bool Ok = !Rest.empty() && Rest.find_first_of(" \t*%$,()") == StringRef::npos &&
+                    !isdigit((unsigned char)Rest[0]);
+          if (Ok) {
+            std::string P = ".Lgoc_iac" + std::to_string(InlineAsmLabels);
+            std::string R = ".Lgoc_iar" + std::to_string(InlineAsmLabels);
+            ++InlineAsmLabels;
+            Out += P + ":\n" + L.str() + "\n" + R + ":";
+            CallSite CS;
+            CS.Pre = P;
+            CS.Ret = R;
+            CS.Target = Rest.str();
+            CS.Safepoint = false;
+            FI.Calls.push_back(std::move(CS));
+            Changed = true;
+            if (I + 1 < Lines.size())
+              Out += "\n";
+            continue;
+          }
+        }
+      }
+      Out += L.str();
+      if (I + 1 < Lines.size())
+        Out += "\n";
+    }
+    if (!Changed)
+      return false;
+    Op.ChangeToES(MF.createExternalSymbolName(Out), Op.getTargetFlags());
+    return true;
+  }
 
   bool doInitialization(Module &M) override {
     for (const Function &F : M) {
@@ -143,6 +251,8 @@ struct GocObjTables : MachineFunctionPass {
         Fl |= FlagSysvUnmodelled;
       IRFlags[F.getName()] = Fl;
       IRSysv[F.getName()] = Mask;
+      if (Fl & FlagHasSptr)
+        IRSptr[F.getName()] = sptrTargets(F);
     }
     return false;
   }
@@ -167,6 +277,26 @@ struct GocObjTables : MachineFunctionPass {
     FI.FrameSize = MF.getFrameInfo().getStackSize();
     FI.Flags = IRFlags.lookup(MF.getFunction().getName());
     FI.SysvPtrRegs = IRSysv.lookup(MF.getFunction().getName());
+    if (auto It = IRSptr.find(MF.getFunction().getName()); It != IRSptr.end()) {
+      const MachineFrameInfo &MFI = MF.getFrameInfo();
+      StringMap<int64_t> Obj;
+      for (int I = 0, E = MFI.getObjectIndexEnd(); I < E; ++I)
+        if (!MFI.isDeadObjectIndex(I))
+          if (const AllocaInst *A = MFI.getObjectAllocation(I))
+            if (A->hasName())
+              Obj.try_emplace(A->getName(), MFI.getObjectOffset(I));
+      for (const SptrTarget &T : It->second) {
+        auto O = Obj.find(T.Alloca);
+        if (O == Obj.end())
+          continue;
+        int64_t Off = -O->second - 16 - T.Off;
+        if (Off < 8 || Off % 8 != 0)
+          continue;
+        if (std::find(FI.SptrSlots.begin(), FI.SptrSlots.end(), (uint64_t)Off) == FI.SptrSlots.end())
+          FI.SptrSlots.push_back(Off);
+      }
+      std::sort(FI.SptrSlots.begin(), FI.SptrSlots.end());
+    }
     MachineInstr *Last = nullptr;
     for (MachineBasicBlock &MBB : MF) {
       bool SawStackmap = false;
@@ -175,6 +305,10 @@ struct GocObjTables : MachineFunctionPass {
           Last = &MI;
         if (MI.getOpcode() == TargetOpcode::STACKMAP) {
           SawStackmap = true;
+          continue;
+        }
+        if (MI.isInlineAsm()) {
+          labelInlineAsmCalls(MF, MI, FI);
           continue;
         }
         if (MI.getOpcode() == X86::LEA64r && MI.getNumOperands() >= 6 &&
@@ -321,6 +455,9 @@ bool GocObjTables::doFinalization(Module &M) {
     W.uleb(GC[I].empty() ? std::string("0") : GC[I] + "-.Lgoc_gcbase+1");
     W.uleb("0");          // inl
     W.uleb(Twine(F.SysvPtrRegs)); // 1.1: sysv_ptr_regs
+    W.uleb(Twine(F.SptrSlots.size())); // 1.2: sptr_slots
+    for (uint64_t O : F.SptrSlots)
+      W.uleb(Twine(O));
     W.end(L);
   }
 
@@ -383,7 +520,7 @@ bool GocObjTables::doFinalization(Module &M) {
   unsigned Prod = W.str("goc-llc (LLVM " LLVM_VERSION_STRING ")");
   W.section(".goc.header");
   OS << "\t.byte 0x47,0x4f,0x43,0x4f,0x42,0x4a,0,0\n"
-     << "\t.short 1\n\t.short 1\n"
+     << "\t.short 1\n\t.short 2\n"
      << "\t.byte 1\n\t.byte 0\n\t.short 0\n"
      << "\t.long .Lgoc_s" << Prof << "-.Lgoc_strtab\n"
      << "\t.long .Lgoc_s" << Prod << "-.Lgoc_strtab\n"

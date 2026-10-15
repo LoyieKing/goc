@@ -96,6 +96,12 @@ func (bd *Builder) Sections() map[string][]byte {
 		if bd.Header.Minor >= 1 {
 			r.uleb(fn.SysvPtrRegs)
 		}
+		if bd.Header.Minor >= 2 {
+			r.uleb(uint64(len(fn.SptrSlots)))
+			for _, s := range fn.SptrSlots {
+				r.uleb(s)
+			}
+		}
 		funcs.record(r.b)
 	}
 	for _, rl := range bd.Relocs {

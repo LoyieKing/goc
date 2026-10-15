@@ -77,6 +77,9 @@ func synthFuncs(f *gocobj.File, pkg, flags, cABI string) ([]synthFn, error) {
 		if fn.Flags&gocobj.FuncInternal != 0 {
 			e.GoSym = pkg + "." + tu + "." + fn.Name
 		}
+		for _, o := range fn.SptrSlots {
+			e.SptrSlots = append(e.SptrSlots, int(o))
+		}
 		for i, reg := range sysvRegs {
 			if fn.SysvPtrRegs&(1<<i) != 0 {
 				e.SysvPointerRegs = append(e.SysvPointerRegs, reg)
@@ -160,4 +163,62 @@ func clip(v any) string {
 		return s[:160] + "..."
 	}
 	return s
+}
+
+// tableFields are the meta.json fields the tables now carry. mergeMeta
+// overwrites them in each function goc-llc compiled; everything else (the
+// Go ABI thunks, the stack-check policy, the ABI word, the document header)
+// still comes from goc-lower's meta.json.
+var tableFields = []string{"go_sym", "frame", "calls", "branches", "has_sptr", "sptr_slots", "sysv_pointer_regs"}
+
+// mergeMeta writes meta.json with the table-derived fields replaced and
+// returns the path of the temporary file.
+func mergeMeta(syn []synthFn, metaPath string) (string, error) {
+	b, err := os.ReadFile(metaPath)
+	if err != nil {
+		return "", err
+	}
+	var doc map[string]json.RawMessage
+	if err := json.Unmarshal(b, &doc); err != nil {
+		return "", err
+	}
+	var fns []map[string]json.RawMessage
+	if err := json.Unmarshal(doc["functions"], &fns); err != nil {
+		return "", err
+	}
+	idx := map[string]int{}
+	for i, m := range fns {
+		var name string
+		_ = json.Unmarshal(m["mir_name"], &name)
+		idx[name] = i
+	}
+	for _, s := range syn {
+		i, ok := idx[s.MIRName]
+		if !ok {
+			return "", fmt.Errorf("%s: in the tables but not in meta.json", s.MIRName)
+		}
+		js, _ := json.Marshal(s)
+		var mine map[string]json.RawMessage
+		_ = json.Unmarshal(js, &mine)
+		for _, k := range tableFields {
+			fns[i][k] = mine[k]
+		}
+	}
+	if doc["functions"], err = json.Marshal(fns); err != nil {
+		return "", err
+	}
+	out, err := json.Marshal(doc)
+	if err != nil {
+		return "", err
+	}
+	tf, err := os.CreateTemp("", "gocobj2goobj-meta-*.json")
+	if err != nil {
+		return "", err
+	}
+	if _, err := tf.Write(out); err != nil {
+		tf.Close()
+		os.Remove(tf.Name())
+		return "", err
+	}
+	return tf.Name(), tf.Close()
 }

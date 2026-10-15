@@ -11,4 +11,17 @@ if [[ ${#files[@]} -eq 0 ]]; then
 fi
 ( cd "$ROOT" && go build -o "$ROOT/build/goc-objdump" ./tools/goc-objdump )
 "$ROOT/build/goc-objdump" verify "${files[@]}"
-echo "verify-real: ${#files[@]} files ok"
+# The meta entries the converter now builds from the tables must agree with
+# goc-lower's text-derived meta.json.
+( cd "$ROOT" && go build -o "$ROOT/build/gocobj2goobj" ./tools/gocobj2goobj )
+for f in "${files[@]}"; do
+  m="${f%.gocobj}.meta.json"
+  [[ -f "$m" ]] || continue
+  abi=
+  grep -q '"abi": "ABI0"' "$m" && abi=ABI0
+  "$ROOT/build/gocobj2goobj" -check-meta -in "$f" -meta "$m" -c-abi "$abi" -o /dev/null >/dev/null || {
+    "$ROOT/build/gocobj2goobj" -check-meta -in "$f" -meta "$m" -c-abi "$abi" -o /dev/null | head -20 >&2
+    exit 1
+  }
+done
+echo "verify-real: ${#files[@]} files ok (verify + check-meta)"
