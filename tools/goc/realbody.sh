@@ -222,7 +222,7 @@ if [[ "$IN" != *.ll && "$OPT_LEVEL" != 0 ]]; then
   # "-inline-threshold=250": the textual pipeline above does not carry
   # default<O3>'s inliner threshold (docs/perf-gap.md).
   read -r -a _goc_opt_extra <<<"${GOC_OPT_EXTRA:-}"
-  "$OPT" "-passes=$PIPELINE" "${_goc_opt_extra[@]}" -S "$LL" -o "$TMP/body.opt.ll"
+  "$OPT" -load-pass-plugin="$SMPASS" "-passes=$PIPELINE,function(goc-name-blocks)" "${_goc_opt_extra[@]}" -S "$LL" -o "$TMP/body.opt.ll"
   cp "$TMP/body.opt.ll" "$LL"
   echo "realbody: O$OPT_LEVEL inlined before stack maps" >&2
 fi

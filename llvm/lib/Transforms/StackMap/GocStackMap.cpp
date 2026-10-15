@@ -2263,6 +2263,23 @@ struct GocInlineGate : PassInfoMixin<GocInlineGate> {
   static bool isRequired() { return true; }
 };
 
+// Name every unnamed address-taken block. LLVM 19's .ll parser keys forward
+// blockaddress references by ValID, whose ordering ignores the kind, so a
+// numbered and a named target in one table can collapse into one entry
+// (quickjs dispatch_table: OP_pow jumped to OP_or). Clang without value
+// names leaves blocks numbered while the inliner names its ".exit" blocks;
+// naming them all keeps the textual hand-off between tools exact.
+struct GocNameBlocks : PassInfoMixin<GocNameBlocks> {
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
+    unsigned n = 0;
+    for (BasicBlock &BB : F)
+      if (!BB.hasName() && BB.hasAddressTaken())
+        BB.setName("goc.ba" + Twine(n++));
+    return PreservedAnalyses::all();
+  }
+  static bool isRequired() { return true; }
+};
+
 } // namespace
 
 bool goc::parseStackMapPass(StringRef Name, FunctionPassManager &FPM,
@@ -2277,6 +2294,10 @@ bool goc::parseStackMapPass(StringRef Name, FunctionPassManager &FPM,
   }
   if (Name == "goc-pin-i64") {
     FPM.addPass(GocPinI64());
+    return true;
+  }
+  if (Name == "goc-name-blocks") {
+    FPM.addPass(GocNameBlocks());
     return true;
   }
   if (Name == "goc-inline-gate") {

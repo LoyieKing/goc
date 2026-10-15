@@ -356,7 +356,10 @@ cmd_build() {
     # (250; a textual "inline" uses 225), see docs/perf-gap.md.
     local -a OPT_EXTRA=()
     read -r -a OPT_EXTRA <<<"${GOC_OPT_EXTRA:-}"
-    if ! "$OPT" "-passes=$PIPELINE" "${OPT_EXTRA[@]}" -S "$BODY_LL" -o "$TMP/a.opt.ll"; then
+    # goc-name-blocks: LLVM 19's .ll reader can merge a numbered and a named
+    # blockaddress target (see GocStackMap.cpp); name them before printing.
+    PIPELINE="$PIPELINE,function(goc-name-blocks)"
+    if ! "$OPT" -load-pass-plugin="$SMPASS" "-passes=$PIPELINE" "${OPT_EXTRA[@]}" -S "$BODY_LL" -o "$TMP/a.opt.ll"; then
       cleanup_build_tmp
       exit 1
     fi
