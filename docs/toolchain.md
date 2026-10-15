@@ -28,7 +28,7 @@ linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就�
 
 `goc go` 和 `goc check` 不读环境里已有的 `GOC_*`。要改默认就加参数。
 
-`goc build` 保持 `-O0`，仍读取调用方已经导出的 `GOC_*`。同一项又写了参数时，参数优先。P28 黄金测试仍是 `-O0`。`-O3`、`cptr`、`--fast-stack-alloca` 只在 `goc go` 和 `goc check` 上。
+`goc build` 保持 `-O0`，仍读取调用方已经导出的 `GOC_*`。同一项又写了参数时，参数优先。黄金测试（test/clang）仍是 `-O0`。`-O3`、`cptr`、`--fast-stack-alloca` 只在 `goc go` 和 `goc check` 上。
 
 ## 默认
 

@@ -141,7 +141,7 @@ void checkEscapesAndMix(Function &F, ColorEscapeState &S) {
     }
 
     // Call args: if callee is known to sink to heap globals — conservative
-    // check for gptr/cptr mix on annotated params is limited in P17.
+    // check for gptr/cptr mix on annotated params is limited.
     if (auto *CB = dyn_cast<CallBase>(&I)) {
       Function *Callee = CB->getCalledFunction();
       if (!Callee || isAnnotationIntrinsic(Callee))
@@ -171,7 +171,7 @@ void attachMetadata(Module &M, ColorEscapeState &S) {
 
   // Module-level schema note.
   M.addModuleFlag(Module::Warning, "goc.color.schema",
-                  MDString::get(Ctx, "annotate+!goc.color;v0.2.2-P17"));
+                  MDString::get(Ctx, "annotate+!goc.color;v0.2.2"));
 
   for (auto &KV : S.Info) {
     Value *V = KV.first;

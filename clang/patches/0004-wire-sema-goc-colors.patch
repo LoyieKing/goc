@@ -14,7 +14,7 @@
    void ActOnEndOfTranslationUnit();
    void ActOnEndOfTranslationUnitFragment(TUFragmentKind Kind);
  
-+  /// DiagnoseGocColorEscapes - goc P28: mirror Goc* attrs to AnnotateAttr and
++  /// DiagnoseGocColorEscapes - goc: mirror Goc* attrs to AnnotateAttr and
 +  /// diagnose sptr escape (store to non-stack / return).
 +  void DiagnoseGocColorEscapes();
 +
@@ -28,7 +28,7 @@
    if (!PP.isIncrementalProcessingEnabled())
      TUScope = nullptr;
 +
-+  // goc P28: mirror Goc* attrs to AnnotateAttr and reject sptr escape.
++  // goc: mirror Goc* attrs to AnnotateAttr and reject sptr escape.
 +  DiagnoseGocColorEscapes();
  }
  

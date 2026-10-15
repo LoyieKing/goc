@@ -1,4 +1,4 @@
-//===- GocClangPlugin.cpp - P27 goc color attrs + Sema escape --------------===//
+//===- GocClangPlugin.cpp - goc color attrs + Sema escape -----------------===//
 // Out-of-tree Clang plugin that meaningfully extends Clang:
 //   1. ParsedAttrInfo: goc_cptr / goc_sptr / goc_uptr / goc_auto_ptr / goc_gptr
 //      (attaches AnnotateAttr "goc.color.*" for IR survival)
@@ -374,7 +374,7 @@ public:
 } // namespace
 
 static FrontendPluginRegistry::Add<GocClangAction>
-    X("goc-clang", "goc P27: pointer-color attrs + Sema sptr escape");
+    X("goc-clang", "goc: pointer-color attrs + Sema sptr escape");
 
 static ParsedAttrInfoRegistry::Add<GocColorAttrInfo<GocColor::CPtr>>
     A1("goc_cptr", "goc cptr color attribute");

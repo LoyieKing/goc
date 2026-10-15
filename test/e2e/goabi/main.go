@@ -1,4 +1,4 @@
-// P29 golden: Go calls clang-compiled C through goc ABIInternal entry thunks.
+// Golden test: Go calls clang-compiled C through goc ABIInternal entry thunks.
 //
 // The C bodies live in a packed goobj: TEXT symbols are the Go-ABI entry thunk
 // (<name>) plus the SysV body (<name>.impl). stubs_amd64.s only satisfies Go's

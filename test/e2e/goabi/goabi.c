@@ -1,4 +1,4 @@
-/* P29 golden: Go ABIInternal on clang-compiled code.
+/* Golden test: Go ABIInternal on clang-compiled code.
  *
  * goc_goabi.py gives supported functions a Go-ABI entry thunk, renames their
  * SysV bodies to <name>.impl, and retains ordinary C-to-C calls. These probes

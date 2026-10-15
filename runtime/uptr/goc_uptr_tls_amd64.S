@@ -1,6 +1,6 @@
-/* goc_uptr_tls_amd64.S — P22: read owner g->stack.hi via Go linux/amd64 TLS.
+/* goc_uptr_tls_amd64.S — read owner g->stack.hi via Go linux/amd64 TLS.
  *
- * Convention (same as P1 morestack / P5 FS:-8):
+ * Convention (same as the morestack prologue, FS:-8):
  *   movq %fs:-8, %rax   // g
  *   movq 8(%rax), %rax  // g.stack.hi  (stack.lo @ 0, stack.hi @ 8)
  *

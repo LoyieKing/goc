@@ -1,13 +1,13 @@
-/* goc.h — P28 in-tree Clang / P27 plugin color surface (syntax-guide v0.2.1)
+/* goc.h — pointer-color surface for in-tree Clang or the plugin (syntax-guide v0.2.1)
  *
  * When compiled with -fplugin=libGocClang.so, native attributes
  *   __attribute__((goc_cptr|goc_sptr|goc_uptr|goc_auto_ptr|goc_gptr))
  * are registered by the plugin and lowered to AnnotateAttr "goc.color.*".
- * Without the plugin, fall back to clang::annotate (P17-compatible).
+ * Without the plugin, fall back to clang::annotate (read by the IR color pass).
  *
  * Product path: a stack pointer stored into non-stack cptr/auto T* is promoted
  * to uptr by the IR pass. Unsupported escapes and raw sptr returns stay hard
- * errors. No dsptr. The P27 plugin still rejects a sptr store to heap/global.
+ * errors. No dsptr. The plugin still rejects a sptr store to heap/global.
  */
 #ifndef GOC_H
 #define GOC_H
@@ -21,8 +21,8 @@ extern "C" {
 #endif
 
 /* Prefer plugin-native spellings when the plugin is loaded (define GOC_USE_PLUGIN_ATTRS
- * from the goc driver). Otherwise annotate tokens survive into IR for P17 pass. */
-/* Native goc_* attrs: in-tree Attr.td (P28) or -fplugin (P27). */
+ * from the goc driver). Otherwise annotate tokens survive into IR for the color pass. */
+/* Native goc_* attrs: in-tree Attr.td or -fplugin. */
 #if defined(GOC_USE_PLUGIN_ATTRS) || defined(GOC_USE_INTREE_ATTRS)
 #  define GOC_ANN_CPTR __attribute__((goc_cptr))
 #  define GOC_ANN_SPTR __attribute__((goc_sptr))

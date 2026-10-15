@@ -1,4 +1,4 @@
-//===- GocColorEscape.cpp - P17 pointer color + escape analysis -----------===//
+//===- GocColorEscape.cpp - pointer color + escape analysis ---------------===//
 // Frontend vertical slice: refine auto_ptr, encode stack pointers stored in
 // cptr T* slots as uptr, and annotate IR for later backend hooks.
 //===----------------------------------------------------------------------===//
@@ -16,6 +16,11 @@ using namespace llvm;
 using namespace goc::ce;
 
 int goc::runColorEscape(Module &M) {
+  // Register goc metadata kinds up front: printed attachment order follows
+  // kind IDs, and later passes would otherwise register them in DenseMap
+  // (pointer-hash) order, making the output IR nondeterministic.
+  for (const char *Kind : {"goc.color", "goc.prov", "goc.uptr_encoded"})
+    M.getContext().getMDKindID(Kind);
   unsigned DynamicAllocas = lowerDynamicAllocas(M);
   ColorEscapeState S;
   seedAnnotations(M, S);

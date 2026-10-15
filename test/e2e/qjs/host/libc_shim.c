@@ -1,4 +1,4 @@
-/* P29 north-star: freestanding libc surface for quickjs-ng on goroutine stacks.
+/* Freestanding libc surface for quickjs-ng on goroutine stacks.
  *
  * goc-compiled C must not enter libc for allocation, I/O, or TLS: libc may
  * switch stacks in ways Go's stack discipline cannot describe. This shim

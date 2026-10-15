@@ -1,4 +1,4 @@
-# P17 IR color representation
+# IR color representation
 
 **Contract:** `goc-syntax-guide.md` v0.2.1  
 **Date:** 2026-09-21 (Asia/Shanghai)
@@ -29,7 +29,7 @@ After `goc-color-escape`:
 - Instruction metadata `!goc.color !{!"sptr"}` (also `cptr`/`uptr`/`gptr`/`auto`)
 - Optional `!goc.prov !{!"stack"|"cheap"|"goheap"}`
 - Optional `!goc.uptr_encoded !{!"1"}` when value came from `goc_uptr_from_*`
-- Module flag `goc.color.schema` = `annotate+!goc.color;v0.2.1-P17`
+- Module flag `goc.color.schema` = `annotate+!goc.color;v0.2.2`
 
 ## Escape rules enforced
 
@@ -48,12 +48,12 @@ clang-19 -emit-llvm -S -O0 -I include foo.c|.goc
 
 The product path does not read `!goc.color` after this pass: `libGocPasses.so` records live sptr/gptr slots at call sites, and goc-llc turns those records into the `.goc.gcmaps` bitmaps that become Go stack maps.
 
-## P19 uptr MSB
+## uptr MSB
 
 Named builtins are no longer identity stubs at runtime/IR-lower:
 
-- Host: link `p19-uptr-runtime/build/libgoc_uptr.a` (`goc_uptr.h`)
-- IR: `goc-uptr-lower` expands calls to `sub`/`add`/`and 1<<63` + FATAL guards
+- Host: link `runtime/uptr` (`include/goc_uptr.h`) 
+- Encode/decode are runtime calls (`goc_uptr_*`) with FATAL guards on tag mismatch
 - `*_hi` variants recognized by color-escape (same encode metadata)
 
-See `../../p19-uptr-runtime/docs/UPTR-MSB.md`.
+See [`runtime/UPTR-MSB.md`](../../runtime/UPTR-MSB.md).

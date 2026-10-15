@@ -1,4 +1,4 @@
-# P27: build libGocClang.so (Clang plugin — attrs + Sema escape)
+# Build libGocClang.so (Clang plugin — attrs + Sema escape)
 CXX      := clang++-19
 LLVM_CFG ?= llvm-config-19
 

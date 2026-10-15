@@ -29,7 +29,7 @@ static cl::opt<bool> FatalErrors("fatal-errors",
 
 int main(int argc, char **argv) {
   InitLLVM X(argc, argv);
-  cl::ParseCommandLineOptions(argc, argv, "goc P17 color/escape analysis\n");
+  cl::ParseCommandLineOptions(argc, argv, "goc color/escape analysis\n");
 
   LLVMContext Ctx;
   SMDiagnostic Err;

@@ -46,8 +46,8 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | 目录 | 职责 |
 |---|---|
 | `cmd/goc` | 命令行入口（bash）：`goc go`、`goc build`、`goc test`、`goc check`、`goc toolchain` |
-| `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`）、发布（`pack-release.sh`）、测试入口（`ci-test.sh`、`check-file-size.sh`（单文件 800 行上限）、`test-lit.sh`（`test/lit` 的 FileCheck 测试）、`test-p27/p28/p29*.sh`、`qjs-*.sh`、`test262-sample.py`、`qjs-official-tests.py`） |
-| `clang/` | Clang 补丁、`SemaGocColors.cpp`、树外插件（p27 测试用） |
+| `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`、`qjs-build.sh`、`qjs-cli-build.sh`）、发布（`pack-release.sh`）、CI 入口（`ci-test.sh`、`check-file-size.sh`：单文件 800 行上限）。测试脚本本身都在 `test/` 下 |
+| `clang/` | Clang 补丁、`SemaGocColors.cpp`（树内 Sema）、树外插件 `plugin/`（与树内同规则，`goc test --plugin` 用） |
 | `llvm/` | goc 自己的 LLVM 代码。`lib/Transforms/ColorEscape` 编成独立工具 `goc-color-escape`；`lib/Transforms/StackMap` 是 opt 插件 `libGocPasses.so`；`tools/goc-llc` 是加了 goc 机器 pass 和表输出的 llc；`lib/CodeGen` 是共享栈检查，`lib/Target/<arch>` 是架构钩子。构建：`scripts/build-passes.sh`，产物在 `build/llvm/` |
 | `goobj/enc` | 从 Go 1.24 源码 vendored 的目标文件写入器（`goobj/enc/vendorize.sh` 负责同步） |
 | `goobj/lower` | Go ABI 降级：thunk、签名、参数布局 |
@@ -59,7 +59,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `gocobj` | `.gocobj` 的 Go 读写和校验库（与 Go 版本无关，ABI 常量见 `docs/go-abi-profiles.md`） |
 | `runtime/` | uptr 运行时（`runtime/uptr`）和头文件 |
 | `include/` | 用户头文件 `goc.h`、`goc_uptr.h` |
-| `test/` | 测试：`sema`、`realbody`（p27/p28 golden）、`goabi`（p29）、`arm64`、`color-escape`、`color`、`qjs`/`qjscli`/`qjsmem`（QuickJS 宿主） |
+| `test/` | 所有测试，入口是各目录的 `run.sh`：`clang`（前端 golden）、`color-escape`、`lit`（FileCheck）、`gocobj`（格式 golden）、`e2e/`（`realbody`、`goabi`、`stress`、`lines`、`arm64`、`qjs` QuickJS 宿主与测试脚本）。见 `test/README.md` |
 | `bench/` | 基准和 perf-gap 脚本，不在 CI 里 |
 | `third_party/` | QuickJS 源码说明（源码本身不进 git）、本地 LLVM 构建目录 |
 
@@ -69,6 +69,6 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 
 ## 测试
 
-- `scripts/ci-test.sh`：`goc check`、`goc test`、`test-p29-goabi.sh`、gocobj 单元测试、`test-stress.sh`（栈增长 + GC 压力）、`test/e2e/arm64/run.sh`、`goc test --plugin`。CI 跑的就是这一组。
+- `scripts/ci-test.sh`：依次跑文件大小检查、`goc check`、`test/clang`、`test/color-escape`、`test/lit`、`test/e2e/{realbody,goabi,stress,lines,arm64}`、Go 单元测试、gocobj golden 和 gocobj-diff。CI 跑的就是这一组。
 - QuickJS：`scripts/qjs-cli-build.sh`（ng / `QJS_FLAVOR=bellard`），然后跑 `test/e2e/qjs/test262-sample.py` 和 `test/e2e/qjs/official-tests.py`。
 - Go 单元测试：`go test ./goobj/lower ./tools/...`。

@@ -1,6 +1,6 @@
-/* goc_uptr.h — P19/P22 uptr MSB encode/decode (syntax-guide v0.2.1 §3.3)
+/* goc_uptr.h — uptr encode/decode (syntax-guide v0.2.1 §3.3)
  *
- * Protocol (amd64 user VA):
+ * Protocol (amd64 and arm64 user VA):
  *   MSB=0: absolute cptr address; use as pointer.
  *   MSB=1: int64 two's-complement offset from owner g's stack.hi;
  *          abs = (uintptr_t)((int64_t)stack_hi + (int64_t)stored).
@@ -8,9 +8,9 @@
  * Decode only with owner g's hi; wrong tag / cross-g → FATAL.
  * No dsptr. No silent sptr→uptr promote (frontend still errors).
  *
- * P22: non-*_hi APIs read live g->stack.hi via TLS (goc_runtime_stack_hi /
- * FS:-8) when built with GOC_UPTR_HAVE_TLS and linked into a Go binary;
- * *_hi + goc_test_set_stack_hi remain for freestanding host proofs.
+ * Inside a Go binary (GOC_UPTR_HAVE_TLS) the current-g API reads the live
+ * g->stack.hi; the *_hi variants and goc_test_set_stack_hi serve host tests.
+ * Implementation: runtime/uptr. Protocol notes: runtime/UPTR-MSB.md.
  */
 #ifndef GOC_UPTR_H
 #define GOC_UPTR_H
@@ -31,6 +31,7 @@ extern "C" {
 typedef void *goc_cptr;
 typedef void *goc_sptr;
 typedef void *goc_uptr;
+typedef void *goc_auto_ptr;
 #endif
 
 static inline bool goc_uptr_is_stack_encoded(goc_uptr u) {
@@ -51,6 +52,10 @@ goc_uptr goc_uptr_from_cptr(goc_cptr p);
 goc_uptr goc_uptr_from_sptr(goc_sptr p);
 goc_cptr goc_uptr_as_cptr(goc_uptr u);
 goc_sptr goc_uptr_as_sptr(goc_uptr u);
+/* Compiler-inserted, tag-aware conversions for source-level T* storage. */
+goc_uptr goc_uptr_from_ptr(void *p);
+void *goc_uptr_decode(goc_uptr u);
+void *goc_uptr_require_cptr(void *p);
 
 /* Stack.hi provider: test override > TLS g->stack.hi > host approx. */
 uintptr_t goc_stack_hi(void);
@@ -65,6 +70,15 @@ uintptr_t goc_runtime_stack_lo(void);
 uintptr_t goc_runtime_getg(void);
 
 void goc_uptr_fatal(const char *msg) __attribute__((noreturn));
+
+/* Lowered C alloca(size): allocations stay live until the containing function
+ * returns, then goc_dynrelease releases the invocation's entire scope. */
+void *goc_dynalloc(size_t bytes, void **scope);
+void goc_dynrelease(void **scope);
+
+/* GOC_DYNALLOC_POOL: single-thread bump pool instead of malloc per alloca.
+ * Define it only when one goroutine owns every goc_dynalloc (QuickJS).
+ * Default pool is 16 MiB; override with -DGOC_DYNALLOC_POOL_SIZE=bytes. */
 
 #ifdef __cplusplus
 }

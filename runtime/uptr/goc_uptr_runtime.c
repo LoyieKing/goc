@@ -1,8 +1,8 @@
-/* P19/P22: uptr MSB encode/decode against owner g stack.hi.
+/* uptr MSB encode/decode against owner g stack.hi.
  *
  * Builds:
- *   Host (P19): default — test override + page approx; libc fatal.
- *   Go  (P22):  -DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS
+ *   Host: default — test override + page approx; libc fatal.
+ *   Go:    -DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS
  *               inline FS:-8 → g→stack.hi (no cross-object relocs;
  *               Go internal linker does not apply clang PLT/GOT/.bss).
  */
@@ -104,7 +104,7 @@ void goc_test_clear_stack_bounds(void) {
 #endif
 }
 
-/* g: linux/amd64 reads FS:-8 (P1 morestack / P5). linux/arm64 reads x28,
+/* g: linux/amd64 reads FS:-8 (as the morestack prologue). linux/arm64 reads x28,
  * which llc reserves; this TU must be compiled with that reservation. */
 #if defined(__aarch64__)
 static inline uintptr_t goc_tls_getg(void) {

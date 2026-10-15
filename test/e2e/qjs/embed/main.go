@@ -1,4 +1,4 @@
-// P29 north-star smoke: quickjs-ng (colored, compiled by goc) executing on a
+// End-to-end smoke: quickjs-ng (colored, compiled by goc) executing on a
 // goroutine stack, called from Go through goc ABIInternal entry thunks.
 //
 // The QJS bodies live in the packed goobj (build/qjs/qjs.o): TEXT symbols are
@@ -464,5 +464,5 @@ func main() {
 	if failed {
 		os.Exit(1)
 	}
-	fmt.Println("PASS p29-qjs (quickjs-ng on goroutine stack via goc)")
+	fmt.Println("PASS qjs-embed (quickjs-ng on goroutine stack via goc)")
 }
