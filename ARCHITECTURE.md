@@ -38,7 +38,9 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `goobj/enc` | 从 Go 1.24 源码 vendored 的目标文件写入器（`goobj/enc/vendorize.sh` 负责同步） |
 | `goobj/lower` | Go ABI 降级：thunk、签名、meta.json |
 | `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子、默认栈图 |
-| `tools/goc-elfpack` | ELF → goobj |
+| `tools/goc-elfpack` | ELF → goobj（逻辑在 `goobj/elfpack`；栈检查拼接在 `legacy_splice.go`，方案第 6a 行删除） |
+| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，过渡期内部仍调用 `goobj/elfpack` |
+| `tools/gocobj-diff` | 两个 goobj 的语义比对（符号、reloc、解码后的 pc 表、funcdata、FuncInfo） |
 | `tools/goc-lower` | `goobj/lower` 的命令行外壳 |
 | `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
 | `gocobj` | `.gocobj` 的 Go 读写和校验库（与 Go 版本无关，ABI 常量见 `docs/go-abi-profiles.md`） |

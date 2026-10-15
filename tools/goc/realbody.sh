@@ -371,17 +371,29 @@ fi
 
 "$LOWER" check-meta "$TMP/meta.json"
 
-# A release ships bin/elfpack. A checkout builds it from goobj.
-if [[ -x "$ROOT/bin/elfpack" ]]; then
-  ELFPACK="$ROOT/bin/elfpack"
+# A release ships bin/elfpack and bin/gocobj2goobj. A checkout builds them.
+# With the .goc.* tables present the object goes through gocobj2goobj, which
+# checks it (goc-objdump verify) and then still runs the elfpack code.
+if [[ -n "$GOC_TABLES" ]]; then
+  PACK_PKG=./tools/gocobj2goobj/
+  PACK_BIN="$ROOT/bin/gocobj2goobj"
 else
-  ( cd "$GOMOD_ROOT" && go build -o "$TMP/elfpack" ./tools/goc-elfpack/ )
-  ELFPACK="$TMP/elfpack"
+  PACK_PKG=./tools/goc-elfpack/
+  PACK_BIN="$ROOT/bin/elfpack"
+fi
+if [[ ! -x "$PACK_BIN" ]]; then
+  PACK_BIN="$TMP/pack"
+  ( cd "$GOMOD_ROOT" && go build -o "$PACK_BIN" "$PACK_PKG" )
 fi
 # HeaderString follows GOARCH, not the host. An explicit amd64 must override
-# a user's GOARCH too. The elfpack binary itself stays a host (amd64) tool.
-GOARCH="$GOC_ARCH" "$ELFPACK" -elf "$ELF" -meta "$TMP/meta.json" \
-  -maps "$TMP/maps" -out-o "$OUT_O" -p "$PKG"
+# a user's GOARCH too. The packer itself stays a host (amd64) tool.
+if [[ -n "$GOC_TABLES" ]]; then
+  GOARCH="$GOC_ARCH" "$PACK_BIN" -in "$ELF" -meta "$TMP/meta.json" \
+    -maps "$TMP/maps" -o "$OUT_O" -p "$PKG"
+else
+  GOARCH="$GOC_ARCH" "$PACK_BIN" -elf "$ELF" -meta "$TMP/meta.json" \
+    -maps "$TMP/maps" -out-o "$OUT_O" -p "$PKG"
+fi
 
 if [[ $MAGIC_OK -eq 1 ]]; then
   "$LOWER" magic-obj "$OUT_O"

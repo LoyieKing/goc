@@ -81,9 +81,11 @@ cp -a "$GOC_COLOR_ESCAPE" "$stage/passes/goc-color-escape"
 cp -a "$GOC_STACKMAP" "$stage/passes/libGocPasses.so"
 chmod a+rx "$stage/passes/goc-llc" "$stage/passes/goc-color-escape"
 
-( cd "$ROOT/backend" && go build -o "$stage/bin/elfpack" ./goobj/elfpack/ )
+( cd "$ROOT" && go build -o "$stage/bin/elfpack" ./tools/goc-elfpack/ )
 chmod a+rx "$stage/bin/elfpack"
-( cd "$ROOT/backend" && go build -o "$stage/bin/goc-lower" ./goobj/goclower/ )
+( cd "$ROOT" && go build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
+chmod a+rx "$stage/bin/gocobj2goobj"
+( cd "$ROOT" && go build -o "$stage/bin/goc-lower" ./tools/goc-lower/ )
 chmod a+rx "$stage/bin/goc-lower"
 
 # Drop the absolute build-machine directory from RUNPATH. $ORIGIN/../lib

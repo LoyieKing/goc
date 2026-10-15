@@ -12,7 +12,7 @@
 // Frame-address repair (GocFrameAddrFix / the x86 leaq asm) is not ported.
 // GOC_SPTR_MAPS is refused before we get here. A function that arrives with
 // sptr slots is a fatal error rather than a wrong bitmap.
-package main
+package elfpack
 
 import (
 	"encoding/binary"
