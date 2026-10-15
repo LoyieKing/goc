@@ -1,5 +1,0 @@
-# path lines  # reason — files that predate the 800-line limit
-# (scripts/check-file-size.sh). A file may shrink but not grow; lower the
-# number when it shrinks and remove the line once it is split.
-goobj/lower/goabi.go 1672                # thunk emitters for both arches + wrapper tables; split per arch next
-tools/gocobj2goobj/convert.go 919        # text, data and pc tables in one converter; split by section kind
