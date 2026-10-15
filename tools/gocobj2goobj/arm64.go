@@ -113,6 +113,20 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 			putInsnAt(s.P, off, insnAt(s.P, off)&^0x03ffffff)
 			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: objabi.R_CALLARM64, Sym: target})
 		case elf.R_AARCH64_ADR_PREL_PG_HI21:
+			if next >= 0 {
+				if _, ok := arm64PagePair(elf.R_AARCH64(mine[next].Type)); !ok {
+					next = -1 // e.g. LDST128: Go has no pair type for it
+				}
+			}
+			if next < 0 || mine[next].Sym != r.Sym || mine[next].Add != r.Add {
+				// llc scheduled the low half away from the ADRP (or one ADRP
+				// feeds several loads). Go's linker patches each half on its
+				// own: R_ARM64_PCREL on an ADRP, R_ARM64_LDSTn / R_ARM64_PCREL
+				// on the low-12 instruction (see archreloc).
+				putInsnAt(s.P, off, insnAt(s.P, off)&^0x60FFFFE0)
+				s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: objabi.R_ARM64_PCREL, Add: add, Sym: target})
+				continue
+			}
 			typ, err := pair(arm64PagePair)
 			if err != nil {
 				return err
@@ -126,6 +140,28 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				return err
 			}
 			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: objabi.R_ARM64_GOTPCREL, Add: add, Sym: target})
+		case elf.R_AARCH64_ADD_ABS_LO12_NC, elf.R_AARCH64_LDST8_ABS_LO12_NC,
+			elf.R_AARCH64_LDST16_ABS_LO12_NC, elf.R_AARCH64_LDST32_ABS_LO12_NC,
+			elf.R_AARCH64_LDST64_ABS_LO12_NC, elf.R_AARCH64_LDST128_ABS_LO12_NC:
+			// A low-12 half whose ADRP is not right before it.
+			w := insnAt(s.P, off) &^ 0x003FFC00
+			typ := objabi.R_ARM64_PCREL
+			switch elf.R_AARCH64(r.Type) {
+			case elf.R_AARCH64_ADD_ABS_LO12_NC:
+				w &^= 1 << 22
+			case elf.R_AARCH64_LDST8_ABS_LO12_NC:
+				typ = objabi.R_ARM64_LDST8
+			case elf.R_AARCH64_LDST16_ABS_LO12_NC:
+				typ = objabi.R_ARM64_LDST16
+			case elf.R_AARCH64_LDST32_ABS_LO12_NC:
+				typ = objabi.R_ARM64_LDST32
+			case elf.R_AARCH64_LDST64_ABS_LO12_NC:
+				typ = objabi.R_ARM64_LDST64
+			default:
+				typ = objabi.R_ARM64_LDST128
+			}
+			putInsnAt(s.P, off, w)
+			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: add, Sym: target})
 		case elf.R_AARCH64_ABS64:
 			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: objabi.R_ADDR, Add: add, Sym: target})
 		case elf.R_AARCH64_ABS32:
