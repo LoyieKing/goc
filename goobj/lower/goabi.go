@@ -1070,7 +1070,7 @@ func emitArm64RegisterArgument(ty string, source loc, dest string) []string {
 // .goc.* wrapper tables (labels emit no bytes).
 func emitThunksL(a abiSet, goabi []llFunc, labels bool) string {
 	if a.arch == "arm64" {
-		return emitArm64Thunks(goabi)
+		return emitArm64Thunks(goabi, labels)
 	}
 	lines := []string{"# Go 1.24 ABIInternal -> SysV entry thunks — generated", "\t.text"}
 	// mark defines a label for the .goc.* tables (it emits no bytes).
@@ -1152,19 +1152,30 @@ func emitThunksL(a abiSet, goabi []llFunc, labels bool) string {
 	return strings.Join(lines, "\n")
 }
 
-func emitArm64Thunks(goabi []llFunc) string {
+func emitArm64Thunks(goabi []llFunc, labels bool) string {
 	lines := []string{"// Go 1.24 arm64 ABIInternal -> AAPCS64 entry thunks — generated", "\t.text"}
-	for _, d := range goabi {
+	// mark defines a label for the .goc.* tables (it emits no bytes).
+	mark := func(l string, ti int) {
+		if labels {
+			lines = append(lines, fmt.Sprintf(".Lgocw_%s%d:", l, ti))
+		}
+	}
+	for ti, d := range goabi {
+		if labels {
+			lines = append(lines, fmt.Sprintf("\t.section\t.text.%s,\"ax\",%%progbits", d.Name))
+		}
 		lines = append(lines,
 			fmt.Sprintf("\t.globl\t%s", d.Name),
 			fmt.Sprintf("\t.type\t%s, %%function", d.Name),
 			"\t.balign\t4",
 			d.Name+":",
 			"\tstp\tx29, x30, [sp, #-16]!",
-			"\tmov\tx29, sp",
 		)
+		mark("p", ti)
+		lines = append(lines, "\tmov\tx29, sp")
 		if d.plan.Outgoing > 0 {
 			lines = append(lines, fmt.Sprintf("\tsub\tsp, sp, #%d", d.plan.Outgoing))
+			mark("a", ti)
 		}
 		var regMoves []a64gpr
 		var floatMoves []a64fpr
@@ -1195,7 +1206,9 @@ func emitArm64Thunks(goabi []llFunc) string {
 		lines = append(lines, parallelArm64FPR(floatMoves)...)
 		lines = append(lines, intLoads...)
 		lines = append(lines, floatLoads...)
+		mark("c", ti)
 		lines = append(lines, "\tbl\t"+d.Impl)
+		mark("r", ti)
 		for _, mv := range d.plan.ResultMoves {
 			if strings.ContainsAny(mv[0][:1], "dsqv") {
 				lines = append(lines, fmt.Sprintf("\tfmov\t%s, %s", mv[1], mv[0]))
@@ -1203,12 +1216,13 @@ func emitArm64Thunks(goabi []llFunc) string {
 				lines = append(lines, fmt.Sprintf("\tmov\t%s, %s", mv[1], mv[0]))
 			}
 		}
-		lines = append(lines,
-			"\tmov\tsp, x29",
-			"\tldp\tx29, x30, [sp], #16",
-			"\tret",
-			fmt.Sprintf("\t.size\t%s, .-%s", d.Name, d.Name),
-		)
+		lines = append(lines, "\tmov\tsp, x29")
+		mark("m", ti)
+		lines = append(lines, "\tldp\tx29, x30, [sp], #16")
+		mark("o", ti)
+		lines = append(lines, "\tret")
+		mark("e", ti)
+		lines = append(lines, fmt.Sprintf("\t.size\t%s, .-%s", d.Name, d.Name))
 	}
 	lines = append(lines, "")
 	return strings.Join(lines, "\n")
@@ -1391,7 +1405,7 @@ func WriteGoABI(inLL, outLL, outS, outJSON, outTables, arch string) error {
 	if err != nil {
 		return err
 	}
-	tables := outTables != "" && arch != "arm64"
+	tables := outTables != ""
 	ll, asm, js, logText, wrappers, err := runGoABI(string(text), arch, tables)
 	if err != nil {
 		return err
@@ -1451,6 +1465,14 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		slots     []int
 		mask      uint64
 	}
+	// The thunk frame: x86-64 pushes RBP (8 bytes, BP = the saved RBP);
+	// arm64 saves X29/X30 with one pre-indexed STP (16 bytes). Outgoing
+	// stack arguments sit below that in both.
+	a64 := a.arch == "arm64"
+	save := 8
+	if a64 {
+		save = 16
+	}
 	ts := make([]thunk, len(goabi))
 	for i, d := range goabi {
 		spills, stackPtrs, area, err := goArgsLayout(d.ABI.Go)
@@ -1460,7 +1482,13 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		var slots []int
 		for _, p := range d.ABI.SysV.Params {
 			if p.Location.Kind == "stack" && p.Type == "ptr" {
-				slots = append(slots, d.Outgoing-p.Location.Off)
+				// Bytes below varp: BP on x86-64; on arm64 Go's varp is
+				// the entry SP minus 8, i.e. 8 above the saved X29.
+				o := d.Outgoing - p.Location.Off
+				if a64 {
+					o += 8
+				}
+				slots = append(slots, o)
 			}
 		}
 		sort.Ints(slots)
@@ -1475,7 +1503,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 	// to the C body, scans the Go stack arguments and the outgoing pointer
 	// arguments.
 	pcv := make([]string, len(goabi))
-	b.WriteString("\t.section .goc.pcvalue,\"\",@progbits\n")
+	b.WriteString("\t.section .goc.pcvalue,\"\",%progbits\n")
 	for i, d := range goabi {
 		l := begin()
 		pcv[i] = l
@@ -1491,22 +1519,25 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		}
 		uleb(0)
 		fmt.Fprintf(&b, "\t.sleb128 0\n")
-		at("p", 8)
+		at("p", save)
 		if d.Outgoing > 0 {
-			at("a", 8+d.Outgoing)
+			at("a", save+d.Outgoing)
 		}
-		at("m", 8)
+		at("m", save)
 		at("o", 0)
 		end(l)
 	}
 	gc := make([]string, len(goabi))
-	b.WriteString("\t.section .goc.gcmaps,\"\",@progbits\n")
+	b.WriteString("\t.section .goc.gcmaps,\"\",%progbits\n")
 	for i, d := range goabi {
 		t := ts[i]
 		if t.area%8 != 0 || d.Outgoing%8 != 0 {
 			return "", fmt.Errorf("goabi: %s: Go argument area %d or outgoing area %d is not word aligned", d.Name, t.area, d.Outgoing)
 		}
 		nargs, nlocals := t.area/8, d.Outgoing/8
+		if a64 {
+			nlocals = (d.Outgoing + save - 8) / 8 // varp = entry SP - 8
+		}
 		args := make([]byte, (nargs+7)/8)
 		for _, o := range t.stackPtrs {
 			if o%8 != 0 || o/8 >= nargs {
@@ -1538,20 +1569,20 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		uleb(0) // ncolor
 		end(l)
 	}
-	b.WriteString("\t.section .goc.funcs,\"\",@progbits\n")
+	b.WriteString("\t.section .goc.funcs,\"\",%progbits\n")
 	for i, d := range goabi {
 		t := ts[i]
 		l := begin()
 		uleb(ref(d.Name))
 		uleb(fmt.Sprintf(".Lgocw_e%d-%s", i, d.Name))
-		uleb(8 + d.Outgoing) // frame
-		uleb(t.area)         // arg_size
-		u8(1)                // ABIInternal
-		u8(1)                // kind: ABI wrapper
-		uleb(4 | 8)          // flags: nosplit, has_frame_pointer
-		u8(0)                // func_id
-		uleb(0)              // file
-		uleb(0)              // start_line
+		uleb(save + d.Outgoing) // frame
+		uleb(t.area)            // arg_size
+		u8(1)                   // ABIInternal
+		u8(1)                   // kind: ABI wrapper
+		uleb(4 | 8)             // flags: nosplit, has_frame_pointer
+		u8(0)                   // func_id
+		uleb(0)                 // file
+		uleb(0)                 // start_line
 		uleb(pcv[i] + "-.Lgoc_pcvbase+1")
 		uleb(gc[i] + "-.Lgoc_gcbase+1")
 		uleb(0)            // inl
@@ -1562,7 +1593,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		}
 		end(l)
 	}
-	b.WriteString("\t.section .goc.wrappers,\"\",@progbits\n")
+	b.WriteString("\t.section .goc.wrappers,\"\",%progbits\n")
 	for i, d := range goabi {
 		t := ts[i]
 		l := begin()
@@ -1587,19 +1618,27 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		}
 		end(l)
 	}
-	b.WriteString("\t.section .goc.relocs,\"\",@progbits\n")
+	b.WriteString("\t.section .goc.relocs,\"\",%progbits\n")
 	for i, d := range goabi {
 		l := begin()
 		uleb(ref(d.Name))
-		uleb(fmt.Sprintf(".Lgocw_r%d-4-%s", i, d.Name))
-		u8(4)
-		u8(1) // CALL
-		uleb(ref(d.Impl))
-		fmt.Fprintf(&b, "\t.sleb128 -4\n")
+		if a64 {
+			uleb(fmt.Sprintf(".Lgocw_c%d-%s", i, d.Name))
+			u8(4)
+			u8(11) // ARM64_CALL26: on the BL itself
+			uleb(ref(d.Impl))
+			fmt.Fprintf(&b, "\t.sleb128 0\n")
+		} else {
+			uleb(fmt.Sprintf(".Lgocw_r%d-4-%s", i, d.Name))
+			u8(4)
+			u8(1) // CALL
+			uleb(ref(d.Impl))
+			fmt.Fprintf(&b, "\t.sleb128 -4\n")
+		}
 		u8(0)
 		end(l)
 	}
-	b.WriteString("\t.section .goc.strtab,\"\",@progbits\n")
+	b.WriteString("\t.section .goc.strtab,\"\",%progbits\n")
 	for i, s := range list {
 		fmt.Fprintf(&b, ".Lgocw_s%d:\n\t.asciz %q\n", i, s)
 	}

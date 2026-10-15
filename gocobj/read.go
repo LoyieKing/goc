@@ -239,7 +239,8 @@ func Parse(ra io.ReaderAt) (*File, error) {
 // section by "function+offset", where function is the enclosing STT_FUNC.
 func elfCallRelocs(ef *elf.File, syms []elf.Symbol) map[string]string {
 	out := map[string]string{}
-	if ef.Machine != elf.EM_X86_64 {
+	a64 := ef.Machine == elf.EM_AARCH64
+	if ef.Machine != elf.EM_X86_64 && !a64 {
 		return out
 	}
 	for si, s := range ef.Sections {
@@ -263,9 +264,18 @@ func elfCallRelocs(ef *elf.File, syms []elf.Symbol) map[string]string {
 		for i := 0; i+24 <= len(data); i += 24 {
 			off := binary.LittleEndian.Uint64(data[i:])
 			info := binary.LittleEndian.Uint64(data[i+8:])
-			typ := elf.R_X86_64(info & 0xffffffff)
 			idx := info >> 32
-			if (typ != elf.R_X86_64_PLT32 && typ != elf.R_X86_64_PC32) || idx == 0 || int(idx) > len(syms) {
+			bias := int64(4) // x86 PC-relative fields count from their end
+			if a64 {
+				typ := elf.R_AARCH64(info & 0xffffffff)
+				if typ != elf.R_AARCH64_CALL26 && typ != elf.R_AARCH64_JUMP26 {
+					continue
+				}
+				bias = 0
+			} else if typ := elf.R_X86_64(info & 0xffffffff); typ != elf.R_X86_64_PLT32 && typ != elf.R_X86_64_PC32 {
+				continue
+			}
+			if idx == 0 || int(idx) > len(syms) {
 				continue
 			}
 			target := syms[idx-1]
@@ -273,7 +283,7 @@ func elfCallRelocs(ef *elf.File, syms []elf.Symbol) map[string]string {
 			if elf.ST_TYPE(target.Info) == elf.STT_SECTION {
 				// One section per function: a section-relative reference
 				// names the function at that offset.
-				at := target.Value + uint64(int64(binary.LittleEndian.Uint64(data[i+16:]))+4)
+				at := target.Value + uint64(int64(binary.LittleEndian.Uint64(data[i+16:]))+bias)
 				name = ""
 				for _, y := range syms {
 					if y.Section == target.Section && elf.ST_TYPE(y.Info) == elf.STT_FUNC && y.Value == at {

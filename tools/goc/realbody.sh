@@ -2,7 +2,7 @@
 # Real Clang IR body → goc-llc → .gocobj → gocobj2goobj → goobj.
 # Every defined function is emitted. Each eligible function is renamed F.impl
 # and gains a Go ABIInternal entry F (Go→C thunk, C→C on the platform ABI,
-# C→Go .goabi). amd64 uses SysV.
+# C→Go .goabi). amd64 uses SysV; arm64 uses AAPCS64.
 # Usage: realbody.sh <input.ll|.c> <out.goobj> [pkg_prefix] [--abi0]
 #   pkg_prefix defaults to main. An import path may contain dots.
 #   --abi0: mark the object ABI0 (C-side platform entries, e.g. a libc shim).
@@ -42,14 +42,21 @@ PKG="${3:-main}"
 
 CLANG="$(goc_resolve_clang)"
 goc_prepend_lib "$(goc_clang_libdir "$CLANG")"
-# linux/amd64 only. arm64 needs an AArch64 stack-check hook in goc-llc and
-# AArch64 relocations in gocobj2goobj; both are pending (ARCHITECTURE.md).
+# Default stays linux/amd64. arm64 is a separate ISel, not a -march switch.
+# Both go through goc-llc: it emits the stack check (AArch64 hook) and the
+# .goc.* tables. g is x28, reserved by llc; there is no TLS load. Frame-
+# address repair (GocFrameAddrFix) and stack-map roots are x86-only, as on
+# main, so arm64 functions carry no locals pointer maps.
 GOC_ARCH="${GOC_ARCH:-amd64}"
-if [[ "$GOC_ARCH" != amd64 ]]; then
-  echo "realbody: FATAL GOC_ARCH=$GOC_ARCH is not supported (amd64 only; the AArch64 stack-check hook is not implemented yet)" >&2
+case "$GOC_ARCH" in
+  amd64|arm64) ;;
+  *) echo "realbody: FATAL GOC_ARCH=$GOC_ARCH (want amd64 or arm64)" >&2; exit 1 ;;
+esac
+export GOC_ARCH
+if [[ "$GOC_ARCH" == arm64 && "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
+  echo "realbody: FATAL GOC_CSR_ADJUST is x86-only; arm64 has no frame-address repair" >&2
   exit 1
 fi
-export GOC_ARCH
 # GOC_FRAMEADDR_MODE=gep (default): goc-reanchor rematerializes frame
 # addresses as plain GEPs, which is only safe with goc-llc's post-RA
 # GocFrameAddrFix pass (llvm/tools/goc-llc/goc_llc.cpp). asm: the old opaque leaq
@@ -59,7 +66,7 @@ if [[ -x "$ROOT/passes/goc-llc" ]]; then
 else
   GOC_LLC_BIN="$ROOT/build/llvm/goc-llc"
 fi
-if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
+if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" || "$GOC_ARCH" == arm64 ]]; then
   if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
     "$ROOT/scripts/build-passes.sh" >&2 || true
   fi
@@ -80,7 +87,7 @@ fi
 # and keeps that register across the call; tail duplication makes that
 # live range common. Only goc-llc's post-RA GocFrameAddrFix re-derives it.
 # A pre-set LLC=llc-19 used to skip the missing-binary check above.
-if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" ]]; then
+if [[ "${GOC_FRAMEADDR_MODE:-gep}" != "asm" || "$GOC_ARCH" == arm64 ]]; then
   if ! grep -a -q 'goc-frameaddr-fix' "$LLC" 2>/dev/null; then
     echo "realbody: FATAL $LLC has no GocFrameAddrFix; frame-address GEPs would stay stale across calls. Build build/llvm/goc-llc, or set GOC_FRAMEADDR_MODE=asm." >&2
     exit 1
@@ -120,6 +127,20 @@ cleanup() { [[ -n "${GOC_KEEP_TMP:-}" ]] || rm -rf "$TMP"; }
 trap cleanup EXIT
 
 LL="$TMP/body.ll"
+if [[ "$GOC_ARCH" == arm64 && "$IN" == *.c ]]; then
+  # runtime/uptr is the one TU that has an aarch64 path. Every other file
+  # that still contains the amd64 host sequence is refused rather than
+  # compiled into a binary that reads FS or traps in syscall.
+  case "$IN" in
+    *runtime/uptr/*) ;;
+    *)
+      if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$IN"; then
+        echo "realbody: FATAL $IN is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
+        exit 1
+      fi
+      ;;
+  esac
+fi
 if [[ "$IN" == *.ll ]]; then
   cp "$IN" "$LL"
 else
@@ -138,8 +159,12 @@ else
     OPT_FLAGS+=(-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
                 -fno-optimize-sibling-calls -Xclang -disable-llvm-passes)
   fi
+  TARGET_ARGS=()
+  if [[ "$GOC_ARCH" == arm64 ]]; then
+    TARGET_ARGS=(-target aarch64-unknown-linux-gnu -ffixed-x28)
+  fi
   # -fno-discard-value-names: see cmd/goc. The passes match stack slots by name.
-  "$CLANG" "${NATIVE_DEFS[@]}" -mno-red-zone -fno-stack-protector \
+  "$CLANG" "${NATIVE_DEFS[@]}" "${TARGET_ARGS[@]}" -mno-red-zone -fno-stack-protector \
     -fno-asynchronous-unwind-tables -fno-discard-value-names -I "$INC" \
     -emit-llvm -S "${OPT_FLAGS[@]}" \
     -o "$LL" "$IN"
@@ -157,6 +182,9 @@ fi
 # the 8-byte stack alignment); the few aligned SSE moves LLVM still selects are
 # made unaligned after instruction selection (see ALIGNFIX below).
 # amd64 Go calls are only 8-byte aligned, so the x86 backend must be told.
+# arm64 Go requires 16-byte SP; do not inject the x86 override. The
+# no-realign-stack attribute still applies: a dynamic AND of SP would make
+# pcsp unusable on either architecture.
 LOWER="$(goc_lower_bin)"
 "$LOWER" fix-ir "$LL"
 
@@ -213,7 +241,7 @@ fi
 
 # Record the stack-map roots on the IR goc-llc compiles: the tables take
 # their locations from the STACKMAP instructions of this very compile.
-if [[ "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
+if [[ "$GOC_ARCH" != arm64 && "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
   if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
     SMPASS="$GOC_STACKMAP"
   elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
@@ -242,17 +270,31 @@ fi
 # leave each stackmap record before a JMP; the tables attach a record to the
 # next CALL in layout order, so the merged CALL would get another path's roots.
 # Tail duplication is on: QuickJS dispatch blocks are shared tails, and gcc
-# duplicates them. Stock llc accepts the thresholds on both arches.
-LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
-          -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
-          -no-x86-call-frame-opt -enable-tail-merge=false
-          -tail-dup-pred-size=1000 -tail-dup-succ-size=1000)
+# duplicates them.
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  # No -march=x86-64, no -no-x86-call-frame-opt, no -reserve-goc-r14.
+  # +reserve-x28 keeps g live across the body. AArch64 has no red zone.
+  LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic
+            -mtriple=aarch64-unknown-linux-gnu -mattr=+reserve-x28
+            -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
+            -enable-tail-merge=false
+            -tail-dup-pred-size=1000 -tail-dup-succ-size=1000)
+else
+  LLC_ARGS=("-O$LLC_OPT_LEVEL" -relocation-model=pic -march=x86-64
+            -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls
+            -no-x86-call-frame-opt -enable-tail-merge=false
+            -tail-dup-pred-size=1000 -tail-dup-succ-size=1000)
+fi
 # GOC_LLC_EXTRA: extra llc flags for experiments (default empty).
 if [[ -n "${GOC_LLC_EXTRA:-}" ]]; then
   read -r -a _goc_llc_extra <<<"$GOC_LLC_EXTRA"
   LLC_ARGS+=("${_goc_llc_extra[@]}")
 fi
-if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
+    echo "realbody: note GOC_FIXED_G is implicit on arm64 (x28 reserved); not passing -reserve-goc-r14" >&2
+  fi
+elif [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-reserve-goc-r14)
   echo "realbody: GOC_FIXED_G=1 llc=$LLC" >&2
 fi
@@ -262,6 +304,9 @@ fi
 # section per function: every reference between functions then carries an
 # ELF relocation, so the converter never patches code.
 LLC_ARGS+=(-function-sections -goc-sym-abi="$SYM_ABI")
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  LLC_ARGS+=(-goc-profile=go1.24-arm64)
+fi
 if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-goc-fixed-g)
 fi
@@ -269,9 +314,15 @@ fi
   -o "$TMP/body.s" "$LL"
 
 # ALIGNFIX: without realignment an amd64 frame is only 8-byte aligned, so
-# aligned SSE memory moves would #GP.
-"$LOWER" align-asm "$TMP/body.s"
+# aligned SSE memory moves would #GP. arm64 has no SSE and keeps 16-byte SP,
+# so this rewrite does not apply.
+if [[ "$GOC_ARCH" != arm64 ]]; then
+  "$LOWER" align-asm "$TMP/body.s"
+fi
 MC_TRIPLE=x86_64-unknown-linux-gnu
+if [[ "$GOC_ARCH" == arm64 ]]; then
+  MC_TRIPLE=aarch64-unknown-linux-gnu
+fi
 # Go thunks are appended to the same assembly and assembled once. That puts
 # both .text contributions in one relocatable object, so the driver does not
 # call ld or ld.lld.

@@ -129,6 +129,7 @@ using namespace llvm;
 static codegen::RegisterCodeGenFlags CGF;
 static cl::opt<std::string> InputFilename(cl::Positional, cl::desc("<input>"), cl::init("-"));
 static cl::opt<std::string> OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
+static cl::opt<std::string> TargetTriple("mtriple", cl::desc("Override target triple for module"));
 static cl::opt<std::string> GocTables(
     "goc-tables", cl::desc("Write the .goc.* sections (assembler text) to this file"),
     cl::value_desc("filename"));
@@ -1155,7 +1156,7 @@ int main(int argc, char **argv) {
   Triple TheTriple;
   const llvm::Target *TheTarget = nullptr;
   auto SetDataLayout = [&](StringRef DLTriple, StringRef) -> std::optional<std::string> {
-    TheTriple = Triple(DLTriple.str());
+    TheTriple = Triple(TargetTriple.empty() ? DLTriple.str() : Triple::normalize(TargetTriple));
     if (TheTriple.getTriple().empty())
       TheTriple.setTriple(sys::getDefaultTargetTriple());
     std::string Error;
@@ -1177,6 +1178,8 @@ int main(int argc, char **argv) {
     Err.print(argv[0], errs());
     return 1;
   }
+  if (!TargetTriple.empty())
+    M->setTargetTriple(Triple::normalize(TargetTriple));
   if (auto CM = M->getCodeModel(); CM && !codegen::getExplicitCodeModel())
     Target->setCodeModel(*CM);
   if (codegen::getFloatABIForCalls() != FloatABI::Default)
@@ -1217,17 +1220,26 @@ int main(int argc, char **argv) {
   PassConfig->setInitialized();
   if (TargetPassConfig::willCompleteCodeGenPipeline()) {
     PM.add(new GocStackmapPlacement());
-    PM.add(new GocFrameAddrFix());
-    if (!GocNoStackCheck && Triple(M->getTargetTriple()).getArch() == Triple::x86_64) {
+    Triple::ArchType Arch = Triple(M->getTargetTriple()).getArch();
+    bool IsA64 = Arch == Triple::aarch64;
+    // The frame-address repair rewrites x86 instructions.
+    if (Arch == Triple::x86_64)
+      PM.add(new GocFrameAddrFix());
+    // The profile follows the target unless one was named.
+    if (IsA64 && GocProfile.getNumOccurrences() == 0)
+      GocProfile = "go1.24-arm64";
+    if (!GocNoStackCheck && (Arch == Triple::x86_64 || IsA64)) {
       const goc::AbiProfile *Prof = goc::lookupProfile(GocProfile);
-      if (!Prof || StringRef(Prof->Arch) != "amd64") {
-        errs() << "goc-llc: unknown or non-amd64 profile " << GocProfile << "\n";
+      StringRef Want = IsA64 ? "arm64" : "amd64";
+      if (!Prof || StringRef(Prof->Arch) != Want) {
+        errs() << "goc-llc: unknown or non-" << Want << " profile " << GocProfile << "\n";
         return 1;
       }
       // The bodies are C: they are entered with the platform convention
       // whatever their Go symbol ABI says.
       goc::StackCheckOptions SO{Prof, goc::EntryABI::C, GocFixedG};
-      PM.add(goc::createGocStackCheckPass(SO, goc::createX86StackCheckTarget()));
+      PM.add(goc::createGocStackCheckPass(
+          SO, IsA64 ? goc::createAArch64StackCheckTarget() : goc::createX86StackCheckTarget()));
     }
     if (!GocTables.empty())
       PM.add(goc::createGocObjTablesPass(GocTables, GocProfile, GocSymABI));

@@ -2,7 +2,8 @@
 #   libGocPasses.so   opt plugin: goc-color-escape, goc-inline-gate,
 #                     goc-stackmap, goc-reanchor, goc-pin-i64
 #   goc-color-escape  standalone driver for the color/escape transform
-#   goc-llc           llc plus GocFrameAddrFix / GocStackmapPlacement
+#   goc-llc           llc plus GocFrameAddrFix / GocStackmapPlacement, the Go
+#                     stack check (X86 and AArch64 hooks) and the .goc.* tables
 #
 #   cmake -S llvm -B build/llvm -G Ninja -DLLVM_DIR=$(llvm-config --cmakedir) \
 #         -DGOC_X86_SRC=<llvm-project>/llvm/lib/Target/X86 \
@@ -67,6 +68,7 @@ add_executable(goc-color-escape tools/goc-color-escape/goc_color_escape.cpp
 target_link_libraries(goc-color-escape PRIVATE ${GOC_LLVM_LIBS})
 
 add_executable(goc-llc tools/goc-llc/goc_llc.cpp tools/goc-llc/GocObjTables.cpp
-  lib/CodeGen/GocStackCheck.cpp lib/Target/X86/GocX86StackCheck.cpp)
+  lib/CodeGen/GocStackCheck.cpp lib/Target/X86/GocX86StackCheck.cpp
+  lib/Target/AArch64/GocAArch64StackCheck.cpp)
 target_include_directories(goc-llc PRIVATE ${GOC_X86_SRC} ${GOC_X86_BUILD})
 target_link_libraries(goc-llc PRIVATE ${GOC_LLVM_LIBS})

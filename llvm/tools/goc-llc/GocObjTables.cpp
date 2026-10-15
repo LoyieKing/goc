@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -79,6 +80,7 @@ struct FuncAddr {
 
 struct FuncInfo {
   goc::FuncStackInfo Stack;
+  bool A64 = false; // AArch64: BL relocations at the instruction, no stack-map roots
   std::string Name, End;
   uint64_t FrameSize;
   uint64_t Flags = 0;
@@ -207,6 +209,7 @@ struct GocObjTables : MachineFunctionPass {
   StringMap<uint64_t> IRFlags, IRSysv;
   StringMap<std::vector<SptrTarget>> IRSptr;
   unsigned InlineAsmLabels = 0;
+  bool A64 = false;
 
   // Direct calls written in inline assembly ("call sym" on a line of its
   // own) are invisible to machine passes. Put a label pair around each one
@@ -381,12 +384,15 @@ struct GocObjTables : MachineFunctionPass {
     MCContext &Ctx = MF.getContext();
     FuncInfo FI;
     FI.Name = TM.getSymbol(&MF.getFunction())->getName().str();
+    FI.A64 = TM.getTargetTriple().isAArch64();
+    A64 = A64 || FI.A64;
+    const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
     FI.FrameSize = MF.getFrameInfo().getStackSize();
     FI.Flags = IRFlags.lookup(MF.getFunction().getName());
     FI.SysvPtrRegs = IRSysv.lookup(MF.getFunction().getName());
     if (auto It = goc::stackInfo().find(FI.Name); It != goc::stackInfo().end())
       FI.Stack = It->second;
-    if (FI.Stack.HasCheck && FI.Stack.ABI == goc::EntryABI::C && (FI.Flags & (1u << 7)))
+    if (!FI.A64 && FI.Stack.HasCheck && FI.Stack.ABI == goc::EntryABI::C && (FI.Flags & (1u << 7)))
       report_fatal_error("goc: " + Twine(FI.Name) +
                          ": stack check needs the pointer-ness of its SysV argument "
                          "registers, and this signature is not modelled");
@@ -409,6 +415,12 @@ struct GocObjTables : MachineFunctionPass {
           FI.SptrSlots.push_back(Off);
       }
       std::sort(FI.SptrSlots.begin(), FI.SptrSlots.end());
+      // The BP-relative offsets above follow the x86-64 frame. arm64 has
+      // no frame-address repair and records no stack maps (as on main,
+      // whose meta.json never listed arm64 sptr slots): no slots, so no
+      // locals bits, rather than bits computed for the wrong frame.
+      if (FI.A64)
+        FI.SptrSlots.clear();
     }
     MachineInstr *Last = nullptr;
     Pending.clear();
@@ -427,7 +439,7 @@ struct GocObjTables : MachineFunctionPass {
           labelInlineAsmCalls(MF, MI, FI);
           continue;
         }
-        if (MI.getOpcode() == X86::LEA64r && MI.getNumOperands() >= 6 &&
+        if (!FI.A64 && MI.getOpcode() == X86::LEA64r && MI.getNumOperands() >= 6 &&
             MI.getOperand(1).getReg() == X86::RIP && MI.getOperand(4).isGlobal() &&
             isa<Function>(MI.getOperand(4).getGlobal())) {
           if (MI.getPostInstrSymbol())
@@ -448,7 +460,9 @@ struct GocObjTables : MachineFunctionPass {
         CS.Roots = std::move(Pending);
         Pending.clear();
         unsigned Opc = MI.getOpcode();
-        if ((Opc == X86::CALL64pcrel32 || Opc == X86::CALLpcrel32) && MI.getNumOperands()) {
+        bool Direct = FI.A64 ? TII.getName(Opc) == "BL"
+                             : (Opc == X86::CALL64pcrel32 || Opc == X86::CALLpcrel32);
+        if (Direct && MI.getNumOperands()) {
           const MachineOperand &MO = MI.getOperand(0);
           if (MO.isGlobal())
             CS.Target = TM.getSymbol(MO.getGlobal())->getName().str();
@@ -502,7 +516,7 @@ struct Writer {
   std::string ref(StringRef S) {
     return ".Lgoc_s" + std::to_string(str(S)) + "-.Lgoc_strtab";
   }
-  void section(StringRef Name) { OS << "\t.section " << Name << ",\"\",@progbits\n"; }
+  void section(StringRef Name) { OS << "\t.section " << Name << ",\"\",%progbits\n"; }
   // A record: uleb length, then the body between two labels.
   std::string begin() {
     std::string L = ".Lgoc_r" + std::to_string(Rec++);
@@ -569,6 +583,8 @@ bool GocObjTables::doFinalization(Module &M) {
             Set(B, 8 * (int64_t)S.WordBelowVarp);
       }
       for (const SMLoc &Lc : C.Roots) {
+        if (F.A64)
+          break; // no stack-map roots on arm64
         if (Lc.Type == 2 && Lc.Reg == 6 && Lc.Off < 0 && Lc.Size == 8)
           Set(B, -(int64_t)Lc.Off);
         else if (Lc.Type == 4 && Lc.Off >= 0 && Lc.Off % 8 == 0)
@@ -684,6 +700,17 @@ bool GocObjTables::doFinalization(Module &M) {
       }
       std::string L = W.begin();
       W.uleb(W.ref(F.Name));
+      if (F.A64) {
+        // BL: CALL26 on the instruction itself, no PC bias.
+        W.uleb(C.Pre + "-" + F.Name);
+        W.u8(4);
+        W.u8(11); // ARM64_CALL26
+        W.uleb(W.ref(C.Target));
+        W.sleb("0");
+        W.u8(C.Safepoint ? 1 : 0);
+        W.end(L);
+        continue;
+      }
       W.uleb(C.Ret + "-4-" + F.Name);
       W.u8(4);
       W.u8(1); // CALL
@@ -732,7 +759,7 @@ bool GocObjTables::doFinalization(Module &M) {
   W.section(".goc.header");
   OS << "\t.byte 0x47,0x4f,0x43,0x4f,0x42,0x4a,0,0\n"
      << "\t.short 1\n\t.short 3\n"
-     << "\t.byte 1\n\t.byte " << (goc::stackInfo().empty() ? 0 : 1) << "\n\t.short 0\n"
+     << "\t.byte " << (A64 ? 2 : 1) << "\n\t.byte " << (goc::stackInfo().empty() ? 0 : 1) << "\n\t.short 0\n"
      << "\t.long .Lgoc_s" << Prof << "-.Lgoc_strtab\n"
      << "\t.long .Lgoc_s" << Prod << "-.Lgoc_strtab\n"
      << "\t.long 0\n";

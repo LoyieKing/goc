@@ -35,9 +35,13 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | 层 | 位置 | 负责 |
 |---|---|---|
 | 共享（与架构无关） | `llvm/include/Goc/StackCheck.h`、`llvm/lib/CodeGen/GocStackCheck.cpp` | 判定哪些函数需要检查（叶子 / 无栈帧 / 帧 ≤ 128 且无调用 → nosplit）；按 ABI profile 常量选 small（≤128）/ big（≤4096）/ huge 档；记录 body/stub 标签、每段 SP 偏移、morestack 调用点，供 GocObjTables 写表 |
-| 架构钩子 | `llvm/lib/Target/X86/GocX86StackCheck.cpp`（`createX86StackCheckTarget`） | 只发指令：读 g 和 stackguard、比较、条件跳转、stub 里保存参数寄存器、调用 `runtime.morestack_noctxt`、恢复并跳回入口 |
+| 架构钩子 | `llvm/lib/Target/X86/GocX86StackCheck.cpp`（`createX86StackCheckTarget`）、`llvm/lib/Target/AArch64/GocAArch64StackCheck.cpp`（`createAArch64StackCheckTarget`） | 只发指令：读 g 和 stackguard、比较、条件跳转、stub 里保存参数寄存器、调用 `runtime.morestack_noctxt`、恢复并跳回入口 |
 
-新增一个架构只需要实现钩子接口（约 150 行），再在 `gocobj2goobj` 里加该架构的重定位映射。AArch64 钩子尚未实现，见 `progress.md`。
+新增一个架构只需要实现钩子接口（约 150 行），再在 `gocobj2goobj` 里加该架构的重定位映射（arm64 的在 `tools/gocobj2goobj/arm64.go`）。AArch64 钩子按名字在目标自己的表里查 opcode 和寄存器，不需要 AArch64 的私有头文件，所以只要 goc-llc 链接的 libLLVM 带 AArch64 后端即可。
+
+其他按架构区分的地方都很小：GocObjTables 里 x86 的调用记在返回地址前 4 字节（CALL，addend −4），AArch64 的 BL 记在指令本身（ARM64_CALL26，addend 0）；GocFrameAddrFix 和栈图根只在 x86 上运行；`goc-lower goabi` 为两种架构都输出 thunk 的表（x86 保存 RBP 占 8 字节，arm64 用一条 STP 保存 X29/X30 占 16 字节）。
+
+arm64 的覆盖面和 main 一致：能编译、生成栈检查和 morestack、能链接，但不执行（没有 qemu）；没有 frame-address 修复，也不记录栈图，所以 arm64 函数没有 locals 指针位图。另外 Go 在 arm64 上把返回地址存在栈帧底部，而 C 函数和 thunk 把 X29/X30 存在顶部，所以在 arm64 上真正运行之前，还需要调整栈帧布局或回溯信息。
 
 ## 目录
 

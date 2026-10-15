@@ -42,6 +42,7 @@ type fn struct {
 
 type converter struct {
 	path, pkg, tu string
+	arm64         bool
 	f             *gocobj.File
 	ef            *elf.File
 	syms          []elf.Symbol
@@ -91,21 +92,22 @@ var libcallImpl = func() map[string]bool {
 }()
 
 func newConverter(p string, f *gocobj.File, pkg, goarch string) (*converter, error) {
-	if goarch != "amd64" {
-		return nil, fmt.Errorf("GOARCH=%s: only amd64 objects are converted", goarch)
+	want := map[string]elf.Machine{"amd64": elf.EM_X86_64, "arm64": elf.EM_AARCH64}[goarch]
+	if want == 0 {
+		return nil, fmt.Errorf("GOARCH=%s: only amd64 and arm64 objects are converted", goarch)
 	}
 	ef, err := elf.Open(p)
 	if err != nil {
 		return nil, err
 	}
-	if ef.Machine != elf.EM_X86_64 {
-		return nil, fmt.Errorf("%s: ELF machine %v, want x86-64", p, ef.Machine)
+	if ef.Machine != want {
+		return nil, fmt.Errorf("%s: ELF machine %v, want %v for GOARCH=%s", p, ef.Machine, want, goarch)
 	}
 	syms, err := ef.Symbols()
 	if err != nil {
 		return nil, err
 	}
-	c := &converter{path: p, pkg: pkg, tu: tuTag(f), f: f, ef: ef, syms: syms,
+	c := &converter{path: p, arm64: goarch == "arm64", pkg: pkg, tu: tuTag(f), f: f, ef: ef, syms: syms,
 		byName: map[string]*fn{}, bySec: map[int][]*fn{}, abiByGoSym: map[string]obj.ABI{},
 		goName: map[string]string{}, dataSym: map[int]*obj.LSym{}, secSym: map[int]*obj.LSym{},
 		gotSyms: map[string]*obj.LSym{}}
@@ -262,7 +264,7 @@ func pcRelELF(t uint32) bool {
 // -4: Go's R_PCREL/R_CALL subtract the field width themselves).
 func (c *converter) resolveTarget(r rela) (*obj.LSym, int64, string) {
 	abs := r.Add
-	if pcRelELF(r.Type) {
+	if !c.arm64 && pcRelELF(r.Type) {
 		abs += 4
 	}
 	if r.Sym == 0 || int(r.Sym-1) >= len(c.syms) {
@@ -443,14 +445,14 @@ func (c *converter) emitData() error {
 		}
 		pcTextAt := map[uint64]bool{}
 		for _, r := range rs {
-			if elf.R_X86_64(r.Type) == elf.R_X86_64_PC32 && r.Sym > 0 && int(r.Sym-1) < len(c.syms) && c.isText(int(c.syms[r.Sym-1].Section)) {
+			if !c.arm64 && elf.R_X86_64(r.Type) == elf.R_X86_64_PC32 && r.Sym > 0 && int(r.Sym-1) < len(c.syms) && c.isText(int(c.syms[r.Sym-1].Section)) {
 				pcTextAt[r.Off] = true
 			}
 		}
 		var tables []tableBase
 		for _, cr := range codeRels {
 			r := cr.r
-			if elf.R_X86_64(r.Type) != elf.R_X86_64_PC32 || r.Sym == 0 || int(r.Sym-1) >= len(c.syms) {
+			if c.arm64 || elf.R_X86_64(r.Type) != elf.R_X86_64_PC32 || r.Sym == 0 || int(r.Sym-1) >= len(c.syms) {
 				continue
 			}
 			es := c.syms[r.Sym-1]
@@ -514,6 +516,14 @@ func (c *converter) emitData() error {
 			}
 			var typ objabi.RelocType
 			siz := uint8(4)
+			if c.arm64 {
+				var ok bool
+				if typ, siz, ok = arm64DataReloc(r.Type); !ok {
+					return fmt.Errorf("unsupported arm64 data reloc type %d in %s at %#x", r.Type, secs[i].Name, r.Off)
+				}
+				host.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
+				continue
+			}
 			switch elf.R_X86_64(r.Type) {
 			case elf.R_X86_64_64:
 				typ, siz = objabi.R_ADDR, 8
@@ -626,7 +636,11 @@ func stackmaps(g *gocobj.GCMap) (args, locals []byte, idx []gocobj.PCEntry) {
 }
 
 func (c *converter) write(out string) error {
-	ctxt := obj.Linknew(&x86.Linkamd64)
+	arch := &x86.Linkamd64
+	if c.arm64 {
+		arch = &linkARM64
+	}
+	ctxt := obj.Linknew(arch)
 	c.ctxt = ctxt
 	ctxt.IsAsm = true
 	ctxt.Pkgpath = c.pkg
@@ -735,7 +749,15 @@ func (c *converter) write(out string) error {
 			s.P = append([]byte(nil), d[x.off:x.off+t.TextSize]...)
 			s.Size = int64(len(s.P))
 			s.R = nil
+			if c.arm64 {
+				if err := c.arm64TextRelocs(x, rs); err != nil {
+					return err
+				}
+			}
 			for _, r := range rs {
+				if c.arm64 {
+					break
+				}
 				if r.Off < x.off || r.Off >= x.off+t.TextSize {
 					continue
 				}

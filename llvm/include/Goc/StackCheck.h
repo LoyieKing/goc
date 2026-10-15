@@ -110,6 +110,7 @@ public:
 };
 
 std::unique_ptr<StackCheckTarget> createX86StackCheckTarget();
+std::unique_ptr<StackCheckTarget> createAArch64StackCheckTarget();
 
 /// What GocStackCheck decided for one function, read by the tables writer.
 struct FuncStackInfo {
