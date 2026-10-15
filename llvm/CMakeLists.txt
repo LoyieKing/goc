@@ -55,7 +55,11 @@ endif()
 # Shared core, compiled once and linked into both the plugin and the tool.
 add_library(GocCore OBJECT
   lib/Transforms/ColorEscape/GocColorEscape.cpp
-  lib/Transforms/StackMap/GocStackMap.cpp)
+  lib/Transforms/ColorEscape/CEAnalysis.cpp lib/Transforms/ColorEscape/CERewrite.cpp
+  lib/Transforms/ColorEscape/CECheck.cpp lib/Transforms/ColorEscape/CEReport.cpp
+  lib/Transforms/StackMap/GocStackMap.cpp
+  lib/Transforms/StackMap/SMLiveness.cpp lib/Transforms/StackMap/SMAddresses.cpp
+  lib/Transforms/StackMap/SMStackMap.cpp lib/Transforms/StackMap/SMReanchor.cpp lib/Transforms/StackMap/SMPinI64.cpp lib/Transforms/StackMap/SMUptrInline.cpp)
 
 # No LLVM libraries: the plugin resolves LLVM symbols from the loading opt.
 # Linking libLLVM in would run its static initializers a second time and
@@ -64,7 +68,9 @@ add_library(GocPasses MODULE lib/Plugin/GocPasses.cpp $<TARGET_OBJECTS:GocCore>)
 set_target_properties(GocPasses PROPERTIES PREFIX "lib" OUTPUT_NAME GocPasses)
 
 add_executable(goc-color-escape tools/goc-color-escape/goc_color_escape.cpp
-  lib/Transforms/ColorEscape/GocColorEscape.cpp)
+  lib/Transforms/ColorEscape/GocColorEscape.cpp
+  lib/Transforms/ColorEscape/CEAnalysis.cpp lib/Transforms/ColorEscape/CERewrite.cpp
+  lib/Transforms/ColorEscape/CECheck.cpp lib/Transforms/ColorEscape/CEReport.cpp)
 target_link_libraries(goc-color-escape PRIVATE ${GOC_LLVM_LIBS})
 
 add_executable(goc-llc tools/goc-llc/goc_llc.cpp tools/goc-llc/GocObjTables.cpp

@@ -360,7 +360,7 @@ cmd_build() {
     local -a OPT_EXTRA=()
     read -r -a OPT_EXTRA <<<"${GOC_OPT_EXTRA:-}"
     # goc-name-blocks: LLVM 19's .ll reader can merge a numbered and a named
-    # blockaddress target (see GocStackMap.cpp); name them before printing.
+    # blockaddress target (see SMUptrInline.cpp, GocNameBlocks); name them before printing.
     PIPELINE="$PIPELINE,function(goc-name-blocks)"
     if ! "$OPT" -load-pass-plugin="$SMPASS" "-passes=$PIPELINE" "${OPT_EXTRA[@]}" -S "$BODY_LL" -o "$TMP/a.opt.ll"; then
       cleanup_build_tmp

@@ -35,7 +35,7 @@ actually left in the machine-code input: inlined uptr helpers (each
 `movq %fs:-8` inline-asm is one volatile g load) and GC root slots
 (goc.spill.root / goc.arganchor) chosen by the backend GocStackMap pass.
 
-Metadata semantics (from llvm/lib/Transforms/ColorEscape/GocColorEscape.cpp):
+Metadata semantics (from llvm/lib/Transforms/ColorEscape/CECheck.cpp, attachMetadata):
   * on a load / GEP / call: color of the *value*.
   * on a pointer-typed alloca that got the TU default (-default-ptr-color):
     color of the *contents* of the slot (SlotColor).  When the pass drops that
@@ -129,9 +129,7 @@ def cmd_build(a):
     sh([clang] + cargs + defs + a.cflags.split() + ["-o", o("a.ll"), src], cwd=ROOT)
     esc = os.path.join(ROOT, "build/llvm/goc-color-escape")
     if not os.access(esc, os.X_OK):
-        if not shutil.which("make"):
-            sys.exit("missing %s and no make to build it" % esc)
-        sh(["make", "-C", os.path.join(ROOT, "llvm/lib/Transforms/ColorEscape"), "all"])
+        sh([os.path.join(ROOT, "scripts/build-passes.sh")])
     with open(o("color-escape.log"), "w") as log:
         subprocess.run([esc, o("a.ll"), "-o", o("a.color.ll"), "-fatal-errors=true",
                         "-default-ptr-color=" + a.default_color], check=True, stderr=log)
