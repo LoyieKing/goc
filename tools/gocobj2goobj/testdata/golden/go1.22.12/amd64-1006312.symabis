@@ -1,0 +1,2 @@
+def main.hello_add.impl ABI0
+def main.hello_add ABIInternal

@@ -56,7 +56,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `goobjw` | goc 自己的 Go 目标文件 writer/reader，按 `gometa` 的事实写出与 `go tool asm` 同样的对象（docs/multi-go-version.md） |
 | `goobj/lower` | Go ABI 降级：thunk、签名、参数布局 |
 | `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子 |
-| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata。ELF→`R_*` 按名字映射（`relocmap.go`），编号、profile 等随 Go 版本变的事实来自 `gometa`；一个二进制覆盖 go1.23–1.27 |
+| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata。ELF→`R_*` 按名字映射（`relocmap.go`），编号、profile 等随 Go 版本变的事实来自 `gometa`；一个二进制覆盖 go1.18–1.27（arm64 从 go1.21 起） |
 | `tools/golangc-metadata-resolver` | 读一个 GOROOT 的源码，输出该版本的事实 JSON；升级 Go 时运行它 |
 | `tools/gocobj-diff` | 开发工具：两个 goobj 的语义比对（符号、reloc、解码后的 pc 表、funcdata、FuncInfo），改转换器时用；CI 里由 `test/gocobj/diff.sh` 检查 |
 | `tools/goc-lower` | `goobj/lower` 的命令行外壳，realbody.sh 调用，发布包里是 `bin/goc-lower` |

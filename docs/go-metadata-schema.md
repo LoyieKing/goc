@@ -33,19 +33,23 @@
 | `aux_types` | `Aux*` 类型值（`Gotype`、`FuncInfo`、`Funcdata`、`DwarfInfo`、`DwarfLines`、`Pcsp`…） |
 | `pkg_idx` | 特殊包下标 `None`、`Hashed64`、`Hashed`、`Builtin`、`Self` |
 | `sym_abi_static` | `SymABIstatic` |
-| `hash_size` / `hash64_size` | 内容哈希的长度（16 / 8） |
+| `hash_size` / `hash64_size` | 内容哈希的长度（16 / 8；1.18 的 hash_size 是 sha1 的 20） |
 | `builtins` | `goobj.builtins`，按下标排列的 `{name, abi}` |
 
 ## writer
 
 | 字段 | 取值 | 含义（出处 cmd/internal/obj/objfile.go、plist.go） |
 |---|---|---|
-| `content_hash` | `notsha256` \| `sha256-prefix01` | 内容可寻址符号的哈希：1.23 为取反的 sha256，1.24 起为 sha256(0x01‖data)，截取 `hash_size` 字节 |
+| `content_hash` | `sha1` \| `notsha256` \| `sha256-prefix01` | 内容可寻址符号的哈希：1.18 为 sha1，1.19–1.23 为取反的 sha256，1.24 起为 sha256(0x01‖data)，截取 `hash_size` 字节 |
 | `asm_named_syms_linkname` | bool | 汇编对象的有名符号是否带 `SymFlagLinkname`（1.23–1.26 为 true） |
 | `align` | `heuristic` \| `explicit` | heuristic：内容可寻址的数据按大小推出对齐（8/4/2/1）；explicit（1.27）：写 `LSym.Align`，pctab 为 1 |
 | `trim_inline_hash` | bool | 符号名是否去掉 `#…#` inline 后缀（1.27） |
-| `asm_args_stackmap` | bool | Flushplist 是否给本包的 ABI0 函数加 `.args_stackmap` 和 `.arginfo<ABI>` funcdata |
-| `func_flags` / `func_ids` | map | `internal/abi` 的 `FuncFlag*` / `FuncID*` |
+| `asm_args_stackmap` | bool | Flushplist 是否给转换器写出的本包 ABI0 函数（名字带包名）加 `.args_stackmap` 和 `.arginfo<ABI>` funcdata。1.22 起为 true；之前只加给 `"".f` 形式的名字，所以为 false |
+| `type_prefix` / `itab_prefix` | string | 标记 Go 类型和 itab 符号的名字前缀：1.20 起 `type:` / `go:itab.`，之前 `type.` / `go.itab.` |
+| `sort_relocs` | bool | WriteObjFile 是否按偏移排序重定位（1.19 起） |
+| `funcinfo_start_line` | bool | `goobj.FuncInfo` 在 FuncFlag 后是否有 StartLine（1.20 起） |
+| `inl_file_sym_refs` | bool | traverseFuncAux 是否还访问每个内联调用点的文件符号（1.22 前） |
+| `func_flags` / `func_ids` | map | `internal/abi` 的 `FuncFlag*` / `FuncID*`（1.21 前读 `objabi` 的 `FuncFlag_*`/`FuncID_*`，换成 internal/abi 的名字） |
 | `runtime_func_ids` | map | `objabi.funcIDs`：runtime 函数名（不带 `runtime.`）→ FuncID |
 
 ## abi（internal/abi/symtab.go、stack.go，runtime/runtime2.go）
@@ -53,7 +57,7 @@
 | 字段 | 含义 |
 |---|---|
 | `funcdata` / `pcdata` | `FUNCDATA_*` / `PCDATA_*` 下标 |
-| `stack_small` / `stack_big` / `stack_nosplit_base` | 128 / 4096 / 800（1.23–1.27） |
+| `stack_small` / `stack_big` / `stack_nosplit_base` | 128 / 4096 / 800（1.18–1.27；1.21 前由 `objabi` 的 StackGuard 928 − StackSmall 得出） |
 | `g_offsets` | `runtime.g` 字段的字节偏移（64 位）：`stack_lo`、`stack_hi`、`stackguard0` |
 
 ## arch.<goarch>
@@ -64,6 +68,7 @@
 | `g_reg` | g 寄存器（amd64 R14，arm64 R28），出自 ssa/_gen/*Ops.go |
 | `int_arg_regs` / `float_arg_regs` | ABIInternal 的参数寄存器（`ParamIntRegNames` / `ParamFloatRegNames`） |
 | `morestack` | morestack 入口符号 |
+| `stack_copy_adjusts_fp` | runtime 拷贝栈时是否改写帧里保存的帧指针（`runtime.adjustframe`）。goc 的代码用帧指针寻址局部变量，为 false 的架构（1.21 前的 arm64）转换器拒绝 |
 
 gocobj2goobj 用 `abi` 和 `arch` 的事实匹配 goc 的 ABI profile（`gocobj/abi.go`，`llvm/include/Goc/AbiProfiles.def`）。
 
@@ -72,7 +77,7 @@ gocobj2goobj 用 `abi` 和 `arch` 的事实匹配 goc 的 ABI profile（`gocobj/
 | 字段 | 含义 |
 |---|---|
 | `abbrev_function` | `DW_ABRV_FUNCTION` |
-| `func_die` | `v1`：low/high pc 都是 `DW_FORM_addr`（R_ADDR）；`v2`：`emitHiLoPc`，开启 dwarf5 实验时为 `DW_FORM_addrx` + udata 长度，否则同 v1 |
+| `func_die` | `v0`（1.21 前）：同 v1，但没有 decl_line；`v1`：low/high pc 都是 `DW_FORM_addr`（R_ADDR）；`v2`：`emitHiLoPc`，开启 dwarf5 实验时为 `DW_FORM_addrx` + udata 长度，否则同 v1 |
 | `lines` | `generateDebugLinesSymbol` 的片段布局，当前为 `v1` |
 | `text_addrx` | `FuncCountToDwTxtAddrFlavor`：`{max_funcs, reloc, size}` 从小到大排列。选择依据是 `DwTextCount*2`，与 Go 一致。只有 v2 版本有这一项 |
 

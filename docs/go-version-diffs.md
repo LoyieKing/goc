@@ -1,6 +1,6 @@
 # Go 各版本之间与 goc 相关的目标文件 / ABI 差异
 
-本文汇总 Go 1.23–1.27 之间、会影响 goc 后端（goc-llc → `.gocobj` → gocobj2goobj → goobj → `go build -toolexec`）的差异。所有结论都来自真实的 Go 源码，比对的是官方发布包里的 `go/src`：
+本文汇总 Go 1.23–1.27 之间（go1.18–1.22 见文末一节）、会影响 goc 后端（goc-llc → `.gocobj` → gocobj2goobj → goobj → `go build -toolexec`）的差异。所有结论都来自真实的 Go 源码，比对的是官方发布包里的 `go/src`：
 
 | 版本 | 来源 |
 |---|---|
@@ -99,3 +99,25 @@ symtab.go 的其他变化：1.25 把 `FuncID_runfinq` 换成 `FuncID_runFinalize
 2. FUNCDATA/PCDATA、栈常量、g 偏移、g 寄存器、ABIInternal 寄存器在 1.23–1.27 中**完全相同**，所以 goc-llc 生成的机器码和 `.gocobj` 可以与 Go 版本无关（一个 ABI profile 覆盖五个版本）。
 3. writer 行为的差异记在事实文件的 `writer`/`dwarf` 里：内容哈希（1.24 变）、DWARF5 `addrx` 与 `DwTextCount`（1.25+）、汇编符号的 Linkname 标志（1.27 去掉）、对齐规则与 `TrimInlineHash`（1.27）。见 [go-metadata-schema.md](go-metadata-schema.md)。
 4. toolexec 不能再假设 `$GOTOOLDIR/pack` 存在（1.25+）。
+
+## go1.18–go1.22（与 go1.23 的差异）
+
+2026-10 加入这些版本时，从 go.dev/dl 官方包 go1.18.10、go1.19.13、go1.20.14、go1.21.13、go1.22.12 的 `go/src` 读出：
+
+| 项 | 1.18 | 1.19 | 1.20 | 1.21 | 1.22 | 出处 |
+|---|---|---|---|---|---|---|
+| 目标文件 magic | `go118ld` | `go118ld` | `go120ld` | 同 | 同 | `cmd/internal/goobj/objfile.go` |
+| FuncInfo 的 StartLine | 无 | 无 | 有 | 有 | 有 | `goobj/funcinfo.go` `(*FuncInfo).Write` |
+| 内容哈希 | sha1，20 字节 | notsha256，16 字节 | 同 | 同 | 同 | `obj/objfile.go` `contentHash`、`goobj.HashSize` |
+| 重定位按偏移排序 | 否 | 是 | 是 | 是 | 是 | `obj/objfile.go` `WriteObjFile` |
+| 类型/itab 前缀 | `type.` / `go.itab.` | 同 | `type:` / `go:itab.` | 同 | 同 | `obj/objfile.go` `(*writer).Sym` |
+| 文件头 GOARCH 变体部分 | 无 | 无 | 有 | 有 | 有 | `objabi/util.go` `HeaderString` |
+| 函数 DIE 的 decl_line | 无 | 无 | 无 | 有 | 有 | `dwarf/dwarf.go` `PutDefaultFunc` |
+| 汇编函数的 args_stackmap | 只给 `"".f` | 同 | 同 | 同 | 带包名的本包符号 | `obj/plist.go` `Flushplist` |
+| 内联调用点的文件符号引用 | 有 | 有 | 有 | 有 | 无 | `obj/sym.go` `traverseFuncAux` |
+| 汇编符号的 Linkname 标志 | 无 | 无 | 无 | 无 | 无（1.23 起有） | `obj/objfile.go` `(*writer).Sym` |
+| FUNCDATA/FuncID 定义 | `objabi/funcdata.go`、`funcid.go` | 同 | 同 | `internal/abi/symtab.go` | 同 | |
+| ARM64 ADRP+LDR 配对重定位 | 无 | 无 | `R_ARM64_PCREL_LDST*` | 同 | 同 | `objabi/reloctype.go` |
+| 拷贝栈时改写 arm64 保存的帧指针 | 否 | 否 | 否 | 是 | 是 | `runtime/stack.go` `adjustframe` |
+
+栈常量（StackSmall 128、StackBig 4096、nosplit 预算 800）、g 的字段偏移、g 寄存器和参数寄存器在 1.18–1.27 相同，所以 ABI profile 不变。arm64 因最后一行从 go1.21 起支持，见 [multi-go-version.md](multi-go-version.md) 第 9 节。

@@ -182,7 +182,7 @@ More detail in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Usage
 
-**Requirements:** linux/amd64, Go 1.24+. The release archive already contains the patched Clang.
+**Requirements:** linux/amd64 host, Go 1.18–1.27 (arm64 targets: Go 1.21+; see [docs/multi-go-version.md](docs/multi-go-version.md)). The release archive already contains the patched Clang. Building from a checkout with a Go older than 1.23 also needs a Go 1.23+ for the repository tools (`GOC_HOST_GO`).
 
 Download and the smallest program: [docs/quickstart.md](docs/quickstart.md).
 

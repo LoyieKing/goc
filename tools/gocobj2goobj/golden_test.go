@@ -13,8 +13,11 @@ import (
 )
 
 // testdata/golden holds .gocobj files and the objects the old converter
-// (built against each release's cmd/internal/obj writer) made of them. The
-// goobjw-based converter must reproduce them byte for byte.
+// (built against each release's cmd/internal/obj writer, go1.23-1.27) or,
+// for go1.18-1.22, this converter when those releases were added (checked
+// with gocobj-diff against go1.23 and by linking: docs/multi-go-version.md)
+// made of them. The converter must reproduce them byte for byte. arm64 has
+// goldens from go1.21, the first release goc supports it on.
 func TestGolden(t *testing.T) {
 	ins, _ := filepath.Glob("testdata/golden/*.gocobj")
 	vers, _ := filepath.Glob("testdata/golden/go1.*")
@@ -36,6 +39,9 @@ func TestGolden(t *testing.T) {
 			f := strings.Fields(string(args))
 			pkg, goarch := f[0], f[1]
 			want, err := os.ReadFile(filepath.Join(vdir, name+".goobj"))
+			if os.IsNotExist(err) && goarch == "arm64" && !meta.Arch["arm64"].StackCopyAdjustsFP {
+				continue
+			}
 			if err != nil {
 				t.Fatal(err)
 			}
