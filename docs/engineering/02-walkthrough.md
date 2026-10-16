@@ -142,7 +142,7 @@ hello_add.impl:                         # @hello_add.impl
 
 ```
 $ go run ./tools/goc-objdump dump out/add.gocobj
-gocobj 1.4 arch=1 flags=0x1 profile="go1.24-amd64" producer="goc-llc (LLVM 19.1.7)"
+gocobj 1.4 arch=1 flags=0x1 profile="goabi1-amd64" producer="goc-llc (LLVM 19.1.7)"
 file 0 /workspace/archtrace/add.c
 func hello_add.impl size=9 frame=8 args=0 abi=0 kind=0 flags=0xe id=0 file=0 line=3 sysvptr=0x0
   pcvalue SP_DELTA: 0=8
@@ -341,7 +341,7 @@ TEXT main.bump(SB)
   :1  0x18ec  c3          RET
 ```
 
-ELF 的 `R_X86_64_PLT32` 已经按 `gover_go1_24.go` 的表换成了 Go 的 `R_CALL`。
+ELF 的 `R_X86_64_PLT32` 已经按 `relocmap.go` 的表换成了 Go 的 `R_CALL`。
 
 ## 4. 同一个文件编 arm64（`GOC_ARCH=arm64`）
 

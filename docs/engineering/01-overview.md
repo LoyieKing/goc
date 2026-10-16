@@ -49,7 +49,7 @@ flowchart TD
   I -->|"goc-llc -function-sections -goc-tables<br/>机器 pass：StackmapPlacement, X86FrameAddrFix / A64*, StackCheck, ObjTables"| J["body.s + body.goc.s"]
   J -->|"goc-lower align-asm（仅 amd64）<br/>cat body.s thunks.s body.goc.s thunks.goc.s"| K["body.thunks.s"]
   K -->|"llvm-mc -filetype=obj"| L["foo.gocobj（ELF + .goc.*）"]
-  L -->|"gocobj2goobj -p pkg -symabis<br/>gover_go1_24.go"| M["foo.goobj + foo.symabis"]
+  L -->|"gocobj2goobj -p pkg -symabis<br/>按 Go 版本构建"| M["foo.goobj + foo.symabis"]
   M -->|"go build -a -toolexec tools/goc/toolexec_recognize_goobj.sh<br/>asm 阶段追加 symabis；compile 阶段 pack 进 _pkg_.a"| N["Go 链接器 → 可执行文件"]
 ```
 
@@ -90,7 +90,7 @@ flag 解析统一在 `scripts/goc-flags.sh` 的 `goc_consume_flag`：每个 flag
 | `--stackmap PATH` | `GOC_STACKMAP` | 指定 `libGocPasses.so` |
 
 只供调试、没有 flag 的环境变量：`GOC_FRAMEADDR_FIX`、`GOC_FRAMEADDR_TRACE`、`GOC_FRAMEADDR_STATS`、`GOC_FRAMEADDR_DEBUG`、`GOC_FRAMEADDR_TAINT`（`lib/Target/X86`），
-`GOC_STACKMAP_PLACEMENT_TRACE`（`GocStackmapPlacement.cpp`），`GOC_GOVERSION`（`gocobj2goobj -goversion` 默认值）。
+`GOC_STACKMAP_PLACEMENT_TRACE`（`GocStackmapPlacement.cpp`），`GOC_PROFILE`（覆盖 realbody 传给 goc-llc 的 profile）、`GOC_CACHE`（按 Go 版本构建的转换器缓存目录）。
 `GOC_FRAMEADDR_MODE` 已移除，设成 `gep` 以外的值 `realbody.sh` 直接报错。
 
 工具定位：clang 只认 `bin/clang`（发布包）或 `third_party/llvm-19.1.7-clang-build/bin/clang`（源码树），没有 `--clang`；
@@ -119,11 +119,11 @@ flag 解析统一在 `scripts/goc-flags.sh` 的 `goc_consume_flag`：每个 flag
 | `llvm/CMakeLists.txt` | 上面全部的构建；产物在 `build/llvm/` | |
 | `tools/goc/` | 单文件流水线与 toolexec 钩子 | `realbody.sh`、`toolexec_recognize_goobj.sh` |
 | `tools/goc-lower/` + `goobj/lower/` | Go ABI thunk、IR 小修、汇编对齐修正 | `main.go`（子命令 `goabi` `fix-ir` `rename-ir` `align-asm` `fnname` `magic-obj` `has-define`）、`goabi_*.go`、`rewrite.go` |
-| `tools/gocobj2goobj/` | `.gocobj` → goobj 转换 | `main.go`、`convert.go`、`data.go`、`pctab.go`、`write.go`、`arm64.go`、`gover.go`、`gover_go1_24.go` |
+| `tools/gocobj2goobj/` | `.gocobj` → goobj 转换 | `main.go`、`convert.go`、`data.go`、`pctab.go`、`write.go`、`arm64.go`、`relocmap.go`（另见 `tools/goc-goenc`、`tools/goc/goenc.sh`） |
 | `tools/goc-objdump/` | 查看 / 校验 `.gocobj` | `main.go`（`dump`、`verify`） |
 | `tools/gocobj-diff/` | 两个 goobj 语义比对（开发工具） | `main.go` |
 | `gocobj/` | `.gocobj` 的 Go 读写与校验库 | `format.go`、`read.go`、`write.go`、`verify.go`、`abi.go` |
-| `goobj/enc/` | 从本地 GOROOT vendored 的 Go 目标文件编码器 | `vendorize.sh`、`cmd/objlib/…`、`stdinternal/…` |
+| `goobj/enc/` | `tools/goc-goenc` 由 go1.24.4 生成的 Go 目标文件 writer 副本 | `cmd/objlib/…`、`stdinternal/…`、`GOVERSION` |
 | `runtime/` | uptr 运行时 | `uptr/goc_uptr_runtime.c`、`uptr/goc_uptr_tls_amd64.S`、`UPTR-MSB.md`、`TLS-HI.md` |
 | `test/` | 全部测试（见 07 篇） | `README.md` |
 | `examples/` | `hello/`（最小程序）、`hello_colors.c`、`sptr_escape_bad.c` | |

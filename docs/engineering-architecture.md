@@ -20,7 +20,7 @@ Go 链接器把它当普通 Go 函数链接。不走 cgo，不切栈。
 | [02 走一遍：从 add.c 到二进制](engineering/02-walkthrough.md) | 用 `examples/hello` 和一个带调用的 `call.c`，逐阶段给出真实产物 |
 | [03 前端与 IR pass](engineering/03-ir-passes.md) | Clang 补丁与 Sema、`libGocPasses.so` 里每个 pass 的输入 / 输出 / 不变量 |
 | [04 goc-llc 与机器 pass](engineering/04-goc-llc.md) | 为什么要自己的 llc、栈检查（共享 + X86/AArch64 钩子）、帧地址修复、stackmap 落位、`.goc.*` 表输出、arm64 细节 |
-| [05 .gocobj、转换与 Go 链接](engineering/05-gocobj-and-link.md) | `.gocobj` 格式摘要、`gocobj2goobj`、`gover_go1_24.go`、`go build -toolexec`、所有 Go 版本耦合点 |
+| [05 .gocobj、转换与 Go 链接](engineering/05-gocobj-and-link.md) | `.gocobj` 格式摘要、`gocobj2goobj`（按 Go 版本构建）、`go build -toolexec`、所有 Go 版本耦合点 |
 | [06 运行时模型](engineering/06-runtime.md) | morestack、stackmap 怎么被 Go 用、uptr、`gptr` 与写屏障现状、alloca 池 |
 | [07 测试、扩展指南、已知缺口](engineering/07-tests-howto-gaps.md) | 测试布局与运行、加新 Go 版本 / 新 pass / 新架构、已知缺口与文档不一致 |
 

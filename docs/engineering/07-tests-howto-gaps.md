@@ -57,18 +57,15 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 
 注意：带着一个指向别的工作树的 `GOC_ROOT` 跑 `lit` 会测错树（`env -u GOC_ROOT`）。
 
-## 2. 加一个新 Go 版本（例：go1.25）
+## 2. 加一个新 Go 版本（例：go1.28）
 
-现在 CI 的 1.25.x 任务就因为缺这一步而失败（`continue-on-error`，不阻塞）。步骤来自 `tools/gocobj2goobj/gover.go` 顶部注释和 `docs/go-abi-profiles.md`：
+详见 [multi-go-version.md](../multi-go-version.md) §7。转换器按 Go 版本自动构建（`tools/goc/goenc.sh`），所以通常只需要：
 
-1. **重新 vendor 编码器**：用新 Go 跑 `goobj/enc/vendorize.sh`（从本地 GOROOT 复制 `cmd/internal/...`、`internal/abi` 等并改写 import）。
-2. **ABI profile**：对照新 Go 的 `cmd/compile/internal/ssa/_gen/{AMD64,ARM64}Ops.go`、`runtime/runtime2.go`、`internal/abi/stack.go`、`cmd/internal/obj/{x86/obj6.go,arm64/obj7.go}`、`cmd/compile/abi-internal.md` 核对每一行。
-   在 `llvm/include/Goc/AbiProfiles.def` 和 `gocobj/abi.go` 各加 `go1.25-amd64`、`go1.25-arm64`（`TestProfilesMatchDef` 要求两边一致）。数值有变化时还要改用到它的后端代码。
-3. **版本映射**：复制 `gover_go1_24.go` 为 `gover_go1_25.go`，`Name: "go1.25"`，`Profiles` 指向新 profile；逐项对照新 Go 的 `cmd/internal/objabi/reloctype.go` 和 `internal/abi/symtab.go`。
-4. **profile 怎么传到 goc-llc**：`goc-llc -goc-profile` 默认是 `go1.24-amd64`，`realbody.sh` 在 arm64 上写死 `-goc-profile=go1.24-arm64`。转换器要求 `.gocobj` header 的 profile 等于 `gover` 的 `Profiles[GOARCH]`，所以 `realbody.sh` 必须按目标 Go 版本选 profile——**现在没有这段逻辑，要新加**。
-5. **thunk**：检查 `goobj/lower/goabi_x86.go`、`goabi_a64.go` 是否还符合新版 ABIInternal。
-6. **toolexec**：检查 `go build -toolexec` 调用 `asm -gensymabis` / `compile` / `pack` 的方式是否变了。
-7. 跑 `./scripts/ci-test.sh`；把 CI 矩阵里新版本的 `experimental` 改成 `false`。
+1. 在 `.github/workflows/ci.yml` 的矩阵里加上新版本，用它本地跑 `./scripts/ci-test.sh`。
+2. 如果 `goc-goenc` 报 “has ABI facts no goc profile states”：说明 ABI 事实变了，在 `llvm/include/Goc/AbiProfiles.def` 和 `gocobj/abi.go` 加 `goabi2-*`，并修改用到它的后端代码。
+3. 如果 gocobj2goobj 编译失败（writer API 变了）：在 `tools/goc-goenc` 生成 `goc_compat.go` 的地方加一个分支。
+4. 检查 thunk（`goobj/lower/goabi_x86.go`、`goabi_a64.go`）和 toolexec 是否仍然适用。
+5. 在 [go-version-diffs.md](../go-version-diffs.md) 里补上新版本的差异。
 
 ## 3. 加一个新 IR pass
 
@@ -115,7 +112,7 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 来自代码、`docs/todo.md`、`docs/runtime-model.md`：
 
 1. **`goc go` 只支持 linux/amd64**；arm64 只有 `goc build` 和 `test/e2e/arm64`（qemu）。QuickJS 宿主用 x86 syscall 和 SSE 汇编，arm64 上被拒绝；`runtime/uptr` 的 TLS 读只有 amd64 汇编。
-2. **只有 go1.24 的映射**，没有 `gover_go1_25.go`；profile 名在 `goc-llc` 默认值和 `realbody.sh` 里写死为 go1.24。
+2. （已解决）原来只有 go1.24 的映射；现在支持 go1.23–1.27（multi-go-version.md）。
 3. **`gptr` 写屏障没有实现**（06 篇 §3），`gptr` 也不会进栈图；合同（syntax-guide）里写了。
 4. **跨 goroutine 使用 sptr/uptr 是合同错误**（单字表示里没有 goroutine 指针）。`GOC_SPTR_WITH_G` 只在 todo 里。
 5. **C 调 Go 没有编译器支持**：手写寄存器搬运、固定 64 字节溢出区、只认 `main` 包、类型覆盖少（`docs/todo.md`「goc 调用 Go」）。

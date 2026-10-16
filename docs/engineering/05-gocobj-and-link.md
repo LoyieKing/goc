@@ -35,16 +35,18 @@ ELF 自带的重定位仍然有效，只作交叉检查。02 篇 §2.5 / §3.4 �
 ## 3. `gocobj2goobj`
 
 ```
-gocobj2goobj -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis] [-goversion go1.24]
+gocobj2goobj -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis] [-goarch arm64]
+gocobj2goobj -print-profile -goarch arm64     # 这个 Go 对应的 ABI profile
+gocobj2goobj -version                          # 写出的对象头里的 Go 版本
 ```
 
+转换器**按 Go 版本构建**：`tools/goc/goenc.sh` 的 `goc_converter` 先用 `tools/goc-goenc` 从当前 GOROOT 拷出 writer（`cmd/internal/obj…`），再针对它构建 gocobj2goobj，按完整版本号缓存在 `build/goenc/`。设计见 [multi-go-version.md](../multi-go-version.md)，版本差异见 [go-version-diffs.md](../go-version-diffs.md)。
+
 `main.go` 的流程：
-1. `lookupGoVersion(-goversion)`：空值 = 构建转换器的那个 Go（`runtime.Version()`）。找不到映射就报
-   `no Go object mapping for go1.25.14 (have go1.24); add tools/gocobj2goobj/gover_go1_25.go`。
-2. `gocobj.Open` + `gocobj.Verify`，有错就停。
-3. `GOARCH`（默认 amd64）对应的 profile 必须等于 header 里的 profile。
-4. header 的 `stack_checks_in_code` 必须为 1（后端必须已经发出栈检查）。
-5. `newConverter` → `write`；`-symabis` 时写出 `def <pkg>.<name> ABI0|ABIInternal` 行。
+1. `gocobj.Open` + `gocobj.Verify`，有错就停。
+2. header 里的 profile 必须与这个 Go 的 profile **事实相同**（`gocobj.SameFacts`；`go1.24-amd64` 是 `goabi1-amd64` 的旧名）。
+3. header 的 `stack_checks_in_code` 必须为 1（后端必须已经发出栈检查）。
+4. `newConverter` → `write`；`-symabis` 时写出 `def <pkg>.<name> ABI0|ABIInternal` 行。
 
 分文件：
 
@@ -53,25 +55,21 @@ gocobj2goobj -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis] [-gove
 | `convert.go` | 名字解析：`tuTag`（内部 C 名加 TU 标签）、`resolveCName`（`.impl` / `.goabi` / `@plt` 约定）、`resolveTarget`（ELF 重定位 → Go 符号 + 偏移；PC 相对形式去掉 −4，因为 Go 的 `R_PCREL`/`R_CALL` 自己减字段宽度）、`gotSlot`、`GOC_LIBCALL_IMPL`、`textSecs`/`sortedKeys`（按段号排序遍历，保证输出确定） |
 | `data.go` | 数据段 → 数据符号 |
 | `pctab.go` | pcvalue → Go 的 pctab 编码；gcmaps → `gclocals.*` 符号和 `PCDATA_StackMapIndex` |
-| `write.go` | 用 `goobj/enc` 写 goobj；为每个 `.goc.files` 建 PosBase |
+| `write.go` | 用 writer 写 goobj；为每个 `.goc.files` 建 PosBase |
 | `arm64.go` | arm64 重定位：ADRP+低 12 位配对、GOT 配对等 |
-| `gover.go` + `gover_go1_24.go` | Go 版本相关的全部映射（下节） |
+| `relocmap.go` | ELF → Go 重定位映射（下节），与版本无关 |
 
-## 4. `gover_go1_24.go`：版本映射的唯一位置
+## 4. `relocmap.go`：按名字引用的映射
 
-`goVersion` 结构（`gover.go`）里的字段就是 Go 版本耦合的全部清单：
-
-| 字段 | go1.24 的值 |
+| 字段 | 值（都是 `objabi`/`abi` 的常量名，数字来自所用 Go 的 writer） |
 |---|---|
-| `Name` | `"go1.24"`（匹配 `go1.24`、`go1.24.N`、`go1.24rcN`…） |
-| `Profiles` | amd64 → `go1.24-amd64`，arm64 → `go1.24-arm64` |
 | `X86Text` | `R_X86_64_PC32`/`PLT32` → `R_PCREL`，`R_X86_64_32`/`32S` → `R_ADDR` |
 | `X86Call` | `R_CALL`（`.goc.relocs` 标为调用的 PC 相对字段） |
 | `X86Data` | `R_X86_64_64` → `{R_ADDR, 8}` 等 |
 | `A64Call` / `A64Page` / `A64PagePair` / `A64Lo12` / `A64GOTPair` / `A64Data` | `R_CALLARM64`、`R_ARM64_PCREL`、`R_ADDRARM64`、`R_ARM64_PCREL_LDST{8,16,32,64}`、`R_ARM64_LDST*`、`R_ARM64_GOTPCREL`… |
 | `FuncdataArgs` / `FuncdataLocals` / `PcdataStackMapIndex` | `abi.FUNCDATA_ArgsPointerMaps`、`abi.FUNCDATA_LocalsPointerMaps`、`abi.PCDATA_StackMapIndex` |
 
-注册方式：`func init() { registerGoVersion(&goVersion{…}) }`。`gover_test.go` 检查版本匹配规则和报错文本。
+profile 来自生成的 `objabi.GocProfiles`（goc-goenc 探测 GOROOT 后写入）。各版本 writer API 的差异由生成的 `goc_compat.go` 吸收（`GocAddRel`、`GocSetAlign`、`GocSetTextCount`）。
 
 ## 5. 接进 `go build`：`tools/goc/toolexec_recognize_goobj.sh`
 
@@ -93,15 +91,15 @@ gocobj2goobj -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis] [-gove
 |---|---|---|
 | 1 | `llvm/include/Goc/AbiProfiles.def` | g 寄存器、`stackguard0` 偏移、StackSmall/StackBig、morestack 名、ABIInternal 整数 / 浮点参数寄存器 |
 | 2 | `gocobj/abi.go` | 上表的 Go 副本，`TestProfilesMatchDef` 保证两者一致 |
-| 3 | `tools/gocobj2goobj/gover_go1_XX.go` | 重定位类型、funcdata/pcdata 编号、profile 名 |
-| 4 | `goobj/enc/` | 从本地 GOROOT vendored 的 `cmd/internal/obj…`、`internal/abi`… 编码器（`goobj/enc/vendorize.sh`）；goobj 文件格式本身 |
+| 3 | `tools/goc-goenc` | 从 GOROOT 拷 writer、探测 ABI 事实选 profile、生成 `goc_compat.go`（各版本 API 差异） |
+| 4 | `goobj/enc/` | goc-goenc 由 go1.24.4 生成的树内副本（供 `go vet`/单测；CI 检查能重新生成一致）；实际转换用的是按版本生成的副本 |
 | 5 | `goobj/lower/goabi_x86.go`、`goabi_a64.go` | thunk 按 Go 1.24 ABIInternal 生成（生成文件的首行就写着 `Go 1.24 ABIInternal -> SysV entry thunks`）：参数寄存器分配、X15 清零、溢出区 |
 | 6 | `llvm/lib/Target/X86/GocX86StackCheck.cpp`、`GocAArch64StackCheck.cpp` | g 的取法（`FS:-8` / X28）、morestack 的寄存器约定（R14 装 g、X3 装返回地址） |
 | 7 | `SMUptrInline.cpp`（`tlsGWord`）、`runtime/uptr/goc_uptr_tls_amd64.S` | `g.stack.lo` 在 `g+0`、`g.stack.hi` 在 `g+8` |
 | 8 | `llvm/lib/Target/AArch64/GocAArch64Frame.cpp` | Go arm64 帧布局：LR 在 `0(RSP)` |
 | 9 | `UNSAFE_POINT` 的取值 | −1 safe / −2 unsafe（Go 的 `abi.UnsafePointSafe`/`Unsafe`），在 GocObjTables 里产生 |
-| 10 | `tools/goc/toolexec_recognize_goobj.sh` | 依赖 `go build -toolexec` 调 `asm -gensymabis` / `compile` 的参数形状和 `pack` 工具 |
-| 11 | `.github/workflows/ci.yml` | 矩阵：1.24.4（必须过）+ 1.25.x（`experimental`、`continue-on-error`，预期失败直到有 `gover_go1_25.go`） |
+| 10 | `tools/goc/toolexec_recognize_goobj.sh` | 依赖 `go build -toolexec` 调 `asm -gensymabis` / `compile` 的参数形状；`pack` 不在 GOTOOLDIR 时（1.25+）用 `go tool pack` |
+| 11 | `.github/workflows/ci.yml` | 矩阵：go 1.23.x、1.24.4、1.25.x、1.26.x、1.27.x，全部必过 |
 
 ## 7. 符号命名约定（从产物里观察到的）
 

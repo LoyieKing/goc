@@ -52,7 +52,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`、`qjs-build.sh`、`qjs-cli-build.sh`）、发布（`pack-release.sh`）、CI 入口（`ci-test.sh`、`check-file-size.sh`：单文件 800 行上限）。测试脚本本身都在 `test/` 下 |
 | `clang/` | Clang 补丁、`SemaGocColors.cpp`（树内 Sema）、树外插件 `plugin/`（与树内同规则，`goc test --plugin` 用） |
 | `llvm/` | goc 自己的 LLVM 代码，目录照 LLVM 的布局：`lib/Analysis`（只读分析：指针颜色、safepoint、栈地址）、`lib/Transforms`（IR 改写：ColorEscape、StackMap）、`lib/Plugin`（`libGocPasses.so`，所有 IR pass 都在这里，用 `opt -load-pass-plugin`）、`lib/CodeGen` / `lib/Target/<arch>` / `lib/Object`（goc-llc 的机器 pass 和表输出）、`tools/goc-llc`（llc 驱动）。构建：`scripts/build-passes.sh`，产物在 `build/llvm/`。见 `llvm/README.md` |
-| `goobj/enc` | 从 Go 1.24 源码 vendored 的目标文件写入器（`goobj/enc/vendorize.sh` 负责同步） |
+| `goobj/enc` | Go 目标文件 writer 的树内副本，由 `tools/goc-goenc` 从 go1.24.4 生成；实际转换时按所用 Go 版本重新生成（docs/multi-go-version.md） |
 | `goobj/lower` | Go ABI 降级：thunk、签名、参数布局 |
 | `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子 |
 | `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata。随 Go 版本变的映射（profile、ELF→`R_*`、funcdata 编号）都在 `gover_go1_XX.go`，升级 Go 只加这一个文件 |

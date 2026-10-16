@@ -34,7 +34,7 @@ goc-llc 自己的选项：
 | 选项 | 默认 | 含义 |
 |---|---|---|
 | `-goc-tables FILE` | 空 | 把 `.goc.*` 段以汇编文本写到 FILE（`realbody.sh` 写 `body.goc.s`） |
-| `-goc-profile NAME` | `go1.24-amd64`；arm64 目标且未指定时自动 `go1.24-arm64` | ABI profile（`AbiProfiles.def`），名字的架构必须和目标一致 |
+| `-goc-profile NAME` | `goabi1-amd64`；arm64 目标且未指定时自动 `goabi1-arm64`（realbody.sh 总是传入转换器给出的 profile） | ABI profile（`AbiProfiles.def`），名字的架构必须和目标一致 |
 | `-goc-sym-abi 0\|1` | 0 | 表里 C 函数的 Go 符号 ABI：0 = ABI0（有 thunk 包着，或纯 C 对象），1 = ABIInternal |
 | `-goc-fixed-g` | off | g 常驻 profile 的 G 寄存器（配合 `-reserve-goc-r14`） |
 | `-goc-no-stack-check` | off | 不发栈检查（仅测试） |
@@ -55,7 +55,7 @@ goc-llc 自己的选项：
 | `-tail-dup-*-size=1000` | 打开尾复制（QuickJS 分派块，性能） |
 | `-function-sections` | 每个函数一个段，函数间引用全部带 ELF 重定位，转换器不用修补机器码 |
 
-arm64 换成：`-relocation-model=static -mtriple=aarch64-unknown-linux-gnu -mattr=+reserve-x28 -aarch64-enable-compress-jump-tables=false … -goc-profile=go1.24-arm64`（没有 `-no-x86-call-frame-opt`）。
+arm64 换成：`-relocation-model=static -mtriple=aarch64-unknown-linux-gnu -mattr=+reserve-x28 -aarch64-enable-compress-jump-tables=false … -goc-profile=goabi1-arm64`（没有 `-no-x86-call-frame-opt`）。
 
 ## 3. `GocStackmapPlacement`（lib/CodeGen）
 
