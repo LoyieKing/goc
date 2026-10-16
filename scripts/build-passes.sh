@@ -45,6 +45,8 @@ fi
 command -v cmake >/dev/null || { echo "build-passes: cmake not found" >&2; exit 1; }
 GEN=()
 command -v ninja >/dev/null && GEN=(-G Ninja)
+# GOC_CCACHE=1 (CI): see build-clang.sh.
+[[ "${GOC_CCACHE:-0}" == 1 ]] && GEN+=(-DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
 cmake -S "$ROOT/llvm" -B "$ROOT/build/llvm" "${GEN[@]}" \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="$CXX" \
   -DLLVM_DIR="$("$LLVM_CFG" --cmakedir)" \

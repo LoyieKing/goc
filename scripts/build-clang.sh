@@ -45,6 +45,13 @@ if [[ -z "$CXX" ]]; then
   fi
 fi
 echo "build-clang: host CC=$CC CXX=$CXX"
+# GOC_CCACHE=1 (CI) compiles through ccache, so a patch change recompiles only
+# the files it touches. Off by default: local builds are unchanged.
+LAUNCH=()
+if [[ "${GOC_CCACHE:-0}" == 1 ]]; then
+  need ccache
+  LAUNCH=(-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
+fi
 
 if [[ ! -f "$SRC/llvm/CMakeLists.txt" ]]; then
   mkdir -p "$ROOT/third_party"
@@ -70,7 +77,7 @@ if [[ ! -f "$SRC/.goc-patches-applied" ]]; then
 fi
 
 cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" "${LAUNCH[@]}" \
   -DLLVM_TARGETS_TO_BUILD="X86;AArch64" \
   -DLLVM_ENABLE_PROJECTS="clang;lld" \
   -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF \
