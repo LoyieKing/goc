@@ -196,7 +196,7 @@ func gocGoMathModf(x float64) (float64, float64) {
 
 //go:noinline
 func gocGoParseFloat(p *byte, length uint64) float64 {
-	value, _ := strconv.ParseFloat(unsafe.String(p, int(length)), 64)
+	value, _ := strconv.ParseFloat(bytesString(p, int(length)), 64)
 	return value
 }
 
@@ -465,4 +465,13 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("PASS qjs-embed (quickjs-ng on goroutine stack via goc)")
+}
+
+// bytesString views n bytes at p as a string without copying, as
+// unsafe.String does (go1.20+; these programs build with go1.18).
+func bytesString(p *byte, n int) string {
+	return *(*string)(unsafe.Pointer(&struct {
+		p *byte
+		n int
+	}{p, n}))
 }

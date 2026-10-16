@@ -12,6 +12,9 @@
 #   plus: a linux/amd64 host TU is refused; runtime/uptr is compiled for arm64
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}"
+# shellcheck source=goversion.sh
+source "$ROOT/test/e2e/arm64/goversion.sh"
+arm64_skip_old_go "arm64"
 export GOC_ROOT="$ROOT"
 GOC="$ROOT/cmd/goc"
 

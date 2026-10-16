@@ -1,3 +1,3 @@
 module goc.local/goabi-test
 
-go 1.23
+go 1.18

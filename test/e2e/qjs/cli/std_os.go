@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strings"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -68,7 +67,7 @@ func gocQjsCliCString(address uintptr) string {
 	for *(*byte)(unsafe.Add(unsafe.Pointer(p), length)) != 0 {
 		length++
 	}
-	return strings.Clone(unsafe.String(p, length))
+	return string(unsafe.Slice(p, length))
 }
 
 func gocQjsCliCStringArray(address uintptr, count uint32) []string {

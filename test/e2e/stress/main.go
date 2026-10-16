@@ -35,7 +35,7 @@ func model(v int64, n int32) int64 {
 	return r
 }
 
-var sink atomic.Pointer[[]byte]
+var sink atomic.Value // []byte
 
 func main() {
 	debug.SetGCPercent(1)
@@ -52,7 +52,7 @@ func main() {
 				default:
 				}
 				b := make([]byte, 64<<10)
-				sink.Store(&b)
+				sink.Store(b)
 				runtime.GC()
 			}
 		}()
@@ -68,7 +68,7 @@ func main() {
 		{"big", stress_big, 300},
 		{"huge", stress_huge, 40},
 	}
-	var failed atomic.Int32
+	var failed int32
 	var wg sync.WaitGroup
 	for round := 0; round < 20; round++ {
 		for _, t := range tiers {
@@ -80,7 +80,7 @@ func main() {
 					defer wg.Done()
 					if got, want := t.f(seed, depth), model(seed, depth); got != want {
 						fmt.Printf("FAIL stress-%s: seed %d depth %d: got %d want %d\n", t.name, seed, depth, got, want)
-						failed.Add(1)
+						atomic.AddInt32(&failed, 1)
 					}
 				}(t)
 			}
@@ -91,7 +91,7 @@ func main() {
 			v := seed
 			if got, want := stress_through(&v, 200), model(seed, 200)+seed; got != want {
 				fmt.Printf("FAIL stress-through: got %d want %d\n", got, want)
-				failed.Add(1)
+				atomic.AddInt32(&failed, 1)
 			}
 		}(int64(round))
 		wg.Wait()
@@ -100,7 +100,7 @@ func main() {
 	churn.Wait()
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)
-	if failed.Load() != 0 {
+	if atomic.LoadInt32(&failed) != 0 {
 		os.Exit(1)
 	}
 	fmt.Printf("PASS stress (%d GCs)\n", ms.NumGC)

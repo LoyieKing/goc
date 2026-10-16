@@ -120,6 +120,10 @@ type Arch struct {
 	IntArgs   []string `json:"int_arg_regs"`
 	FloatArgs []string `json:"float_arg_regs"`
 	Morestack string   `json:"morestack"`
+	// StackCopyAdjustsFP: the runtime's stack copy (adjustframe) rewrites
+	// the frame pointers saved in the frames. goc's code addresses locals
+	// from the frame pointer, so it needs this (arm64 from go1.21).
+	StackCopyAdjustsFP bool `json:"stack_copy_adjusts_fp"`
 }
 
 // DWARF describes the per-function DWARF the assembler path emits.

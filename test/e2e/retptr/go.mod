@@ -1,3 +1,3 @@
 module goc.local/retptr-test
 
-go 1.23
+go 1.18

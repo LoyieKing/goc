@@ -53,6 +53,17 @@ func main() {
 	check("inlined frame file", filepath.Base(a.File), "lines.c")
 	check("inlined frame line", a.Line, inl)
 	check("more frames", more, true)
+	if !expandsPCList() {
+		// Before go1.23, CallersFrames gives one frame per pc unless the
+		// list came from runtime.Callers (which adds the virtual pcs of
+		// outer frames itself), so the outer frame cannot be checked here.
+		fmt.Printf("inlined: %s %s:%d (%s: outer frame not expanded)\n", a.Function, filepath.Base(a.File), a.Line, runtime.Version())
+		if failed {
+			os.Exit(1)
+		}
+		fmt.Println("PASS lines")
+		return
+	}
 	b, more := fr.Next()
 	check("more frames after caller", more, true)
 	check("caller func", strings.TrimSuffix(b.Function, ".impl"), "main.lines_inlined")
@@ -65,4 +76,14 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("PASS lines")
+}
+
+// expandsPCList reports whether runtime.CallersFrames inserts the virtual
+// pcs of the frames an inlined pc expands to (go1.23+).
+func expandsPCList() bool {
+	var major, minor int
+	if n, _ := fmt.Sscanf(runtime.Version(), "go%d.%d", &major, &minor); n < 2 {
+		return true // devel
+	}
+	return major > 1 || minor >= 23
 }

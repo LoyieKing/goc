@@ -83,6 +83,11 @@ func profileFor(m *gometa.Meta, goarch string) (gocobj.Profile, error) {
 	if !ok {
 		return gocobj.Profile{}, fmt.Errorf("%s: no facts for GOARCH=%s", m.Go, goarch)
 	}
+	if !a.StackCopyAdjustsFP {
+		return gocobj.Profile{}, fmt.Errorf("goc does not support GOARCH=%s with %s: its runtime does not adjust "+
+			"saved frame pointers when it copies a stack (runtime.adjustframe), and goc's code addresses locals "+
+			"from the frame pointer (docs/multi-go-version.md)", goarch, m.Go)
+	}
 	got := gocobj.Profile{Arch: goarch, PtrSize: a.PtrSize, GReg: a.GReg,
 		StackGuard0Off: m.ABI.GOffsets["stackguard0"], StackSmall: m.ABI.StackSmall,
 		StackBig: m.ABI.StackBig, Morestack: a.Morestack, FPRegs: a.FloatArgs}

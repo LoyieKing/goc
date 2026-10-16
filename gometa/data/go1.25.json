@@ -1401,7 +1401,8 @@
         "X13",
         "X14"
       ],
-      "morestack": "runtime.morestack_noctxt"
+      "morestack": "runtime.morestack_noctxt",
+      "stack_copy_adjusts_fp": true
     },
     "arm64": {
       "ptr_size": 8,
@@ -1443,7 +1444,8 @@
         "F14",
         "F15"
       ],
-      "morestack": "runtime.morestack_noctxt"
+      "morestack": "runtime.morestack_noctxt",
+      "stack_copy_adjusts_fp": true
     }
   },
   "dwarf": {
@@ -1478,7 +1480,7 @@
   },
   "sources": {
     "abi": "internal/abi/symtab.go internal/abi/stack.go runtime/runtime2.go",
-    "arch": "cmd/internal/sys/arch.go cmd/compile/internal/ssa/_gen/AMD64Ops.go cmd/compile/internal/ssa/_gen/ARM64Ops.go runtime/asm_amd64.s runtime/asm_arm64.s",
+    "arch": "cmd/internal/sys/arch.go cmd/compile/internal/ssa/_gen/AMD64Ops.go cmd/compile/internal/ssa/_gen/ARM64Ops.go runtime/asm_amd64.s runtime/asm_arm64.s runtime/stack.go",
     "dwarf": "cmd/internal/dwarf/dwarf.go cmd/internal/obj/dwarf.go cmd/internal/objabi/reloctype.go",
     "object": "cmd/internal/goobj/objfile.go cmd/internal/goobj/builtinlist.go cmd/internal/objabi/util.go",
     "relocs": "cmd/internal/objabi/reloctype.go",

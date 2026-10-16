@@ -38,7 +38,7 @@ func main() {
 	fmt.Println("PASS manyfuncs")
 }
 GO
-printf 'module goc.local/manyfuncs\n\ngo 1.23\n' >"$OUT/src/go.mod"
+printf 'module goc.local/manyfuncs\n\ngo 1.18\n' >"$OUT/src/go.mod"
 cp "$ROOT/test/e2e/retptr/stubs_amd64.s" "$OUT/src/"
 # shellcheck source=../../../scripts/goc-product-lib.sh
 source "$ROOT/scripts/goc-product-lib.sh"

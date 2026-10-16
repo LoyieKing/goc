@@ -305,10 +305,11 @@ func (r *resolver) resolve() *gometa.Meta {
 			}
 		}
 		r.regs(a, &ar)
+		ar.StackCopyAdjustsFP = r.stackCopyAdjustsFP(a)
 		m.Arch[a] = ar
 	}
 	src("arch", "cmd/internal/sys/arch.go", r.ssaGen()+"/AMD64Ops.go",
-		r.ssaGen()+"/ARM64Ops.go", "runtime/asm_amd64.s", "runtime/asm_arm64.s")
+		r.ssaGen()+"/ARM64Ops.go", "runtime/asm_amd64.s", "runtime/asm_arm64.s", "runtime/stack.go")
 
 	hashSrc := r.writerFacts(m)
 	r.dwarfFacts(m)
@@ -435,7 +436,11 @@ func (r *resolver) writerFacts(m *gometa.Meta) (hashSrc string) {
 	fiw := r.funcSource("cmd/internal/goobj/funcinfo.go", "(*FuncInfo).Write")
 	w.FuncInfoStartLine = strings.Contains(fiw, "writeUint32(uint32(a.StartLine))")
 	fp := r.funcSource("cmd/internal/obj/plist.go", "Flushplist")
-	w.AsmArgsStackmap = strings.Contains(fp, `".args_stackmap"`) && strings.Contains(fp, `"%s.arginfo%d"`)
+	// Before go1.22 only functions written package-relative ("".f, ·f in
+	// the source) got them; the converter's names are package-qualified,
+	// as main·f would be.
+	w.AsmArgsStackmap = strings.Contains(fp, `".args_stackmap"`) && strings.Contains(fp, `"%s.arginfo%d"`) &&
+		!strings.Contains(fp, `if !strings.HasPrefix(s.Name, "\"\".") {`)
 	return hashSrc
 }
 
@@ -490,4 +495,16 @@ func (r *resolver) ssaGen() string {
 		return "cmd/compile/internal/ssa/_gen"
 	}
 	return "cmd/compile/internal/ssa/gen"
+}
+
+// stackCopyAdjustsFP reads runtime.adjustframe: does it adjust the saved
+// frame pointer on goarch?
+func (r *resolver) stackCopyAdjustsFP(goarch string) bool {
+	af := r.funcSource("runtime/stack.go", "adjustframe")
+	m := regexp.MustCompile(`if (\(?goarch\.ArchFamily == goarch\.\w+(?: \|\| goarch\.ArchFamily == goarch\.\w+)*\)?) && frame\.argp-frame\.varp == 2\*goarch\.PtrSize \{`).FindStringSubmatch(af)
+	if m == nil {
+		r.errorf("runtime/stack.go: adjustframe adjusts frame pointers in an unknown way")
+		return false
+	}
+	return strings.Contains(m[1], "goarch."+strings.ToUpper(goarch))
 }

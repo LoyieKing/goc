@@ -4,6 +4,9 @@
 # Skipped when qemu-aarch64 is not installed (ARM64_REQUIRE_QEMU=1: fail).
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}"
+# shellcheck source=goversion.sh
+source "$ROOT/test/e2e/arm64/goversion.sh"
+arm64_skip_old_go "arm64 stress"
 export GOC_ROOT="$ROOT"
 cd "$ROOT"
 QEMU="$(command -v qemu-aarch64 || command -v qemu-aarch64-static || true)"
