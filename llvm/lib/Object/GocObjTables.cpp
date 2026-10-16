@@ -7,11 +7,9 @@
 // assembly, so llvm-mc fills in every offset and the one ELF object it
 // writes is the .gocobj.
 //
-// Transitional content (plan row 4): functions (text size, frame size),
-// direct-call relocations, and one gc record per safepoint call with empty
-// bitmaps. The pointer bits still come from .llvm_stackmaps in the same
-// object; Go names, ABI and the stack-check decision still come from
-// meta.json. Later rows move those into these tables.
+// Content: functions (text size, frame size), direct-call relocations, and
+// one gc record per safepoint call with its locals/args pointer bitmaps
+// (docs/gocobj-format.md); there is no meta.json side file.
 //
 //===----------------------------------------------------------------------===//
 #include "GocObjTablesImpl.h"

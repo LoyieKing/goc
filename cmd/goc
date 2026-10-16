@@ -172,10 +172,11 @@ cmd_build() {
   esac
   export GOC_ARCH
   if [[ "$GOC_ARCH" == arm64 ]]; then
-    # goc-llc emits the AArch64 stack check and tables. Frame-address
-    # repair and stack-map roots stay x86-only (as on main).
+    # goc-llc emits the AArch64 stack check and tables, and repairs frame
+    # addresses (GocA64FrameAddrFix); goc-stackmap/goc-reanchor run as on
+    # amd64. Only the GOC_CSR_ADJUST experiment is x86-only.
     if [[ "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
-      echo "goc build: FATAL GOC_CSR_ADJUST is x86-only; arm64 has no frame-address repair" >&2
+      echo "goc build: FATAL GOC_CSR_ADJUST is x86-only" >&2
       exit 1
     fi
     case "$SRC" in

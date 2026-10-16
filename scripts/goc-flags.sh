@@ -363,8 +363,8 @@ Each Go→C thunk frame is that signature's stack arguments, rounded up to 16,
 plus the saved frame pointer.
 `goc build` emits every defined function and a Go entry for each. It stays
 at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
-frames, and amd64 sptr maps are always on for `goc go` and `goc build`.
-arm64 cannot record sptr maps. There is no --all or --goabi.
+frames, and sptr maps (amd64 and arm64) are always on for `goc go` and
+`goc build`. There is no --all or --goabi.
 Clang arguments go after `--`.
 EOF
 }

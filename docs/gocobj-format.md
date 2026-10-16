@@ -47,7 +47,7 @@ and checks a file. Golden files are in `test/gocobj/`.
 | 8 | u16 | major (1) |
 | 10 | u16 | minor (1) |
 | 12 | u8 | arch: 1 amd64, 2 arm64 |
-| 13 | u8 | flags: bit 0 `stack_checks_in_code` (entry checks are already in the machine code; until goc's backend emits them, this is 0 and the converter adds them) |
+| 13 | u8 | flags: bit 0 `stack_checks_in_code` (entry checks are already in the machine code; goc-llc always sets it, and gocobj2goobj rejects an object with it clear) |
 | 14 | u16 | reserved, 0 |
 | 16 | u32 strref | ABI profile, e.g. `go1.24-amd64` |
 | 20 | u32 strref | producer (goc and LLVM versions) |

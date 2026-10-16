@@ -8,7 +8,6 @@
 #   4. morestack prologue (ldr from x28, cmp, b.ls), emitted by goc-llc's
 #      AArch64 stack-check hook; the .gocobj passes goc-objdump verify
 #   5. 9-int Go entry stores x8, llvm-mc assembles it, link if it can
-#      (stack maps stay off on arm64, as on main)
 #   6. default amd64 goc build of a tiny C file still works
 #   plus: a linux/amd64 host TU is refused; runtime/uptr is compiled for arm64
 set -euo pipefail

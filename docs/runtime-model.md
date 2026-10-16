@@ -1,7 +1,8 @@
 # Runtime model
 
 Compile pointer-colored C so it runs on the goroutine stack and participates
-in Go stack growth, GC stackmaps, and write barriers for `gptr`.
+in Go stack growth and GC stackmaps. (No write-barrier code is emitted for
+`gptr` stores.)
 
 The pipeline, the directory layout and what each tool and pass does are in
 [ARCHITECTURE.md](../ARCHITECTURE.md). This page covers the runtime model the

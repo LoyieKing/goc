@@ -45,8 +45,8 @@ goc_prepend_lib "$(goc_clang_libdir "$CLANG")"
 # Default stays linux/amd64. arm64 is a separate ISel, not a -march switch.
 # Both go through goc-llc: it emits the stack check (AArch64 hook) and the
 # .goc.* tables. g is x28, reserved by llc; there is no TLS load. Frame-
-# address repair (GocFrameAddrFix) and stack-map roots are x86-only, as on
-# main, so arm64 functions carry no locals pointer maps.
+# address repair (GocA64FrameAddrFix) and stack-map roots run on arm64 too,
+# so arm64 functions carry locals pointer maps.
 GOC_ARCH="${GOC_ARCH:-amd64}"
 case "$GOC_ARCH" in
   amd64|arm64) ;;
@@ -54,7 +54,7 @@ case "$GOC_ARCH" in
 esac
 export GOC_ARCH
 if [[ "$GOC_ARCH" == arm64 && "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
-  echo "realbody: FATAL GOC_CSR_ADJUST is x86-only; arm64 has no frame-address repair" >&2
+  echo "realbody: FATAL GOC_CSR_ADJUST is x86-only" >&2
   exit 1
 fi
 # goc-reanchor rematerializes frame addresses as plain GEPs, which is only
