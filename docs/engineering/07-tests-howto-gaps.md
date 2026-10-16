@@ -23,7 +23,7 @@
 ### CI（`scripts/ci-test.sh`，按顺序）
 
 ```
-file sizes      ./scripts/check-file-size.sh          # 单文件 800 行，无例外（third_party/、goobj/enc/、test/、testdata/ 不查）
+file sizes      ./scripts/check-file-size.sh          # 单文件 800 行，无例外（third_party/、test/、testdata/ 不查）
 goc check       ./cmd/goc check
 clang           ./test/clang/run.sh
 color-escape    ./test/color-escape/run.sh
@@ -59,11 +59,11 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 
 ## 2. 加一个新 Go 版本（例：go1.28）
 
-详见 [multi-go-version.md](../multi-go-version.md) §7。转换器按 Go 版本自动构建（`tools/goc/goenc.sh`），所以通常只需要：
+详见 [multi-go-version.md](../multi-go-version.md) §8。通常只需要：
 
-1. 在 `.github/workflows/ci.yml` 的矩阵里加上新版本，用它本地跑 `./scripts/ci-test.sh`。
-2. 如果 `goc-goenc` 报 “has ABI facts no goc profile states”：说明 ABI 事实变了，在 `llvm/include/Goc/AbiProfiles.def` 和 `gocobj/abi.go` 加 `goabi2-*`，并修改用到它的后端代码。
-3. 如果 gocobj2goobj 编译失败（writer API 变了）：在 `tools/goc-goenc` 生成 `goc_compat.go` 的地方加一个分支。
+1. 用新 Go 运行 `GOTOOLCHAIN=local go run ./tools/golangc-metadata-resolver -o gometa/data/go1.28.json`，在 CI 矩阵里加上新版本，本地跑 `./scripts/ci-test.sh`。
+2. 如果 gocobj2goobj 报 “has ABI facts no goc profile states”：说明 ABI 事实变了，在 `llvm/include/Goc/AbiProfiles.def` 和 `gocobj/abi.go` 加 `goabi2-*`，并修改用到它的后端代码。
+3. 如果解析器报某个函数的指纹未登记（Go 的 writer 行为可能变了）：读懂改动，必要时改 `goobjw` 并在 schema 里加字段，用 `tools/gocobj-diff` 和链接测试核对后，把指纹加进 `tools/golangc-metadata-resolver/reviewed.go`。
 4. 检查 thunk（`goobj/lower/goabi_x86.go`、`goabi_a64.go`）和 toolexec 是否仍然适用。
 5. 在 [go-version-diffs.md](../go-version-diffs.md) 里补上新版本的差异。
 

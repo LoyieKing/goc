@@ -21,11 +21,11 @@
 | 新增的符号 flag | `SymFlagLinkname`、`SymFlagABIWrapper`、`ObjFlagStd`（1.23 新增） | `SymFlagWasmExport`、`AuxWasmType`，`Align` 字段 | 无 | 无（只有 Reader 的整数运算重构） | `SymFlagLinknameStd` |
 | `cmd/internal/goobj/funcinfo.go` | 五个版本逐字节一致（md5 98407171） | | | | |
 
-结论：块布局和 magic 没变，变的是 flag 位。goc 用到的是 writer 一侧（`obj.WriteObjFile`），只要 writer 来自同一个 Go 版本，flag 就自然一致。
+结论：块布局和 magic 没变，变的是 flag 位。这些数值由 `tools/golangc-metadata-resolver` 从各版本源码读进 `gometa/data/go1.X.json`（`object.*`），goc 自己的 writer（`goobjw`）按它写。
 
 ## 2. 重定位类型编号（cmd/internal/objabi/reloctype.go）
 
-`RelocType` 是 `iota` 枚举，写进 goobj 的是**数字**。中间插入或删除一项，后面的编号就会整体移位：
+`RelocType` 是 `iota` 枚举（`R_ADDR RelocType = 1 + iota`，所以从 1 开始），写进 goobj 的是**数字**。中间插入或删除一项，后面的编号就会整体移位：
 
 | 版本 | `R_*` 个数 | 相对上一版的变化 |
 |---|---|---|
@@ -35,16 +35,16 @@
 | 1.26 | 106 | 加 `R_RISCV_ADD32/SUB32`、`R_LOONG64_ADDR_PCREL20_S2`、`R_LOONG64_CALL36` |
 | 1.27 | 109 | 加 `R_LOONG64_ADDR64_HI/LO`、`R_LOONG64_GOT64_HI/LO`，删 `R_JMPLOONG64` |
 
-goc 用到的类型的实际编号：
+goc 用到的类型的实际编号（即 `gometa/data/go1.X.json` 的 `relocs`；本表早先的版本误写成了从 0 开始的 iota 下标，已更正）：
 
 | 类型 | 1.23 | 1.24 | 1.25 | 1.26 | 1.27 |
 |---|---|---|---|---|---|
-| `R_ADDR` / `R_CALL` / `R_PCREL` | 0 / 6 / 13 | 同 | 同 | 同 | 同 |
-| `R_CALLARM64` / `R_ADDRARM64` | 8 / 2 | 同 | 同 | 同 | 同 |
-| `R_ARM64_GOTPCREL` | 34 | 34 | **33** | 33 | 33 |
-| `R_ARM64_PCREL` | 36 | 36 | **35** | 35 | 35 |
-| `R_ARM64_PCREL_LDST8..64` | 37–40 | 37–40 | **36–39** | 36–39 | 36–39 |
-| `R_ARM64_LDST8..128` | 41–45 | 41–45 | **40–44** | 40–44 | 40–44 |
+| `R_ADDR` / `R_CALL` / `R_PCREL` | 1 / 7 / 14 | 同 | 同 | 同 | 同 |
+| `R_CALLARM64` / `R_ADDRARM64` | 9 / 3 | 同 | 同 | 同 | 同 |
+| `R_ARM64_GOTPCREL` | 35 | 35 | **34** | 34 | 34 |
+| `R_ARM64_PCREL` | 37 | 37 | **36** | 36 | 36 |
+| `R_ARM64_PCREL_LDST8..64` | 38–41 | 38–41 | **37–40** | 37–40 | 37–40 |
+| `R_ARM64_LDST8..128` | 42–46 | 42–46 | **41–45** | 41–45 | 41–45 |
 
 **这是最关键的差异**：仓库原来那份 go1.24 的 vendored `objabi`，在 Go 1.25+ 上给 arm64 写出的 ADRP/LDST 重定位编号会差 1，链接时会解释成别的重定位类型。amd64 用到的三种类型编号没变，所以之前 amd64 上没暴露出来。
 
@@ -83,11 +83,11 @@ symtab.go 的其他变化：1.25 把 `FuncID_runfinq` 换成 `FuncID_runFinalize
 | 项 | 出处 | 结论 |
 |---|---|---|
 | 目标文件头 | cmd/internal/objabi/util.go `HeaderString()`：`go object GOOS GOARCH <buildcfg.Version>[ GOAMD64=v1 …] X:<experiments>` | 格式五版一致；`Version` 是**完整版本号**（如 `go1.24.13`） |
-| 头校验 | cmd/link/internal/ld/lib.go `var wantHdr = objabi.HeaderString()`，`line != wantHdr` 就报 `linked object header mismatch` | 1.23 起一直是**逐字节**比较。所以 goobj 必须由与链接器**完全同版本**（含补丁号）的 writer 写出 |
-| `buildcfg.Version` 来源 | internal/buildcfg/zbootstrap.go `const version = "go1.X.Y"` | 拷贝 writer 时 zbootstrap.go 会一起带过来，所以这份拷贝写出的头就是该 GOROOT 的版本 |
+| 头校验 | cmd/link/internal/ld/lib.go `var wantHdr = objabi.HeaderString()`，`line != wantHdr` 就报 `linked object header mismatch` | 1.23 起一直是**逐字节**比较。所以 goobj 的头必须与链接器**完全同版本**（含补丁号）；gocobj2goobj 让同一个 Go 的 `go tool asm` 汇编一个空文件取得这一行（按版本缓存） |
+| `buildcfg.Version` 来源 | internal/buildcfg/zbootstrap.go `const version = "go1.X.Y"` | goc 不读它，头部直接向该 Go 的汇编器探测 |
 | linkname 限制 | cmd/link/internal/loader/loader.go `blockedLinknames` | 1.23 引入、之后逐版扩充；goc 的符号不在名单里 |
-| writer 的 API | cmd/internal/obj/data.go `func (s *LSym) AddRel` | **1.24 新增**（会检查 FIPS 重定位）；1.23 直接 `s.R = append(s.R, r)` |
-| writer 依赖的包 | `go list -deps cmd/internal/obj/x86` | 1.23 需要 `cmd/internal/notsha256`（带汇编）；1.24 起换成 `cmd/internal/hash`；1.26 起多了 `internal/strconv` |
+| writer 的 API | cmd/internal/obj/data.go `func (s *LSym) AddRel` | **1.24 新增**（会检查 FIPS 重定位）；1.23 直接 `s.R = append(s.R, r)`。goc 自己的 writer 不涉及 |
+| writer 依赖的包 | `go list -deps cmd/internal/obj/x86` | 内容哈希：1.23 是 `cmd/internal/notsha256`（sha256 各字取反）；1.24 起是 `cmd/internal/hash`（sha256(0x01‖data) 取前 16 字节）。对应 `writer.content_hash` |
 | toolexec 用到的工具 | `asm -gensymabis`、`compile`、`pack r` | 参数形式五版一致 |
 | 发行包里预装的工具 | `pkg/tool/linux_amd64/` | 1.23、1.24 都有 `pack`、`nm`、`objdump`；**1.25 起只剩 asm、cgo、compile、cover、link、preprofile、vet（1.26 起加 fix）**，`pack` 改由 `go tool pack` 按需构建 |
 | DWARF5 文本地址索引 | cmd/internal/obj/link.go `DwTextCount`、dwarf.go 第 298 行 `WriteDwTxtAddrx(…, c.DwTextCount*2)`；cmd/compile/internal/gc/compile.go 每编一个函数就 `DwTextCount++` | **1.25 新增**。重定位宽度（`R_DWTXTADDR_U1..U4`，同版本 reloctype.go 新增）按这个计数选；不设置时为 0，函数多的包在链接时报 `R_DWTXTADDR_U1 relocation overflow`（QuickJS 实测，`test/e2e/manyfuncs` 复现） |
@@ -95,7 +95,7 @@ symtab.go 的其他变化：1.25 把 `FuncID_runfinq` 换成 `FuncID_runFinalize
 
 ## 7. 对 goc 的影响汇总
 
-1. **重定位编号**（第 2 节）和**文件头版本号**（第 6 节）决定了 gocobj2goobj 必须用目标 Go 版本自己的 `cmd/internal/obj` 构建，任何一份固定的 vendored 拷贝都不行。
+1. **重定位编号**（第 2 节）等数值每版不同，**文件头版本号**（第 6 节）要逐字节相同：gocobj2goobj 按 `go env GOVERSION` 选用该版本的事实文件（`gometa/data`），头部向该 Go 的汇编器探测。
 2. FUNCDATA/PCDATA、栈常量、g 偏移、g 寄存器、ABIInternal 寄存器在 1.23–1.27 中**完全相同**，所以 goc-llc 生成的机器码和 `.gocobj` 可以与 Go 版本无关（一个 ABI profile 覆盖五个版本）。
-3. writer 一侧的 API 差异有三处：`LSym.AddRel`（1.24+）、`Link.DwTextCount`（1.25+，必须设成函数个数），以及 `LSym.Align`（1.27+，内容可寻址的数据必须设置）。
+3. writer 行为的差异记在事实文件的 `writer`/`dwarf` 里：内容哈希（1.24 变）、DWARF5 `addrx` 与 `DwTextCount`（1.25+）、汇编符号的 Linkname 标志（1.27 去掉）、对齐规则与 `TrimInlineHash`（1.27）。见 [go-metadata-schema.md](go-metadata-schema.md)。
 4. toolexec 不能再假设 `$GOTOOLDIR/pack` 存在（1.25+）。

@@ -40,7 +40,7 @@ gocobj2goobj -print-profile -goarch arm64     # 这个 Go 对应的 ABI profile
 gocobj2goobj -version                          # 写出的对象头里的 Go 版本
 ```
 
-转换器**按 Go 版本构建**：`tools/goc/goenc.sh` 的 `goc_converter` 先用 `tools/goc-goenc` 从当前 GOROOT 拷出 writer（`cmd/internal/obj…`），再针对它构建 gocobj2goobj，按完整版本号缓存在 `build/goenc/`。设计见 [multi-go-version.md](../multi-go-version.md)，版本差异见 [go-version-diffs.md](../go-version-diffs.md)。
+**一个转换器覆盖所有支持的 Go 版本**：它按 `go env GOVERSION`（或 `-goversion`、`-go-meta file.json`）选用 `gometa` 里该版本的事实，用自己的 writer `goobjw` 写对象；文件头一行向同一个 Go 的 `go tool asm` 探测并缓存。checkout 里由 `tools/goc/converter.sh` 的 `goc_converter` 构建一次（`build/conv/`），发布包直接用 `bin/gocobj2goobj`。设计见 [multi-go-version.md](../multi-go-version.md)，版本差异见 [go-version-diffs.md](../go-version-diffs.md)。
 
 `main.go` 的流程：
 1. `gocobj.Open` + `gocobj.Verify`，有错就停。
@@ -55,13 +55,14 @@ gocobj2goobj -version                          # 写出的对象头里的 Go 版
 | `convert.go` | 名字解析：`tuTag`（内部 C 名加 TU 标签）、`resolveCName`（`.impl` / `.goabi` / `@plt` 约定）、`resolveTarget`（ELF 重定位 → Go 符号 + 偏移；PC 相对形式去掉 −4，因为 Go 的 `R_PCREL`/`R_CALL` 自己减字段宽度）、`gotSlot`、`GOC_LIBCALL_IMPL`、`textSecs`/`sortedKeys`（按段号排序遍历，保证输出确定） |
 | `data.go` | 数据段 → 数据符号 |
 | `pctab.go` | pcvalue → Go 的 pctab 编码；gcmaps → `gclocals.*` 符号和 `PCDATA_StackMapIndex` |
-| `write.go` | 用 writer 写 goobj；为每个 `.goc.files` 建 PosBase |
+| `write.go` | 用 `goobjw` 写 goobj；为每个 `.goc.files` 建文件表 |
+| `header.go` | `go env` 与对象头探测（`go tool asm` 汇编空文件，按 `go env` 输出缓存） |
 | `arm64.go` | arm64 重定位：ADRP+低 12 位配对、GOT 配对等 |
 | `relocmap.go` | ELF → Go 重定位映射（下节），与版本无关 |
 
 ## 4. `relocmap.go`：按名字引用的映射
 
-| 字段 | 值（都是 `objabi`/`abi` 的常量名，数字来自所用 Go 的 writer） |
+| 字段 | 值（都是 `objabi`/`abi` 的常量名，数字来自 `gometa` 中该版本的 `relocs`/`abi`） |
 |---|---|
 | `X86Text` | `R_X86_64_PC32`/`PLT32` → `R_PCREL`，`R_X86_64_32`/`32S` → `R_ADDR` |
 | `X86Call` | `R_CALL`（`.goc.relocs` 标为调用的 PC 相对字段） |
@@ -69,7 +70,7 @@ gocobj2goobj -version                          # 写出的对象头里的 Go 版
 | `A64Call` / `A64Page` / `A64PagePair` / `A64Lo12` / `A64GOTPair` / `A64Data` | `R_CALLARM64`、`R_ARM64_PCREL`、`R_ADDRARM64`、`R_ARM64_PCREL_LDST{8,16,32,64}`、`R_ARM64_LDST*`、`R_ARM64_GOTPCREL`… |
 | `FuncdataArgs` / `FuncdataLocals` / `PcdataStackMapIndex` | `abi.FUNCDATA_ArgsPointerMaps`、`abi.FUNCDATA_LocalsPointerMaps`、`abi.PCDATA_StackMapIndex` |
 
-profile 来自生成的 `objabi.GocProfiles`（goc-goenc 探测 GOROOT 后写入）。各版本 writer API 的差异由生成的 `goc_compat.go` 吸收（`GocAddRel`、`GocSetAlign`、`GocSetTextCount`）。
+profile 由 `profileFor` 用该版本的 `abi`/`arch` 事实匹配 `gocobj.Profiles()` 得出（优先 `goabi*` 名）。各版本 writer 行为的差异（内容哈希、Linkname 标志、对齐、DWARF5 addrx）由事实文件的 `writer`/`dwarf` 字段驱动，见 [go-metadata-schema.md](../go-metadata-schema.md)。
 
 ## 5. 接进 `go build`：`tools/goc/toolexec_recognize_goobj.sh`
 
@@ -91,8 +92,8 @@ profile 来自生成的 `objabi.GocProfiles`（goc-goenc 探测 GOROOT 后写入
 |---|---|---|
 | 1 | `llvm/include/Goc/AbiProfiles.def` | g 寄存器、`stackguard0` 偏移、StackSmall/StackBig、morestack 名、ABIInternal 整数 / 浮点参数寄存器 |
 | 2 | `gocobj/abi.go` | 上表的 Go 副本，`TestProfilesMatchDef` 保证两者一致 |
-| 3 | `tools/goc-goenc` | 从 GOROOT 拷 writer、探测 ABI 事实选 profile、生成 `goc_compat.go`（各版本 API 差异） |
-| 4 | `goobj/enc/` | goc-goenc 由 go1.24.4 生成的树内副本（供 `go vet`/单测；CI 检查能重新生成一致）；实际转换用的是按版本生成的副本 |
+| 3 | `tools/golangc-metadata-resolver` | 从 GOROOT 读出事实；其 `reviewed.go` 登记 goobjw 复刻的 Go 函数指纹，未登记的指纹会报错 |
+| 4 | `gometa/data/go1.X.json`、`goobjw/` | 各版本事实（CI 检查与解析器输出一致）与据此写对象的 writer |
 | 5 | `goobj/lower/goabi_x86.go`、`goabi_a64.go` | thunk 按 Go 1.24 ABIInternal 生成（生成文件的首行就写着 `Go 1.24 ABIInternal -> SysV entry thunks`）：参数寄存器分配、X15 清零、溢出区 |
 | 6 | `llvm/lib/Target/X86/GocX86StackCheck.cpp`、`GocAArch64StackCheck.cpp` | g 的取法（`FS:-8` / X28）、morestack 的寄存器约定（R14 装 g、X3 装返回地址） |
 | 7 | `SMUptrInline.cpp`（`tlsGWord`）、`runtime/uptr/goc_uptr_tls_amd64.S` | `g.stack.lo` 在 `g+0`、`g.stack.hi` 在 `g+8` |

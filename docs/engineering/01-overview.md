@@ -119,11 +119,13 @@ flag 解析统一在 `scripts/goc-flags.sh` 的 `goc_consume_flag`：每个 flag
 | `llvm/CMakeLists.txt` | 上面全部的构建；产物在 `build/llvm/` | |
 | `tools/goc/` | 单文件流水线与 toolexec 钩子 | `realbody.sh`、`toolexec_recognize_goobj.sh` |
 | `tools/goc-lower/` + `goobj/lower/` | Go ABI thunk、IR 小修、汇编对齐修正 | `main.go`（子命令 `goabi` `fix-ir` `rename-ir` `align-asm` `fnname` `magic-obj` `has-define`）、`goabi_*.go`、`rewrite.go` |
-| `tools/gocobj2goobj/` | `.gocobj` → goobj 转换 | `main.go`、`convert.go`、`data.go`、`pctab.go`、`write.go`、`arm64.go`、`relocmap.go`（另见 `tools/goc-goenc`、`tools/goc/goenc.sh`） |
+| `tools/gocobj2goobj/` | `.gocobj` → goobj 转换 | `main.go`、`convert.go`、`data.go`、`pctab.go`、`write.go`、`arm64.go`、`relocmap.go`、`header.go`（另见 `tools/goc/converter.sh`） |
 | `tools/goc-objdump/` | 查看 / 校验 `.gocobj` | `main.go`（`dump`、`verify`） |
 | `tools/gocobj-diff/` | 两个 goobj 语义比对（开发工具） | `main.go` |
 | `gocobj/` | `.gocobj` 的 Go 读写与校验库 | `format.go`、`read.go`、`write.go`、`verify.go`、`abi.go` |
-| `goobj/enc/` | `tools/goc-goenc` 由 go1.24.4 生成的 Go 目标文件 writer 副本 | `cmd/objlib/…`、`stdinternal/…`、`GOVERSION` |
+| `gometa/` | 各 Go 版本的事实（内嵌 JSON） | `meta.go`、`data/go1.23.json`…`go1.27.json` |
+| `goobjw/` | 自己的 goobj writer / reader | `link.go`、`write.go`、`dwarf.go`、`read.go` |
+| `tools/golangc-metadata-resolver/` | 从 GOROOT 生成事实 JSON | `main.go`、`consts.go`、`reviewed.go`（审查过的 Go 函数指纹） |
 | `runtime/` | uptr 运行时 | `uptr/goc_uptr_runtime.c`、`uptr/goc_uptr_tls_amd64.S`、`UPTR-MSB.md`、`TLS-HI.md` |
 | `test/` | 全部测试（见 07 篇） | `README.md` |
 | `examples/` | `hello/`（最小程序）、`hello_colors.c`、`sptr_escape_bad.c` | |

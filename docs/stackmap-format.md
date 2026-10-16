@@ -23,5 +23,6 @@ creation order.
 
 ## goobj
 
-`tools/gocobj2goobj` writes the object the Go linker accepts. The encoder lives in
-`goobj/enc/` and does not overlay `GOROOT`.
+`tools/gocobj2goobj` writes the object the Go linker accepts. The writer is goc's own
+(`goobjw/`, driven by the per-release facts in `gometa/`); it copies no Go
+toolchain code and does not overlay `GOROOT`.
