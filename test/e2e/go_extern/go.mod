@@ -1,3 +1,4 @@
 module goc.local/go_extern
 
-go 1.23
+go 1.18
+
