@@ -200,7 +200,9 @@ func (r *resolver) checkReviewed() {
 }
 
 // fingerprint returns the fingerprint of "file:Func", or "absent".
-func (r *resolver) fingerprint(key string) string {
+// normalized is the gofmt-printed function without comments, the text
+// a fingerprint is taken of ("absent" if there is no such function).
+func (r *resolver) normalized(key string) string {
 	file, fn, _ := strings.Cut(key, ":")
 	sf := r.parse(file)
 	d := findFunc(sf, fn)
@@ -211,7 +213,15 @@ func (r *resolver) fingerprint(key string) string {
 	cp := *d
 	cp.Doc = nil
 	printer.Fprint(&b, token.NewFileSet(), stripComments(&cp))
-	sum := sha256.Sum256(b.Bytes())
+	return b.String()
+}
+
+func (r *resolver) fingerprint(key string) string {
+	n := r.normalized(key)
+	if n == "absent" {
+		return n
+	}
+	sum := sha256.Sum256([]byte(n))
 	return hex.EncodeToString(sum[:])[:16]
 }
 

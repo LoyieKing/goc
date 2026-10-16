@@ -38,6 +38,8 @@ func main() {
 	goroot := flag.String("goroot", "", "GOROOT to read (default: go env GOROOT)")
 	out := flag.String("o", "", "output file (default stdout)")
 	fingerprints := flag.Bool("fingerprints", false, "print the reviewed functions' fingerprints and exit")
+	printFunc := flag.String("print", "", "print a reviewed function (file:func), comments stripped, and exit (for reviewing a change)")
+	keepGoing := flag.Bool("keep-going", false, "report errors but still write what was resolved (surveying a new release; the result is not for gometa/data)")
 	flag.Parse()
 	if *goroot == "" {
 		b, err := exec.Command("go", "env", "GOROOT").Output()
@@ -48,6 +50,10 @@ func main() {
 		*goroot = strings.TrimSpace(string(b))
 	}
 	r := &resolver{goroot: *goroot, files: map[string]*srcFile{}, used: map[string]bool{}}
+	if *printFunc != "" {
+		fmt.Println(r.normalized(*printFunc))
+		return
+	}
 	if *fingerprints {
 		for _, k := range reviewedKeys() {
 			fmt.Printf("%s\t%s\n", k, r.fingerprint(k))
@@ -59,10 +65,12 @@ func main() {
 		for _, e := range r.errs {
 			fmt.Fprintln(os.Stderr, "golangc-metadata-resolver:", e)
 		}
-		os.Exit(1)
+		if !*keepGoing {
+			os.Exit(1)
+		}
 	}
 	b, err := m.Encode()
-	if err == nil {
+	if err == nil && !*keepGoing {
 		_, err = gometa.Parse(b) // the converter must accept what we write
 	}
 	if err != nil {
@@ -177,27 +185,71 @@ func (r *resolver) resolve() *gometa.Meta {
 	src("relocs", "cmd/internal/objabi/reloctype.go")
 	src("sym_kinds", "cmd/internal/objabi/symkind.go")
 
-	// internal/abi.
-	sym := r.consts(r.parse("internal/abi/symtab.go"), nil)
-	m.ABI.Funcdata = pickTrim(sym, "FUNCDATA_")
-	m.ABI.Pcdata = pickTrim(sym, "PCDATA_")
-	m.Writer.FuncFlags = pickTrim(sym, "FuncFlag")
-	m.Writer.FuncIDs = map[string]int{}
-	for n, v := range pick(sym, "FuncID") {
-		m.Writer.FuncIDs[strings.TrimPrefix(strings.TrimPrefix(n, "FuncID"), "_")] = v
+	// internal/abi (go1.21+); cmd/internal/objabi before that.
+	var sym []constBlock
+	abiSrc := []string{"internal/abi/symtab.go", "internal/abi/stack.go"}
+	if r.exists("internal/abi/symtab.go") {
+		sym = r.consts(r.parse("internal/abi/symtab.go"), nil)
+		m.ABI.Funcdata = pickTrim(sym, "FUNCDATA_")
+		m.ABI.Pcdata = pickTrim(sym, "PCDATA_")
+		m.Writer.FuncFlags = pickTrim(sym, "FuncFlag")
+		m.Writer.FuncIDs = map[string]int{}
+		for n, v := range pick(sym, "FuncID") {
+			m.Writer.FuncIDs[strings.TrimPrefix(strings.TrimPrefix(n, "FuncID"), "_")] = v
+		}
+		stack := pick(r.consts(r.parse("internal/abi/stack.go"), nil), "Stack")
+		m.ABI.StackSmall = stack["StackSmall"]
+		m.ABI.StackBig = stack["StackBig"]
+		m.ABI.StackNosplitBase = stack["StackNosplitBase"]
+	} else {
+		abiSrc = []string{"cmd/internal/objabi/funcdata.go", "cmd/internal/objabi/funcid.go", "cmd/internal/objabi/stack.go"}
+		fd := r.consts(r.parse("cmd/internal/objabi/funcdata.go"), nil)
+		m.ABI.Funcdata = pickTrim(fd, "FUNCDATA_")
+		m.ABI.Pcdata = pickTrim(fd, "PCDATA_")
+		sym = r.consts(r.parse("cmd/internal/objabi/funcid.go"), nil)
+		// Same values under internal/abi's later names.
+		flagNames := map[string]string{"TOPFRAME": "TopFrame", "SPWRITE": "SPWrite", "ASM": "Asm"}
+		m.Writer.FuncFlags = map[string]int{}
+		for n, v := range pickTrim(sym, "FuncFlag_") {
+			if nn, ok := flagNames[n]; ok {
+				m.Writer.FuncFlags[nn] = v
+			} else {
+				r.errorf("cmd/internal/objabi/funcid.go: unknown FuncFlag_%s", n)
+			}
+		}
+		m.Writer.FuncIDs = map[string]int{}
+		for n, v := range pickTrim(sym, "FuncID_") {
+			switch n {
+			case "normal":
+				n = "Normal"
+			case "wrapper":
+				n = "Wrapper"
+			}
+			m.Writer.FuncIDs[n] = v
+		}
+		st := r.parse("cmd/internal/objabi/stack.go")
+		stack := pick(r.consts(st, nil), "Stack")
+		m.ABI.StackSmall = stack["StackSmall"]
+		m.ABI.StackBig = stack["StackBig"]
+		// StackLimit = stackGuard - StackSystem - StackSmall: the nosplit
+		// budget that go1.21 names StackNosplitBase.
+		mm := regexp.MustCompile(`stackGuard := (\d+)\*stackGuardMultiplier\(race\) \+ StackSystem\s+stackLimit := stackGuard - StackSystem - StackSmall`).FindStringSubmatch(string(st.text))
+		if mm == nil {
+			r.errorf("cmd/internal/objabi/stack.go: StackLimit has an unknown layout")
+		} else {
+			g, _ := strconv.Atoi(mm[1])
+			m.ABI.StackNosplitBase = g - m.ABI.StackSmall
+		}
 	}
-	stack := pick(r.consts(r.parse("internal/abi/stack.go"), nil), "Stack")
-	m.ABI.StackSmall = stack["StackSmall"]
-	m.ABI.StackBig = stack["StackBig"]
-	m.ABI.StackNosplitBase = stack["StackNosplitBase"]
 	m.ABI.GOffsets = r.gOffsets()
-	src("abi", "internal/abi/symtab.go", "internal/abi/stack.go", "runtime/runtime2.go")
+	src("abi", append(abiSrc, "runtime/runtime2.go")...)
 
 	// objabi.funcIDs: runtime.<name> -> FuncID.
 	m.Writer.RuntimeFuncIDs = map[string]int{}
 	abiNames := map[string]int64{}
 	for n, v := range pick(sym, "FuncID") {
 		abiNames["abi."+n] = int64(v)
+		abiNames[n] = int64(v)
 	}
 	if cl := compositeVar(r.parse("cmd/internal/objabi/funcid.go"), "funcIDs"); cl != nil {
 		for _, e := range cl.Elts {
@@ -249,8 +301,8 @@ func (r *resolver) resolve() *gometa.Meta {
 		r.regs(a, &ar)
 		m.Arch[a] = ar
 	}
-	src("arch", "cmd/internal/sys/arch.go", "cmd/compile/internal/ssa/_gen/AMD64Ops.go",
-		"cmd/compile/internal/ssa/_gen/ARM64Ops.go", "runtime/asm_amd64.s", "runtime/asm_arm64.s")
+	src("arch", "cmd/internal/sys/arch.go", r.ssaGen()+"/AMD64Ops.go",
+		r.ssaGen()+"/ARM64Ops.go", "runtime/asm_amd64.s", "runtime/asm_arm64.s")
 
 	hashSrc := r.writerFacts(m)
 	r.dwarfFacts(m)
@@ -294,7 +346,7 @@ func (r *resolver) gOffsets() map[string]int {
 }
 
 func (r *resolver) regs(arch string, ar *gometa.Arch) {
-	ops := string(r.parse("cmd/compile/internal/ssa/_gen/" + strings.ToUpper(arch) + "Ops.go").text)
+	ops := string(r.parse(r.ssaGen() + "/" + strings.ToUpper(arch) + "Ops.go").text)
 	find := func(re, what string) string {
 		m := regexp.MustCompile(re).FindStringSubmatch(ops)
 		if m == nil {
@@ -392,4 +444,18 @@ func (r *resolver) dwarfFacts(m *gometa.Meta) {
 	} else if d.FuncDIE == "v2" {
 		r.errorf("emitHiLoPc without FuncCountToDwTxtAddrFlavor")
 	}
+}
+
+func (r *resolver) exists(rel string) bool {
+	_, err := os.Stat(filepath.Join(r.goroot, "src", filepath.FromSlash(rel)))
+	return err == nil
+}
+
+// ssaGen is the SSA rule generator directory: ssa/_gen from go1.20,
+// ssa/gen before.
+func (r *resolver) ssaGen() string {
+	if r.exists("cmd/compile/internal/ssa/_gen") {
+		return "cmd/compile/internal/ssa/_gen"
+	}
+	return "cmd/compile/internal/ssa/gen"
 }
