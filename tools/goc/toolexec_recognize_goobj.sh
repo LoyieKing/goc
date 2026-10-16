@@ -78,9 +78,14 @@ inject_binobj() {
     prev="$arg"
   done
   [[ -n "${GOC_BINOBJ:-}" && -n "$out_a" && -f "$out_a" ]] || return 0
-  local pack
-  pack="$(dirname "$TOOL")/pack"
-  [[ -x "$pack" ]] || pack="$(go env GOTOOLDIR)/pack"
+  # go1.25+ distributions no longer ship pack prebuilt; `go tool pack`
+  # builds it on first use (docs/go-version-diffs.md).
+  local pack=()
+  if [[ -x "$(dirname "$TOOL")/pack" ]]; then
+    pack=("$(dirname "$TOOL")/pack")
+  else
+    pack=(env GOFLAGS= GOTOOLCHAIN=local go tool pack)
+  fi
   # Member name must end in .o. See the header comment.
   local stage f base
   stage="$(mktemp -d)"
@@ -92,7 +97,7 @@ inject_binobj() {
       *.goobj) base="${base%.goobj}.o" ;;
     esac
     cp "$f" "$stage/$base"
-    "$pack" r "$out_a" "$stage/$base"
+    "${pack[@]}" r "$out_a" "$stage/$base"
     echo "toolexec: packed $(basename "$f") into $out_a" >&2
   done
   rm -rf "$stage"

@@ -134,7 +134,17 @@ func main() {
 	if has(all["cmd/internal/obj"].Dir, "func (s *LSym) AddRel(") {
 		addRel = "s.AddRel(ctxt, r)"
 	}
-	write(filepath.Join(*out, "cmd/objlib/obj/goc_compat.go"), fmt.Sprintf(gocCompat, addRel))
+	// LSym.Align (go1.27+): content-addressable data must set it.
+	setAlign := ""
+	if m := regexp.MustCompile(`(?s)type LSym struct \{.*?\n\tAlign\s+(\w+)`).FindStringSubmatch(
+		readFile(filepath.Join(all["cmd/internal/obj"].Dir, "link.go"))); m != nil && !strings.Contains(m[0], "\n}") {
+		setAlign = "s.Align = " + m[1] + "(a)"
+	}
+	compat, err := format.Source([]byte(fmt.Sprintf(gocCompat, addRel, setAlign)))
+	if err != nil {
+		log.Fatal(err)
+	}
+	write(filepath.Join(*out, "cmd/objlib/obj/goc_compat.go"), string(compat))
 	write(filepath.Join(*out, "cmd/objlib/objabi/goc_profile.go"), profileFile(gr, ver))
 	write(filepath.Join(*out, "go.mod"), fmt.Sprintf("module %s\n\ngo %s\n", module, pick(*lang, langVersion(ver))))
 	write(filepath.Join(*out, "GOVERSION"), ver+"\n")
@@ -305,6 +315,14 @@ func probe(goroot, arch string) gocobj.Profile {
 	return p
 }
 
+func readFile(path string) string {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(b)
+}
+
 // has reports whether any .go file of dir contains needle.
 func has(dir, needle string) bool {
 	m, _ := filepath.Glob(filepath.Join(dir, "*.go"))
@@ -366,4 +384,7 @@ package obj
 
 // GocAddRel appends relocation r to s.
 func (s *LSym) GocAddRel(ctxt *Link, r Reloc) { %s }
+
+// GocSetAlign sets a data symbol's alignment where LSym has one.
+func (s *LSym) GocSetAlign(a int) { %s }
 `

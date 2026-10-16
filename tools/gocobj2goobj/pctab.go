@@ -12,6 +12,9 @@ import (
 // hold from their pc to the next entry; the runtime starts at -1.
 func pctab(ctxt *obj.Link, size int64, ents []gocobj.PCEntry) *obj.LSym {
 	sym := &obj.LSym{Type: objabi.SRODATA, Attribute: obj.AttrContentAddressable | obj.AttrPcdata}
+	// Align 1, as cmd/internal/obj.funcpctab does; go1.27 rejects a
+	// content-addressable symbol without one.
+	sym.GocSetAlign(1)
 	if size <= 0 {
 		return sym
 	}
