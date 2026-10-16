@@ -24,18 +24,34 @@ func main() {
 	in := flag.String("in", "", "input .gocobj")
 	out := flag.String("o", "", "output Go object file")
 	pkg := flag.String("p", "main", "package path")
-	goversion := flag.String("goversion", os.Getenv("GOC_GOVERSION"), "Go release the object is for (default: the Go this converter was built with)")
+	printProfile := flag.Bool("print-profile", false, "print the goc ABI profile for -goarch (or $GOARCH) and exit")
+	printVersion := flag.Bool("version", false, "print the Go release this converter writes objects for and exit")
+	goarchFlag := flag.String("goarch", "", "target GOARCH (default $GOARCH, else amd64)")
 	symabis := flag.String("symabis", "", "also write the asm symabis (def lines) of the functions here")
 	flag.Parse()
+	goarch := *goarchFlag
+	if goarch == "" {
+		goarch = os.Getenv("GOARCH")
+	}
+	if goarch == "" {
+		goarch = "amd64"
+	}
+	if *printVersion {
+		fmt.Println(goVersion())
+		return
+	}
+	want, err := profileFor(goarch)
+	if err != nil {
+		fatalf("%v", err)
+	}
+	if *printProfile {
+		fmt.Println(want.Name)
+		return
+	}
 	if *in == "" || *out == "" {
 		fmt.Fprintln(os.Stderr, "usage: gocobj2goobj -in foo.gocobj -o foo.goobj [-p pkg] [-symabis file]")
 		os.Exit(2)
 	}
-	v, err := lookupGoVersion(*goversion)
-	if err != nil {
-		fatalf("%v", err)
-	}
-	gv = v
 	f, err := gocobj.Open(*in)
 	if err != nil {
 		fatalf("%v", err)
@@ -46,12 +62,11 @@ func main() {
 		}
 		os.Exit(1)
 	}
-	goarch := os.Getenv("GOARCH")
-	if goarch == "" {
-		goarch = "amd64"
-	}
-	if want := gv.Profiles[goarch]; f.Header.Profile != want {
-		fatalf("%s has ABI profile %q, this converter writes %q for GOARCH=%s", *in, f.Header.Profile, want, goarch)
+	// The object's profile must state the facts of this Go's ABI; the name
+	// may differ (go1.24-amd64 is goabi1-amd64's old name).
+	if have, ok := gocobj.LookupProfile(f.Header.Profile); !ok || !gocobj.SameFacts(have, want) {
+		fatalf("%s has ABI profile %q; %s on GOARCH=%s needs %q (or one with the same facts)",
+			*in, f.Header.Profile, goVersion(), goarch, want.Name)
 	}
 	if f.Header.Flags&gocobj.HeaderStackChecksInCode == 0 {
 		fatalf("%s: the backend did not emit the stack checks (header flag stack_checks_in_code is 0)", *in)

@@ -19,6 +19,12 @@ type Profile struct {
 }
 
 var profiles = []Profile{
+	{"goabi1-amd64", "amd64", 8, "R14", 16, 128, 4096, "runtime.morestack_noctxt",
+		regs("RAX,RBX,RCX,RDI,RSI,R8,R9,R10,R11"),
+		regs("X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14")},
+	{"goabi1-arm64", "arm64", 8, "R28", 16, 128, 4096, "runtime.morestack_noctxt",
+		regs("R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15"),
+		regs("F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15")},
 	{"go1.24-amd64", "amd64", 8, "R14", 16, 128, 4096, "runtime.morestack_noctxt",
 		regs("RAX,RBX,RCX,RDI,RSI,R8,R9,R10,R11"),
 		regs("X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14")},
@@ -37,6 +43,16 @@ func LookupProfile(name string) (Profile, bool) {
 		}
 	}
 	return Profile{}, false
+}
+
+// SameFacts reports whether two profiles describe the same ABI (names aside).
+func SameFacts(a, b Profile) bool {
+	a.Name, b.Name = "", ""
+	return a.Arch == b.Arch && a.PtrSize == b.PtrSize && a.GReg == b.GReg &&
+		a.StackGuard0Off == b.StackGuard0Off && a.StackSmall == b.StackSmall &&
+		a.StackBig == b.StackBig && a.Morestack == b.Morestack &&
+		strings.Join(a.IntRegs, ",") == strings.Join(b.IntRegs, ",") &&
+		strings.Join(a.FPRegs, ",") == strings.Join(b.FPRegs, ",")
 }
 
 // Profiles returns all known profiles.

@@ -4,7 +4,14 @@
 // in a .gocobj is Go-version independent. A .gocobj records the profile name in
 // its .goc.header; gocobj2goobj refuses a profile it was not built for.
 //
-// Sources (Go 1.24):
+// One profile covers every Go release whose facts are equal: goabi1 is
+// go1.23 through go1.27 (docs/go-version-diffs.md). tools/goc-goenc probes
+// these facts from a GOROOT and picks the profile, so a new Go release
+// needs no change here unless it moves one of them.
+// go1.24-amd64/arm64 are the old names of goabi1, kept so older .gocobj
+// files and goldens still decode.
+//
+// Sources (Go 1.23-1.27):
 //   G_REG            cmd/compile/internal/ssa/_gen/AMD64Ops.go (R14 = g),
 //                    ARM64Ops.go (R28 = g)
 //   STACKGUARD0_OFF  runtime/runtime2.go: type g struct { stack stack (lo, hi);
@@ -22,6 +29,15 @@
 #ifndef GOC_ABI_PROFILE
 #error "define GOC_ABI_PROFILE before including Goc/AbiProfiles.def"
 #endif
+
+GOC_ABI_PROFILE("goabi1-amd64", "amd64", 8, "R14", 16, 128, 4096,
+                "runtime.morestack_noctxt",
+                "RAX,RBX,RCX,RDI,RSI,R8,R9,R10,R11",
+                "X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14")
+GOC_ABI_PROFILE("goabi1-arm64", "arm64", 8, "R28", 16, 128, 4096,
+                "runtime.morestack_noctxt",
+                "R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15",
+                "F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14,F15")
 
 GOC_ABI_PROFILE("go1.24-amd64", "amd64", 8, "R14", 16, 128, 4096,
                 "runtime.morestack_noctxt",

@@ -68,7 +68,7 @@ static cl::opt<std::string> GocTables(
     cl::value_desc("filename"));
 static cl::opt<std::string> GocProfile(
     "goc-profile", cl::desc("Go ABI profile (Goc/AbiProfiles.def) the code targets"),
-    cl::init("go1.24-amd64"));
+    cl::init("goabi1-amd64"));
 static cl::opt<unsigned> GocSymABI(
     "goc-sym-abi",
     cl::desc("Go symbol ABI of the C functions in the tables: 0 ABI0 (Go ABI thunks wrap "
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
       PM.add(goc::createGocX86FrameAddrFixPass());
     // The profile follows the target unless one was named.
     if (IsA64 && GocProfile.getNumOccurrences() == 0)
-      GocProfile = "go1.24-arm64";
+      GocProfile = "goabi1-arm64";
     if (!GocNoStackCheck && (Arch == Triple::x86_64 || IsA64)) {
       const goc::AbiProfile *Prof = goc::lookupProfile(GocProfile);
       StringRef Want = IsA64 ? "arm64" : "amd64";

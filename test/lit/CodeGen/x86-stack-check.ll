@@ -1,7 +1,7 @@
 ; goc-llc on amd64: the Go stack check compares SP with g.stackguard0
 ; (g at %fs:-8, stackguard0 at +16) before the prologue, and the cold block
 ; saves the argument registers around runtime.morestack. The tables name
-; the go1.24-amd64 profile.
+; the goabi1-amd64 profile (the default).
 ; RUN: %goc-llc -O2 -relocation-model=pic -march=x86-64 -frame-pointer=all \
 ; RUN:   -disable-tail-calls -function-sections -goc-tables %t.tables.s %s -o - \
 ; RUN:   | FileCheck %s
@@ -34,4 +34,4 @@ entry:
 
 ; TABLES-DAG: .section .goc.header
 ; TABLES-DAG: .section .goc.gcmaps
-; TABLES-DAG: .asciz "go1.24-amd64"
+; TABLES-DAG: .asciz "goabi1-amd64"

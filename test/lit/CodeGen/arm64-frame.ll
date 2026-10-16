@@ -5,7 +5,7 @@
 ; and v in [old SP, old g.stack.hi) gets the delta added afterwards.
 ; RUN: %goc-llc -O2 -relocation-model=static -mtriple=aarch64-unknown-linux-gnu \
 ; RUN:   -mattr=+reserve-x28 -frame-pointer=all -disable-tail-calls \
-; RUN:   -function-sections -goc-profile=go1.24-arm64 -goc-tables %t.tables.s %s -o - \
+; RUN:   -function-sections -goc-profile=goabi1-arm64 -goc-tables %t.tables.s %s -o - \
 ; RUN:   | FileCheck %s
 ; RUN: FileCheck --check-prefix=TABLES %s < %t.tables.s
 
@@ -44,4 +44,4 @@ entry:
 ; CHECK-NEXT:  csel [[R]], {{x[0-9]+}}, [[R]], lo
 ; CHECK:       bl fill
 
-; TABLES: .asciz "go1.24-arm64"
+; TABLES: .asciz "goabi1-arm64"

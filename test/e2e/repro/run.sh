@@ -23,9 +23,11 @@ for f in repro.gocobj repro.goobj; do
   cmp "$OUT/a/$f" "$OUT/b/$f" || { echo "FAIL repro: $f differs between two builds" >&2; exit 1; }
 done
 
-go build -o "$OUT/gocobj2goobj" ./tools/gocobj2goobj
+# shellcheck source=../../../tools/goc/goenc.sh
+source "$ROOT/tools/goc/goenc.sh"
+CONV="$(goc_converter "$ROOT")"
 for i in $(seq 10); do
-  "$OUT/gocobj2goobj" -in "$OUT/a/repro.gocobj" -o "$OUT/conv$i.goobj" -symabis "$OUT/conv$i.symabis"
+  "$CONV" -in "$OUT/a/repro.gocobj" -o "$OUT/conv$i.goobj" -symabis "$OUT/conv$i.symabis"
   cmp "$OUT/conv1.goobj" "$OUT/conv$i.goobj" && cmp "$OUT/conv1.symabis" "$OUT/conv$i.symabis" \
     || { echo "FAIL repro: gocobj2goobj output differs on run $i" >&2; exit 1; }
 done

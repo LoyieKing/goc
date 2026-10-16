@@ -10,7 +10,11 @@ set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${GOC_ROOT:-$(cd "$SELF/../.." && pwd)}"
 export GOC_ROOT="$ROOT"
-GOMOD_ROOT="$ROOT"
+# Sources of gocobj2goobj: the checkout, or a release's src/.
+GOC_SRC_ROOT="$ROOT"
+[[ -f "$ROOT/go.mod" ]] || GOC_SRC_ROOT="$ROOT/src"
+# shellcheck source=tools/goc/goenc.sh
+source "$ROOT/tools/goc/goenc.sh"
 # shellcheck source=scripts/goc-product-lib.sh
 source "$ROOT/scripts/goc-product-lib.sh"
 
@@ -308,9 +312,12 @@ fi
 # section per function: every reference between functions then carries an
 # ELF relocation, so the converter never patches code.
 LLC_ARGS+=(-function-sections -goc-sym-abi="$SYM_ABI")
-if [[ "$GOC_ARCH" == arm64 ]]; then
-  LLC_ARGS+=(-goc-profile=go1.24-arm64)
-fi
+# The converter for the Go in PATH (built against that release's object
+# writer) names the ABI profile; goc-llc records it in the .gocobj header.
+# GOC_PROFILE overrides it (tests).
+PACK_BIN="$(GOC_PREBUILT_CONVERTER="$ROOT/bin/gocobj2goobj" goc_converter "$GOC_SRC_ROOT")" || exit 1
+PROFILE="${GOC_PROFILE:-$("$PACK_BIN" -print-profile -goarch "$GOC_ARCH")}" || exit 1
+LLC_ARGS+=(-goc-profile="$PROFILE")
 if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
   LLC_ARGS+=(-goc-fixed-g)
 fi
@@ -335,12 +342,6 @@ cat "$TMP/body.s" "$TMP/thunks.s" "$GOC_TABLES" "$TMP/thunks.goc.s" > "$TMP/body
   -o "$TMP/body.llc.o" "$TMP/body.thunks.s"
 ELF="$TMP/body.llc.o"
 
-# A release ships bin/gocobj2goobj. A checkout builds it.
-PACK_BIN="$ROOT/bin/gocobj2goobj"
-if [[ ! -x "$PACK_BIN" ]]; then
-  PACK_BIN="$TMP/pack"
-  ( cd "$GOMOD_ROOT" && go build -o "$PACK_BIN" ./tools/gocobj2goobj/ )
-fi
 side="$OUT_O"
 case "$side" in
   *.goobj) side="${side%.goobj}" ;;

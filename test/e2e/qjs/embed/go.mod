@@ -1,3 +1,3 @@
 module goc.local/qjs-test
 
-go 1.24
+go 1.23
