@@ -423,9 +423,16 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
       if (CB->isInlineAsm())
         continue;
       SmallVector<int64_t, 4> offsets;
-      if (!outgoingPointerWords(*CB, DL, offsets))
+      // An intrinsic is lowered inline or to a libcall of scalars; it never
+      // passes a pointer in its own outgoing stack area (vector.reduce.add on
+      // a <8 x i64> would otherwise count as an unmodelled SysV argument).
+      const Function *Callee = CB->getCalledFunction();
+      bool Intrinsic = Callee && Callee->isIntrinsic();
+      if (!outgoingPointerWords(*CB, DL, offsets) && !Intrinsic)
         report_fatal_error(Twine("goc-stackmap: unmodelled SysV argument in a call from ") +
                            F.getName());
+      if (Intrinsic)
+        offsets.clear();
       anyOutgoing |= !offsets.empty();
       outgoing[CB] = std::move(offsets);
     }

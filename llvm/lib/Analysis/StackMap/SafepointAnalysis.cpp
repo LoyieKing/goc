@@ -433,11 +433,24 @@ DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL) {
             Grew = true;
           }
         } else if (auto *CB = dyn_cast<CallBase>(&I)) {
-          if (CB->getIntrinsicID() == Intrinsic::frameaddress &&
-              CB->getType()->isPointerTy()) {
+          if (!CB->getType()->isPointerTy() || CB->isInlineAsm())
+            continue;
+          if (CB->getIntrinsicID() == Intrinsic::frameaddress) {
             stack.insert(CB);
             Grew = true;
+            continue;
           }
+          // A pointer returned by a call that was handed a frame address may
+          // point back into this frame: p = pick(&slot), strchr(buf, c). This
+          // pass is not interprocedural, so treat the result as frame-derived;
+          // otherwise it rides a callee-saved register or spill across a
+          // later stack copy and is stale afterwards (test/e2e/retptr).
+          for (Value *Arg : CB->args())
+            if (Arg->getType()->isPointerTy() && stack.count(Arg)) {
+              stack.insert(CB);
+              Grew = true;
+              break;
+            }
         }
       }
     }

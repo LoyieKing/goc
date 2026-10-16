@@ -17,9 +17,11 @@ step "realbody"          ./test/e2e/realbody/run.sh
 step "reproducible"      ./test/e2e/repro/run.sh
 step "goabi"             ./test/e2e/goabi/run.sh
 step "stress"            ./test/e2e/stress/run.sh
+step "retptr"            ./test/e2e/retptr/run.sh
 step "lines"             ./test/e2e/lines/run.sh
 step "arm64"             ./test/e2e/arm64/run.sh
 step "arm64 stress"      ./test/e2e/arm64/stress.sh
+step "arm64 retptr"      ./test/e2e/arm64/retptr.sh
 step "go unit tests"     go test ./gocobj/ ./goobj/lower/ ./tools/...
 step "gocobj goldens"    go run ./tools/goc-objdump verify test/gocobj/v1.0/valid.gocobj
 step "gocobj-diff"       ./test/gocobj/diff.sh
