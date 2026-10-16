@@ -16,6 +16,9 @@ if(NOT LLVM_VERSION_MAJOR EQUAL 19)
   message(FATAL_ERROR "goc: needs LLVM 19, found ${LLVM_PACKAGE_VERSION}")
 endif()
 message(STATUS "goc: LLVM ${LLVM_PACKAGE_VERSION} from ${LLVM_DIR}")
+if(DEFINED GOC_EXPECT_LLVM_DIR AND NOT LLVM_DIR STREQUAL GOC_EXPECT_LLVM_DIR)
+  message(FATAL_ERROR "goc: found LLVM in ${LLVM_DIR}, wanted ${GOC_EXPECT_LLVM_DIR}")
+endif()
 
 # goc-llc subclasses X86 machine passes, which needs LLVM's private
 # Target/X86 headers and the generated X86Gen*.inc files.

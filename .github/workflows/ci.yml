@@ -35,8 +35,11 @@ jobs:
       - name: Cache keys
         id: keys
         env:
-          CLANG_KEY: goc-clang-19.1.7-r3-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/apply-patches.sh', 'scripts/slim-clang-build.sh') }}
-          PASSES_KEY: goc-passes-r1-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/apply-patches.sh', 'scripts/slim-clang-build.sh') }}-${{ hashFiles('llvm/**', 'scripts/build-passes.sh') }}
+          # r4: the clang cache also carries LLVM's headers and CMake package so
+          # a passes rebuild on a clang hit finds this LLVM, not the system's
+          # (r3 lacked them; the passes were then built with RTTI and failed to load).
+          CLANG_KEY: goc-clang-19.1.7-r4-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/apply-patches.sh', 'scripts/slim-clang-build.sh') }}
+          PASSES_KEY: goc-passes-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/apply-patches.sh', 'scripts/slim-clang-build.sh') }}-${{ hashFiles('llvm/**', 'scripts/build-passes.sh') }}
         run: |
           echo "clang=$CLANG_KEY" >>"$GITHUB_OUTPUT"
           echo "passes=$PASSES_KEY" >>"$GITHUB_OUTPUT"
@@ -54,6 +57,10 @@ jobs:
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
+            third_party/llvm-19.1.7-clang-build/include
+            third_party/llvm-19.1.7-clang-build/lib/cmake/llvm
+            third_party/llvm-project-19.1.7/llvm/include
+            third_party/llvm-project-19.1.7/llvm/cmake
           key: ${{ steps.keys.outputs.clang }}
 
       - name: Restore passes
@@ -109,6 +116,10 @@ jobs:
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
+            third_party/llvm-19.1.7-clang-build/include
+            third_party/llvm-19.1.7-clang-build/lib/cmake/llvm
+            third_party/llvm-project-19.1.7/llvm/include
+            third_party/llvm-project-19.1.7/llvm/cmake
           key: ${{ steps.keys.outputs.clang }}
 
       - name: Build passes
@@ -185,6 +196,10 @@ jobs:
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
+            third_party/llvm-19.1.7-clang-build/include
+            third_party/llvm-19.1.7-clang-build/lib/cmake/llvm
+            third_party/llvm-project-19.1.7/llvm/include
+            third_party/llvm-project-19.1.7/llvm/cmake
           key: ${{ needs.toolchain.outputs.clang-key }}
           fail-on-cache-miss: true
 

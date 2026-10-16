@@ -42,6 +42,16 @@ fi
 }
 
 
+# The passes must be built against the LLVM that loads them (no RTTI,
+# libLLVM.so.19.1 of this build). Without its CMake package, find_package
+# would quietly take a system LLVM 19 (built with RTTI): the plugin then
+# references typeinfo symbols opt does not export and fails to load.
+LLVM_CMAKEDIR="$("$LLVM_CFG" --cmakedir)"
+[[ -f "$LLVM_CMAKEDIR/LLVMConfig.cmake" ]] || {
+  echo "build-passes: no LLVMConfig.cmake in $LLVM_CMAKEDIR (a slimmed clang build lacks it; see scripts/slim-clang-build.sh)" >&2
+  exit 1
+}
+
 command -v cmake >/dev/null || { echo "build-passes: cmake not found" >&2; exit 1; }
 GEN=()
 command -v ninja >/dev/null && GEN=(-G Ninja)
@@ -49,7 +59,7 @@ command -v ninja >/dev/null && GEN=(-G Ninja)
 [[ "${GOC_CCACHE:-0}" == 1 ]] && GEN+=(-DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
 cmake -S "$ROOT/llvm" -B "$ROOT/build/llvm" "${GEN[@]}" \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER="$CXX" \
-  -DLLVM_DIR="$("$LLVM_CFG" --cmakedir)" \
+  -DLLVM_DIR="$LLVM_CMAKEDIR" -DGOC_EXPECT_LLVM_DIR="$LLVM_CMAKEDIR" \
   -DGOC_X86_SRC="$X86_SRC" -DGOC_X86_BUILD="$X86_BUILD"
 cmake --build "$ROOT/build/llvm"
 
