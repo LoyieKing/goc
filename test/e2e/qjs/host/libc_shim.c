@@ -11,7 +11,8 @@
  * Pthread operations below are single-thread-only shims, not concurrency.
  *
  * QJS's SysV calls bind to the .impl bodies. Go uses the separate
- * ABIInternal entry thunks.
+ * ABIInternal entry thunks. C calls Go through __go_extern stubs
+ * (spill, g, xmm15, pcsp); no handwritten goabi asm.
  */
 #include <stdarg.h>
 #include <stddef.h>
@@ -19,6 +20,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "../../../../third_party/quickjs-ng/dtoa.h"
+#include "../../../../include/goc.h"
 
 /* ---------- memory: fixed C arena with reusable, coalescing blocks ---------- */
 #define ARENA_SIZE (64u * 1024u * 1024u)
@@ -779,25 +781,17 @@ struct timespec_s {
   long tv_nsec;
 };
 
+typedef struct { int64_t sec; int64_t nsec; } goc_go_timespec;
+__go_extern("main.gocGoClockGettime")
+goc_go_timespec goc_x_ClockGettime(int64_t clk);
+
 int goc_clock_gettime(int clk, struct timespec_s *ts) {
   /* CLOCK_REALTIME (0) and CLOCK_MONOTONIC (1) go through Go's vDSO clocks.
    * A raw syscall is about 100 ns slower. Other clocks stay on syscall 228. */
   if (clk == 0 || clk == 1) {
-    long sec = clk, nsec;
-    __asm__ volatile(
-        "subq $64, %%rsp\n\t"
-        "movq %%fs:-8, %%r14\n\t"
-        "pxor %%xmm15, %%xmm15\n\t"
-        "call main.gocGoClockGettime.goabi\n\t"
-        "addq $64, %%rsp"
-        : "+a"(sec), "=b"(nsec)
-        :
-        : "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11",
-          "r12", "r13", "r14", "r15", "xmm0", "xmm1", "xmm2", "xmm3", "xmm4",
-          "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12",
-          "xmm13", "xmm14", "xmm15", "cc", "memory");
-    ts->tv_sec = sec;
-    ts->tv_nsec = nsec;
+    goc_go_timespec p = goc_x_ClockGettime((int64_t)clk);
+    ts->tv_sec = p.sec;
+    ts->tv_nsec = p.nsec;
     return 0;
   }
   long ret;
@@ -820,26 +814,12 @@ _Static_assert(sizeof(struct tm) == 56 && offsetof(struct tm, tm_gmtoff) == 40,
                "Go localtime bridge requires Linux amd64 struct tm");
 static char goc_localtime_zone[64];
 
+__go_extern("main.gocGoLocaltime")
+void goc_x_Localtime(int64_t seconds, struct tm *out, char *zone);
+
 struct tm *goc_localtime_r(const time_t *t, struct tm *tm) {
-  struct tm *result = tm;
-  long seconds = *t;
-  char *zone = goc_localtime_zone;
-  /* Go spills register args just above the return address so traceback can
-   * recover them. A raw call from C does not reserve that area, so the spill
-   * overwrites this frame and a later uptr check traps. 64 bytes covers this
-   * 3-word signature. */
-  __asm__ volatile(
-      "subq $64, %%rsp\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoLocaltime.goabi\n\t"
-      "addq $64, %%rsp"
-      : "+a"(seconds), "+b"(tm), "+c"(zone)
-      : : "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11",
-        "r12", "r13", "r14", "r15", "xmm0", "xmm1", "xmm2", "xmm3", "xmm4",
-        "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12",
-        "xmm13", "xmm14", "xmm15", "cc", "memory");
-  return result;
+  goc_x_Localtime((int64_t)(*t), tm, goc_localtime_zone);
+  return tm;
 }
 
 /* ---------- pthread: single-threaded no-ops ---------- */
@@ -870,43 +850,9 @@ void goc___assert_fail(const char *expr, const char *file, unsigned line, const 
   __builtin_trap();
 }
 
-/* ---------- libm: call Go's math routines without entering libc ----------
- * The inline call keeps SP fixed (pcsp remains valid); LLVM saves SysV
- * callee-saved registers listed as clobbers, and R14 is loaded with the
- * current Go g before entering an ABIInternal Go function. */
-#define GOC_GO_MATH_CLOBBERS \
-  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11", \
-  "r12", "r13", "r14", "r15", "xmm0", "xmm1", "xmm2", "xmm3", \
-  "xmm4", "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", \
-  "xmm12", "xmm13", "xmm14", "xmm15", "cc", "memory"
-
-#define GOC_GO_MATH1(name, go_name) \
-  double name(double x) { \
-    double out; \
-    __asm__ volatile( \
-        "movsd %1, %%xmm0\n\t" \
-        "movq %%fs:-8, %%r14\n\t" \
-        "pxor %%xmm15, %%xmm15\n\t" \
-        "call " #go_name ".goabi\n\t" \
-        "movsd %%xmm0, %0" \
-        : "=m"(out) : "m"(x) : GOC_GO_MATH_CLOBBERS); \
-    return out; \
-  }
-
-#define GOC_GO_MATH2(name, go_name) \
-  double name(double x, double y) { \
-    double out; \
-    __asm__ volatile( \
-        "movsd %1, %%xmm0\n\t" \
-        "movsd %2, %%xmm1\n\t" \
-        "movq %%fs:-8, %%r14\n\t" \
-        "pxor %%xmm15, %%xmm15\n\t" \
-        "call " #go_name ".goabi\n\t" \
-        "movsd %%xmm0, %0" \
-        : "=m"(out) : "m"(x), "m"(y) : GOC_GO_MATH_CLOBBERS); \
-    return out; \
-  }
-
+/* ---------- libm ----------
+ * sqrt/floor/ceil/trunc/round are inline. Transcendentals call glibc via
+ * goc_libm_glibc.S. A few helpers call Go through __go_extern stubs. */
 /* sqrt/floor/ceil/trunc/round are IEEE-754 specified. The C bodies match
  * glibc bit for bit (floor/ceil/trunc/round follow musl, MIT). */
 typedef union { double f; uint64_t i; } goc_dbits;
@@ -1017,60 +963,40 @@ GOC_LIBC1(sinh)
 GOC_LIBC1(tan)
 GOC_LIBC1(tanh)
 
+
+__go_extern("main.gocGoMathRoundToEven")
+int64_t goc_x_MathRoundToEven(double x);
+typedef struct { double frac; int64_t exp; } goc_frexp_pair;
+__go_extern("main.gocGoMathFrexp")
+goc_frexp_pair goc_x_MathFrexp(double x);
+__go_extern("main.gocGoMathLdexp")
+double goc_x_MathLdexp(double x, int32_t exponent);
+typedef struct { double whole; double frac; } goc_modf_pair;
+__go_extern("main.gocGoMathModf")
+goc_modf_pair goc_x_MathModf(double x);
+__go_extern("main.gocGoParseFloat")
+double goc_x_ParseFloat(const char *p, uint64_t length);
+
 long goc_lrint(double x) {
-  long out;
-  __asm__ volatile(
-      "movsd %1, %%xmm0\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoMathRoundToEven.goabi\n\t"
-      "movq %%rax, %0"
-      : "=m"(out) : "m"(x) : GOC_GO_MATH_CLOBBERS);
-  return out;
+  return (long)goc_x_MathRoundToEven(x);
 }
 
 double frexp(double x, int *exponent) {
-  double fraction;
-  long power;
-  __asm__ volatile(
-      "movsd %2, %%xmm0\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoMathFrexp.goabi\n\t"
-      "movsd %%xmm0, %0\n\t"
-      "movq %%rax, %1"
-      : "=m"(fraction), "=m"(power) : "m"(x) : GOC_GO_MATH_CLOBBERS);
-  *exponent = (int)power;
-  return fraction;
+  goc_frexp_pair p = goc_x_MathFrexp(x);
+  *exponent = (int)p.exp;
+  return p.frac;
 }
 
 double scalbn(double x, int exponent) {
-  double result;
-  __asm__ volatile(
-      "movsd %1, %%xmm0\n\t"
-      "movl %2, %%eax\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoMathLdexp.goabi\n\t"
-      "movsd %%xmm0, %0"
-      : "=m"(result) : "m"(x), "m"(exponent) : GOC_GO_MATH_CLOBBERS);
-  return result;
+  return goc_x_MathLdexp(x, (int32_t)exponent);
 }
 
 double goc_scalbn(double x, int exponent) { return scalbn(x, exponent); }
 
 double modf(double x, double *integer) {
-  double whole, fraction;
-  __asm__ volatile(
-      "movsd %2, %%xmm0\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoMathModf.goabi\n\t"
-      "movsd %%xmm0, %0\n\t"
-      "movsd %%xmm1, %1"
-      : "=m"(whole), "=m"(fraction) : "m"(x) : GOC_GO_MATH_CLOBBERS);
-  *integer = whole;
-  return fraction;
+  goc_modf_pair p = goc_x_MathModf(x);
+  *integer = p.whole;
+  return p.frac;
 }
 
 double strtod(const char *input, char **end) {
@@ -1109,17 +1035,8 @@ double strtod(const char *input, char **end) {
   }
   if (end)
     *end = (char *)p;
-  double result;
   size_t length = (size_t)(p - number);
-  __asm__ volatile(
-      "movq %1, %%rax\n\t"
-      "movq %2, %%rbx\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoParseFloat.goabi\n\t"
-      "movsd %%xmm0, %0"
-      : "=m"(result) : "m"(number), "m"(length) : GOC_GO_MATH_CLOBBERS);
-  return result;
+  return goc_x_ParseFloat(number, (uint64_t)length);
 }
 
 double goc_fabs(double x) { return __builtin_fabs(x); }

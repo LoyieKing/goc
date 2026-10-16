@@ -7,6 +7,7 @@
 #ifdef GOC_QJS_BELLARD
 #include "../../../../third_party/quickjs-bellard/quickjs.h"
 #include "bellard_compat.h"
+#include "../../../../include/goc.h"
 #else
 #include "../../../../third_party/quickjs-ng/quickjs.h"
 #endif
@@ -195,44 +196,23 @@ _Static_assert(sizeof(GocQjsCliStrerrorRequest) == 32 &&
                offsetof(GocQjsCliStrerrorRequest, output) == 8,
                "Go strerror bridge layout mismatch");
 
+__go_extern("main.gocGoQjsCliProcess")
+void goc_x_QjsCliProcess(GocQjsCliProcessRequest *request);
+
 static void goc_qjs_cli_call_go_process(GocQjsCliProcessRequest *request) {
-  __asm__ volatile(
-      "movq %0, %%rax\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoQjsCliProcess.goabi"
-      : : "m"(request)
-      : "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9",
-        "r10", "r11", "r12", "r13", "r14", "r15",
-        "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6",
-        "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12",
-        "xmm13", "xmm14", "xmm15", "cc", "memory");
+  goc_x_QjsCliProcess(request);
 }
+__go_extern("main.gocGoQjsCliFloat")
+void goc_x_QjsCliFloat(GocQjsCliFloatRequest *request);
+
 static void goc_qjs_cli_call_go_float(GocQjsCliFloatRequest *request) {
-  __asm__ volatile(
-      "movq %0, %%rax\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoQjsCliFloat.goabi"
-      : : "m"(request)
-      : "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9",
-        "r10", "r11", "r12", "r13", "r14", "r15",
-        "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6",
-        "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12",
-        "xmm13", "xmm14", "xmm15", "cc", "memory");
+  goc_x_QjsCliFloat(request);
 }
+__go_extern("main.gocGoQjsCliStrerror")
+void goc_x_QjsCliStrerror(GocQjsCliStrerrorRequest *request);
+
 static void goc_qjs_cli_call_go_strerror(GocQjsCliStrerrorRequest *request) {
-  __asm__ volatile(
-      "movq %0, %%rax\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocGoQjsCliStrerror.goabi"
-      : : "m"(request)
-      : "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9",
-        "r10", "r11", "r12", "r13", "r14", "r15",
-        "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6",
-        "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12",
-        "xmm13", "xmm14", "xmm15", "cc", "memory");
+  goc_x_QjsCliStrerror(request);
 }
 
 /* ----- qjs:std formatted output and FILE objects. ----- */

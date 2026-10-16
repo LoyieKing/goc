@@ -83,11 +83,24 @@ func runGoABI(text, arch string, tables bool) (outLL, asm string, js []byte, log
 	if err != nil {
 		return "", "", nil, "", "", err
 	}
+	externs, externSkipped, err := collectGoExterns(text, a)
+	if err != nil {
+		return "", "", nil, "", "", err
+	}
+	externNames := map[string]bool{}
+	for _, x := range externs {
+		externNames[x.CName] = true
+	}
 	defs := parseFunctions(text, "define")
 	var goabi []llFunc
 	var skipped []string
 	reasons := map[string]string{}
 	for _, d := range defs {
+		if externNames[d.Name] {
+			skipped = append(skipped, d.Name)
+			reasons[d.Name] = "__go_extern declaration cannot have a C body in this TU"
+			continue
+		}
 		plan, reason := analyzeSignature(a, d)
 		if reason != "" {
 			skipped = append(skipped, d.Name)
@@ -109,7 +122,7 @@ func runGoABI(text, arch string, tables bool) (outLL, asm string, js []byte, log
 		rename[d.Name] = true
 	}
 	for _, d := range parseFunctions(text, "declare") {
-		if rename[d.Name] {
+		if rename[d.Name] || externNames[d.Name] {
 			continue
 		}
 		if plan, _ := analyzeSignature(a, d); plan != nil {
@@ -125,10 +138,18 @@ func runGoABI(text, arch string, tables bool) (outLL, asm string, js []byte, log
 		text = replaceAtName(text, name, name+".impl")
 	}
 	asm = emitThunksL(a, goabi, tables)
+	if len(externs) > 0 {
+		asm += emitGoExternStubs(a, externs, tables)
+	}
 	if tables {
 		if wrappers, err = emitWrapperTables(a, goabi); err != nil {
 			return "", "", nil, "", "", err
 		}
+		extTables, err2 := emitGoExternTables(a, externs)
+		if err2 != nil {
+			return "", "", nil, "", "", err2
+		}
+		wrappers += extTables
 	}
 	file := goABIFile{Functions: []goFuncJSON{}, Skipped: skipped}
 	for _, d := range goabi {
@@ -151,6 +172,13 @@ func runGoABI(text, arch string, tables bool) (outLL, asm string, js []byte, log
 	fmt.Fprintf(&log, "goabi: %d rewritten, %d left SysV-only%s\n", len(goabi), len(skipped), extra)
 	for _, name := range skipped {
 		fmt.Fprintf(&log, "goabi: skipped %s: %s\n", name, reasons[name])
+	}
+	if len(externs) > 0 || len(externSkipped) > 0 {
+		fmt.Fprintf(&log, "go_extern: %d stubs", len(externs))
+		if len(externSkipped) > 0 {
+			fmt.Fprintf(&log, ", %d skipped [%s]", len(externSkipped), strings.Join(externSkipped, ", "))
+		}
+		log.WriteByte('\n')
 	}
 	return text, asm, js, log.String(), wrappers, nil
 }

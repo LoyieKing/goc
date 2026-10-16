@@ -90,6 +90,14 @@ static inline JSObject *goc_js_get_obj(JSValue v) { return v.pointer; }
 #define __goc_nowb __attribute__((annotate("goc.attr.nowb")))
 #define __goc_safepoint __attribute__((annotate("goc.attr.safepoint")))
 
+/* C-side import of a Go function. Applied to a declaration only.
+ * goc emits a SysV-callable stub (spill area, g in R14, clear xmm15,
+ * pcsp/stackmap) that calls go_sym.goabi. Ordinary C calls use the
+ * declared name. The C name must differ from the Go symbol's base name
+ * (e.g. goc_x_Foo calling main.Foo) so the stub and the Go function
+ * do not collide. The Go callee is not required to be nosplit. */
+#define __go_extern(go_sym) __attribute__((annotate("goc.attr.go_extern:" go_sym)))
+
 #ifdef __cplusplus
 }
 #endif

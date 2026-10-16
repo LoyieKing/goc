@@ -203,29 +203,17 @@ type gocTM struct {
 //go:linkname gocRuntimeNanotime runtime.nanotime
 func gocRuntimeNanotime() int64
 
-//go:linkname gocTimeNow time.now
-func gocTimeNow() (sec int64, nsec int32, mono int64)
 
 // gocGoClockGettime backs goc_clock_gettime for CLOCK_REALTIME (0) and
-// CLOCK_MONOTONIC (1). Monotonic time is runtime.nanotime (vDSO). Realtime
-// is time.now (vDSO), which time.Now wraps. //go:noinline stays on
-// gocGoLocaltime, not here.
-//
-// It must not grow the stack: goc_clock_gettime calls it from inline asm
-// after "subq $64, %rsp", which the C function's pcsp table does not
-// describe, so a stack copy here unwinds the C caller with the wrong frame
-// size ("unexpected return pc"). runtime.nanotime and time.now are NOSPLIT
-// on linux/amd64 in go1.18-1.27; time.Now is not inlined on go1.18-1.21
-// and its stack check made the growth sweep in qjs-build.sh crash there.
-//
-//go:nosplit
+// CLOCK_MONOTONIC (1). C calls via __go_extern stub (SysV callee-saved
+// preserved, pcsp for morestack). time.Now may grow the stack; that is OK.
 func gocGoClockGettime(clk int64) (int64, int64) {
 	if clk == 1 {
 		n := gocRuntimeNanotime()
 		return n / 1e9, n % 1e9
 	}
-	sec, nsec, _ := gocTimeNow()
-	return sec, int64(nsec)
+	now := time.Now()
+	return now.Unix(), int64(now.Nanosecond())
 }
 
 //go:noinline

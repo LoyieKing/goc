@@ -69,13 +69,17 @@ func goabi_store(out *int32, v int32) int32
 
 ## 3. C 调用 Go
 
-没有稳定的写法。现在能工作的只有手写调用，QuickJS 的数学桥是这么做的。Go 函数是普通函数，带 `//go:noinline`。C 在调用前做三件事：
+在 C 里用 `__go_extern("pkg.Func")` 标记声明（见 `include/goc.h`）。goc 会生成 SysV 可调用的 stub：按签名预留 Go 参数溢出区、装好 `g`（R14）、清零 `xmm15`，并带上 pcsp，再 `call pkg.Func.goabi`。宿主侧写普通 C 调用即可。Go 被调方**不需要** `//go:nosplit`——stub 自己的帧表能支撑搬栈。
 
-1. 参数按 Go 的调用约定放进寄存器。整数从 `rax` 起，浮点从 `xmm0` 起。
-2. 把当前 goroutine 放回 `R14`，并把 `xmm15` 清零。
-3. `call main.函数名.goabi`。包必须是 `main`。
+```c
+#include "goc.h"
+__go_extern("main.go_extern_add")
+int64_t go_extern_add(int64_t a, int64_t b);
 
-Go 会在返回地址上方写下寄存器里的参数。调用前后留出空间，QuickJS 的 `localtime` 桥留了 64 字节。签名更大就得多留。
+int64_t use(int64_t a, int64_t b) { return go_extern_add(a, b); }
+```
+
+多返回值在 C 侧写成小结构体（与 Go 的多返回寄存器约定对应）。金测见 `test/e2e/go_extern/`。
 
 不要在 `.goobj` 里导出名叫 `malloc` 或 `printf` 的符号。外部链接时，这两个名字会在进程启动时被 libc 调到。
 
@@ -84,7 +88,7 @@ Go 会在返回地址上方写下寄存器里的参数。调用前后留出空�
 - linux/arm64。
 - 把 goc 的 `.goobj` 交给 `gcc` 或 `ld`。
 - 变参、x87、异常、AVX 的 Go 可调用入口。
-- `goc_goimport`、`goc_goexport`。编译器不认。
+- `goc_goexport`。编译器不认。（C→Go 用 `__go_extern`。）
 - 多线程同时调用 `alloca`。
 - 把栈上的指针交给别的 goroutine。
 
@@ -161,13 +165,17 @@ Pointer colors, and whether a stack pointer may be handed to another goroutine, 
 
 ## 3. C calling Go
 
-There is no stable spelling. The calls that work today are written by hand, as in the QuickJS math bridge. The Go function is an ordinary function marked `//go:noinline`. Before the call, C does three things:
+Mark a C declaration with `__go_extern("pkg.Func")` (`include/goc.h`). goc emits a SysV-callable stub: spill area sized for the signature, `g` in R14, clear `xmm15`, preserve SysV callee-saved registers, and pcsp so the Go callee may grow the stack. The host uses an ordinary C call. The C name must differ from the Go base name (e.g. `goc_x_Foo` → `main.Foo`). The Go callee does not need `//go:nosplit`.
 
-1. Put the arguments in registers the way Go does. Integers start at `rax`, floats at `xmm0`.
-2. Put the current goroutine back in `R14`, and clear `xmm15`.
-3. `call main.Name.goabi`. The package must be `main`.
+```c
+#include "goc.h"
+__go_extern("main.go_extern_add")
+int64_t goc_x_add(int64_t a, int64_t b);
 
-Go writes the register arguments above the return address. Leave room around the call. The QuickJS `localtime` bridge leaves 64 bytes. A wider signature needs more.
+int64_t use(int64_t a, int64_t b) { return goc_x_add(a, b); }
+```
+
+Multiple Go results map to a small C struct. See `test/e2e/go_extern/`.
 
 Do not export a symbol named `malloc` or `printf`. With external linking, libc calls those names during process startup.
 
@@ -176,6 +184,6 @@ Do not export a symbol named `malloc` or `printf`. With external linking, libc c
 - linux/arm64.
 - Giving a goc `.goobj` to `gcc` or `ld`.
 - A Go-callable entry for variadics, x87, exceptions, or AVX.
-- `goc_goimport` and `goc_goexport`. The compiler does not recognize them.
+- `goc_goexport`. The compiler does not recognize it. (`__go_extern` covers C→Go imports.)
 - Calling `alloca` from several threads at once.
 - Handing a pointer to stack data to another goroutine.

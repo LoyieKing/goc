@@ -86,4 +86,4 @@ Go 的 pcsp 表描述不了函数中间 SP 变化，所以 VLA / `alloca` 不能
 |---|---|
 | Go → C | Go 调 `pkg.F`（thunk，ABIInternal）→ 搬寄存器 → `call F.impl`（SysV / AAPCS）→ 返回前清零 X15。thunk 帧 = 栈参数（向上取整到 16）+ 保存的帧指针 |
 | C → C | 直接 `call F.impl` |
-| C → Go | 没有编译器支持。只能手写：把参数放进 Go ABI 寄存器、恢复 R14 的 g、清零 X15、`call main.Func.goabi`（`docs/guide.md`「C 调用 Go」；`convert.go` 的 `.goabi` 后缀约定）。缺口清单见 `docs/todo.md`「goc 调用 Go」 |
+| C → Go | `__go_extern("pkg.Func")` 声明 → goc-lower 生成 stub（溢出区、g、xmm15、SysV callee-saved、pcsp）。见 `docs/guide.md`「C 调用 Go」、`test/e2e/go_extern/` |

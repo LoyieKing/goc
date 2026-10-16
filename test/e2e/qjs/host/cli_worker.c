@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "../../../../include/goc.h"
 #ifdef GOC_QJS_BELLARD
 #include "../../../../third_party/quickjs-bellard/quickjs.h"
 #include "bellard_compat.h"
@@ -132,23 +133,13 @@ static int64_t goc_qjs_cli_now_ns(void) {
 }
 
 /* The scheduler waits on the Go runtime rather than a C or libc sleep. */
-#define GOC_GO_CLOBBERS \
-  "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", \
-  "r11", "r12", "r13", "r14", "r15", "xmm0", "xmm1", "xmm2", \
-  "xmm3", "xmm4", "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", \
-  "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15", "cc", "memory"
+__go_extern("main.gocQjsCliWorkerSleep")
+void goc_x_QjsCliWorkerSleep(int64_t nanoseconds);
 
 static void goc_qjs_cli_wait_ns(int64_t nanoseconds) {
   if (nanoseconds <= 0)
     return;
-  __asm__ volatile(
-      "movq %0, %%rax\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocQjsCliWorkerSleep.goabi"
-      :
-      : "m"(nanoseconds)
-      : GOC_GO_CLOBBERS);
+  goc_x_QjsCliWorkerSleep(nanoseconds);
 }
 
 /* Same layout as syscall.PollFd and the Go bridge in test/e2e/qjs/cli/worker.go. */
@@ -170,15 +161,11 @@ _Static_assert(sizeof(GocQjsCliPollFd) == 8, "pollfd layout");
 _Static_assert(sizeof(GocQjsCliPollRequest) == 24, "poll request layout");
 _Static_assert(offsetof(GocQjsCliPollRequest, result) == 16, "poll result");
 
+__go_extern("main.gocQjsCliPoll")
+void goc_x_QjsCliPoll(GocQjsCliPollRequest *request);
+
 static void goc_qjs_cli_call_go_poll(GocQjsCliPollRequest *request) {
-  __asm__ volatile(
-      "movq %0, %%rax\n\t"
-      "movq %%fs:-8, %%r14\n\t"
-      "pxor %%xmm15, %%xmm15\n\t"
-      "call main.gocQjsCliPoll.goabi"
-      :
-      : "m"(request)
-      : GOC_GO_CLOBBERS);
+  goc_x_QjsCliPoll(request);
 }
 
 static GocQjsCliRuntime *goc_qjs_cli_find_runtime(JSRuntime *rt) {

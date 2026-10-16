@@ -16,6 +16,7 @@ step "lit"               ./test/lit/run.sh
 step "realbody"          ./test/e2e/realbody/run.sh
 step "reproducible"      ./test/e2e/repro/run.sh
 step "goabi"             ./test/e2e/goabi/run.sh
+step "go_extern"         ./test/e2e/go_extern/run.sh
 step "stress"            ./test/e2e/stress/run.sh
 step "retptr"            ./test/e2e/retptr/run.sh
 step "many functions"    ./test/e2e/manyfuncs/run.sh

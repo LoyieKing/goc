@@ -31,6 +31,7 @@ lit             ./test/lit/run.sh
 realbody        ./test/e2e/realbody/run.sh
 reproducible    ./test/e2e/repro/run.sh
 goabi           ./test/e2e/goabi/run.sh
+go_extern       ./test/e2e/go_extern/run.sh
 stress          ./test/e2e/stress/run.sh
 lines           ./test/e2e/lines/run.sh
 arm64           ./test/e2e/arm64/run.sh
@@ -115,7 +116,7 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 2. （已解决）原来只有 go1.24 的映射；现在支持 go1.23–1.27（multi-go-version.md）。
 3. **`gptr` 写屏障没有实现**（06 篇 §3），`gptr` 也不会进栈图；合同（syntax-guide）里写了。
 4. **跨 goroutine 使用 sptr/uptr 是合同错误**（单字表示里没有 goroutine 指针）。`GOC_SPTR_WITH_G` 只在 todo 里。
-5. **C 调 Go 没有编译器支持**：手写寄存器搬运、固定 64 字节溢出区、只认 `main` 包、类型覆盖少（`docs/todo.md`「goc 调用 Go」）。
+5. **C 调 Go**：`__go_extern` stub 已落地；非 main 包链入、string/切片/接口、色合同与 panic 语义仍见 `docs/todo.md`。
 6. **栈上传参的指向栈的指针**：被调用者在搬栈之后才读时不会被修正（栈参数区不在栈图里）（todo.md）。
 7. **帧地址修复的 tainted 值**（`p - x`、`p * k`）不能修复，只打印 note（`GOC_FRAMEADDR_TAINT`）。
 8. 不支持：完整 ISO C 和宿主 libc、Go 可调用路径上的 AVX / x87 / EH、`stacksave`/`stackrestore`、变参和部分聚合的 ABIInternal（`docs/runtime-model.md`）。
