@@ -1,0 +1,6 @@
+def main.callmany.impl ABI0
+def main.sa_c.many ABI0
+def main.deep.impl ABI0
+def main.sa_c.rec ABI0
+def main.callmany ABIInternal
+def main.deep ABIInternal

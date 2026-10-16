@@ -4,7 +4,7 @@
 # and its Goc/Internal header, or a Go package split into several files)
 # rather than raising the limit.
 #
-# Vendored code (third_party/, goobj/enc/: the Go toolchain's objlib) and test
+# Vendored code (third_party/) and test
 # inputs (test/, testdata/) are not checked.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -19,8 +19,8 @@ while IFS= read -r f; do
     echo "FAIL $f: $n lines > $MAX; split it" >&2
     fail=1
   fi
-done < <(git ls-files -- cmd llvm goobj tools scripts gocobj \
-  | grep -Ev '^goobj/enc/|/testdata/' \
+done < <(git ls-files -- cmd llvm goobj gometa goobjw tools scripts gocobj \
+  | grep -Ev '/testdata/' \
   | grep -E '\.(c|cc|cpp|h|go|py|sh|s|S|td|def)$|^cmd/goc$')
 
 (( fail == 0 )) && echo "PASS file sizes (max $MAX lines)"

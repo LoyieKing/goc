@@ -10,11 +10,8 @@ set -euo pipefail
 SELF="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${GOC_ROOT:-$(cd "$SELF/../.." && pwd)}"
 export GOC_ROOT="$ROOT"
-# Sources of gocobj2goobj: the checkout, or a release's src/.
-GOC_SRC_ROOT="$ROOT"
-[[ -f "$ROOT/go.mod" ]] || GOC_SRC_ROOT="$ROOT/src"
-# shellcheck source=tools/goc/goenc.sh
-source "$ROOT/tools/goc/goenc.sh"
+# shellcheck source=tools/goc/converter.sh
+source "$ROOT/tools/goc/converter.sh"
 # shellcheck source=scripts/goc-product-lib.sh
 source "$ROOT/scripts/goc-product-lib.sh"
 
@@ -312,10 +309,10 @@ fi
 # section per function: every reference between functions then carries an
 # ELF relocation, so the converter never patches code.
 LLC_ARGS+=(-function-sections -goc-sym-abi="$SYM_ABI")
-# The converter for the Go in PATH (built against that release's object
-# writer) names the ABI profile; goc-llc records it in the .gocobj header.
+# The converter names the ABI profile of the Go in PATH (from that
+# release's facts, gometa/data); goc-llc records it in the .gocobj header.
 # GOC_PROFILE overrides it (tests).
-PACK_BIN="$(GOC_PREBUILT_CONVERTER="$ROOT/bin/gocobj2goobj" goc_converter "$GOC_SRC_ROOT")" || exit 1
+PACK_BIN="$(goc_converter "$ROOT")" || exit 1
 PROFILE="${GOC_PROFILE:-$("$PACK_BIN" -print-profile -goarch "$GOC_ARCH")}" || exit 1
 LLC_ARGS+=(-goc-profile="$PROFILE")
 if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then

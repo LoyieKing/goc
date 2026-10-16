@@ -23,8 +23,8 @@ for f in repro.gocobj repro.goobj; do
   cmp "$OUT/a/$f" "$OUT/b/$f" || { echo "FAIL repro: $f differs between two builds" >&2; exit 1; }
 done
 
-# shellcheck source=../../../tools/goc/goenc.sh
-source "$ROOT/tools/goc/goenc.sh"
+# shellcheck source=../../../tools/goc/converter.sh
+source "$ROOT/tools/goc/converter.sh"
 CONV="$(goc_converter "$ROOT")"
 for i in $(seq 10); do
   "$CONV" -in "$OUT/a/repro.gocobj" -o "$OUT/conv$i.goobj" -symabis "$OUT/conv$i.symabis"

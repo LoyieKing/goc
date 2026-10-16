@@ -54,15 +54,9 @@ cp -a "$ROOT/tools/goc/realbody.sh" \
   "$stage/tools/goc/"
 chmod a+rx "$stage/tools/goc/realbody.sh"
 cp -a "$ROOT/tools/goc/toolexec_recognize_goobj.sh" "$stage/tools/goc/"
-cp -a "$ROOT/tools/goc/goenc.sh" "$stage/tools/goc/"
-# gocobj2goobj is built per Go release on first use (tools/goc/goenc.sh,
-# docs/multi-go-version.md): ship its sources. bin/gocobj2goobj below is
-# used only with the Go it was built by.
-mkdir -p "$stage/src/gocobj" "$stage/src/tools/gocobj2goobj" "$stage/src/tools/goc-goenc"
-cp -a "$ROOT/go.mod" "$stage/src/"
-for d in gocobj tools/gocobj2goobj tools/goc-goenc; do
-  find "$ROOT/$d" -maxdepth 1 -name '*.go' ! -name '*_test.go' -exec cp -a {} "$stage/src/$d/" \;
-done
+cp -a "$ROOT/tools/goc/converter.sh" "$stage/tools/goc/"
+# bin/gocobj2goobj below serves every supported Go release
+# (docs/multi-go-version.md).
 chmod a+rx "$stage/tools/goc/toolexec_recognize_goobj.sh"
 
 cp -a "$(readlink -f "$clang")" "$stage/bin/clang-19"
@@ -88,7 +82,7 @@ cp -a "$LLC" "$stage/passes/goc-llc"
 cp -a "$GOC_STACKMAP" "$stage/passes/libGocPasses.so"
 chmod a+rx "$stage/passes/goc-llc"
 
-( cd "$ROOT" && go build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
+( cd "$ROOT" && CGO_ENABLED=0 go build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
 chmod a+rx "$stage/bin/gocobj2goobj"
 ( cd "$ROOT" && go build -o "$stage/bin/goc-lower" ./tools/goc-lower/ )
 chmod a+rx "$stage/bin/goc-lower"

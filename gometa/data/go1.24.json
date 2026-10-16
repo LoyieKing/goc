@@ -1446,6 +1446,6 @@
     "relocs": "cmd/internal/objabi/reloctype.go",
     "sym_kinds": "cmd/internal/objabi/symkind.go",
     "toolexec": "pkg/tool/linux_amd64 (directory listing)",
-    "writer": "cmd/internal/obj/objfile.go cmd/internal/obj/plist.go cmd/internal/hash or cmd/internal/notsha256"
+    "writer": "cmd/internal/obj/objfile.go cmd/internal/obj/plist.go cmd/internal/hash/hash.go"
   }
 }

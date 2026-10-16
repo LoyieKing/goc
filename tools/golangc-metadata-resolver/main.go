@@ -252,9 +252,9 @@ func (r *resolver) resolve() *gometa.Meta {
 	src("arch", "cmd/internal/sys/arch.go", "cmd/compile/internal/ssa/_gen/AMD64Ops.go",
 		"cmd/compile/internal/ssa/_gen/ARM64Ops.go", "runtime/asm_amd64.s", "runtime/asm_arm64.s")
 
-	r.writerFacts(m)
+	hashSrc := r.writerFacts(m)
 	r.dwarfFacts(m)
-	src("writer", "cmd/internal/obj/objfile.go", "cmd/internal/obj/plist.go", "cmd/internal/hash or cmd/internal/notsha256")
+	src("writer", "cmd/internal/obj/objfile.go", "cmd/internal/obj/plist.go", hashSrc)
 	src("dwarf", "cmd/internal/dwarf/dwarf.go", "cmd/internal/obj/dwarf.go", "cmd/internal/objabi/reloctype.go")
 
 	_, err := os.Stat(filepath.Join(r.goroot, "pkg", "tool", "linux_amd64", "pack"))
@@ -318,18 +318,20 @@ func (r *resolver) regs(arch string, ar *gometa.Arch) {
 	}
 }
 
-func (r *resolver) writerFacts(m *gometa.Meta) {
+func (r *resolver) writerFacts(m *gometa.Meta) (hashSrc string) {
 	w := &m.Writer
 	ch := r.funcSource("cmd/internal/obj/objfile.go", "(*writer).contentHash")
 	switch {
 	case strings.Contains(ch, "notsha256.New()"):
 		w.ContentHash = "notsha256"
+		hashSrc = "cmd/internal/notsha256/sha256.go"
 		ns := r.funcSource("cmd/internal/notsha256/sha256.go", "(*digest).checkSum")
 		if !strings.Contains(ns, "d.h[0]^0xFFFFFFFF") {
 			r.errorf("cmd/internal/notsha256: checkSum no longer complements the sha256 words")
 		}
 	case strings.Contains(ch, "hash.New20()"), strings.Contains(ch, "hash.New32()"):
 		w.ContentHash = "sha256-prefix01"
+		hashSrc = "cmd/internal/hash/hash.go"
 		n32 := r.funcSource("cmd/internal/hash/hash.go", "New32")
 		if !strings.Contains(n32, "sha256.New()") || !strings.Contains(n32, "h.Write([]byte{1})") {
 			r.errorf("cmd/internal/hash: New32 is no longer sha256 over 0x01 || data")
@@ -353,6 +355,7 @@ func (r *resolver) writerFacts(m *gometa.Meta) {
 	w.TrimInlineHash = strings.Contains(sym, "TrimInlineHash(")
 	fp := r.funcSource("cmd/internal/obj/plist.go", "Flushplist")
 	w.AsmArgsStackmap = strings.Contains(fp, `".args_stackmap"`) && strings.Contains(fp, `"%s.arginfo%d"`)
+	return hashSrc
 }
 
 func (r *resolver) dwarfFacts(m *gometa.Meta) {

@@ -139,8 +139,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     # Every supported Go release is required (docs/multi-go-version.md).
-    # gocobj2goobj is built per release against that GOROOT's object writer
-    # (tools/goc/goenc.sh); the toolchain job above does not depend on Go.
+    # One gocobj2goobj serves them all from the facts in gometa/data; the
+    # toolchain job above does not depend on Go.
     strategy:
       fail-fast: false
       matrix:
@@ -209,10 +209,11 @@ jobs:
           go version
           ARM64_REQUIRE_QEMU=1 GOC_REQUIRE_LIT=1 ./scripts/ci-test.sh
 
-      # The tree copy of the object writer is go1.24.4's; it must be what
-      # tools/goc-goenc generates from that GOROOT.
-      - name: goobj/enc is regenerated
-        if: matrix.go == '1.24.4'
+      # The release facts gocobj2goobj embeds must be what the resolver reads
+      # from this GOROOT (a newer patch release may only change
+      # source_version; any other change needs review: docs/go-metadata-schema.md).
+      - name: gometa/data is what the resolver reads
         run: |
-          go run ./tools/goc-goenc -lang 1.23 -out "$RUNNER_TEMP/enc"
-          diff -r "$RUNNER_TEMP/enc" goobj/enc
+          m="$(go env GOVERSION | cut -d. -f1,2)"
+          go run ./tools/golangc-metadata-resolver -o "$RUNNER_TEMP/$m.json"
+          diff <(jq 'del(.source_version)' "gometa/data/$m.json") <(jq 'del(.source_version)' "$RUNNER_TEMP/$m.json")

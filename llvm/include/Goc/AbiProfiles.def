@@ -5,8 +5,9 @@
 // its .goc.header; gocobj2goobj refuses a profile it was not built for.
 //
 // One profile covers every Go release whose facts are equal: goabi1 is
-// go1.23 through go1.27 (docs/go-version-diffs.md). tools/goc-goenc probes
-// these facts from a GOROOT and picks the profile, so a new Go release
+// go1.23 through go1.27 (docs/go-version-diffs.md).
+// tools/golangc-metadata-resolver reads these facts from a GOROOT into
+// gometa/data, and gocobj2goobj picks the profile from them, so a new Go release
 // needs no change here unless it moves one of them.
 // go1.24-amd64/arm64 are the old names of goabi1, kept so older .gocobj
 // files and goldens still decode.
