@@ -138,19 +138,15 @@ jobs:
     needs: toolchain
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # The pinned Go is what the vendored goobj writer and
-    # tools/gocobj2goobj/gover_go1_24.go are for. The next release runs as an
-    # early warning: it is expected to fail until its gover file and ABI
-    # profile exist, and does not fail the workflow.
+    # Every supported Go release is required (docs/multi-go-version.md).
+    # gocobj2goobj is built per release against that GOROOT's object writer
+    # (tools/goc/goenc.sh); the toolchain job above does not depend on Go.
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - go: "1.24.4"
-            experimental: false
-          - go: "1.25.x"
-            experimental: true
-    continue-on-error: ${{ matrix.experimental }}
+        go: ["1.23.x", "1.24.4", "1.25.x", "1.26.x", "1.27.x"]
+    env:
+      GOTOOLCHAIN: local
     name: test (go ${{ matrix.go }})
     steps:
       - uses: actions/checkout@v4
@@ -210,4 +206,13 @@ jobs:
           command -v llvm-config-19 >/dev/null
           inc="$(llvm-config-19 --includedir)"
           test -f "$inc/clang/Frontend/FrontendPluginRegistry.h"
+          go version
           ARM64_REQUIRE_QEMU=1 GOC_REQUIRE_LIT=1 ./scripts/ci-test.sh
+
+      # The tree copy of the object writer is go1.24.4's; it must be what
+      # tools/goc-goenc generates from that GOROOT.
+      - name: goobj/enc is regenerated
+        if: matrix.go == '1.24.4'
+        run: |
+          go run ./tools/goc-goenc -lang 1.23 -out "$RUNNER_TEMP/enc"
+          diff -r "$RUNNER_TEMP/enc" goobj/enc

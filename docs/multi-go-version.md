@@ -27,7 +27,7 @@
 |---|---|
 | `stdinternal/abi/funcpc_stub.go` | `FuncPCABI0` 在 GOROOT 外没有编译器内建实现，用桩函数代替 |
 | `cmd/objlib/obj/goc_inl.go` | 提供 `InlTree.SetParentPC` |
-| `cmd/objlib/obj/goc_compat.go` | 提供 `LSym.GocAddRel`：源码里有 `AddRel`（1.24+）就调用它，否则 `s.R = append(...)`（1.23） |
+| `cmd/objlib/obj/goc_compat.go` | 提供 `LSym.GocAddRel`：源码里有 `AddRel`（1.24+）就调用它，否则 `s.R = append(...)`（1.23）；还有 `LSym.GocSetAlign`：只有 `LSym` 有 `Align` 字段时（1.27+）才设置，否则什么都不做 |
 
 生成过程中它还会从该 GOROOT 的源码**探测 ABI 事实**，并选出与之匹配的 profile，写进 `cmd/objlib/objabi/goc_profile.go`。探测的事实包括：
 
@@ -66,7 +66,7 @@
 | realbody.sh | 用上面的输出给 goc-llc 传 `-goc-profile=<profile>`，amd64 和 arm64 都传；不再写死 `go1.24-arm64` |
 | goc-llc | 把 profile 写进 `.gocobj` header |
 | 转换器 | 检查 header 的 profile 与自己的 profile 是否**事实相同**（名字可以不同），不同就拒绝 |
-| cmd/goc | 透传 `GOC_PROFILE`，可以手动覆盖（只用于测试） |
+| realbody.sh | 环境变量 `GOC_PROFILE` 可以覆盖 profile（只用于测试）；cmd/goc 原样继承环境 |
 
 profile 命名：
 
@@ -78,6 +78,8 @@ profile 命名：
 
 - 根 go.mod 的 go 指令降到 `go 1.23`（支持范围的下限），`goobj/enc` 是 replace 进来的子模块；`test/e2e/*/go.mod` 也降到 1.23。
 - 所有构建都用 `GOTOOLCHAIN=local`，避免 go 命令自己去下载工具链。
+- toolexec 打包时，`$GOTOOLDIR/pack` 存在就用它，否则用 `go tool pack`（1.25+ 的发行包不再预装 pack）。
+- 发行包在 `src/` 下附带 gocobj2goobj、goc-goenc、gocobj 的源码和 go.mod，供 `goenc.sh` 现场构建。
 
 ## 6. CI
 

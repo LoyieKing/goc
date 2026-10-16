@@ -54,6 +54,15 @@ cp -a "$ROOT/tools/goc/realbody.sh" \
   "$stage/tools/goc/"
 chmod a+rx "$stage/tools/goc/realbody.sh"
 cp -a "$ROOT/tools/goc/toolexec_recognize_goobj.sh" "$stage/tools/goc/"
+cp -a "$ROOT/tools/goc/goenc.sh" "$stage/tools/goc/"
+# gocobj2goobj is built per Go release on first use (tools/goc/goenc.sh,
+# docs/multi-go-version.md): ship its sources. bin/gocobj2goobj below is
+# used only with the Go it was built by.
+mkdir -p "$stage/src/gocobj" "$stage/src/tools/gocobj2goobj" "$stage/src/tools/goc-goenc"
+cp -a "$ROOT/go.mod" "$stage/src/"
+for d in gocobj tools/gocobj2goobj tools/goc-goenc; do
+  find "$ROOT/$d" -maxdepth 1 -name '*.go' ! -name '*_test.go' -exec cp -a {} "$stage/src/$d/" \;
+done
 chmod a+rx "$stage/tools/goc/toolexec_recognize_goobj.sh"
 
 cp -a "$(readlink -f "$clang")" "$stage/bin/clang-19"

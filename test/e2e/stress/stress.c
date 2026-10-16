@@ -5,7 +5,7 @@
  * own buffer through the pointer its parent gave it: if a stack copy during
  * the child (growth, or a shrink at a GC) failed to adjust a frame, the
  * values are wrong or the read faults. The three functions have frames in
- * the three stack-check tiers of go1.24-amd64: small (<= StackSmall = 128),
+ * the three stack-check tiers of goabi1-amd64: small (<= StackSmall = 128),
  * big (<= StackBig = 4096) and huge (> StackBig).
  */
 #include <stdint.h>

@@ -89,9 +89,12 @@ symtab.go 的其他变化：1.25 把 `FuncID_runfinq` 换成 `FuncID_runFinalize
 | writer 的 API | cmd/internal/obj/data.go `func (s *LSym) AddRel` | **1.24 新增**（会检查 FIPS 重定位）；1.23 直接 `s.R = append(s.R, r)` |
 | writer 依赖的包 | `go list -deps cmd/internal/obj/x86` | 1.23 需要 `cmd/internal/notsha256`（带汇编）；1.24 起换成 `cmd/internal/hash`；1.26 起多了 `internal/strconv` |
 | toolexec 用到的工具 | `asm -gensymabis`、`compile`、`pack r` | 参数形式五版一致 |
+| 发行包里预装的工具 | `pkg/tool/linux_amd64/` | 1.23、1.24 都有 `pack`、`nm`、`objdump`；**1.25 起只剩 asm、cgo、compile、cover、link、preprofile、vet（1.26 起加 fix）**，`pack` 改由 `go tool pack` 按需构建 |
+| `LSym.Align` | cmd/internal/obj/link.go 的 `type LSym struct` | **1.27 新增**（int16）；1.23–1.26 只有 `FuncInfo.Align`。1.27 的 objfile.go 第 391 行起：内容可寻址、非 TEXT 且 `Align == 0` 的符号会被 `Diag("… is content-addressable but alignment is not set")` 拒绝，pctab 符号必须设 `Align: 1`（同文件 funcpctab 的写法） |
 
 ## 7. 对 goc 的影响汇总
 
 1. **重定位编号**（第 2 节）和**文件头版本号**（第 6 节）决定了 gocobj2goobj 必须用目标 Go 版本自己的 `cmd/internal/obj` 构建，任何一份固定的 vendored 拷贝都不行。
 2. FUNCDATA/PCDATA、栈常量、g 偏移、g 寄存器、ABIInternal 寄存器在 1.23–1.27 中**完全相同**，所以 goc-llc 生成的机器码和 `.gocobj` 可以与 Go 版本无关（一个 ABI profile 覆盖五个版本）。
-3. writer 的 API 差异只有 `LSym.AddRel`（1.24+）一处。
+3. writer 一侧的 API 差异有两处：`LSym.AddRel`（1.24+），以及 `LSym.Align`（1.27+，内容可寻址的数据必须设置）。
+4. toolexec 不能再假设 `$GOTOOLDIR/pack` 存在（1.25+）。
