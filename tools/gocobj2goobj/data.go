@@ -6,9 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/src"
+	"github.com/LoyieKing/goc/goobjw"
 )
 
 func isDataSection(name string) bool {
@@ -28,7 +26,7 @@ func (c *converter) emitData() error {
 	secs := c.ef.Sections
 	type nameRange struct {
 		start, end uint64
-		sym        *obj.LSym
+		sym        *goobjw.Sym
 	}
 	ranges := map[int][]nameRange{}
 	for i, es := range c.syms {
@@ -48,7 +46,9 @@ func (c *converter) emitData() error {
 		}
 		ls := ctxt.Lookup(c.pkg + "." + es.Name)
 		if sc.Type == elf.SHT_NOBITS {
-			ctxt.GloblPos(ls, int64(es.Size), obj.NOPTR, src.NoXPos)
+			if err := ctxt.Globl(ls, int64(es.Size), goobjw.NOPTR); err != nil {
+				return err
+			}
 		} else {
 			b, err := sc.Data()
 			if err != nil {
@@ -57,9 +57,11 @@ func (c *converter) emitData() error {
 			if es.Value+es.Size > uint64(len(b)) {
 				continue
 			}
-			ls.Type = objabi.SDATA
-			ctxt.GloblPos(ls, int64(es.Size), obj.NOPTR, src.NoXPos)
-			writeBytes(ctxt, ls, b[es.Value:es.Value+es.Size])
+			ls.Kind = "SDATA"
+			if err := ctxt.Globl(ls, int64(es.Size), goobjw.NOPTR); err != nil {
+				return err
+			}
+			ls.WriteBytes(0, b[es.Value:es.Value+es.Size])
 		}
 		c.dataSym[i] = ls
 		ranges[sec] = append(ranges[sec], nameRange{es.Value, es.Value + es.Size, ls})
@@ -71,19 +73,23 @@ func (c *converter) emitData() error {
 		}
 		ls := ctxt.Lookup("goc.data." + c.tu + "." + sanitize(sc.Name))
 		if sc.Type == elf.SHT_NOBITS {
-			ctxt.GloblPos(ls, int64(sc.Size), obj.NOPTR, src.NoXPos)
+			if err := ctxt.Globl(ls, int64(sc.Size), goobjw.NOPTR); err != nil {
+				return err
+			}
 		} else {
 			b, err := sc.Data()
 			if err != nil {
 				return err
 			}
-			fl := int(obj.RODATA | obj.DUPOK)
+			fl := goobjw.RODATA | goobjw.DUPOK
 			if sc.Flags&elf.SHF_WRITE != 0 {
-				ls.Type = objabi.SDATA
-				fl = obj.NOPTR
+				ls.Kind = "SDATA"
+				fl = goobjw.NOPTR
 			}
-			ctxt.GloblPos(ls, int64(len(b)), fl, src.NoXPos)
-			writeBytes(ctxt, ls, b)
+			if err := ctxt.Globl(ls, int64(len(b)), fl); err != nil {
+				return err
+			}
+			ls.WriteBytes(0, b)
 		}
 		c.secSym[i] = ls
 	}
@@ -95,7 +101,7 @@ func (c *converter) emitData() error {
 	type tableBase struct {
 		sec   int
 		off   uint64
-		owner *obj.LSym
+		owner *goobjw.Sym
 	}
 	var codeRels []struct {
 		sec int
@@ -123,7 +129,7 @@ func (c *converter) emitData() error {
 			continue
 		}
 		for int64(len(ls.P)) < ls.Size {
-			ls.WriteInt(ctxt, int64(len(ls.P)), 1, 0)
+			ls.WriteInt(int64(len(ls.P)), 1, 0)
 		}
 		pcTextAt := map[uint64]bool{}
 		for _, r := range rs {
@@ -158,7 +164,7 @@ func (c *converter) emitData() error {
 			}
 		}
 		for _, r := range rs {
-			var target *obj.LSym
+			var target *goobjw.Sym
 			var add int64
 			var ename string
 			switch {
@@ -196,14 +202,14 @@ func (c *converter) emitData() error {
 					break
 				}
 			}
-			var typ objabi.RelocType
+			var typ string
 			siz := uint8(4)
 			if c.arm64 {
 				var ok bool
 				if typ, siz, ok = arm64DataReloc(r.Type); !ok {
 					return fmt.Errorf("unsupported arm64 data reloc type %d in %s at %#x", r.Type, secs[i].Name, r.Off)
 				}
-				host.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
+				host.AddRel(goobjw.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
 				continue
 			}
 			d, ok := gv.X86Data[elf.R_X86_64(r.Type)]
@@ -211,7 +217,7 @@ func (c *converter) emitData() error {
 				return fmt.Errorf("unsupported data reloc type %d in %s at %#x", r.Type, secs[i].Name, r.Off)
 			}
 			typ, siz = d.Type, d.Siz
-			host.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
+			host.AddRel(goobjw.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
 		}
 	}
 	return nil

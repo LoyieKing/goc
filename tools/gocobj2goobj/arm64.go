@@ -12,29 +12,15 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/sys"
+	"github.com/LoyieKing/goc/goobjw"
 )
-
-func arm64Nop(*obj.Link)                              {}
-func arm64NopSym(*obj.Link, *obj.LSym, obj.ProgAlloc) {}
-
-// linkARM64 has no encoder: the bytes are llvm-mc's. Flushplist still
-// calls Preprocess and Assemble, so they must not be nil.
-var linkARM64 = obj.LinkArch{
-	Arch:       sys.ArchARM64,
-	Init:       arm64Nop,
-	Preprocess: arm64NopSym,
-	Assemble:   arm64NopSym,
-}
 
 func insnAt(b []byte, off int) uint32       { return binary.LittleEndian.Uint32(b[off:]) }
 func putInsnAt(b []byte, off int, w uint32) { binary.LittleEndian.PutUint32(b[off:], w) }
 
 // arm64PagePair maps the low-12 relocation that follows an ADRP to the Go
 // relocation covering both instructions.
-func arm64PagePair(second elf.R_AARCH64) (objabi.RelocType, bool) {
+func arm64PagePair(second elf.R_AARCH64) (string, bool) {
 	t, ok := gv.A64PagePair[second]
 	return t, ok
 }
@@ -53,7 +39,7 @@ func arm64ClearPagePair(code []byte, off int) {
 // arm64TextRelocs translates the relocations inside one function. rs are
 // the section's relocations; x is the function.
 func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
-	ctxt, s := c.ctxt, x.sym
+	s := x.sym
 	var mine []rela
 	for _, r := range rs {
 		if r.Off >= x.off && r.Off < x.off+x.tab.TextSize {
@@ -78,17 +64,17 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 		if i+1 < len(mine) && mine[i+1].Off == r.Off+4 {
 			next = i + 1
 		}
-		pair := func(want func(elf.R_AARCH64) (objabi.RelocType, bool)) (objabi.RelocType, error) {
+		pair := func(want func(elf.R_AARCH64) (string, bool)) (string, error) {
 			if next < 0 {
-				return 0, fmt.Errorf("%s+%#x: ADRP without a low-12 relocation on the next instruction", s.Name, off)
+				return "", fmt.Errorf("%s+%#x: ADRP without a low-12 relocation on the next instruction", s.Name, off)
 			}
 			n := mine[next]
 			typ, ok := want(elf.R_AARCH64(n.Type))
 			if !ok {
-				return 0, fmt.Errorf("%s+%#x: ADRP followed by relocation type %d", s.Name, off, n.Type)
+				return "", fmt.Errorf("%s+%#x: ADRP followed by relocation type %d", s.Name, off, n.Type)
 			}
 			if n.Sym != r.Sym || n.Add != r.Add {
-				return 0, fmt.Errorf("%s+%#x: ADRP pair targets differ", s.Name, off)
+				return "", fmt.Errorf("%s+%#x: ADRP pair targets differ", s.Name, off)
 			}
 			used[next] = true
 			arm64ClearPagePair(s.P, off)
@@ -100,7 +86,7 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				return fmt.Errorf("call at %s+%#x has addend %d", s.Name, off, add)
 			}
 			putInsnAt(s.P, off, insnAt(s.P, off)&^0x03ffffff)
-			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Call, Sym: target})
+			s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Call, Sym: target})
 		case elf.R_AARCH64_ADR_PREL_PG_HI21:
 			if next >= 0 {
 				if _, ok := arm64PagePair(elf.R_AARCH64(mine[next].Type)); !ok {
@@ -113,22 +99,22 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				// own: R_ARM64_PCREL on an ADRP, R_ARM64_LDSTn / R_ARM64_PCREL
 				// on the low-12 instruction (see archreloc).
 				putInsnAt(s.P, off, insnAt(s.P, off)&^0x60FFFFE0)
-				s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Page, Add: add, Sym: target})
+				s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Page, Add: add, Sym: target})
 				continue
 			}
 			typ, err := pair(arm64PagePair)
 			if err != nil {
 				return err
 			}
-			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: typ, Add: add, Sym: target})
+			s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 8, Type: typ, Add: add, Sym: target})
 		case elf.R_AARCH64_ADR_GOT_PAGE:
-			_, err := pair(func(t elf.R_AARCH64) (objabi.RelocType, bool) {
+			_, err := pair(func(t elf.R_AARCH64) (string, bool) {
 				return gv.A64GOTPair, t == elf.R_AARCH64_LD64_GOT_LO12_NC
 			})
 			if err != nil {
 				return err
 			}
-			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: gv.A64GOTPair, Add: add, Sym: target})
+			s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 8, Type: gv.A64GOTPair, Add: add, Sym: target})
 		case elf.R_AARCH64_ADD_ABS_LO12_NC, elf.R_AARCH64_LDST8_ABS_LO12_NC,
 			elf.R_AARCH64_LDST16_ABS_LO12_NC, elf.R_AARCH64_LDST32_ABS_LO12_NC,
 			elf.R_AARCH64_LDST64_ABS_LO12_NC, elf.R_AARCH64_LDST128_ABS_LO12_NC:
@@ -139,10 +125,10 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				w &^= 1 << 22
 			}
 			putInsnAt(s.P, off, w)
-			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: add, Sym: target})
+			s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: add, Sym: target})
 		case elf.R_AARCH64_ABS64, elf.R_AARCH64_ABS32:
 			d := gv.A64Data[elf.R_AARCH64(r.Type)]
-			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: d.Siz, Type: d.Type, Add: add, Sym: target})
+			s.AddRel(goobjw.Reloc{Off: int32(off), Siz: d.Siz, Type: d.Type, Add: add, Sym: target})
 		default:
 			return fmt.Errorf("unsupported arm64 text reloc type %d in %s at %#x", r.Type, s.Name, off)
 		}
@@ -151,7 +137,7 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 }
 
 // arm64DataReloc maps a relocation in a data section.
-func arm64DataReloc(t uint32) (objabi.RelocType, uint8, bool) {
+func arm64DataReloc(t uint32) (string, uint8, bool) {
 	r, ok := gv.A64Data[elf.R_AARCH64(t)]
 	return r.Type, r.Siz, ok
 }

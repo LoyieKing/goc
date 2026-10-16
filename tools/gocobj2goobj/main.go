@@ -10,6 +10,11 @@
 // block into the code. What it does decide is the Go side of each name
 // (package qualification, ABI0 vs ABIInternal, the .impl/.goabi/@plt
 // conventions) and how ELF relocations map onto Go relocation types.
+//
+// The object is written by goobjw, driven by the target Go release's
+// facts (gometa): the release is `go env GOVERSION` of the go command in
+// PATH unless -goversion or -go-meta says otherwise
+// (docs/multi-go-version.md).
 package main
 
 import (
@@ -18,6 +23,7 @@ import (
 	"os"
 
 	"github.com/LoyieKing/goc/gocobj"
+	"github.com/LoyieKing/goc/gometa"
 )
 
 func main() {
@@ -25,8 +31,11 @@ func main() {
 	out := flag.String("o", "", "output Go object file")
 	pkg := flag.String("p", "main", "package path")
 	printProfile := flag.Bool("print-profile", false, "print the goc ABI profile for -goarch (or $GOARCH) and exit")
-	printVersion := flag.Bool("version", false, "print the Go release this converter writes objects for and exit")
+	printVersion := flag.Bool("version", false, "print the Go release objects are written for and exit")
 	goarchFlag := flag.String("goarch", "", "target GOARCH (default $GOARCH, else amd64)")
+	goversion := flag.String("goversion", "", "target Go version (default: go env GOVERSION)")
+	metaFile := flag.String("go-meta", "", "Go release facts (JSON from tools/golangc-metadata-resolver) instead of the embedded ones")
+	header := flag.String("header", "", "object header line (default: the one `go tool asm` writes)")
 	symabis := flag.String("symabis", "", "also write the asm symabis (def lines) of the functions here")
 	flag.Parse()
 	goarch := *goarchFlag
@@ -36,11 +45,33 @@ func main() {
 	if goarch == "" {
 		goarch = "amd64"
 	}
+	ver := *goversion
+	var meta *gometa.Meta
+	var err error
+	if *metaFile != "" {
+		meta, err = gometa.Load(*metaFile)
+		if err == nil && ver == "" {
+			ver = meta.SourceVersion
+			if v, e := goEnv("GOVERSION"); e == nil && sameMinor(v, meta.Go) {
+				ver = v
+			}
+		}
+	} else {
+		if ver == "" {
+			ver, err = goEnv("GOVERSION")
+		}
+		if err == nil {
+			meta, err = gometa.ForVersion(ver)
+		}
+	}
+	if err != nil {
+		fatalf("%v", err)
+	}
 	if *printVersion {
-		fmt.Println(goVersion())
+		fmt.Println(ver)
 		return
 	}
-	want, err := profileFor(goarch)
+	want, err := profileFor(meta, goarch)
 	if err != nil {
 		fatalf("%v", err)
 	}
@@ -66,16 +97,24 @@ func main() {
 	// may differ (go1.24-amd64 is goabi1-amd64's old name).
 	if have, ok := gocobj.LookupProfile(f.Header.Profile); !ok || !gocobj.SameFacts(have, want) {
 		fatalf("%s has ABI profile %q; %s on GOARCH=%s needs %q (or one with the same facts)",
-			*in, f.Header.Profile, goVersion(), goarch, want.Name)
+			*in, f.Header.Profile, ver, goarch, want.Name)
 	}
 	if f.Header.Flags&gocobj.HeaderStackChecksInCode == 0 {
 		fatalf("%s: the backend did not emit the stack checks (header flag stack_checks_in_code is 0)", *in)
+	}
+	hdr := *header
+	if hdr == "" {
+		if hdr, err = objectHeader(goarch, ver); err != nil {
+			fatalf("%v", err)
+		}
+	} else if hdr[len(hdr)-1] != '\n' {
+		hdr += "\n"
 	}
 	c, err := newConverter(*in, f, *pkg, goarch)
 	if err != nil {
 		fatalf("%v", err)
 	}
-	if err := c.write(*out); err != nil {
+	if err := c.write(*out, meta, hdr); err != nil {
 		fatalf("%v", err)
 	}
 	if *symabis != "" {
@@ -83,6 +122,11 @@ func main() {
 			fatalf("%v", err)
 		}
 	}
+}
+
+func sameMinor(v, minor string) bool {
+	m, ok := gometa.Minor(v)
+	return ok && m == minor
 }
 
 func fatalf(format string, args ...any) {

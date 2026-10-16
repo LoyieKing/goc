@@ -4,19 +4,18 @@ import (
 	"encoding/binary"
 
 	"github.com/LoyieKing/goc/gocobj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
+	"github.com/LoyieKing/goc/goobjw"
 )
 
 // pctab encodes plain (pc, value) entries as a Go pc-value table. Values
 // hold from their pc to the next entry; the runtime starts at -1.
-func pctab(ctxt *obj.Link, size int64, ents []gocobj.PCEntry) *obj.LSym {
-	sym := &obj.LSym{Type: objabi.SRODATA, Attribute: obj.AttrContentAddressable | obj.AttrPcdata}
-	// Align 1, as cmd/internal/obj.funcpctab does; go1.27 rejects a
-	// content-addressable symbol without one.
-	sym.GocSetAlign(1)
+func pctab(ctxt *goobjw.Link, size int64, ents []gocobj.PCEntry) *goobjw.Sym {
+	return ctxt.Pctab(pcbytes(int64(ctxt.Arch.MinLC), size, ents))
+}
+
+func pcbytes(minLC, size int64, ents []gocobj.PCEntry) []byte {
 	if size <= 0 {
-		return sym
+		return nil
 	}
 	type seg struct {
 		val   int64
@@ -38,7 +37,6 @@ func pctab(ctxt *obj.Link, size int64, ents []gocobj.PCEntry) *obj.LSym {
 		}
 		segs = append(segs, seg{e.Value, pc})
 	}
-	minLC := int64(ctxt.Arch.MinLC)
 	var dst []byte
 	prev := int64(-1)
 	for i, s := range segs {
@@ -53,16 +51,13 @@ func pctab(ctxt *obj.Link, size int64, ents []gocobj.PCEntry) *obj.LSym {
 		dst = binary.AppendUvarint(dst, uint64((end-s.start)/minLC))
 		prev = s.val
 	}
-	dst = append(dst, 0)
-	sym.P = dst
-	sym.Size = int64(len(dst))
-	return sym
+	return append(dst, 0)
 }
 
 // inlSym names an inlined C function in the inline tree: the Go symbol of
 // its body in this object if it has one, else (a static function inlined
 // everywhere) the name a body of it would have, which gets a stub.
-func (c *converter) inlSym(name string) *obj.LSym {
+func (c *converter) inlSym(name string) *goobjw.Sym {
 	if gn, ok := c.goName[name]; ok {
 		return c.ctxt.LookupABI(gn, c.abiByGoSym[gn])
 	}

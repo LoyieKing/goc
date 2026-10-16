@@ -1,110 +1,107 @@
 package main
 
-// How ELF relocations map onto Go relocation types, and the funcdata/pcdata
-// indices the stack maps go under. Every entry names its objabi/abi
-// constant; the numbers come from the Go object writer this converter was
-// built against, which tools/goc-goenc copies from the GOROOT that links
-// the result (Go renumbers R_* between releases: docs/go-version-diffs.md).
-// Nothing here depends on the Go version.
+// How ELF relocations map onto Go relocation types. Types are named by
+// their objabi constant; the numbers, which Go renumbers between releases
+// (docs/go-version-diffs.md), come from the release's metadata
+// (gometa) when the object is written.
 
 import (
 	"debug/elf"
 	"fmt"
-	"runtime"
+	"strings"
 
 	"github.com/LoyieKing/goc/gocobj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/abi"
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/buildcfg"
+	"github.com/LoyieKing/goc/gometa"
 )
 
 // sizedReloc is a Go relocation type and the width of the field it patches.
 type sizedReloc struct {
-	Type objabi.RelocType
+	Type string
 	Siz  uint8
 }
 
 type relocMap struct {
 	// amd64 text: a PC-relative field becomes X86Text[type]; one that the
 	// .goc call list marks as a call becomes X86Call instead.
-	X86Text map[elf.R_X86_64]objabi.RelocType
-	X86Call objabi.RelocType
+	X86Text map[elf.R_X86_64]string
+	X86Call string
 	X86Data map[elf.R_X86_64]sizedReloc
 
 	// arm64 text.
-	A64Call     objabi.RelocType                   // BL/B (CALL26, JUMP26)
-	A64Page     objabi.RelocType                   // a lone ADRP, or a lone ADD low-12
-	A64PagePair map[elf.R_AARCH64]objabi.RelocType // ADRP + adjacent low-12, by the low-12 type
-	A64Lo12     map[elf.R_AARCH64]objabi.RelocType // a low-12 load/store without its ADRP
-	A64GOTPair  objabi.RelocType                   // ADRP GOT page + LD64_GOT_LO12
-	A64Data     map[elf.R_AARCH64]sizedReloc       // ABS64/ABS32, text and data
-
-	// The funcdata/pcdata indices the stack maps go under.
-	FuncdataArgs, FuncdataLocals, PcdataStackMapIndex int64
+	A64Call     string                   // BL/B (CALL26, JUMP26)
+	A64Page     string                   // a lone ADRP, or a lone ADD low-12
+	A64PagePair map[elf.R_AARCH64]string // ADRP + adjacent low-12, by the low-12 type
+	A64Lo12     map[elf.R_AARCH64]string // a low-12 load/store without its ADRP
+	A64GOTPair  string                   // ADRP GOT page + LD64_GOT_LO12
+	A64Data     map[elf.R_AARCH64]sizedReloc
 }
 
-// gv is the mapping in use.
 var gv = &relocMap{
-	X86Text: map[elf.R_X86_64]objabi.RelocType{
-		elf.R_X86_64_PC32:  objabi.R_PCREL,
-		elf.R_X86_64_PLT32: objabi.R_PCREL,
-		elf.R_X86_64_32:    objabi.R_ADDR,
-		elf.R_X86_64_32S:   objabi.R_ADDR,
+	X86Text: map[elf.R_X86_64]string{
+		elf.R_X86_64_PC32:  "R_PCREL",
+		elf.R_X86_64_PLT32: "R_PCREL",
+		elf.R_X86_64_32:    "R_ADDR",
+		elf.R_X86_64_32S:   "R_ADDR",
 	},
-	X86Call: objabi.R_CALL,
+	X86Call: "R_CALL",
 	X86Data: map[elf.R_X86_64]sizedReloc{
-		elf.R_X86_64_64:    {objabi.R_ADDR, 8},
-		elf.R_X86_64_32:    {objabi.R_ADDR, 4},
-		elf.R_X86_64_32S:   {objabi.R_ADDR, 4},
-		elf.R_X86_64_PC32:  {objabi.R_PCREL, 4},
-		elf.R_X86_64_PLT32: {objabi.R_PCREL, 4},
+		elf.R_X86_64_64:    {"R_ADDR", 8},
+		elf.R_X86_64_32:    {"R_ADDR", 4},
+		elf.R_X86_64_32S:   {"R_ADDR", 4},
+		elf.R_X86_64_PC32:  {"R_PCREL", 4},
+		elf.R_X86_64_PLT32: {"R_PCREL", 4},
 	},
 
-	A64Call: objabi.R_CALLARM64,
-	A64Page: objabi.R_ARM64_PCREL,
-	A64PagePair: map[elf.R_AARCH64]objabi.RelocType{
-		elf.R_AARCH64_ADD_ABS_LO12_NC:    objabi.R_ADDRARM64,
-		elf.R_AARCH64_LDST8_ABS_LO12_NC:  objabi.R_ARM64_PCREL_LDST8,
-		elf.R_AARCH64_LDST16_ABS_LO12_NC: objabi.R_ARM64_PCREL_LDST16,
-		elf.R_AARCH64_LDST32_ABS_LO12_NC: objabi.R_ARM64_PCREL_LDST32,
-		elf.R_AARCH64_LDST64_ABS_LO12_NC: objabi.R_ARM64_PCREL_LDST64,
+	A64Call: "R_CALLARM64",
+	A64Page: "R_ARM64_PCREL",
+	A64PagePair: map[elf.R_AARCH64]string{
+		elf.R_AARCH64_ADD_ABS_LO12_NC:    "R_ADDRARM64",
+		elf.R_AARCH64_LDST8_ABS_LO12_NC:  "R_ARM64_PCREL_LDST8",
+		elf.R_AARCH64_LDST16_ABS_LO12_NC: "R_ARM64_PCREL_LDST16",
+		elf.R_AARCH64_LDST32_ABS_LO12_NC: "R_ARM64_PCREL_LDST32",
+		elf.R_AARCH64_LDST64_ABS_LO12_NC: "R_ARM64_PCREL_LDST64",
 	},
-	A64Lo12: map[elf.R_AARCH64]objabi.RelocType{
-		elf.R_AARCH64_ADD_ABS_LO12_NC:     objabi.R_ARM64_PCREL,
-		elf.R_AARCH64_LDST8_ABS_LO12_NC:   objabi.R_ARM64_LDST8,
-		elf.R_AARCH64_LDST16_ABS_LO12_NC:  objabi.R_ARM64_LDST16,
-		elf.R_AARCH64_LDST32_ABS_LO12_NC:  objabi.R_ARM64_LDST32,
-		elf.R_AARCH64_LDST64_ABS_LO12_NC:  objabi.R_ARM64_LDST64,
-		elf.R_AARCH64_LDST128_ABS_LO12_NC: objabi.R_ARM64_LDST128,
+	A64Lo12: map[elf.R_AARCH64]string{
+		elf.R_AARCH64_ADD_ABS_LO12_NC:     "R_ARM64_PCREL",
+		elf.R_AARCH64_LDST8_ABS_LO12_NC:   "R_ARM64_LDST8",
+		elf.R_AARCH64_LDST16_ABS_LO12_NC:  "R_ARM64_LDST16",
+		elf.R_AARCH64_LDST32_ABS_LO12_NC:  "R_ARM64_LDST32",
+		elf.R_AARCH64_LDST64_ABS_LO12_NC:  "R_ARM64_LDST64",
+		elf.R_AARCH64_LDST128_ABS_LO12_NC: "R_ARM64_LDST128",
 	},
-	A64GOTPair: objabi.R_ARM64_GOTPCREL,
+	A64GOTPair: "R_ARM64_GOTPCREL",
 	A64Data: map[elf.R_AARCH64]sizedReloc{
-		elf.R_AARCH64_ABS64: {objabi.R_ADDR, 8},
-		elf.R_AARCH64_ABS32: {objabi.R_ADDR, 4},
+		elf.R_AARCH64_ABS64: {"R_ADDR", 8},
+		elf.R_AARCH64_ABS32: {"R_ADDR", 4},
 	},
-
-	FuncdataArgs:        abi.FUNCDATA_ArgsPointerMaps,
-	FuncdataLocals:      abi.FUNCDATA_LocalsPointerMaps,
-	PcdataStackMapIndex: abi.PCDATA_StackMapIndex,
 }
 
-// goVersion is the Go release the writer was copied from. The linker
-// compares the object header, which carries it, byte for byte.
-func goVersion() string { return buildcfg.Version }
-
-// profileFor is the ABI profile tools/goc-goenc matched this Go release to.
-func profileFor(goarch string) (gocobj.Profile, error) {
-	name, ok := objabi.GocProfiles[goarch]
+// profileFor returns the goc ABI profile (gocobj/abi.go) that states the
+// release's ABI facts for goarch.
+func profileFor(m *gometa.Meta, goarch string) (gocobj.Profile, error) {
+	a, ok := m.Arch[goarch]
 	if !ok {
-		return gocobj.Profile{}, fmt.Errorf("no goc ABI profile for GOARCH=%s with %s", goarch, goVersion())
+		return gocobj.Profile{}, fmt.Errorf("%s: no facts for GOARCH=%s", m.Go, goarch)
 	}
-	p, ok := gocobj.LookupProfile(name)
-	if !ok {
-		return gocobj.Profile{}, fmt.Errorf("goc ABI profile %q (from goc-goenc) is not in gocobj/abi.go", name)
+	got := gocobj.Profile{Arch: goarch, PtrSize: a.PtrSize, GReg: a.GReg,
+		StackGuard0Off: m.ABI.GOffsets["stackguard0"], StackSmall: m.ABI.StackSmall,
+		StackBig: m.ABI.StackBig, Morestack: a.Morestack, FPRegs: a.FloatArgs}
+	for _, r := range a.IntArgs {
+		if goarch == "amd64" && r[0] != 'R' {
+			r = "R" + r // AX -> RAX, as the profiles spell them
+		}
+		got.IntRegs = append(got.IntRegs, r)
 	}
-	return p, nil
+	var best gocobj.Profile
+	for _, p := range gocobj.Profiles() {
+		// Prefer the goabi* names; go1.24-* are their old aliases.
+		if gocobj.SameFacts(p, got) && (best.Name == "" || strings.HasPrefix(p.Name, "goabi") && !strings.HasPrefix(best.Name, "goabi")) {
+			best = p
+		}
+	}
+	if best.Name == "" {
+		return gocobj.Profile{}, fmt.Errorf("%s %s has ABI facts no goc profile states: %+v\n"+
+			"add one to llvm/include/Goc/AbiProfiles.def and gocobj/abi.go (docs/multi-go-version.md)", m.Go, goarch, got)
+	}
+	return best, nil
 }
-
-// builtWith reports a converter built by one Go and run for another: its
-// objects would carry the wrong header.
-func builtWith() string { return runtime.Version() }

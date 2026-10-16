@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
+	"github.com/LoyieKing/goc/goobjw"
 )
 
 var verbose = flag.Bool("v", false, "print every difference, not just the first 20")
@@ -53,50 +53,48 @@ func load(path string) (*object, error) {
 	if err != nil {
 		return nil, err
 	}
-	i := bytes.Index(b, []byte(goobj.Magic))
-	if i < 0 {
-		return nil, fmt.Errorf("%s: no %q magic", path, goobj.Magic)
+	r, err := goobjw.NewReader(b, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %v", path, err)
 	}
-	hdr := string(b[:i])
-	if j := strings.IndexByte(hdr, '\n'); j >= 0 {
-		hdr = hdr[:j]
-	}
+	hdr := r.Header
+	pk := r.Meta.Object.PkgIdx
+	at := r.Meta.Object.AuxTypes
+	pkNone, pkSelf, pkH64, pkH, pkB := uint32(pk["None"]), uint32(pk["Self"]), uint32(pk["Hashed64"]), uint32(pk["Hashed"]), uint32(pk["Builtin"])
 	quantum := 1
 	if strings.Contains(hdr, "arm64") {
 		quantum = 4
 	}
-	r := goobj.NewReaderFromBytes(b[i:], true)
-	ndef := uint32(r.NSym() + r.NHashed64def() + r.NHasheddef() + r.NNonpkgdef())
+	ndef := uint32(r.NDef())
 	nall := ndef + uint32(r.NNonpkgref())
 	// PkgIdxNone indexes the non-package symbols, defined ones first: the
 	// same base the Go linker's loader uses (cmd/link/internal/loader).
 	nonpkg := uint32(r.NSym() + r.NHashed64def() + r.NHasheddef())
 	nameOf := func(i uint32) string {
 		s := r.Sym(i)
-		n := s.Name(r)
+		n := s.Name
 		if n == "" && i < ndef { // content-addressed: name by content
 			h := sha256.Sum256(r.Data(i))
-			n = fmt.Sprintf("<hashed type=%d %x>", s.Type(), h[:6])
+			n = fmt.Sprintf("<hashed type=%d %x>", s.Type, h[:6])
 		}
 		return n
 	}
-	resolve := func(ref goobj.SymRef) string {
+	resolve := func(ref goobjw.SymRef) string {
 		switch ref.PkgIdx {
-		case goobj.PkgIdxNone:
-			k := nonpkg + ref.SymIdx
-			if k < nall {
+		case pkNone:
+			if k := nonpkg + ref.SymIdx; k < nall {
 				return nameOf(k)
 			}
-		case goobj.PkgIdxSelf:
+		case pkSelf:
 			if ref.SymIdx < ndef {
 				return nameOf(ref.SymIdx)
 			}
-		case goobj.PkgIdxHashed64:
+		case pkH64:
 			return nameOf(uint32(r.NSym()) + ref.SymIdx)
-		case goobj.PkgIdxHashed:
+		case pkH:
 			return nameOf(uint32(r.NSym()+r.NHashed64def()) + ref.SymIdx)
-		case goobj.PkgIdxBuiltin:
-			n, abi := goobj.BuiltinName(int(ref.SymIdx))
+		case pkB:
+			n, abi := r.BuiltinName(int(ref.SymIdx))
 			return fmt.Sprintf("%s<%d>", n, abi)
 		}
 		if ref.PkgIdx > 0 && int(ref.PkgIdx) < r.NPkg() {
@@ -107,48 +105,47 @@ func load(path string) (*object, error) {
 	o := &object{Header: hdr, Syms: map[string]*sym{}}
 	for i := uint32(0); i < ndef; i++ {
 		s := r.Sym(i)
-		y := &sym{Name: nameOf(i), ABI: s.ABI(), Type: s.Type(), Flag: s.Flag(), Flag2: s.Flag2(),
-			Siz: s.Siz(), Align: s.Align(), Data: r.Data(i), Aux: map[string]string{}}
+		y := &sym{Name: nameOf(i), ABI: s.ABI, Type: s.Type, Flag: s.Flag, Flag2: s.Flag2,
+			Siz: s.Siz, Align: s.Align, Data: r.Data(i), Aux: map[string]string{}}
 		for _, rl := range r.Relocs(i) {
-			y.Relocs = append(y.Relocs, reloc{rl.Off(), rl.Siz(), rl.Type(), resolve(rl.Sym()), rl.Add()})
+			y.Relocs = append(y.Relocs, reloc{rl.Off, rl.Siz, rl.Type, resolve(rl.Sym), rl.Add})
 		}
 		sort.Slice(y.Relocs, func(a, b int) bool { return y.Relocs[a].Off < y.Relocs[b].Off })
 		nfd, npd := 0, 0
 		for _, a := range r.Auxs(i) {
-			ref := a.Sym()
+			ref := a.Sym
 			var data []byte
-			if ref.PkgIdx == goobj.PkgIdxSelf && ref.SymIdx < ndef {
+			if ref.PkgIdx == pkSelf && ref.SymIdx < ndef {
 				data = r.Data(ref.SymIdx)
-			} else if ref.PkgIdx == goobj.PkgIdxNone && nonpkg+ref.SymIdx < ndef {
+			} else if ref.PkgIdx == pkNone && nonpkg+ref.SymIdx < ndef {
 				data = r.Data(nonpkg + ref.SymIdx)
-			} else if ref.PkgIdx == goobj.PkgIdxHashed64 {
+			} else if ref.PkgIdx == pkH64 {
 				data = r.Data(uint32(r.NSym()) + ref.SymIdx)
-			} else if ref.PkgIdx == goobj.PkgIdxHashed {
+			} else if ref.PkgIdx == pkH {
 				data = r.Data(uint32(r.NSym()+r.NHashed64def()) + ref.SymIdx)
 			}
-			switch a.Type() {
-			case goobj.AuxPcsp:
+			switch int(a.Type) {
+			case at["Pcsp"]:
 				y.Aux["pcsp"] = pcvalue(data, quantum)
-			case goobj.AuxPcfile:
+			case at["Pcfile"]:
 				y.Aux["pcfile"] = pcvalue(data, quantum)
-			case goobj.AuxPcline:
+			case at["Pcline"]:
 				y.Aux["pcline"] = pcvalue(data, quantum)
-			case goobj.AuxPcinline:
+			case at["Pcinline"]:
 				y.Aux["pcinline"] = pcvalue(data, quantum)
-			case goobj.AuxPcdata:
+			case at["Pcdata"]:
 				y.Aux[fmt.Sprintf("pcdata%d", npd)] = pcvalue(data, quantum)
 				npd++
-			case goobj.AuxFuncdata:
+			case at["Funcdata"]:
 				y.Aux[fmt.Sprintf("funcdata%d", nfd)] = fmt.Sprintf("%x", data)
 				nfd++
-			case goobj.AuxFuncInfo:
+			case at["FuncInfo"]:
 				y.Aux["funcinfo"] = funcinfo(data)
-			case goobj.AuxGotype:
+			case at["Gotype"]:
 				y.Aux["gotype"] = resolve(ref)
 			}
 		}
-		key := fmt.Sprintf("%s<%d>", y.Name, y.ABI)
-		o.Syms[key] = y
+		o.Syms[fmt.Sprintf("%s<%d>", y.Name, y.ABI)] = y
 	}
 	return o, nil
 }
@@ -185,21 +182,12 @@ func pcvalue(b []byte, quantum int) string {
 }
 
 func funcinfo(b []byte) string {
-	if len(b) < 12 {
+	fi, err := goobjw.DecodeFuncInfo(b)
+	if err != nil {
 		return fmt.Sprintf("%x", b)
 	}
-	var fi goobj.FuncInfo
-	l := fi.ReadFuncInfoLengths(b)
-	var files []goobj.CUFileIndex
-	for k := uint32(0); k < l.NumFile; k++ {
-		files = append(files, fi.ReadFile(b, l.FileOff, k))
-	}
-	var inl []goobj.InlTreeNode
-	for k := uint32(0); k < l.NumInlTree; k++ {
-		inl = append(inl, fi.ReadInlTree(b, l.InlTreeOff, k))
-	}
 	return fmt.Sprintf("args=%d locals=%d funcid=%d flag=%d startline=%d files=%v inl=%v",
-		fi.ReadArgs(b), fi.ReadLocals(b), fi.ReadFuncID(b), fi.ReadFuncFlag(b), fi.ReadStartLine(b), files, inl)
+		fi.Args, fi.Locals, fi.FuncID, fi.FuncFlag, fi.StartLine, fi.File, fi.InlTree)
 }
 
 func main() {

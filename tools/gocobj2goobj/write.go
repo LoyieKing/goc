@@ -8,51 +8,43 @@ import (
 	"os"
 
 	"github.com/LoyieKing/goc/gocobj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/bio"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj/x86"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/src"
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/abi"
+	"github.com/LoyieKing/goc/gometa"
+	"github.com/LoyieKing/goc/goobjw"
 )
 
-func (c *converter) write(out string) error {
-	arch := &x86.Linkamd64
+func (c *converter) write(out string, meta *gometa.Meta, header string) error {
+	goarch := "amd64"
 	if c.arm64 {
-		arch = &linkARM64
+		goarch = "arm64"
 	}
-	ctxt := obj.Linknew(arch)
+	ctxt, err := goobjw.NewLink(meta, goarch, c.pkg)
+	if err != nil {
+		return err
+	}
 	c.ctxt = ctxt
-	ctxt.IsAsm = true
-	ctxt.Pkgpath = c.pkg
-	ctxt.DiagFunc = func(format string, args ...any) {
-		fatalf("diag: "+format, args...)
-	}
-	ctxt.Bso = bufio.NewWriter(os.Stdout)
-	defer ctxt.Bso.Flush()
-	if ctxt.Arch.Init != nil {
-		ctxt.Arch.Init(ctxt)
-	}
+	exps := headerExperiments(header)
+	ctxt.Dwarf5 = exps["dwarf5"]
+	ctxt.RegabiWrappers = exps["regabiwrappers"]
+	funcdataArgs := meta.ABI.Funcdata["ArgsPointerMaps"]
+	funcdataLocals := meta.ABI.Funcdata["LocalsPointerMaps"]
+	pcUnsafe := meta.ABI.Pcdata["UnsafePoint"]
+	pcStackMap := meta.ABI.Pcdata["StackMapIndex"]
+
+	// File table: .goc.files in order (a repeated name keeps its first
+	// index). Every TEXT symbol starts at line 1 of file 0.
 	file := "goc"
 	if len(c.f.Files) > 0 && c.f.Files[0] != "" {
 		file = c.f.Files[0]
 	}
-	fileBase := src.NewFileBase(file, file)
-	pos := ctxt.PosTable.XPos(src.MakePos(fileBase, 1, 0))
-	// 1.4: every .goc.files entry gets a PosBase, so FILE values and
-	// inline-tree call sites map to the object's file table.
-	fileBases := []*src.PosBase{fileBase}
+	fileIdx := []int64{int64(ctxt.AddFile(file))}
 	for _, f := range c.f.Files[min(1, len(c.f.Files)):] {
-		b := src.NewFileBase(f, f)
-		ctxt.PosTable.XPos(src.MakePos(b, 1, 0))
-		fileBases = append(fileBases, b)
+		fileIdx = append(fileIdx, int64(ctxt.AddFile(f)))
 	}
 	goFile := func(i int64) int64 {
-		if i < 0 || i >= int64(len(fileBases)) {
+		if i < 0 || i >= int64(len(fileIdx)) {
 			return 0
 		}
-		return int64(fileBases[i].FileIndex())
+		return fileIdx[i]
 	}
 
 	for _, x := range c.fns {
@@ -60,72 +52,50 @@ func (c *converter) write(out string) error {
 	}
 	// Every function and thunk is a TEXT symbol; an overestimate only widens
 	// the DWARF index fields (go1.25+).
-	ctxt.GocSetTextCount(len(c.fns) + len(c.goName))
+	ctxt.DwTextCount = len(c.fns) + len(c.goName)
 	if err := c.emitData(); err != nil {
 		return err
 	}
 
-	// TEXT, FUNCDATA and PCDATA through the assembler's plist, which sets
-	// up each symbol's FuncInfo; the bytes and tables are filled in after.
-	var head, tail *obj.Prog
-	add := func(p *obj.Prog) {
-		p.Pos = pos
-		if head == nil {
-			head = p
-		} else {
-			tail.Link = p
-		}
-		tail = p
-	}
+	// TEXT symbols with their FUNCDATA; the bytes and tables are filled in
+	// after Flush, as the assembler path did.
 	stackIdx := map[*fn][]gocobj.PCEntry{}
 	for _, x := range c.fns {
 		t := x.tab
 		flags := 0
 		if t.Flags&gocobj.FuncNosplit != 0 {
-			flags |= obj.NOSPLIT
+			flags |= goobjw.TextNoSplit
 		}
-		ctxt.InitTextSym(x.sym, flags, pos)
-		tp := ctxt.NewProg()
-		tp.As = obj.ATEXT
-		tp.Ctxt = ctxt
-		tp.From = obj.Addr{Type: obj.TYPE_MEM, Name: obj.NAME_EXTERN, Sym: x.sym}
-		tp.To = obj.Addr{Type: obj.TYPE_TEXTSIZE, Offset: 0}
-		tp.To.Val = int32(0)
-		x.sym.Func().Text = tp
-		add(tp)
+		if err := ctxt.InitText(x.sym, flags); err != nil {
+			return err
+		}
 		if t.GC != nil {
 			args, locals, idx := stackmaps(t.GC)
 			stackIdx[x] = idx
 			for _, m := range []struct {
-				kind int64
+				kind int
 				name string
 				blob []byte
 			}{
-				{gv.FuncdataArgs, "gclocals.goc." + x.sym.Name + ".args", args},
-				{gv.FuncdataLocals, "gclocals.goc." + x.sym.Name + ".locals", locals},
+				{funcdataArgs, "gclocals.goc." + x.sym.Name + ".args", args},
+				{funcdataLocals, "gclocals.goc." + x.sym.Name + ".locals", locals},
 			} {
 				ms := ctxt.Lookup(m.name)
-				ctxt.GloblPos(ms, int64(len(m.blob)), obj.RODATA|obj.DUPOK, src.NoXPos)
-				writeBytes(ctxt, ms, m.blob)
-				p := ctxt.NewProg()
-				p.As = obj.AFUNCDATA
-				p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: m.kind}
-				p.To = obj.Addr{Type: obj.TYPE_MEM, Name: obj.NAME_EXTERN, Sym: ms}
-				add(p)
+				if err := ctxt.Globl(ms, int64(len(m.blob)), goobjw.RODATA|goobjw.DUPOK); err != nil {
+					return err
+				}
+				ms.WriteBytes(0, m.blob)
+				ctxt.Funcdata(x.sym, m.kind, ms)
 			}
 		}
-		p := ctxt.NewProg()
-		p.As = obj.APCDATA
-		p.From = obj.Addr{Type: obj.TYPE_CONST, Offset: gv.PcdataStackMapIndex}
-		p.To = obj.Addr{Type: obj.TYPE_CONST, Offset: -1}
-		add(p)
+		ctxt.PCDATA(x.sym)
 	}
 	// 1.4: Go's linker reads the FuncID and start line of every inlined
 	// function from its FuncInfo. A static C function inlined everywhere
 	// has no body here, so it gets a one-byte stub (never referenced, so
 	// the linker leaves it out of the binary).
 	type stub struct {
-		sym  *obj.LSym
+		sym  *goobjw.Sym
 		line uint64
 	}
 	var stubs []stub
@@ -135,39 +105,34 @@ func (c *converter) write(out string) error {
 				continue
 			}
 			ls := c.inlSym(n.Func)
-			if ls.Func() != nil && ls.Func().Text != nil {
+			if ls.Func != nil {
 				continue
 			}
-			ctxt.InitTextSym(ls, obj.NOSPLIT|obj.DUPOK, pos)
-			tp := ctxt.NewProg()
-			tp.As = obj.ATEXT
-			tp.Ctxt = ctxt
-			tp.From = obj.Addr{Type: obj.TYPE_MEM, Name: obj.NAME_EXTERN, Sym: ls}
-			tp.To = obj.Addr{Type: obj.TYPE_TEXTSIZE, Offset: 0}
-			tp.To.Val = int32(0)
-			ls.Func().Text = tp
-			add(tp)
+			if err := ctxt.InitText(ls, goobjw.TextNoSplit|goobjw.TextDupok); err != nil {
+				return err
+			}
 			stubs = append(stubs, stub{ls, n.StartLine})
 		}
 	}
-	obj.Flushplist(ctxt, &obj.Plist{Firstpc: head}, nil)
+	if err := ctxt.Flush(); err != nil {
+		return err
+	}
 	for _, st := range stubs {
 		st.sym.P = []byte{0xcc} // int3
 		if c.arm64 {
 			st.sym.P = []byte{0, 0, 0x20, 0xd4} // brk #0
 		}
 		st.sym.Size = int64(len(st.sym.P))
-		st.sym.Set(obj.AttrNoFrame, true)
-		fi := st.sym.Func()
+		fi := st.sym.Func
 		fi.StartLine = int32(st.line)
-		fi.Pcln.Pcdata = make([]*obj.LSym, gv.PcdataStackMapIndex+1)
-		for i := range fi.Pcln.Pcdata {
-			fi.Pcln.Pcdata[i] = pctab(ctxt, 0, nil)
+		fi.Pcdata = make([]*goobjw.Sym, pcStackMap+1)
+		for i := range fi.Pcdata {
+			fi.Pcdata[i] = pctab(ctxt, 0, nil)
 		}
-		fi.Pcln.Pcsp = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: 0}})
-		fi.Pcln.Pcfile = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: 0}})
-		fi.Pcln.Pcline = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: int64(st.line)}})
-		fi.Pcln.UsedFiles = map[goobj.CUFileIndex]struct{}{0: {}}
+		fi.Pcsp = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: 0}})
+		fi.Pcfile = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: 0}})
+		fi.Pcline = pctab(ctxt, st.sym.Size, []gocobj.PCEntry{{PC: 0, Value: int64(st.line)}})
+		fi.UsedFiles = map[uint32]bool{0: true}
 	}
 
 	// Calls, by function and offset of their relocated field: the tables
@@ -231,69 +196,90 @@ func (c *converter) write(out string) error {
 				if r.Add < math.MinInt32 || r.Add > math.MaxInt32 {
 					return fmt.Errorf("reloc at %s+%#x: addend %d out of range", s.Name, off, r.Add)
 				}
-				s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: goAdd, Sym: target})
+				s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: goAdd, Sym: target})
 			}
 
-			fi := s.Func()
+			fi := s.Func
 			fi.Locals = int32(t.FrameSize)
 			fi.Args = int32(t.ArgSize)
-			s.Set(obj.AttrNoFrame, t.FrameSize == 0)
-			s.Set(obj.AttrNoSplit, t.Flags&gocobj.FuncNosplit != 0)
-			need := abi.PCDATA_StackMapIndex + 1
-			if len(fi.Pcln.Pcdata) < need {
-				n := make([]*obj.LSym, need)
-				copy(n, fi.Pcln.Pcdata)
-				fi.Pcln.Pcdata = n
+			s.NoSplit = t.Flags&gocobj.FuncNosplit != 0
+			if need := pcStackMap + 1; len(fi.Pcdata) < need {
+				n := make([]*goobjw.Sym, need)
+				copy(n, fi.Pcdata)
+				fi.Pcdata = n
 			}
-			for i := range fi.Pcln.Pcdata {
-				if fi.Pcln.Pcdata[i] == nil {
-					fi.Pcln.Pcdata[i] = pctab(ctxt, 0, nil)
+			for i := range fi.Pcdata {
+				if fi.Pcdata[i] == nil {
+					fi.Pcdata[i] = pctab(ctxt, 0, nil)
 				}
 			}
 			if sp := pcTable(t, gocobj.PCSPDelta); sp != nil {
-				fi.Pcln.Pcsp = pctab(ctxt, s.Size, sp)
+				fi.Pcsp = pctab(ctxt, s.Size, sp)
 			} else {
-				fi.Pcln.Pcsp = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: int64(t.FrameSize)}})
+				fi.Pcsp = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: int64(t.FrameSize)}})
 			}
 			if up := pcTable(t, gocobj.PCUnsafePoint); up != nil {
-				fi.Pcln.Pcdata[abi.PCDATA_UnsafePoint] = pctab(ctxt, s.Size, up)
+				fi.Pcdata[pcUnsafe] = pctab(ctxt, s.Size, up)
 			}
-			fi.Pcln.Pcdata[abi.PCDATA_StackMapIndex] = pctab(ctxt, s.Size, stackIdx[x])
-			fi.Pcln.Pcfile = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: 1}})
-			fi.Pcln.Pcline = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: 1}})
+			fi.Pcdata[pcStackMap] = pctab(ctxt, s.Size, stackIdx[x])
+			fi.Pcfile = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: 1}})
+			fi.Pcline = pctab(ctxt, s.Size, []gocobj.PCEntry{{PC: 0, Value: 1}})
 			if t.StartLine != 0 {
 				fi.StartLine = int32(t.StartLine)
 			}
 			if ft, lt := pcTable(t, gocobj.PCFile), pcTable(t, gocobj.PCLine); ft != nil && lt != nil {
 				// 1.4: real C files and lines from the debug locations.
-				fi.Pcln.UsedFiles = map[goobj.CUFileIndex]struct{}{}
+				fi.UsedFiles = map[uint32]bool{}
 				gf := make([]gocobj.PCEntry, len(ft))
 				for i, e := range ft {
 					gf[i] = gocobj.PCEntry{PC: e.PC, Value: goFile(e.Value)}
-					fi.Pcln.UsedFiles[goobj.CUFileIndex(gf[i].Value)] = struct{}{}
+					fi.UsedFiles[uint32(gf[i].Value)] = true
 				}
-				fi.Pcln.Pcfile = pctab(ctxt, s.Size, gf)
-				fi.Pcln.Pcline = pctab(ctxt, s.Size, lt)
-				fi.Pcln.InlTree = obj.InlTree{}
+				fi.Pcfile = pctab(ctxt, s.Size, gf)
+				fi.Pcline = pctab(ctxt, s.Size, lt)
+				fi.InlTree = nil
 				for _, n := range t.Inl {
-					p := ctxt.PosTable.XPos(src.MakePos(fileBases[min(int(n.File), len(fileBases)-1)], uint(n.Line), 0))
-					k := fi.Pcln.InlTree.Add(int(n.Parent), p, c.inlSym(n.Func), n.Func)
-					fi.Pcln.InlTree.SetParentPC(k, int32(n.ParentPC))
+					fi.InlTree = append(fi.InlTree, goobjw.InlNode{
+						Parent:   int32(n.Parent),
+						File:     uint32(fileIdx[min(int(n.File), len(fileIdx)-1)]),
+						Line:     int32(n.Line),
+						Func:     c.inlSym(n.Func),
+						ParentPC: int32(n.ParentPC),
+					})
 				}
 				if it := pcTable(t, gocobj.PCInlIndex); it != nil && len(t.Inl) > 0 {
-					fi.Pcln.Pcinline = pctab(ctxt, s.Size, it)
+					fi.Pcinline = pctab(ctxt, s.Size, it)
 				}
 			}
 		}
 	}
 
-	ctxt.NumberSyms()
-	buf, err := bio.Create(out)
+	f, err := os.Create(out)
 	if err != nil {
 		return err
 	}
-	buf.WriteString(objabi.HeaderString())
-	fmt.Fprintf(buf, "!\n")
-	obj.WriteObjFile(ctxt, buf)
-	return buf.Close()
+	bw := bufio.NewWriter(f)
+	if err := ctxt.Write(bw, header); err != nil {
+		f.Close()
+		return err
+	}
+	if err := bw.Flush(); err != nil {
+		f.Close()
+		return err
+	}
+	return f.Close()
+}
+
+// headerExperiments returns the experiments an object header's X: field
+// enables.
+func headerExperiments(h string) map[string]bool {
+	out := map[string]bool{}
+	for _, f := range splitFields(h) {
+		if len(f) > 2 && f[:2] == "X:" {
+			for _, e := range splitComma(f[2:]) {
+				out[e] = true
+			}
+		}
+	}
+	return out
 }
