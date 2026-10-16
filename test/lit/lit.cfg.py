@@ -5,7 +5,7 @@ import os
 import lit.formats
 
 config.name = "goc"
-config.test_format = lit.formats.ShTest(execute_external=True)
+config.test_format = lit.formats.ShTest()  # internal shell; lit 23 rejects execute_external=True
 config.suffixes = [".ll"]
 config.test_source_root = os.path.dirname(__file__)
 root = os.path.abspath(os.path.join(config.test_source_root, "..", ".."))
