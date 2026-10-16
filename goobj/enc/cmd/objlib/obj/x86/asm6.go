@@ -31,11 +31,11 @@
 package x86
 
 import (
+	"encoding/binary"
+	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/sys"
-	"encoding/binary"
-	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/buildcfg"
 	"log"
 	"strings"

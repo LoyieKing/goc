@@ -1,4 +1,4 @@
-// Copyright 2026 The goc Authors. goc addition, not part of the Go tree:
+// goc addition, not part of the Go tree (tools/goc-goenc):
 // gocobj2goobj builds a function's inline tree from the .goc.inltree table
 // instead of from Progs, so it sets ParentPC directly.
 

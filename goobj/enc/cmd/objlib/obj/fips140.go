@@ -135,8 +135,8 @@ see ../../link/internal/ld/fips.go for those details.
 package obj
 
 import (
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/bisect"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/buildcfg"
 	"log"

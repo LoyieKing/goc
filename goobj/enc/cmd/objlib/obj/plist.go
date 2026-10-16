@@ -5,9 +5,9 @@
 package obj
 
 import (
+	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/src"
-	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/abi"
 	"strings"
 )

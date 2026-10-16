@@ -5,11 +5,11 @@
 package x86
 
 import (
+	"encoding/base64"
+	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/src"
-	"encoding/base64"
-	"fmt"
 	"math"
 )
 

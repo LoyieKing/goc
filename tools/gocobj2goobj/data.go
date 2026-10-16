@@ -203,7 +203,7 @@ func (c *converter) emitData() error {
 				if typ, siz, ok = arm64DataReloc(r.Type); !ok {
 					return fmt.Errorf("unsupported arm64 data reloc type %d in %s at %#x", r.Type, secs[i].Name, r.Off)
 				}
-				host.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
+				host.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
 				continue
 			}
 			d, ok := gv.X86Data[elf.R_X86_64(r.Type)]
@@ -211,7 +211,7 @@ func (c *converter) emitData() error {
 				return fmt.Errorf("unsupported data reloc type %d in %s at %#x", r.Type, secs[i].Name, r.Off)
 			}
 			typ, siz = d.Type, d.Siz
-			host.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
+			host.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: siz, Type: typ, Add: add, Sym: target})
 		}
 	}
 	return nil

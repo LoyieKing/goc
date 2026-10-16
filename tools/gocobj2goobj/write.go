@@ -228,7 +228,7 @@ func (c *converter) write(out string) error {
 				if r.Add < math.MinInt32 || r.Add > math.MaxInt32 {
 					return fmt.Errorf("reloc at %s+%#x: addend %d out of range", s.Name, off, r.Add)
 				}
-				s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: goAdd, Sym: target})
+				s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: goAdd, Sym: target})
 			}
 
 			fi := s.Func()

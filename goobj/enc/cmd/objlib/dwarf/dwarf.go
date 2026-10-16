@@ -9,10 +9,10 @@ package dwarf
 
 import (
 	"bytes"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/src"
 	"cmp"
 	"errors"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/src"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/buildcfg"
 	"os/exec"
 	"slices"

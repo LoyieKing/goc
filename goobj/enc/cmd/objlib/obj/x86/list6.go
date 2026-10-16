@@ -31,8 +31,8 @@
 package x86
 
 import (
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
 )
 
 var Register = []string{

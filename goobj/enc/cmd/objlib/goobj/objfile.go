@@ -19,10 +19,10 @@
 package goobj
 
 import (
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/bio"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/bio"
 	"unsafe"
 )
 

@@ -100,7 +100,7 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				return fmt.Errorf("call at %s+%#x has addend %d", s.Name, off, add)
 			}
 			putInsnAt(s.P, off, insnAt(s.P, off)&^0x03ffffff)
-			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Call, Sym: target})
+			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Call, Sym: target})
 		case elf.R_AARCH64_ADR_PREL_PG_HI21:
 			if next >= 0 {
 				if _, ok := arm64PagePair(elf.R_AARCH64(mine[next].Type)); !ok {
@@ -113,14 +113,14 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				// own: R_ARM64_PCREL on an ADRP, R_ARM64_LDSTn / R_ARM64_PCREL
 				// on the low-12 instruction (see archreloc).
 				putInsnAt(s.P, off, insnAt(s.P, off)&^0x60FFFFE0)
-				s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Page, Add: add, Sym: target})
+				s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Page, Add: add, Sym: target})
 				continue
 			}
 			typ, err := pair(arm64PagePair)
 			if err != nil {
 				return err
 			}
-			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: typ, Add: add, Sym: target})
+			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: typ, Add: add, Sym: target})
 		case elf.R_AARCH64_ADR_GOT_PAGE:
 			_, err := pair(func(t elf.R_AARCH64) (objabi.RelocType, bool) {
 				return gv.A64GOTPair, t == elf.R_AARCH64_LD64_GOT_LO12_NC
@@ -128,7 +128,7 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 			if err != nil {
 				return err
 			}
-			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: gv.A64GOTPair, Add: add, Sym: target})
+			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 8, Type: gv.A64GOTPair, Add: add, Sym: target})
 		case elf.R_AARCH64_ADD_ABS_LO12_NC, elf.R_AARCH64_LDST8_ABS_LO12_NC,
 			elf.R_AARCH64_LDST16_ABS_LO12_NC, elf.R_AARCH64_LDST32_ABS_LO12_NC,
 			elf.R_AARCH64_LDST64_ABS_LO12_NC, elf.R_AARCH64_LDST128_ABS_LO12_NC:
@@ -139,10 +139,10 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				w &^= 1 << 22
 			}
 			putInsnAt(s.P, off, w)
-			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: add, Sym: target})
+			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: 4, Type: typ, Add: add, Sym: target})
 		case elf.R_AARCH64_ABS64, elf.R_AARCH64_ABS32:
 			d := gv.A64Data[elf.R_AARCH64(r.Type)]
-			s.AddRel(ctxt, obj.Reloc{Off: int32(off), Siz: d.Siz, Type: d.Type, Add: add, Sym: target})
+			s.GocAddRel(ctxt, obj.Reloc{Off: int32(off), Siz: d.Siz, Type: d.Type, Add: add, Sym: target})
 		default:
 			return fmt.Errorf("unsupported arm64 text reloc type %d in %s at %#x", r.Type, s.Name, off)
 		}

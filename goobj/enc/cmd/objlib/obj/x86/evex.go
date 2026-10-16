@@ -5,9 +5,9 @@
 package x86
 
 import (
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
 	"errors"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/obj"
 	"strings"
 )
 

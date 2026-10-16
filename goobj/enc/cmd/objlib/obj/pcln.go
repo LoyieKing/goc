@@ -5,10 +5,10 @@
 package obj
 
 import (
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"encoding/binary"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"log"
 )
 

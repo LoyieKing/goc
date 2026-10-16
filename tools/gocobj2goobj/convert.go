@@ -300,7 +300,7 @@ func (c *converter) gotSlot(target *obj.LSym, add int64) *obj.LSym {
 	ls.Type = objabi.SDATA
 	c.ctxt.GloblPos(ls, 8, obj.NOPTR, src.NoXPos)
 	ls.WriteInt(c.ctxt, 0, 8, 0) // the reloc needs bytes to land in
-	ls.AddRel(c.ctxt, obj.Reloc{Off: 0, Siz: 8, Type: objabi.R_ADDR, Add: add, Sym: target})
+	ls.GocAddRel(c.ctxt, obj.Reloc{Off: 0, Siz: 8, Type: objabi.R_ADDR, Add: add, Sym: target})
 	c.gotSyms[key] = ls
 	return ls
 }

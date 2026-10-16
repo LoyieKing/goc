@@ -6,8 +6,8 @@ package obj
 
 import (
 	"bytes"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/abi"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/buildcfg"
 	"io"

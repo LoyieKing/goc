@@ -32,12 +32,12 @@
 package obj
 
 import (
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/hash"
-	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/hash"
+	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/buildcfg"
 	"log"
 	"math"

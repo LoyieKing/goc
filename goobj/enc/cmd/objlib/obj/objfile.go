@@ -8,14 +8,14 @@ package obj
 
 import (
 	"bytes"
+	"cmp"
+	"encoding/binary"
+	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/bio"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/goobj"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/hash"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/sys"
-	"cmp"
-	"encoding/binary"
-	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/stdinternal/abi"
 	"io"
 	"log"

@@ -1,7 +1,9 @@
+// goc addition, not part of the Go tree (tools/goc-goenc).
+
 package abi
 
-// Stubs for compiler intrinsics (normally provided by the Go toolchain).
-// Enough for cmd/internal/obj encode path when vendored outside GOROOT.
+// FuncPCABI0 and FuncPCABIInternal are compiler intrinsics inside GOROOT.
+// The object writer never calls them; these stubs only let the copy build.
 
 func FuncPCABI0(f interface{}) uintptr { return 0 }
 

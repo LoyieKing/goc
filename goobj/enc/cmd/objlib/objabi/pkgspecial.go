@@ -48,25 +48,25 @@ var runtimePkgs = []string{
 
 	"runtime",
 
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/atomic",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/exithook",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/maps",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/math",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/sys",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/syscall",
+	"internal/runtime/atomic",
+	"internal/runtime/exithook",
+	"internal/runtime/maps",
+	"internal/runtime/math",
+	"internal/runtime/sys",
+	"internal/runtime/syscall",
 
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/abi",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/bytealg",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/byteorder",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/chacha8rand",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/coverage/rtcov",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/cpu",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/goarch",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/godebugs",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/goexperiment",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/goos",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/profilerecord",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/stringslite",
+	"internal/abi",
+	"internal/bytealg",
+	"internal/byteorder",
+	"internal/chacha8rand",
+	"internal/coverage/rtcov",
+	"internal/cpu",
+	"internal/goarch",
+	"internal/godebugs",
+	"internal/goexperiment",
+	"internal/goos",
+	"internal/profilerecord",
+	"internal/stringslite",
 }
 
 // extraNoInstrumentPkgs is the set of packages in addition to runtimePkgs that
@@ -83,15 +83,15 @@ var extraNoInstrumentPkgs = []string{
 	"-internal/bytealg",
 }
 
-var noRaceFuncPkgs = []string{"sync", "sync/atomic", "github.com/LoyieKing/goc/goobj/enc/stdinternal/sync", "github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/atomic"}
+var noRaceFuncPkgs = []string{"sync", "sync/atomic", "internal/sync", "internal/runtime/atomic"}
 
 var allowAsmABIPkgs = []string{
 	"runtime",
 	"reflect",
 	"syscall",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/bytealg",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/chacha8rand",
-	"github.com/LoyieKing/goc/goobj/enc/stdinternal/runtime/syscall",
+	"internal/bytealg",
+	"internal/chacha8rand",
+	"internal/runtime/syscall",
 	"runtime/internal/startlinetest",
 }
 

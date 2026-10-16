@@ -7,10 +7,10 @@
 package obj
 
 import (
+	"fmt"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/dwarf"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/objabi"
 	"github.com/LoyieKing/goc/goobj/enc/cmd/objlib/src"
-	"fmt"
 	"slices"
 	"strings"
 	"sync"
