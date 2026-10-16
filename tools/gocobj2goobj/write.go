@@ -58,6 +58,9 @@ func (c *converter) write(out string) error {
 	for _, x := range c.fns {
 		x.sym = ctxt.LookupABI(c.goName[x.name], x.abi)
 	}
+	// Every function and thunk is a TEXT symbol; an overestimate only widens
+	// the DWARF index fields (go1.25+).
+	ctxt.GocSetTextCount(len(c.fns) + len(c.goName))
 	if err := c.emitData(); err != nil {
 		return err
 	}

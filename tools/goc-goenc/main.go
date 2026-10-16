@@ -140,7 +140,14 @@ func main() {
 		readFile(filepath.Join(all["cmd/internal/obj"].Dir, "link.go"))); m != nil && !strings.Contains(m[0], "\n}") {
 		setAlign = "s.Align = " + m[1] + "(a)"
 	}
-	compat, err := format.Source([]byte(fmt.Sprintf(gocCompat, addRel, setAlign)))
+	// Link.DwTextCount (go1.25+) sizes the DWARF5 text-address index
+	// relocations (R_DWTXTADDR_U1..U4); the compiler counts its functions
+	// into it. Left 0, a big package overflows R_DWTXTADDR_U1 at link time.
+	dwCount := ""
+	if has(all["cmd/internal/obj"].Dir, "DwTextCount ") {
+		dwCount = "ctxt.DwTextCount = n"
+	}
+	compat, err := format.Source([]byte(fmt.Sprintf(gocCompat, addRel, setAlign, dwCount)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -387,4 +394,8 @@ func (s *LSym) GocAddRel(ctxt *Link, r Reloc) { %s }
 
 // GocSetAlign sets a data symbol's alignment where LSym has one.
 func (s *LSym) GocSetAlign(a int) { %s }
+
+// GocSetTextCount tells the writer how many functions the object has,
+// where it sizes DWARF text-address indices by that.
+func (ctxt *Link) GocSetTextCount(n int) { %s }
 `

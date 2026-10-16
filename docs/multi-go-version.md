@@ -27,7 +27,7 @@
 |---|---|
 | `stdinternal/abi/funcpc_stub.go` | `FuncPCABI0` 在 GOROOT 外没有编译器内建实现，用桩函数代替 |
 | `cmd/objlib/obj/goc_inl.go` | 提供 `InlTree.SetParentPC` |
-| `cmd/objlib/obj/goc_compat.go` | 提供 `LSym.GocAddRel`：源码里有 `AddRel`（1.24+）就调用它，否则 `s.R = append(...)`（1.23）；还有 `LSym.GocSetAlign`：只有 `LSym` 有 `Align` 字段时（1.27+）才设置，否则什么都不做 |
+| `cmd/objlib/obj/goc_compat.go` | 提供 `LSym.GocAddRel`：源码里有 `AddRel`（1.24+）就调用它，否则 `s.R = append(...)`（1.23）；还有 `LSym.GocSetAlign`：只有 `LSym` 有 `Align` 字段时（1.27+）才设置，否则什么都不做；还有 `Link.GocSetTextCount`：设置 `DwTextCount`（1.25+） |
 
 生成过程中它还会从该 GOROOT 的源码**探测 ABI 事实**，并选出与之匹配的 profile，写进 `cmd/objlib/objabi/goc_profile.go`。探测的事实包括：
 
