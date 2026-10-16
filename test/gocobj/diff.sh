@@ -9,8 +9,8 @@ for f in "$A" "$B"; do
   [[ -f "$f" ]] || { echo "gocobj-diff test: missing $f (run test/e2e/realbody and goabi first)" >&2; exit 1; }
 done
 cd "$ROOT"
-go run ./tools/gocobj-diff "$A" "$A"
-if go run ./tools/gocobj-diff "$A" "$B" >/dev/null; then
+"${GOC_HOST_GO:-go}" run ./tools/gocobj-diff "$A" "$A"
+if "${GOC_HOST_GO:-go}" run ./tools/gocobj-diff "$A" "$B" >/dev/null; then
   echo "FAIL gocobj-diff: realbody and goabi objects compared equal" >&2
   exit 1
 fi

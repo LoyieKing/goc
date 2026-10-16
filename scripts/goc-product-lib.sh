@@ -109,7 +109,7 @@ goc_lower_bin() {
       goc_die "goc-lower missing ($bin). See docs/build-from-source.md"
     fi
     mkdir -p "$ROOT/bin"
-    ( cd "$ROOT" && GOPROXY=off go build -o "$bin" ./tools/goc-lower/ ) \
+    ( cd "$ROOT" && GOPROXY=off GOROOT= GOTOOLDIR= "${GOC_HOST_GO:-go}" build -o "$bin" ./tools/goc-lower/ ) \
       || goc_die "could not build goc-lower"
   fi
   printf '%s\n' "$bin"

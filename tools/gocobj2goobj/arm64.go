@@ -20,8 +20,14 @@ func putInsnAt(b []byte, off int, w uint32) { binary.LittleEndian.PutUint32(b[of
 
 // arm64PagePair maps the low-12 relocation that follows an ADRP to the Go
 // relocation covering both instructions.
-func arm64PagePair(second elf.R_AARCH64) (string, bool) {
+//
+// Before go1.20 Go has only the ADRP+ADD pair (R_ADDRARM64); an ADRP+load
+// pair is then written as its two halves.
+func (c *converter) arm64PagePair(second elf.R_AARCH64) (string, bool) {
 	t, ok := gv.A64PagePair[second]
+	if ok {
+		_, ok = c.ctxt.Meta.Relocs[t]
+	}
 	return t, ok
 }
 
@@ -89,7 +95,7 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 			s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Call, Sym: target})
 		case elf.R_AARCH64_ADR_PREL_PG_HI21:
 			if next >= 0 {
-				if _, ok := arm64PagePair(elf.R_AARCH64(mine[next].Type)); !ok {
+				if _, ok := c.arm64PagePair(elf.R_AARCH64(mine[next].Type)); !ok {
 					next = -1 // e.g. LDST128: Go has no pair type for it
 				}
 			}
@@ -102,7 +108,7 @@ func (c *converter) arm64TextRelocs(x *fn, rs []rela) error {
 				s.AddRel(goobjw.Reloc{Off: int32(off), Siz: 4, Type: gv.A64Page, Add: add, Sym: target})
 				continue
 			}
-			typ, err := pair(arm64PagePair)
+			typ, err := pair(c.arm64PagePair)
 			if err != nil {
 				return err
 			}

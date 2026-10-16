@@ -65,7 +65,8 @@ type Builtin struct {
 type Writer struct {
 	// ContentHash names the hash of content-addressable symbols:
 	// "notsha256" (sha256 with every output word complemented) or
-	// "sha256-prefix01" (sha256 over 0x01 followed by the data).
+	// "sha256-prefix01" (sha256 over 0x01 followed by the data) or "sha1"
+	// (go1.18).
 	ContentHash string `json:"content_hash"`
 	// AsmNamedSymsLinkname: an assembler object flags every named symbol
 	// SymFlagLinkname.
@@ -78,6 +79,20 @@ type Writer struct {
 	// AsmArgsStackmap: Flushplist gives an ABI0 assembler function of the
 	// package an args_stackmap and arginfo<ABI> funcdata reference.
 	AsmArgsStackmap bool `json:"asm_args_stackmap"`
+	// TypePrefix and ItabPrefix are the name prefixes that mark Go type
+	// and itab symbols ("type:"/"go:itab." from go1.20, "type."/"go.itab."
+	// before).
+	TypePrefix string `json:"type_prefix"`
+	ItabPrefix string `json:"itab_prefix"`
+	// SortRelocs: WriteObjFile sorts a symbol's relocations by offset
+	// (from go1.19).
+	SortRelocs bool `json:"sort_relocs"`
+	// FuncInfoStartLine: goobj.FuncInfo has a StartLine word after
+	// FuncFlag (from go1.20).
+	FuncInfoStartLine bool `json:"funcinfo_start_line"`
+	// InlFileSymRefs: traverseFuncAux also visits the file symbol of every
+	// inlined call site (before go1.22).
+	InlFileSymRefs bool `json:"inl_file_sym_refs"`
 	// FuncFlags and FuncIDs are internal/abi's.
 	FuncFlags map[string]int `json:"func_flags"`
 	FuncIDs   map[string]int `json:"func_ids"`
@@ -110,7 +125,8 @@ type Arch struct {
 // DWARF describes the per-function DWARF the assembler path emits.
 type DWARF struct {
 	AbbrevFunction int `json:"abbrev_function"` // DW_ABRV_FUNCTION
-	// FuncDIE is the attribute layout of PutDefaultFunc: "v1" (low/high pc
+	// FuncDIE is the attribute layout of PutDefaultFunc: "v0" (as v1 without
+	// DW_AT_decl_line, before go1.21), "v1" (low/high pc
 	// as DW_FORM_addr) or "v2" (emitHiLoPc: DW_FORM_addrx + udata when the
 	// dwarf5 experiment is on, else as v1).
 	FuncDIE string `json:"func_die"`
@@ -227,15 +243,15 @@ func (m *Meta) check() error {
 			}
 		}
 	}
+	// R_ARM64_PCREL_LDSTn (go1.20+) are used if present.
 	need("relocs", m.Relocs, "R_ADDR", "R_CALL", "R_PCREL", "R_CALLARM64", "R_ADDRARM64",
-		"R_ARM64_GOTPCREL", "R_ARM64_PCREL", "R_ARM64_PCREL_LDST8", "R_ARM64_PCREL_LDST16",
-		"R_ARM64_PCREL_LDST32", "R_ARM64_PCREL_LDST64", "R_ARM64_LDST8", "R_ARM64_LDST16",
+		"R_ARM64_GOTPCREL", "R_ARM64_PCREL", "R_ARM64_LDST8", "R_ARM64_LDST16",
 		"R_ARM64_LDST32", "R_ARM64_LDST64", "R_ARM64_LDST128")
 	need("sym_kinds", m.Kinds, "Sxxx", "STEXT", "SRODATA", "SDATA", "SBSS", "SNOPTRDATA", "SNOPTRBSS",
 		"SDWARFFCN", "SDWARFLINES")
 	need("object.obj_flags", m.Object.ObjFlags, "FromAssembly")
 	need("object.sym_flags", m.Object.SymFlags, "Dupok", "Local", "Typelink", "Leaf", "NoSplit", "ReflectMethod", "GoType")
-	need("object.sym_flags2", m.Object.SymFlags2, "UsedInIface", "Itab", "Dict", "PkgInit", "Linkname", "ABIWrapper")
+	need("object.sym_flags2", m.Object.SymFlags2, "UsedInIface", "Itab") // Dict, PkgInit, Linkname, ABIWrapper: newer, used if present
 	need("object.aux_types", m.Object.AuxTypes, "Gotype", "FuncInfo", "Funcdata", "DwarfInfo", "DwarfLoc",
 		"DwarfRanges", "DwarfLines", "Pcsp", "Pcfile", "Pcline", "Pcinline", "Pcdata")
 	need("object.pkg_idx", m.Object.PkgIdx, "None", "Hashed64", "Hashed", "Builtin", "Self")
@@ -249,7 +265,7 @@ func (m *Meta) check() error {
 		return fmt.Errorf("metadata for %s lacks the object magic or hash size", m.Go)
 	}
 	switch m.Writer.ContentHash {
-	case "notsha256", "sha256-prefix01":
+	case "notsha256", "sha256-prefix01", "sha1":
 	default:
 		return fmt.Errorf("metadata for %s: unknown content hash %q", m.Go, m.Writer.ContentHash)
 	}
@@ -259,9 +275,12 @@ func (m *Meta) check() error {
 		return fmt.Errorf("metadata for %s: unknown align model %q", m.Go, m.Writer.Align)
 	}
 	switch m.DWARF.FuncDIE {
-	case "v1", "v2":
+	case "v0", "v1", "v2":
 	default:
 		return fmt.Errorf("metadata for %s: unknown DWARF function DIE layout %q", m.Go, m.DWARF.FuncDIE)
+	}
+	if m.Writer.TypePrefix == "" || m.Writer.ItabPrefix == "" {
+		return fmt.Errorf("metadata for %s lacks the type/itab symbol prefixes", m.Go)
 	}
 	if m.DWARF.Lines != "v1" {
 		return fmt.Errorf("metadata for %s: unknown DWARF lines layout %q", m.Go, m.DWARF.Lines)

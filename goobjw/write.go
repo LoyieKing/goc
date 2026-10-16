@@ -2,6 +2,7 @@ package goobjw
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
@@ -66,6 +67,9 @@ func (l *Link) traverseFuncAux(flag int, s *Sym, fn func(parent, aux *Sym)) {
 	for _, n := range f.InlTree {
 		if n.Func != nil {
 			fn(s, n.Func)
+		}
+		if l.Meta.Writer.InlFileSymRefs {
+			fn(s, l.Lookup(l.files[n.File]))
 		}
 	}
 	for _, a := range []*Sym{f.dwarfRanges, nil, f.dwarfLines, f.dwarfInfo} {
@@ -169,7 +173,9 @@ func (l *Link) funcInfoSyms() {
 		u32(uint32(f.Args))
 		u32(uint32(f.Locals))
 		b.Write([]byte{f.FuncID, f.FuncFlag, 0, 0})
-		u32(uint32(f.StartLine))
+		if l.Meta.Writer.FuncInfoStartLine {
+			u32(uint32(f.StartLine))
+		}
 		files := sortedFiles(f.UsedFiles)
 		u32(uint32(len(files)))
 		for _, x := range files {
@@ -371,7 +377,9 @@ func (l *Link) Write(out io.Writer, header string) error {
 	mark("Reloc")
 	for _, list := range lists {
 		for _, s := range list {
-			sort.SliceStable(s.R, func(i, j int) bool { return s.R[i].Off < s.R[j].Off })
+			if m.Writer.SortRelocs {
+				sort.SliceStable(s.R, func(i, j int) bool { return s.R[i].Off < s.R[j].Off })
+			}
 			for _, r := range s.R {
 				t, ok := m.Relocs[r.Type]
 				if !ok {
@@ -468,10 +476,10 @@ func (l *Link) writeSym(w *writer, s *Sym, name string) error {
 	if s.NoSplit {
 		flag |= o.SymFlags["NoSplit"]
 	}
-	if strings.HasPrefix(s.Name, "type:") && len(s.Name) > 5 && s.Name[5] != '.' && s.Kind == "SRODATA" {
+	if tp := m.Writer.TypePrefix; strings.HasPrefix(s.Name, tp) && len(s.Name) > len(tp) && s.Name[len(tp)] != '.' && s.Kind == "SRODATA" {
 		flag |= o.SymFlags["GoType"]
 	}
-	if strings.HasPrefix(s.Name, "go:itab.") && s.Kind == "SRODATA" {
+	if strings.HasPrefix(s.Name, m.Writer.ItabPrefix) && s.Kind == "SRODATA" {
 		flag2 |= o.SymFlags2["Itab"]
 	}
 	if rest, ok := strings.CutPrefix(s.Name, l.Pkgpath+"."); ok && strings.HasPrefix(rest, ".dict") {
@@ -545,6 +553,9 @@ func (l *Link) contentHash(s *Sym) ([]byte, error) {
 		}
 	case "sha256-prefix01":
 		sum = sha256.Sum256(append([]byte{1}, in...))
+	case "sha1":
+		h := sha1.Sum(in)
+		copy(sum[:], h[:])
 	default:
 		return nil, fmt.Errorf("unknown content hash %q", l.Meta.Writer.ContentHash)
 	}

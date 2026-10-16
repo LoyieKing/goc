@@ -36,8 +36,10 @@ func (l *Link) dwarf(s *Sym) {
 	}
 	info.P = append(info.P, 1, 0x9c) // DW_FORM_block1: DW_OP_call_frame_cfa
 	info.P = append(info.P, 1, 0, 0, 0)
-	info.Size = int64(len(info.P))   // DW_FORM_data4 decl_file: file 0, 1-based
-	uleb(info, uint64(fn.StartLine)) // DW_FORM_udata decl_line
+	info.Size = int64(len(info.P)) // DW_FORM_data4 decl_file: file 0, 1-based
+	if m.DWARF.FuncDIE != "v0" {
+		uleb(info, uint64(fn.StartLine)) // DW_FORM_udata decl_line
+	}
 	external := byte(1)
 	if s.Static {
 		external = 0

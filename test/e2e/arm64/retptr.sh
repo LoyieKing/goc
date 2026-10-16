@@ -20,7 +20,7 @@ for O in 2 3; do
   GOC_DEFAULT_PTR_COLOR=cptr GOC_ARCH=arm64 GOC_OPT_LEVEL=$O "$ROOT/cmd/goc" build \
     "$ROOT/test/e2e/retptr/retptr.c" -o "$OUT/retptr.goobj" >"$OUT/build.log" 2>&1 || {
     tail -20 "$OUT/build.log" >&2; exit 1; }
-  go run ./tools/goc-objdump verify "$OUT/retptr.gocobj"
+  "${GOC_HOST_GO:-go}" run ./tools/goc-objdump verify "$OUT/retptr.gocobj"
   ( cd "$ROOT/test/e2e/retptr" && CGO_ENABLED=0 GOARCH=arm64 GOFLAGS= GOC_BINOBJ="$OUT/retptr.goobj" \
     go build -a -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" -o "$OUT/retptr_test" . ) \
     >"$OUT/go-build.log" 2>&1 || { tail -20 "$OUT/go-build.log" >&2; exit 1; }

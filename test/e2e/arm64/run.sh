@@ -198,8 +198,8 @@ PY
 # The tables describe that check: goc-objdump verify requires SP_DELTA 0 and
 # an unsafe point at pc 0 for every function flagged needs_stack_check.
 [[ -f "$TMP/ms.gocobj" ]] || fail "no side .gocobj next to ms.goobj"
-( cd "$ROOT" && go run ./tools/goc-objdump verify "$TMP/ms.gocobj" ) || fail "arm64 .gocobj does not verify"
-( cd "$ROOT" && go run ./tools/goc-objdump dump "$TMP/ms.gocobj" ) | rg -q 'ARM64_CALL26 runtime\.morestack_noctxt' \
+( cd "$ROOT" && "${GOC_HOST_GO:-go}" run ./tools/goc-objdump verify "$TMP/ms.gocobj" ) || fail "arm64 .gocobj does not verify"
+( cd "$ROOT" && "${GOC_HOST_GO:-go}" run ./tools/goc-objdump dump "$TMP/ms.gocobj" ) | rg -q 'ARM64_CALL26 runtime\.morestack_noctxt' \
   || fail "tables list no morestack call"
 run_arm64 "$TMP/ms.elf" "$(printf '42\n4\n0x')$(GOARCH=arm64 go tool nm "$TMP/ms.elf" | awk '$3=="main.glob"{sub(/^0+/,"",$1); print $1}')"
 pass "arm64 morestack prologue reads g and compares"

@@ -16,7 +16,7 @@ env -u GOC_DEFAULT_PTR_COLOR GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-2}" "$ROOT/cmd/goc"
   tail -20 "$OUT/build.log" >&2
   exit 1
 }
-go run ./tools/goc-objdump verify "$OUT/stress.gocobj"
+"${GOC_HOST_GO:-go}" run ./tools/goc-objdump verify "$OUT/stress.gocobj"
 ( cd "$ROOT/test/e2e/stress" && \
   CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/stress.goobj" \
   go build -a -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" \

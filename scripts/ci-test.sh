@@ -23,8 +23,8 @@ step "lines"             ./test/e2e/lines/run.sh
 step "arm64"             ./test/e2e/arm64/run.sh
 step "arm64 stress"      ./test/e2e/arm64/stress.sh
 step "arm64 retptr"      ./test/e2e/arm64/retptr.sh
-step "go unit tests"     go test ./gocobj/ ./gometa/ ./goobj/... ./goobjw/ ./tools/...
-step "gocobj goldens"    go run ./tools/goc-objdump verify test/gocobj/v1.0/valid.gocobj
+step "go unit tests"     "${GOC_HOST_GO:-go}" test ./gocobj/ ./gometa/ ./goobj/... ./goobjw/ ./tools/...
+step "gocobj goldens"    "${GOC_HOST_GO:-go}" run ./tools/goc-objdump verify test/gocobj/v1.0/valid.gocobj
 step "gocobj-diff"       ./test/gocobj/diff.sh
 
 echo "=== ci-test: all passed ==="

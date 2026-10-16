@@ -33,7 +33,13 @@ func TestProfilesAndRelocsKnown(t *testing.T) {
 			names = append(names, n)
 		}
 		for _, n := range gv.A64PagePair {
-			names = append(names, n)
+			// The ADRP+load pairs are go1.20+; before, the halves are
+			// written on their own (arm64PagePair).
+			if _, ok := m.Relocs[n]; ok || n == "R_ADDRARM64" {
+				names = append(names, n)
+			} else if g, _ := gometa.Minor(m.Go); g >= "go1.20" {
+				t.Errorf("%s: relocation %s unknown", v, n)
+			}
 		}
 		for _, n := range gv.A64Lo12 {
 			names = append(names, n)

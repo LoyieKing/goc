@@ -82,9 +82,9 @@ cp -a "$LLC" "$stage/passes/goc-llc"
 cp -a "$GOC_STACKMAP" "$stage/passes/libGocPasses.so"
 chmod a+rx "$stage/passes/goc-llc"
 
-( cd "$ROOT" && CGO_ENABLED=0 go build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
+( cd "$ROOT" && CGO_ENABLED=0 "${GOC_HOST_GO:-go}" build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
 chmod a+rx "$stage/bin/gocobj2goobj"
-( cd "$ROOT" && go build -o "$stage/bin/goc-lower" ./tools/goc-lower/ )
+( cd "$ROOT" && "${GOC_HOST_GO:-go}" build -o "$stage/bin/goc-lower" ./tools/goc-lower/ )
 chmod a+rx "$stage/bin/goc-lower"
 
 # Drop the absolute build-machine directory from RUNPATH. $ORIGIN/../lib

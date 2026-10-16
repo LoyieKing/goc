@@ -15,7 +15,7 @@ OUT="$ROOT/build/test/stress-arm64"
 mkdir -p "$OUT"
 env -u GOC_DEFAULT_PTR_COLOR GOC_ARCH=arm64 GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-2}" "$ROOT/cmd/goc" build \
   "$ROOT/test/e2e/stress/stress.c" -o "$OUT/stress.goobj" >"$OUT/build.log" 2>&1 || { tail -20 "$OUT/build.log" >&2; exit 1; }
-go run ./tools/goc-objdump verify "$OUT/stress.gocobj"
+"${GOC_HOST_GO:-go}" run ./tools/goc-objdump verify "$OUT/stress.gocobj"
 STUB="$ROOT/test/e2e/stress/stubs_arm64.s"
 cp "$ROOT/test/e2e/stress/stubs_amd64.s" "$STUB"
 trap 'rm -f "$STUB"' EXIT

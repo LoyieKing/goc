@@ -153,6 +153,9 @@ func (r *resolver) resolve() *gometa.Meta {
 	all := pick(gb, "")
 	o.SymABIStatic = all["SymABIstatic"]
 	o.HashSize = all["HashSize"]
+	if o.HashSize == 0 && regexp.MustCompile(`const HashSize = sha1\.Size\b`).Match(gf.text) {
+		o.HashSize = 20 // go1.18
+	}
 	o.Hash64Size = all["Hash64Size"]
 	if bl := compositeVar(r.parse("cmd/internal/goobj/builtinlist.go"), "builtins"); bl != nil {
 		for _, e := range bl.Elts {
@@ -234,6 +237,9 @@ func (r *resolver) resolve() *gometa.Meta {
 		// StackLimit = stackGuard - StackSystem - StackSmall: the nosplit
 		// budget that go1.21 names StackNosplitBase.
 		mm := regexp.MustCompile(`stackGuard := (\d+)\*stackGuardMultiplier\(race\) \+ StackSystem\s+stackLimit := stackGuard - StackSystem - StackSmall`).FindStringSubmatch(string(st.text))
+		if mm == nil { // go1.18, 1.19
+			mm = regexp.MustCompile(`var StackGuard = (\d+)\*stackGuardMultiplier\(\) \+ StackSystem\s+var StackLimit = StackGuard - StackSystem - StackSmall`).FindStringSubmatch(string(st.text))
+		}
 		if mm == nil {
 			r.errorf("cmd/internal/objabi/stack.go: StackLimit has an unknown layout")
 		} else {
@@ -327,6 +333,9 @@ func trimmed(b constBlock, prefix string) map[string]int {
 // header probe expects and returns it.
 func (r *resolver) headerFormat() string {
 	body := r.funcSource("cmd/internal/objabi/util.go", "HeaderString")
+	if strings.Contains(body, `"go object %s %s %s X:%s\n"`) { // go1.18, 1.19
+		return "go object {GOOS} {GOARCH} {GOVERSION} X:{experiments}\\n"
+	}
 	if !strings.Contains(body, `"go object %s %s %s%s X:%s\n"`) {
 		r.errorf("cmd/internal/objabi/util.go: HeaderString has an unknown layout")
 	}
@@ -391,6 +400,12 @@ func (r *resolver) writerFacts(m *gometa.Meta) (hashSrc string) {
 		if m.Object.HashSize > 20 {
 			r.errorf("goobj.HashSize %d exceeds the 20 bytes hash.New20 yields", m.Object.HashSize)
 		}
+	case strings.Contains(ch, "sha1.New()"): // go1.18
+		w.ContentHash = "sha1"
+		hashSrc = "crypto/sha1"
+		if m.Object.HashSize != 20 {
+			r.errorf("goobj.HashSize %d is not sha1's 20 bytes", m.Object.HashSize)
+		}
 	default:
 		r.errorf("cmd/internal/obj/objfile.go: contentHash uses an unknown hash")
 	}
@@ -405,6 +420,20 @@ func (r *resolver) writerFacts(m *gometa.Meta) (hashSrc string) {
 		r.errorf("cmd/internal/obj/objfile.go: (*writer).Sym aligns symbols in an unknown way")
 	}
 	w.TrimInlineHash = strings.Contains(sym, "TrimInlineHash(")
+	switch {
+	case strings.Contains(sym, `strings.HasPrefix(s.Name, "type:")`) && strings.Contains(sym, `strings.HasPrefix(s.Name, "go:itab.")`):
+		w.TypePrefix, w.ItabPrefix = "type:", "go:itab."
+	case strings.Contains(sym, `strings.HasPrefix(s.Name, "type.")`) && strings.Contains(sym, `strings.HasPrefix(s.Name, "go.itab.")`): // before go1.20
+		w.TypePrefix, w.ItabPrefix = "type.", "go.itab."
+	default:
+		r.errorf("cmd/internal/obj/objfile.go: (*writer).Sym marks type and itab symbols in an unknown way")
+	}
+	wof := r.funcSource("cmd/internal/obj/objfile.go", "WriteObjFile")
+	w.SortRelocs = strings.Contains(wof, "sort.Sort(relocByOff(s.R))") || strings.Contains(wof, "slices.SortFunc(s.R, relocByOffCmp)")
+	tfa := r.funcSource("cmd/internal/obj/sym.go", "(*Link).traverseFuncAux")
+	w.InlFileSymRefs = regexp.MustCompile(`f, _ := (ctxt\.getFileSymbolAndLine\(|linkgetlineFromPos\(ctxt, )call\.Pos\)\s+if filesym := ctxt\.Lookup\(f\); filesym != nil \{\s+fn\(fsym, filesym\)`).MatchString(tfa)
+	fiw := r.funcSource("cmd/internal/goobj/funcinfo.go", "(*FuncInfo).Write")
+	w.FuncInfoStartLine = strings.Contains(fiw, "writeUint32(uint32(a.StartLine))")
 	fp := r.funcSource("cmd/internal/obj/plist.go", "Flushplist")
 	w.AsmArgsStackmap = strings.Contains(fp, `".args_stackmap"`) && strings.Contains(fp, `"%s.arginfo%d"`)
 	return hashSrc
@@ -427,6 +456,9 @@ func (r *resolver) dwarfFacts(m *gometa.Meta) {
 		}
 	} else {
 		d.FuncDIE = "v1"
+		if !strings.Contains(pdf, "int64(s.StartLine)") && !strings.Contains(pdf, "int64(s.StartPos.RelLine())") {
+			d.FuncDIE = "v0" // before go1.21: no DW_AT_decl_line
+		}
 	}
 	d.Lines = "v1" // generateDebugLinesSymbol, guarded by reviewed.go
 	rt := r.parse("cmd/internal/objabi/reloctype.go")

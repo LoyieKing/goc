@@ -27,7 +27,7 @@ goc_converter() {
     flock 9
     [[ -x "$dir/gocobj2goobj" ]] && exit 0
     cd "$root" || exit 1
-    GOFLAGS= CGO_ENABLED=0 GOOS= GOARCH= go build -o "$dir/gocobj2goobj.tmp.$$" ./tools/gocobj2goobj >&2 \
+    GOFLAGS= GOROOT= GOTOOLDIR= CGO_ENABLED=0 GOOS= GOARCH= "${GOC_HOST_GO:-go}" build -o "$dir/gocobj2goobj.tmp.$$" ./tools/gocobj2goobj >&2 \
       && mv "$dir/gocobj2goobj.tmp.$$" "$dir/gocobj2goobj"
   ) || { echo "goc: building gocobj2goobj failed" >&2; return 1; }
   echo "$dir/gocobj2goobj"

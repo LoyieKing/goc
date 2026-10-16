@@ -187,16 +187,33 @@ type RInlNode struct {
 	ParentPC           int32
 }
 
-// DecodeFuncInfo decodes a FuncInfo symbol's contents.
+// DecodeFuncInfo decodes a FuncInfo symbol's contents in the layout of
+// the reader's release.
+func (r *Reader) DecodeFuncInfo(b []byte) (DecodedFuncInfo, error) {
+	return decodeFuncInfo(b, r.Meta.Writer.FuncInfoStartLine)
+}
+
+// DecodeFuncInfo decodes a FuncInfo symbol's contents (go1.20+ layout).
 func DecodeFuncInfo(b []byte) (DecodedFuncInfo, error) {
+	return decodeFuncInfo(b, true)
+}
+
+func decodeFuncInfo(b []byte, startLine bool) (DecodedFuncInfo, error) {
 	var fi DecodedFuncInfo
-	if len(b) < 20 {
+	o := 12
+	if startLine {
+		o = 16
+	}
+	if len(b) < o+4 {
 		return fi, fmt.Errorf("short FuncInfo")
 	}
 	u := func(o int) uint32 { return binary.LittleEndian.Uint32(b[o:]) }
-	fi.Args, fi.Locals, fi.FuncID, fi.FuncFlag, fi.StartLine = u(0), u(4), b[8], b[9], int32(u(12))
-	n := int(u(16))
-	o := 20
+	fi.Args, fi.Locals, fi.FuncID, fi.FuncFlag = u(0), u(4), b[8], b[9]
+	if startLine {
+		fi.StartLine = int32(u(12))
+	}
+	n := int(u(o))
+	o += 4
 	if len(b) < o+4*n+4 {
 		return fi, fmt.Errorf("short FuncInfo")
 	}

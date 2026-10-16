@@ -27,7 +27,7 @@ var verbose = flag.Bool("v", false, "print every difference, not just the first 
 type reloc struct {
 	Off    int32
 	Siz    uint8
-	Type   uint16
+	Type   string // objabi name: the numbers differ between releases
 	Target string
 	Add    int64
 }
@@ -35,8 +35,8 @@ type reloc struct {
 type sym struct {
 	Name        string
 	ABI         uint16
-	Type        uint8
-	Flag, Flag2 uint8
+	Type        string // symbol kind name
+	Flag, Flag2 string // flag names
 	Siz, Align  uint32
 	Data        []byte
 	Relocs      []reloc
@@ -105,10 +105,11 @@ func load(path string) (*object, error) {
 	o := &object{Header: hdr, Syms: map[string]*sym{}}
 	for i := uint32(0); i < ndef; i++ {
 		s := r.Sym(i)
-		y := &sym{Name: nameOf(i), ABI: s.ABI, Type: s.Type, Flag: s.Flag, Flag2: s.Flag2,
+		y := &sym{Name: nameOf(i), ABI: s.ABI, Type: nameFor(r.Meta.Kinds, int(s.Type)),
+			Flag: flagNames(r.Meta.Object.SymFlags, s.Flag), Flag2: flagNames(r.Meta.Object.SymFlags2, s.Flag2),
 			Siz: s.Siz, Align: s.Align, Data: r.Data(i), Aux: map[string]string{}}
 		for _, rl := range r.Relocs(i) {
-			y.Relocs = append(y.Relocs, reloc{rl.Off, rl.Siz, rl.Type, resolve(rl.Sym), rl.Add})
+			y.Relocs = append(y.Relocs, reloc{rl.Off, rl.Siz, nameFor(r.Meta.Relocs, int(rl.Type)), resolve(rl.Sym), rl.Add})
 		}
 		sort.Slice(y.Relocs, func(a, b int) bool { return y.Relocs[a].Off < y.Relocs[b].Off })
 		nfd, npd := 0, 0
@@ -140,7 +141,11 @@ func load(path string) (*object, error) {
 				y.Aux[fmt.Sprintf("funcdata%d", nfd)] = fmt.Sprintf("%x", data)
 				nfd++
 			case at["FuncInfo"]:
-				y.Aux["funcinfo"] = funcinfo(data)
+				y.Aux["funcinfo"] = funcinfo(r, data)
+			case at["DwarfInfo"]:
+				y.Aux["dwarfinfo"] = fmt.Sprintf("%x", data)
+			case at["DwarfLines"]:
+				y.Aux["dwarflines"] = fmt.Sprintf("%x", data)
 			case at["Gotype"]:
 				y.Aux["gotype"] = resolve(ref)
 			}
@@ -181,8 +186,8 @@ func pcvalue(b []byte, quantum int) string {
 	return strings.Join(out, " ")
 }
 
-func funcinfo(b []byte) string {
-	fi, err := goobjw.DecodeFuncInfo(b)
+func funcinfo(r *goobjw.Reader, b []byte) string {
+	fi, err := r.DecodeFuncInfo(b)
 	if err != nil {
 		return fmt.Sprintf("%x", b)
 	}
@@ -250,7 +255,7 @@ func compare(a, b *object) []string {
 			continue
 		}
 		if x.Type != y.Type || x.Flag != y.Flag || x.Flag2 != y.Flag2 || x.Siz != y.Siz || x.Align != y.Align {
-			d = append(d, fmt.Sprintf("%s: attrs type=%d/%d flag=%#x/%#x flag2=%#x/%#x size=%d/%d align=%d/%d",
+			d = append(d, fmt.Sprintf("%s: attrs type=%s/%s flag=[%s]/[%s] flag2=[%s]/[%s] size=%d/%d align=%d/%d",
 				k, x.Type, y.Type, x.Flag, y.Flag, x.Flag2, y.Flag2, x.Siz, y.Siz, x.Align, y.Align))
 		}
 		if !bytes.Equal(x.Data, y.Data) {
@@ -272,6 +277,38 @@ func compare(a, b *object) []string {
 		}
 	}
 	return d
+}
+
+// nameFor returns the name a release gives a number (the first, sorted,
+// when several share it).
+func nameFor(m map[string]int, v int) string {
+	var names []string
+	for n, x := range m {
+		if x == v {
+			names = append(names, n)
+		}
+	}
+	if len(names) == 0 {
+		return fmt.Sprintf("#%d", v)
+	}
+	sort.Strings(names)
+	return names[0]
+}
+
+func flagNames(m map[string]int, v uint8) string {
+	var names []string
+	rest := int(v)
+	for n, bit := range m {
+		if bit != 0 && int(v)&bit == bit {
+			names = append(names, n)
+			rest &^= bit
+		}
+	}
+	sort.Strings(names)
+	if rest != 0 {
+		names = append(names, fmt.Sprintf("%#x", rest))
+	}
+	return strings.Join(names, ",")
 }
 
 func firstRelocDiff(a, b []reloc) string {

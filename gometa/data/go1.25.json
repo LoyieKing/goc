@@ -1148,6 +1148,11 @@
     "align": "heuristic",
     "trim_inline_hash": false,
     "asm_args_stackmap": true,
+    "type_prefix": "type:",
+    "itab_prefix": "go:itab.",
+    "sort_relocs": true,
+    "funcinfo_start_line": true,
+    "inl_file_sym_refs": false,
     "func_flags": {
       "Asm": 4,
       "SPWrite": 2,
