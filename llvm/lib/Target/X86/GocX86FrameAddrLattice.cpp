@@ -5,6 +5,22 @@
 //===----------------------------------------------------------------------===//
 #include "GocX86FrameAddrFix.h"
 
+#include "llvm/Support/CommandLine.h"
+
+namespace {
+enum class TaintMode { Quiet, Warn, Fatal };
+}
+static llvm::cl::opt<TaintMode> GocFrameAddrTaint(
+    "goc-frameaddr-taint",
+    llvm::cl::desc("goc-frameaddr-fix: a frame-derived value it cannot repair is"),
+    llvm::cl::init(TaintMode::Quiet),
+    llvm::cl::values(clEnumValN(TaintMode::Quiet, "quiet", "counted only (default)"),
+                     clEnumValN(TaintMode::Warn, "warn", "reported"),
+                     clEnumValN(TaintMode::Fatal, "fatal", "a fatal error")));
+static llvm::cl::opt<bool> GocFrameAddrDebug(
+    "goc-frameaddr-debug",
+    llvm::cl::desc("goc-frameaddr-fix: print the machine function before a fatal taint"));
+
 namespace goc::fa {
 
 int GocFrameAddrFix::spillSlotOf(const MachineInstr &MI, uint64_t *Size) const {
@@ -321,10 +337,8 @@ void GocFrameAddrFix::stepCall(State &S, const MachineInstr &MI) const {
 void GocFrameAddrFix::derivedLive(MachineFunction &MF, StringRef What, const MachineInstr &Call,
                  const Val &V) {
   ++St.Derived;
-  const char *Mode = std::getenv("GOC_FRAMEADDR_TAINT");
-  bool Fatal = Mode && std::strcmp(Mode, "fatal") == 0;
-  bool Quiet = !Mode || std::strcmp(Mode, "quiet") == 0;
-  if (Quiet && !Fatal)
+  bool Fatal = GocFrameAddrTaint == TaintMode::Fatal;
+  if (GocFrameAddrTaint == TaintMode::Quiet)
     return;
   std::string Msg;
   raw_string_ostream OS(Msg);
@@ -346,7 +360,7 @@ void GocFrameAddrFix::derivedLive(MachineFunction &MF, StringRef What, const Mac
     errs() << OS.str();
     return;
   }
-  if (std::getenv("GOC_FRAMEADDR_DEBUG"))
+  if (GocFrameAddrDebug)
     MF.print(errs());
   report_fatal_error(Twine(OS.str()));
 }

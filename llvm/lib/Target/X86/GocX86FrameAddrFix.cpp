@@ -9,9 +9,8 @@
 // into its codegen pipeline. This file rebuilds exactly what llc's
 // LLVMTargetMachine::addPassesToEmitFile does (same TargetPassConfig, same
 // cl::opt flags, same TargetOptions) and appends the pass as the very last
-// machine pass before the AsmPrinter. With GOC_FRAMEADDR_FIX=0 the fix pass
-// is not added (the placement pass still runs, and -enable-tail-merge=false
-// is the default unless given explicitly).
+// machine pass before the AsmPrinter (-enable-tail-merge=false is the
+// default unless given explicitly).
 //
 // The problem it solves (see Transforms/StackMap/SMRoots.cpp, rematFrameAddress): a goroutine
 // stack is copied during a call (the callee's morestack prologue, or the Go
@@ -58,7 +57,7 @@
 //      where liveness is imprecise.
 //   5. A value derived from a frame address with an unknown coefficient
 //      (p - x, p * k) is "tainted" and cannot be repaired here. It is counted
-//      and reported in a note (GOC_FRAMEADDR_TAINT=report lists them,
+//      and reported in a note (-goc-frameaddr-taint=warn lists them,
 //      =fatal aborts the compile). For quickjs these are libregexp's
 //      `sp - stack_buf` style differences that are re-added to a reloaded
 //      base, i.e. offsets, not addresses; the same values are unrepaired in
@@ -81,15 +80,20 @@
 //      already agree.
 #include "GocX86FrameAddrFix.h"
 #include "Goc/MachinePasses.h"
+#include "llvm/Support/CommandLine.h"
+
+static llvm::cl::opt<std::string> GocFrameAddrTrace(
+    "goc-frameaddr-trace", llvm::cl::value_desc("function"),
+    llvm::cl::desc("goc-frameaddr-fix: trace the repair of this function"));
+static llvm::cl::opt<bool> GocFrameAddrStats(
+    "goc-frameaddr-stats",
+    llvm::cl::desc("goc-frameaddr-fix: print per-function repair counts"));
 
 namespace goc::fa {
 
 unsigned TotalUnrepairable = 0, FnsUnrepairable = 0, TotalRepairCalls = 0;
 
 bool GocFrameAddrFix::runOnMachineFunction(MachineFunction &MF) {
-  const char *E = std::getenv("GOC_FRAMEADDR_FIX");
-  if (E && std::strcmp(E, "0") == 0)
-    return false;
   TRI = MF.getSubtarget().getRegisterInfo();
   TII = MF.getSubtarget().getInstrInfo();
   MFI = &MF.getFrameInfo();
@@ -247,9 +251,7 @@ bool GocFrameAddrFix::runOnMachineFunction(MachineFunction &MF) {
   for (int FI = MFI->getObjectIndexBegin(); FI < 0; ++FI)
     if (!MFI->isDeadObjectIndex(FI))
       TopOff = std::max<int64_t>(TopOff, 8 + MFI->getObjectOffset(FI) + MFI->getObjectSize(FI));
-  bool AnalyzeOnly = E && std::strcmp(E, "analyze") == 0;
-  const char *TraceFn = std::getenv("GOC_FRAMEADDR_TRACE");
-  bool Trace = TraceFn && MF.getName() == TraceFn;
+  bool Trace = !GocFrameAddrTrace.empty() && MF.getName() == GocFrameAddrTrace;
   bool Any = false;
   std::vector<MachineBasicBlock *> Order(RPOT.begin(), RPOT.end());
   for (MachineBasicBlock *Orig : Order) {
@@ -334,16 +336,6 @@ bool GocFrameAddrFix::runOnMachineFunction(MachineFunction &MF) {
           Reloads.push_back({R, V.Alias});
       }
       if (Regs.empty() && Slots.empty() && Reloads.empty()) {
-        ++It;
-        continue;
-      }
-      if (AnalyzeOnly) { // GOC_FRAMEADDR_FIX=analyze: count, do not rewrite
-        for (auto &P : Regs)
-          (P.second.K == FA ? St.Lea : P.second.K == D1 ? St.Rebase : St.Range)++;
-        for (auto &P : Slots)
-          (void)P, ++St.Slot;
-        St.Reload += Reloads.size();
-        ++St.Calls;
         ++It;
         continue;
       }
@@ -493,7 +485,7 @@ bool GocFrameAddrFix::runOnMachineFunction(MachineFunction &MF) {
   TotalUnrepairable += St.Derived;
   FnsUnrepairable += St.Derived ? 1 : 0;
   TotalRepairCalls += St.Calls;
-  if (std::getenv("GOC_FRAMEADDR_STATS") && (St.Calls || St.Derived))
+  if (GocFrameAddrStats && (St.Calls || St.Derived))
     errs() << "goc-frameaddr-fix: " << MF.getName() << " calls=" << St.Calls
            << " lea=" << St.Lea << " rebase=" << St.Rebase << " range=" << St.Range
            << " slot=" << St.Slot << " reload=" << St.Reload << " split=" << St.Split
@@ -511,5 +503,5 @@ void goc::printFrameAddrFixNote(llvm::raw_ostream &OS) {
   if (fa::TotalUnrepairable)
     OS << "goc-llc: note: " << fa::TotalUnrepairable
        << " frame-derived values of unknown provenance stay live across calls in "
-       << fa::FnsUnrepairable << " functions (not rebased; GOC_FRAMEADDR_TAINT=report lists them)\n";
+       << fa::FnsUnrepairable << " functions (not rebased; -goc-frameaddr-taint=warn lists them)\n";
 }

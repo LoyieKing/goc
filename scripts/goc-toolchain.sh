@@ -25,16 +25,14 @@ EOF
 }
 
 cmd_status() {
-  local clang libdir flags=()
-  clang="$(goc_resolve_clang)"
-  libdir="$(goc_clang_libdir "$clang")"
+  local flags=()
   goc_append_resolved_flags flags
   cat <<EOF
-clang: $clang
-libdir: $libdir
-opt: $OPT
-llc: $LLC
-stackmap: $GOC_STACKMAP
+clang: $GOC_CLANG
+libdir: $(goc_clang_libdir "$GOC_CLANG")
+opt: $GOC_OPT
+llc: $GOC_LLC
+passes: $GOC_PASSES
 goc go: ${flags[*]}
 arch: ${GOC_ARCH:-amd64}
 EOF

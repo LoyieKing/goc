@@ -14,17 +14,12 @@ dest="${1:?pack-release: need DEST}"
 ver="$(tr -d '[:space:]' <"$ROOT/VERSION")"
 name="goc-${ver}-linux-amd64"
 
-clang="$(goc_resolve_clang)"
-goc_export_tools
-[[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). Run scripts/build-passes.sh"
-[[ -f "$GOC_STACKMAP" ]] || goc_die "libGocPasses.so missing ($GOC_STACKMAP)"
-[[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. Run scripts/build-clang.sh"
+goc_require_tools
+clang="$GOC_CLANG"
+clangbin="$(dirname "$(readlink -f "$clang")")"
 
 copy_tool() {
-  local name="$1" src="${2:-}"
-  if [[ -z "$src" ]]; then
-    src="$(goc_beside "$name" 2>/dev/null || true)"
-  fi
+  local name="$1" src="$clangbin/$1"
   [[ -n "$src" && -e "$src" ]] || goc_die "missing $name (run scripts/build-clang.sh)"
   cp -a "$(readlink -f "$src")" "$stage/bin/$name"
   chmod a+rx "$stage/bin/$name"
@@ -35,7 +30,7 @@ trap 'rm -rf "$work"' EXIT
 stage="$work/$name"
 mkdir -p "$stage/bin" "$stage/lib" "$stage/passes" "$stage/cmd" \
   "$stage/scripts" "$stage/include" "$stage/examples/hello" \
-  "$stage/tools/goc" "$stage/tools/goc"
+  "$stage/tools/goc"
 
 cp -a "$ROOT/cmd/goc" "$stage/cmd/goc"
 chmod a+rx "$stage/cmd/goc"
@@ -48,10 +43,7 @@ done
 cp -a "$ROOT/include/goc.h" "$ROOT/include/goc_uptr.h" "$stage/include/"
 cp -a "$ROOT/examples/hello/go.mod" "$ROOT/examples/hello/main.go" \
   "$ROOT/examples/hello/add.c" "$stage/examples/hello/"
-cp -a "$ROOT/tools/goc/realbody.sh" \
-  "$ROOT/tools/goc/args_map.bin" \
-  "$ROOT/tools/goc/locals_map.bin" \
-  "$stage/tools/goc/"
+cp -a "$ROOT/tools/goc/realbody.sh" "$stage/tools/goc/"
 chmod a+rx "$stage/tools/goc/realbody.sh"
 cp -a "$ROOT/tools/goc/toolexec_recognize_goobj.sh" "$stage/tools/goc/"
 cp -a "$ROOT/tools/goc/converter.sh" "$stage/tools/goc/"
@@ -74,12 +66,12 @@ fi
 [[ -d "$libdir/clang" ]] || goc_die "no clang resource dir in $libdir"
 cp -a "$libdir/clang" "$stage/lib/clang"
 
-copy_tool opt "$OPT"
+copy_tool opt
 copy_tool llc
 copy_tool llvm-mc
 copy_tool llvm-objdump
-cp -a "$LLC" "$stage/passes/goc-llc"
-cp -a "$GOC_STACKMAP" "$stage/passes/libGocPasses.so"
+cp -a "$GOC_LLC" "$stage/passes/goc-llc"
+cp -a "$GOC_PASSES" "$stage/passes/libGocPasses.so"
 chmod a+rx "$stage/passes/goc-llc"
 
 ( cd "$ROOT" && CGO_ENABLED=0 "${GOC_HOST_GO:-go}" build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )

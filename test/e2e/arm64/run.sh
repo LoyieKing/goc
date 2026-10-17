@@ -39,8 +39,7 @@ fail() { echo "FAIL $*" >&2; exit 1; }
 
 # A caller's environment must not leak into a case.
 clean_env() {
-  env -u GOC_ARCH -u GOC_CSR_ADJUST -u GOC_KEEP_TMP \
-      -u GOC_FIXED_G "$@"
+  env -u GOC_ARCH -u GOC_KEEP_TMP "$@"
 }
 
 header_has() {
@@ -253,7 +252,7 @@ rg -q 'not ported' "$TMP/host.log" || { cat "$TMP/host.log" >&2; fail "refusal d
 pass "arm64 refuses the linux/amd64 QuickJS host"
 
 echo "== arm64 uptr helpers (compiler bodies, x28) =="
-# goc-inline-gate gives every goc_uptr_* / goc_stack_* helper an inline body;
+# goc-uptr-inline gives every goc_uptr_* / goc_stack_* helper an inline body;
 # no runtime object is linked. On arm64 g is x28.
 cat >"$TMP/uptr.c" <<'EOF'
 #include "goc_uptr.h"

@@ -1,6 +1,6 @@
 # goc's LLVM-side code, built against an installed LLVM 19:
 #   libGocPasses.so   opt plugin: goc-color-escape, print<goc-color>,
-#                     goc-inline-gate, goc-stackmap, goc-reanchor
+#                     goc-uptr-inline, goc-stackmap, goc-reanchor
 #   goc-llc           llc plus GocFrameAddrFix / GocStackmapPlacement, the Go
 #                     stack check (X86 and AArch64 hooks) and the .goc.* tables
 #

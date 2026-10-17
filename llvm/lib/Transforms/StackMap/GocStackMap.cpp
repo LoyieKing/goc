@@ -54,7 +54,7 @@
 //   SMRoots.cpp       STACKMAP roots, TLS g hoist, frame-address remat
 //   SMStackMap.cpp    goc-stackmap
 //   SMReanchor.cpp    goc-reanchor
-//   SMUptrInline.cpp  goc-inline-gate (inlined uptr helpers), goc-name-blocks
+//   SMUptrInline.cpp  goc-uptr-inline (inlined uptr helpers), goc-name-blocks
 
 #include "Goc/Internal/StackMap.h"
 #include "Goc/StackMap.h"
@@ -75,8 +75,8 @@ bool goc::parseStackMapPass(StringRef Name, FunctionPassManager &FPM,
     goc::sm::addGocNameBlocks(FPM);
     return true;
   }
-  if (Name == "goc-inline-gate") {
-    goc::sm::addGocInlineGate(FPM);
+  if (Name == "goc-uptr-inline") {
+    goc::sm::addGocUptrInline(FPM);
     return true;
   }
   return false;

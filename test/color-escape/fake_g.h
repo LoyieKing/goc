@@ -1,6 +1,6 @@
 /* Host stand-in for the goroutine g that goc's uptr helpers read.
  *
- * goc-inline-gate gives goc_stack_lo/hi, goc_uptr_* and friends inline
+ * goc-uptr-inline gives goc_stack_lo/hi, goc_uptr_* and friends inline
  * bodies that load g from %fs:-8 and stack.lo/hi from g+0/g+8, exactly as in
  * a Go binary. In a host executable whose only TLS variable is this
  * local-exec pointer, that variable is the word at %fs:-8 (x86-64 TLS

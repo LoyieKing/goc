@@ -40,7 +40,7 @@ Usage:
   --fast-stack-alloca is much faster and single-threaded only: the alloca
   pool cursor is process-global, so concurrent calls are not thread-safe.
   Morestack, splittable frames, and sptr maps are always on.
-  linux/amd64. --fixed-g and --opt-extra=-inline-threshold=250 stay off.
+  linux/amd64. --opt-extra=-inline-threshold=250 stays off.
 `goc build` emits every defined function and a Go entry for each. It stays
 at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
 frames, and sptr maps are always on (amd64 and arm64).
@@ -58,36 +58,9 @@ cmd_version() {
   echo "goc $ver"
 }
 
-resolve_clang() { goc_resolve_clang; }
-
-# In-tree and packed clangs need their own libLLVM. Prepend that lib dir so
-# goc-llc and opt (with libGocPasses.so) start without a hand-set LD_LIBRARY_PATH.
-prepend_clang_lib() {
-  local clang="$1" bin libdir
-  bin="$(readlink -f "$clang" 2>/dev/null || true)"
-  [[ -n "$bin" ]] || return 0
-  libdir="$(cd "$(dirname "$bin")/../lib" 2>/dev/null && pwd || true)"
-  [[ -n "$libdir" && -e "$libdir/libLLVM.so.19.1" ]] || return 0
-  case ":${LD_LIBRARY_PATH:-}:" in
-    *":$libdir:"*) ;;
-    *) export LD_LIBRARY_PATH="$libdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ;;
-  esac
-}
-
 cmd_cc() {
-  local CLANG
-  GOC_FLAG_MODE=driver
-  while [[ $# -gt 0 ]]; do
-    if goc_consume_flag "$1" "${2:-}"; then
-      shift "$GOC_FLAG_SHIFT"
-      continue
-    fi
-    break
-  done
-  unset GOC_FLAG_MODE
-  CLANG="$(resolve_clang)"
-  prepend_clang_lib "$CLANG"
-  exec "$CLANG" -I "$ROOT/include" "$@"
+  goc_tools
+  exec "$GOC_CLANG" -I "$ROOT/include" "$@"
 }
 
 cmd_build() {
@@ -142,59 +115,23 @@ cmd_build() {
   if [[ "$GOC_ARCH" == arm64 ]]; then
     # goc-llc emits the AArch64 stack check and tables, and repairs frame
     # addresses (GocA64FrameAddrFix); goc-stackmap/goc-reanchor run as on
-    # amd64. Only the GOC_CSR_ADJUST experiment is x86-only.
-    if [[ "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
-      echo "goc build: FATAL GOC_CSR_ADJUST is x86-only" >&2
-      exit 1
-    fi
+    # amd64.
     if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$SRC"; then
       echo "goc build: FATAL $SRC is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
       exit 1
     fi
   fi
 
-  local CLANG
-  CLANG="$(resolve_clang)"
-  prepend_clang_lib "$CLANG"
+  # goc-llc (with GocFrameAddrFix), opt and libGocPasses.so of this tree.
+  goc_require_tools
+  local CLANG="$GOC_CLANG" OPT="$GOC_OPT" SMPASS="$GOC_PASSES"
   local INC="$ROOT/include"
-  # amd64 gep remat is only safe with goc-llc's GocFrameAddrFix. Passing
-  # stock llc-19 here used to skip realbody's missing-binary check, so tail
-  # duplication kept frame addresses in callee-saved registers across calls.
-  local LLC="${LLC:-}"
-  if [[ -z "$LLC" ]]; then
-    if [[ -x "$ROOT/passes/goc-llc" ]]; then
-      LLC="$ROOT/passes/goc-llc"
-    else
-      LLC="$ROOT/build/llvm/goc-llc"
-    fi
-  fi
   local REALBODY="$ROOT/tools/goc/realbody.sh"
   local OPT_LEVEL="${GOC_OPT_LEVEL:-0}"
   case "$OPT_LEVEL" in
     0|1|2|3) ;;
     *) echo "goc build: GOC_OPT_LEVEL must be 0, 1, 2, or 3" >&2; exit 1 ;;
   esac
-
-  local OPT="${OPT:-}"
-  if [[ -z "$OPT" || ! -x "$OPT" ]]; then
-    OPT="$(goc_beside opt 2>/dev/null || true)"
-    [[ -n "$OPT" ]] || OPT="$(command -v opt-19 || command -v opt || true)"
-  fi
-  [[ -n "$OPT" && -x "$OPT" ]] || { echo "goc build: opt missing" >&2; exit 1; }
-  # libGocPasses.so: every goc IR pass, color/escape included.
-  local SMPASS="${GOC_STACKMAP:-}"
-  if [[ -z "$SMPASS" && -f "$ROOT/passes/libGocPasses.so" ]]; then
-    SMPASS="$ROOT/passes/libGocPasses.so"
-  fi
-  SMPASS="${SMPASS:-$ROOT/build/llvm/libGocPasses.so}"
-  if [[ ! -f "$SMPASS" ]]; then
-    if [[ -n "${GOC_STACKMAP:-}" ]]; then
-      echo "goc build: missing pass plugin $SMPASS" >&2
-      exit 1
-    fi
-    "$ROOT/scripts/build-passes.sh"
-    [[ -f "$SMPASS" ]] || { echo "goc build: missing pass plugin $SMPASS" >&2; exit 1; }
-  fi
 
   local TMP
   TMP="$(mktemp -d)"
@@ -274,10 +211,11 @@ cmd_build() {
     fi
     BODY_LL="$TMP/a.color.nodbg.ll"
   fi
-  # goc-inline-gate gives every goc_uptr_* / goc_stack_* / goc_dynalloc call
+  # goc-uptr-inline gives every goc_uptr_* / goc_stack_* / goc_dynalloc call
   # an internal alwaysinline body (there is no runtime library), at every -O.
-  # It does not restrict inlining: call-bearing functions may inline.
-  if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate \
+  local UPTR_ARGS=()
+  [[ "${GOC_INLINE_DYNALLOC:-0}" == 1 ]] && UPTR_ARGS+=(-goc-fast-stack-alloca)
+  if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-uptr-inline "${UPTR_ARGS[@]}" \
       -S "$BODY_LL" -o "$TMP/a.gate.ll"; then
     cleanup_build_tmp
     exit 1
@@ -349,8 +287,7 @@ cmd_build() {
   if [[ -n "${GOC_PKG:-}" ]]; then RB_ARGS+=("$GOC_PKG"); fi
   if [[ $ABI0 -eq 1 ]]; then RB_ARGS+=(--abi0); fi
   if GOC_ROOT="$ROOT" GOC_OPT_LEVEL="$OPT_LEVEL" \
-      GOC_ARCH="$GOC_ARCH" LLC="$LLC" OPT="${OPT:-}" \
-      GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
+      GOC_ARCH="$GOC_ARCH" GOC_STACKMAP_PREPARED="$STACKMAP_PREPARED" \
       "$REALBODY" "${RB_ARGS[@]}"; then
     echo "goc build: wrote $OUT_O"
     cleanup_build_tmp
@@ -362,18 +299,8 @@ cmd_build() {
 }
 
 cmd_test() {
-  GOC_FLAG_MODE=driver
-  while [[ $# -gt 0 ]]; do
-    if goc_consume_flag "$1" "${2:-}"; then
-      shift "$GOC_FLAG_SHIFT"
-      continue
-    fi
-    echo "unknown goc test flag: $1" >&2; exit 2
-  done
-  unset GOC_FLAG_MODE
-  # realbody runs goc-llc, which needs the clang tree's libLLVM, the same
-  # way goc build does.
-  prepend_clang_lib "$(resolve_clang)"
+  [[ $# -eq 0 ]] || { echo "goc test takes no arguments" >&2; exit 2; }
+  goc_tools
   bash "$ROOT/test/clang/run.sh"
   bash "$ROOT/test/e2e/realbody/run.sh"
   echo "goc test: PASS"

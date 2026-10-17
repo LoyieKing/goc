@@ -139,20 +139,6 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       if (!fix.Uses.empty())
         argFixes.push_back(std::move(fix));
     }
-    // GOC_CSR_ADJUST: the SysV morestack stub rewrites a saved RBX/R12/R13/
-    // R15/R14 when the value is inside the old stack. The post-call use can
-    // stay in that register. The anchor reload would force the memory
-    // round-trip this mode exists to remove. Store tags above still mark a
-    // slot that holds &s->token; those are not registers.
-    if (const char *csr = std::getenv("GOC_CSR_ADJUST")) {
-      if (std::strcmp(csr, "1") == 0) {
-        if (!fixes.empty() || !argFixes.empty())
-          errs() << "goc-reanchor: " << F.getName() << " csr-adjust skips "
-                 << fixes.size() << " defs and " << argFixes.size()
-                 << " args\n";
-        return PreservedAnalyses::none();
-      }
-    }
     if (fixes.empty() && argFixes.empty())
       return PreservedAnalyses::all();
 

@@ -9,9 +9,8 @@
 // Why a driver: stock llc has no hook to insert a plugin MachineFunction pass
 // into its codegen pipeline. This file rebuilds exactly what llc's
 // LLVMTargetMachine::addPassesToEmitFile does (same TargetPassConfig, same
-// cl::opt flags, same TargetOptions). With GOC_FRAMEADDR_FIX=0 the fix pass
-// does nothing (the placement pass still runs, and -enable-tail-merge=false
-// is the default unless given explicitly).
+// cl::opt flags, same TargetOptions). -enable-tail-merge=false is the
+// default unless given explicitly.
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -74,8 +73,6 @@ static cl::opt<unsigned> GocSymABI(
     cl::desc("Go symbol ABI of the C functions in the tables: 0 ABI0 (Go ABI thunks wrap "
              "them, or a C-only object), 1 ABIInternal"),
     cl::init(0));
-static cl::opt<bool> GocFixedG("goc-fixed-g",
-                               cl::desc("g stays in the profile's G register (-reserve-goc-r14)"));
 static cl::opt<bool> GocNoStackCheck("goc-no-stack-check",
                                      cl::desc("Do not emit the Go stack check (tests only)"));
 static cl::opt<char> OptLevel("O", cl::desc("Optimization level"), cl::Prefix, cl::init('2'));
@@ -217,7 +214,7 @@ int main(int argc, char **argv) {
       }
       // The bodies are C: they are entered with the platform convention
       // whatever their Go symbol ABI says.
-      goc::StackCheckOptions SO{Prof, goc::EntryABI::C, GocFixedG};
+      goc::StackCheckOptions SO{Prof, goc::EntryABI::C};
       PM.add(goc::createGocStackCheckPass(
           SO, IsA64 ? goc::createAArch64StackCheckTarget() : goc::createX86StackCheckTarget()));
     }

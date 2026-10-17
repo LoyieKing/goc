@@ -413,4 +413,4 @@ entry:
 ```
 
 `goc_uptr_from_ptr` 把栈地址编码成「MSB=1 + 相对 `g.stack.hi` 的偏移」（06 篇），搬栈后再解码仍然正确。
-`goc-inline-gate` 会给这类 helper 一个 `alwaysinline` 的函数体（`SMUptrInline.cpp`），O3 把它内联掉。
+`goc-uptr-inline` 会给这类 helper 一个 `alwaysinline` 的函数体（`SMUptrInline.cpp`），O3 把它内联掉。

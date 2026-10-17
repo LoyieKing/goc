@@ -86,7 +86,7 @@ bool outgoingPointerWords(const CallBase &CB, const DataLayout &DL,
   // arm64: stack arguments sit 16 above SP (goc-llc AArch64Frame) and are
   // not described here yet. TODO: a stack pointer passed on the stack and
   // reloaded by the callee after the stack moved is not adjusted.
-  if (gocArchArm64())
+  if (gocArchArm64(*CB.getModule()))
     return true;
   unsigned GPR = 0, SSE = 0;
   uint64_t Stack = 0;

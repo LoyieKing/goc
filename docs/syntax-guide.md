@@ -304,7 +304,7 @@ void     goc_dynrelease(void **scope);
 
 `scope` 是水位。函数入口置 `NULL`。这次执行里第一次分配记下水位；池地址永非 `NULL`，所以后面的 `alloca` 不改它。返回时水位以上全部丢掉，再把 `*scope` 清掉。失败不返回 `NULL`，直接 FATAL（stderr 一行 `goc FATAL uptr: …`，然后 trap）：`scope` 为空、尺寸溢出、池耗尽。pool 路径上，释放时水位不在池内也是致命错误。
 
-没有运行时库，两套实现都由编译器内联（`goc-inline-gate`），签名和颜色相同：
+没有运行时库，两套实现都由编译器内联（`goc-uptr-inline`），签名和颜色相同：
 
 | 构建 | 行为 |
 |---|---|

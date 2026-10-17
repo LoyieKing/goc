@@ -95,7 +95,6 @@ struct GocStackCheck : MachineFunctionPass {
     CheckPlan P;
     P.ABI = Info.ABI;
     P.Frame = Frame;
-    P.FixedG = Opts.FixedG;
     P.Profile = &Prof;
     P.Tier = Frame <= Prof.StackSmall ? FrameTier::Small
              : Frame <= Prof.StackBig ? FrameTier::Big

@@ -87,7 +87,7 @@ arm64 后端已经接上：goc-llc 生成栈检查和 morestack 冷块（`llvm/l
 
 ## 性能：缩小和原生 QuickJS 的差距
 
-来源是 [perf-gap.md](perf-gap.md) 第 8 节。下面每一项都在默认构建里（linux/amd64，`GOC_OPT_LEVEL=3`，gep 模式用 `goc-llc`）。`GOC_FIXED_G` 仍默认关。perf-gap 第 13 项 `-inline-threshold=250` 不在这份清单里，没有开。收益一栏仍是合入前的数字：“实测”是当时的 A/B（时间比，小于 1 表示变快）；“估计”按指令份额推算，这次没有再计时。
+来源是 [perf-gap.md](perf-gap.md) 第 8 节。下面每一项都在默认构建里（linux/amd64，`GOC_OPT_LEVEL=3`，gep 模式用 `goc-llc`）。固定 g 寄存器（原 `GOC_FIXED_G`）的实验开关已删除。perf-gap 第 13 项 `-inline-threshold=250` 不在这份清单里，没有开。收益一栏仍是合入前的数字：“实测”是当时的 A/B（时间比，小于 1 表示变快）；“估计”按指令份额推算，这次没有再计时。
 
 这套二进制上的正确性对照：
 
@@ -104,7 +104,7 @@ arm64 后端已经接上：goc-llc 生成栈检查和 morestack 冷块（`llvm/l
 
 - **恢复回溯栈时不再解码（E1）。** 已进两份 `scripts/qjs-gstack*.patch`。`pc` / `cptr` / `capture` 用 `(uint8_t *)(uintptr_t)(elem).val`。`next_sp` 仍走 `goc_regexp_restore_stackptr`（`goc_uptr_decode`）：它保存的是真栈地址。标成 `cptr` 的做法（E2）没有采用。
   - 收益：合入前只编译未运行。`lre_exec` 的 `FS:-8` 读取 29 → 0，TU 隐式 uptr 存储 12 → 2，`lre_exec` spill 根槽 12 → 7、根重载 52 → 12。按指令份额估计 RegExp 指令数少约 15 个点。这次默认构建上 Bellard 和 ng 的 `libregexp` 都是隐式 uptr 存储 2、解码加载 0。
-- **同一函数里只读一次 `g`。** 已进默认构建，没有开 `GOC_FIXED_G`。`tlsGWord` 的读 `g` 是 `readnone` + `nounwind` + `willreturn`（amd64 `movq %fs:-8, $0`，arm64 `mov $0, x28`）。O3 之后 `hoistTlsG` 把一个函数里的多次读取收成入口处一次。`stack.lo` / `stack.hi` 的加载仍是 volatile。
+- **同一函数里只读一次 `g`。** 已进默认构建，没有固定 g 寄存器。`tlsGWord` 的读 `g` 是 `readnone` + `nounwind` + `willreturn`（amd64 `movq %fs:-8, $0`，arm64 `mov $0, x28`）。O3 之后 `hoistTlsG` 把一个函数里的多次读取收成入口处一次。`stack.lo` / `stack.hi` 的加载仍是 volatile。
   - 收益：估计读 `g` 这一类的 9.4 个点指令能省一半左右。E1 之后 `lre_exec` 里已经没有 `g` 读取，剩下的是 JS 栈溢出检查等位置。Bellard 的 `quickjs.ll` 从 481 次读、54 个函数重复读，变成 122 次读、0 个函数重复读。
 - **GC 根在两次调用之间留在寄存器。** 定义处仍 volatile 写回根槽（stackmap 认的是槽地址，不能被 DSE 删掉）。同一段没有 safepoint 的区间只 volatile 重载一次，后面的使用留在寄存器里；下一次调用后再重载。另外，根槽（`goc.arganchor` / `goc.anchor` / `goc.spill.root`）的精确拷贝若活在被调用者保存的寄存器里，调用后从槽里重读，不再对这份拷贝做 LEA。Go 已经改过槽里的指针。arm64 的帧地址重物化已移植（IR 重物化 + goc-llc 的调用后修正）。
   - 收益：估计最多省 3.9 个点指令。这次没有重测指令数。Bellard 的 300 次栈增长扫描通过；原先字面量 `8` 在搬栈后会被读成 `8*(1+2^-32)`，就是这条路径。
@@ -123,7 +123,7 @@ arm64 后端已经接上：goc-llc 生成栈检查和 morestack 冷块（`llvm/l
   - 收益：机制已实测；估计 Bellard microbench 的几何平均少约 2%。
 - **超越函数直接调 glibc。** `test/e2e/qjs/host/asm/goc_libm_glibc.S` 做栈对齐后调用，不经 Go 的 cgo。`frexp` / `modf` / `ldexp` / `scalbn` / `lrint` / `strtod` 仍走原来的 cgo。CLI 要求 `Math.sin(1)` 的十进制和 glibc 一致。
   - 收益：估计 `3d-morph` 少 35% 到 40%。这次没有重测，只对了 `sin` / `log` / `atan2` 的值。
-- **非根槽恢复栈槽共享。** 默认 llc 不再传 `-no-stack-slot-sharing`。根 alloca 仍独占槽位。没有开 `goc-pin-i64`。
+- **非根槽恢复栈槽共享。** 默认 llc 不再传 `-no-stack-slot-sharing`。根 alloca 仍独占槽位。`goc-pin-i64` 从未启用，已删除。
   - 收益：估计 `JS_CallInternal` 的帧从 1768 字节降到约 1200 字节。关掉槽共享的实验构建在第 16 次扫描 SIGSEGV，默认构建保持打开。
 - **小叶子函数免栈检查。** `GOC_NO_NOSPLIT=1` 仍在，大函数不会整段标成 nosplit。没有调用、帧不超过 `StackSmall` 的 ABI0 叶子由 `gocLeafNosplit` 标 `AttrNoSplit`，链接器检查预算。
   - 收益：估计能省下栈检查那 1.8 个点指令里的一部分。

@@ -71,7 +71,7 @@ gocobj2goobj 选择事实文件的方式：
 `tools/goc/converter.sh` 提供 `goc_converter`，供 realbody.sh 和 repro 测试使用：
 
 - 发布包：直接用 `bin/gocobj2goobj`，一个二进制服务所有支持的 Go 版本；
-- 源码 checkout：按转换器源码（gocobj、gometa 及其数据、goobjw、tools/gocobj2goobj）的哈希构建一次，缓存在 `${GOC_CACHE:-build/conv}/<hash>/`。
+- 源码 checkout：按转换器源码（gocobj、gometa 及其数据、goobjw、tools/gocobj2goobj）的哈希构建一次，缓存在 `build/conv/<hash>/`。
 
 ## 5. profile 只在一处选定
 
@@ -81,7 +81,6 @@ gocobj2goobj 选择事实文件的方式：
 | realbody.sh | 用上面的输出给 goc-llc 传 `-goc-profile=<profile>` |
 | goc-llc | 把 profile 写进 `.gocobj` header |
 | 转换器 | 检查 header 的 profile 与目标版本的 profile 是否**事实相同**（名字可以不同），不同就拒绝 |
-| realbody.sh | 环境变量 `GOC_PROFILE` 可以覆盖 profile（只用于测试） |
 
 profile 命名：
 

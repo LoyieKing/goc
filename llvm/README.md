@@ -12,7 +12,7 @@ follows LLVM's. Two products: `libGocPasses.so` (every IR pass, loaded with
 | `lib/Analysis/GocColor/` | Pointer-color seeding and propagation (`ColorAnalysis.cpp`) and the `print<goc-color>` table (`ColorPrinter.cpp`) |
 | `lib/Analysis/StackMap/` | Read-only safepoint, liveness and stack-address queries used by the stack-map passes |
 | `lib/Transforms/ColorEscape/` | IR pass `goc-color-escape`: escape checks, implicit uptr encode/decode, dynamic alloca lowering, metadata |
-| `lib/Transforms/StackMap/` | IR passes `goc-stackmap`, `goc-reanchor`, `goc-inline-gate`, `goc-name-blocks`: stack-map roots and frame-address rematerialization |
+| `lib/Transforms/StackMap/` | IR passes `goc-stackmap`, `goc-reanchor`, `goc-uptr-inline`, `goc-name-blocks`: stack-map roots and frame-address rematerialization |
 | `lib/Plugin/` | `libGocPasses.so`: registers the passes above, plus `print<goc-color>` |
 | `lib/CodeGen/` | Target-independent machine passes: the Go stack check and `GocStackmapPlacement` |
 | `lib/Target/X86/` | x86 stack-check hook and `GocX86FrameAddrFix` (re-derive frame addresses after calls; lattice in `GocX86FrameAddrLattice.cpp`) |

@@ -8,7 +8,7 @@
  * Decode only with owner g's hi; wrong tag / cross-g → FATAL.
  * No dsptr. No silent sptr→uptr promote (frontend still errors).
  *
- * There is no runtime library: goc-inline-gate (SMUptrInline.cpp) gives
+ * There is no runtime library: goc-uptr-inline (SMUptrInline.cpp) gives
  * every function declared here an inline body, at every -O. The current-g
  * API reads the live g (amd64 %fs:-8, arm64 x28): stack.lo at g+0,
  * stack.hi at g+8. A wrong tag writes "goc FATAL uptr: ..." and traps.

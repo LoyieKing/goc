@@ -116,7 +116,7 @@ const DenseSet<const Argument *> &stackPointerArguments(const Module &M,
                                                         const DataLayout &DL);
 DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL);
 bool unmergeReportedAllocas(Function &F);
-bool gocArchArm64();
+bool gocArchArm64(const Module &M);
 Value *tlsGWord(IRBuilder<> &B, uint64_t Off);
 Function *uptrFatal(Module &M);
 void emitUptrFatal(IRBuilder<> &B, Module &M, const char *Msg);
@@ -138,7 +138,7 @@ bool rewriteUptrCall(CallInst *CI);
 // Pass factories, for parseStackMapPass.
 void addGocStackMap(FunctionPassManager &FPM);
 void addGocReanchor(FunctionPassManager &FPM);
-void addGocInlineGate(FunctionPassManager &FPM);
+void addGocUptrInline(FunctionPassManager &FPM);
 void addGocNameBlocks(FunctionPassManager &FPM);
 
 } // namespace goc::sm

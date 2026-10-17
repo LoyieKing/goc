@@ -15,7 +15,7 @@ goc_converter() {
   fi
   sum="$( (cd "$root" && cat go.mod gocobj/*.go gometa/*.go gometa/data/*.json goobjw/*.go \
     tools/gocobj2goobj/*.go) | sha256sum | cut -c1-12)"
-  dir="${GOC_CACHE:-$root/build/conv}/$sum"
+  dir="$root/build/conv/$sum"
   if [[ -x "$dir/gocobj2goobj" ]]; then
     echo "$dir/gocobj2goobj"
     return 0

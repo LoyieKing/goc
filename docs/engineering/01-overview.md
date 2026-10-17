@@ -39,7 +39,7 @@ Go 的 goroutine 栈很小（起步几 KB），不够时运行时会**整块搬�
 flowchart TD
   A["foo.c（带 cptr/sptr/... 注解）"] -->|"打补丁的 clang 19.1.7<br/>clang/patches + clang/sema/SemaGocColors.cpp<br/>-emit-llvm -O3 -Xclang -disable-llvm-passes"| B["a.ll<br/>颜色以 annotate 形式进 IR"]
   B -->|"opt -passes=goc-color-escape<br/>（GOC_COLOR_REPORT=1 时先 print goc-color）"| C["a.color.ll<br/>!goc.color、uptr 编解码调用"]
-  C -->|"opt -passes=goc-inline-gate"| D["a.gate.ll"]
+  C -->|"opt -passes=goc-uptr-inline"| D["a.gate.ll"]
   D -->|"opt default O3 管线（去掉 argpromotion、globalopt）<br/>+ function(goc-name-blocks)"| E["a.opt.ll"]
   E -->|"opt -passes=goc-stackmap"| F["a.sm.ll<br/>根槽 + llvm.experimental.stackmap"]
   F -->|"opt -passes=goc-reanchor"| G["a.reanchor.ll<br/>指针实参锚定、goc.oldfp"]
@@ -54,7 +54,7 @@ flowchart TD
 ```
 
 文件名就是 `GOC_KEEP_TMP=1` 时临时目录里看到的名字（`cmd/goc` 一个目录，`realbody.sh` 一个目录）。
-`-O0` 时 C→G 之间的 inline-gate / O3 / stackmap / reanchor 不在 `cmd/goc` 里跑，`realbody.sh` 只补跑 `goc-stackmap`（见 02 篇）。
+`-O0` 时 C→G 之间的 uptr-inline / O3 / stackmap / reanchor 不在 `cmd/goc` 里跑，`realbody.sh` 只补跑 `goc-stackmap`（见 02 篇）。
 
 ## 4. 命令行入口 `cmd/goc`
 
@@ -77,21 +77,17 @@ flag 解析统一在 `scripts/goc-flags.sh` 的 `goc_consume_flag`：每个 flag
 |---|---|---|
 | `-O0..-O3` | `GOC_OPT_LEVEL` | `cmd/goc`、`realbody.sh` |
 | `--default-ptr-color C` | `GOC_DEFAULT_PTR_COLOR` | `cmd/goc` → `goc-color-escape -default-ptr-color=` |
-| `--fast-stack-alloca` | `GOC_INLINE_DYNALLOC=1` | `SMUptrInline.cpp`（`getenv`） |
+| `--fast-stack-alloca` | `GOC_INLINE_DYNALLOC=1` | `cmd/goc`、`realbody.sh` → `goc-uptr-inline -goc-fast-stack-alloca` |
 | `--color-report` | `GOC_COLOR_REPORT=1` | `cmd/goc`：加 `-g` 并先跑 `print<goc-color>` |
-| `--arch amd64\|arm64` | `GOC_ARCH` | `cmd/goc`、`realbody.sh`、`SMUptrInline.cpp` |
-| `--fixed-g` | `GOC_FIXED_G=1` | `realbody.sh` → `goc-llc -reserve-goc-r14 -goc-fixed-g`（amd64） |
-| `--csr-adjust` | `GOC_CSR_ADJUST=1` | `SMReanchor.cpp`（x86-only） |
+| `--arch amd64\|arm64` | `GOC_ARCH` | `cmd/goc`、`realbody.sh`、`goc-lower`（pass 按模块 triple 判断架构） |
 | `--keep-tmp[=DIR]` | `GOC_KEEP_TMP` | `cmd/goc`、`realbody.sh` |
-| `--opt-extra` / `--llc-extra` / `--llc-opt` | `GOC_OPT_EXTRA` / `GOC_LLC_EXTRA` / `GOC_LLC_OPT` | 实验用 |
+| `--opt-extra` / `--llc-extra` | `GOC_OPT_EXTRA` / `GOC_LLC_EXTRA` | 实验用 |
 | `--pkg PATH` | `GOC_PKG` | `realbody.sh` → `gocobj2goobj -p` |
 | `--ir-renames SPEC` | `GOC_IR_RENAMES` | `goc-lower rename-ir` |
 | `--libcall-impl SPEC` | `GOC_LIBCALL_IMPL` | `tools/gocobj2goobj/convert.go`（`os.Getenv`） |
-| `--stackmap PATH` | `GOC_STACKMAP` | 指定 `libGocPasses.so` |
 
-只供调试、没有 flag 的环境变量：`GOC_FRAMEADDR_FIX`、`GOC_FRAMEADDR_TRACE`、`GOC_FRAMEADDR_STATS`、`GOC_FRAMEADDR_DEBUG`、`GOC_FRAMEADDR_TAINT`（`lib/Target/X86`），
-`GOC_STACKMAP_PLACEMENT_TRACE`（`GocStackmapPlacement.cpp`），`GOC_PROFILE`（覆盖 realbody 传给 goc-llc 的 profile）、`GOC_CACHE`（按 Go 版本构建的转换器缓存目录）。
-`GOC_FRAMEADDR_MODE` 已移除，设成 `gep` 以外的值 `realbody.sh` 直接报错。
+工具（clang、opt、llvm-mc、goc-llc、libGocPasses.so）只从本树找：release 的 `bin/`、`passes/`，或 checkout 的 `third_party/llvm-19.1.7-clang-build` 与 `build/llvm`（`goc_tools`，`scripts/goc-product-lib.sh`），没有 flag 或环境变量可以换。
+LLVM pass 里不读环境变量；调试开关是 goc-llc 的命令行选项，用 `--llc-extra` 传：`-goc-frameaddr-trace=<函数>`、`-goc-frameaddr-stats`、`-goc-frameaddr-debug`、`-goc-frameaddr-taint=report|fatal`、`-goc-stackmap-placement-trace`。
 
 工具定位：clang 只认 `bin/clang`（发布包）或 `third_party/llvm-19.1.7-clang-build/bin/clang`（源码树），没有 `--clang`；
 `goc-llc` / `libGocPasses.so` 先找 `passes/`（发布包）再找 `build/llvm/`（源码树）。
@@ -109,7 +105,7 @@ flag 解析统一在 `scripts/goc-flags.sh` 的 `goc_consume_flag`：每个 flag
 | `llvm/lib/Analysis/GocColor/` | 颜色播种与传播（只读）、`print<goc-color>` 报表 | `ColorAnalysis.cpp`、`ColorPrinter.cpp` |
 | `llvm/lib/Analysis/StackMap/` | safepoint、栈地址、跨调用使用的只读查询 | `SafepointAnalysis.cpp` |
 | `llvm/lib/Transforms/ColorEscape/` | IR pass `goc-color-escape` | `GocColorEscape.cpp`、`CECheck.cpp`、`CERewrite.cpp` |
-| `llvm/lib/Transforms/StackMap/` | IR pass `goc-stackmap`、`goc-reanchor`、`goc-inline-gate`、`goc-name-blocks`、`goc-pin-i64` | `GocStackMap.cpp`（注册）、`SMStackMap.cpp`、`SMReanchor.cpp`、`SMRoots.cpp`、`SMUptrInline.cpp`、`SMPinI64.cpp` |
+| `llvm/lib/Transforms/StackMap/` | IR pass `goc-stackmap`、`goc-reanchor`、`goc-uptr-inline`、`goc-name-blocks` | `GocStackMap.cpp`（注册）、`SMStackMap.cpp`、`SMReanchor.cpp`、`SMRoots.cpp`、`SMUptrInline.cpp` |
 | `llvm/lib/Plugin/` | `libGocPasses.so` 的注册入口 | `GocPasses.cpp` |
 | `llvm/lib/CodeGen/` | 与架构无关的机器 pass | `GocStackCheck.cpp`、`GocStackmapPlacement.cpp` |
 | `llvm/lib/Target/X86/` | x86 栈检查钩子、帧地址修复 | `GocX86StackCheck.cpp`、`GocX86FrameAddrFix.cpp`、`GocX86FrameAddrLattice.cpp` |

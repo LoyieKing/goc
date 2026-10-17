@@ -37,65 +37,22 @@ if [[ $# -gt 3 ]]; then
 fi
 PKG="${3:-main}"
 
-CLANG="$(goc_resolve_clang)"
-goc_prepend_lib "$(goc_clang_libdir "$CLANG")"
+goc_require_tools
+CLANG="$GOC_CLANG" OPT="$GOC_OPT" MC="$GOC_MC" SMPASS="$GOC_PASSES"
+# goc-reanchor rematerializes frame addresses as plain GEPs, which is only
+# safe with goc-llc's post-RA GocFrameAddrFix pass: stock llc CSEs the GEP
+# into a callee-saved register and keeps it across the call.
+LLC="$GOC_LLC"
 # Default stays linux/amd64. arm64 is a separate ISel, not a -march switch.
 # Both go through goc-llc: it emits the stack check (AArch64 hook) and the
 # .goc.* tables. g is x28, reserved by llc; there is no TLS load. Frame-
 # address repair (GocA64FrameAddrFix) and stack-map roots run on arm64 too,
 # so arm64 functions carry locals pointer maps.
-GOC_ARCH="${GOC_ARCH:-amd64}"
+export GOC_ARCH="${GOC_ARCH:-amd64}"   # goc-lower reads it
 case "$GOC_ARCH" in
   amd64|arm64) ;;
   *) echo "realbody: FATAL GOC_ARCH=$GOC_ARCH (want amd64 or arm64)" >&2; exit 1 ;;
 esac
-export GOC_ARCH
-if [[ "$GOC_ARCH" == arm64 && "${GOC_CSR_ADJUST:-0}" == 1 ]]; then
-  echo "realbody: FATAL GOC_CSR_ADJUST is x86-only" >&2
-  exit 1
-fi
-# goc-reanchor rematerializes frame addresses as plain GEPs, which is only
-# safe with goc-llc's post-RA GocFrameAddrFix pass (llvm/lib/CodeGen).
-# Stock llc CSEs the GEP into a callee-saved register and keeps it across the
-# call; only GocFrameAddrFix re-derives it, so a stock LLC is refused.
-if [[ -x "$ROOT/passes/goc-llc" ]]; then
-  GOC_LLC_BIN="$ROOT/passes/goc-llc"
-else
-  GOC_LLC_BIN="$ROOT/build/llvm/goc-llc"
-fi
-if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
-  "$ROOT/scripts/build-passes.sh" >&2 || true
-fi
-if [[ -z "${LLC:-}" && ! -x "$GOC_LLC_BIN" ]]; then
-  echo "realbody: FATAL missing $GOC_LLC_BIN (frame-address repair); run scripts/build-passes.sh" >&2
-  exit 1
-fi
-LLC="${LLC:-$GOC_LLC_BIN}"
-if ! grep -a -q 'goc-frameaddr-fix' "$LLC" 2>/dev/null; then
-  echo "realbody: FATAL $LLC has no GocFrameAddrFix; frame-address GEPs would stay stale across calls. Build build/llvm/goc-llc." >&2
-  exit 1
-fi
-if [[ -z "${LLVM_MC:-}" || ! -x "${LLVM_MC:-}" ]]; then
-  LLVM_MC="$(goc_beside llvm-mc 2>/dev/null || true)"
-  if [[ -z "$LLVM_MC" ]]; then
-    LLVM_MC="$(command -v llvm-mc-19 || command -v llvm-mc || true)"
-  fi
-fi
-[[ -n "${LLVM_MC:-}" && -x "$LLVM_MC" ]] || {
-  echo "realbody: FATAL llvm-mc missing. See docs/build-from-source.md" >&2
-  exit 1
-}
-MC="$LLVM_MC"
-if [[ -z "${OPT:-}" || ! -x "${OPT:-}" ]]; then
-  OPT="$(goc_beside opt 2>/dev/null || true)"
-  if [[ -z "$OPT" ]]; then
-    OPT="$(command -v opt-19 || command -v opt || true)"
-  fi
-fi
-[[ -n "${OPT:-}" && -x "$OPT" ]] || {
-  echo "realbody: FATAL opt missing. See docs/build-from-source.md" >&2
-  exit 1
-}
 INC="$ROOT/include"
 OPT_LEVEL="${GOC_OPT_LEVEL:-0}"
 case "$OPT_LEVEL" in
@@ -170,21 +127,14 @@ fi
 LOWER="$(goc_lower_bin)"
 "$LOWER" fix-ir "$LL"
 
-# The pass plugin: goc-inline-gate below, goc-stackmap further down.
-if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
-  SMPASS="$GOC_STACKMAP"
-elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
-  SMPASS="$ROOT/passes/libGocPasses.so"
-else
-  SMPASS="$ROOT/build/llvm/libGocPasses.so"
-fi
-[[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
 if [[ "$IN" != *.ll ]]; then
   # As in cmd/goc (which runs it before handing realbody a .ll): every
   # goc_uptr_* / goc_stack_* / goc_dynalloc call gets an inline body; there
   # is no runtime library. Before rename-ir, so the malloc/free of the
   # non-pool goc_dynalloc can be redirected too.
-  "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate -S "$LL" -o "$TMP/body.gate.ll"
+  UPTR_ARGS=()
+  [[ "${GOC_INLINE_DYNALLOC:-0}" == 1 ]] && UPTR_ARGS+=(-goc-fast-stack-alloca)
+  "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-uptr-inline ${UPTR_ARGS[@]+"${UPTR_ARGS[@]}"} -S "$LL" -o "$TMP/body.gate.ll"
   cp "$TMP/body.gate.ll" "$LL"
 fi
 
@@ -239,9 +189,6 @@ if [[ "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
 fi
 
 LLC_OPT_LEVEL="$OPT_LEVEL"
-if [[ -n "${GOC_LLC_OPT:-}" ]]; then
-  LLC_OPT_LEVEL="$GOC_LLC_OPT"
-fi
 # Per-call Direct locations are the roots. Keep RBP valid at every call.
 # Spill slots share (no -no-stack-slot-sharing): root allocas are not spill
 # slots, and goc-reanchor keeps their lifetime markers off so a scalar cannot
@@ -254,7 +201,7 @@ fi
 # Tail duplication is on: QuickJS dispatch blocks are shared tails, and gcc
 # duplicates them.
 if [[ "$GOC_ARCH" == arm64 ]]; then
-  # No -march=x86-64, no -no-x86-call-frame-opt, no -reserve-goc-r14.
+  # No -march=x86-64, no -no-x86-call-frame-opt.
   # +reserve-x28 keeps g live across the body. AArch64 has no red zone.
   # Jump tables stay 4-byte: goc-llc inserts code after the compression
   # pass sized the entries (LR copy, frame-address repair, stack check).
@@ -277,14 +224,6 @@ if [[ -n "${GOC_LLC_EXTRA:-}" ]]; then
   read -r -a _goc_llc_extra <<<"$GOC_LLC_EXTRA"
   LLC_ARGS+=("${_goc_llc_extra[@]}")
 fi
-if [[ "$GOC_ARCH" == arm64 ]]; then
-  if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
-    echo "realbody: note GOC_FIXED_G is implicit on arm64 (x28 reserved); not passing -reserve-goc-r14" >&2
-  fi
-elif [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
-  LLC_ARGS+=(-reserve-goc-r14)
-  echo "realbody: GOC_FIXED_G=1 llc=$LLC" >&2
-fi
 # goc-llc emits the Go stack check and morestack block of each function and
 # writes the .goc.* tables (docs/gocobj-format.md) as assembler text. They
 # are assembled into the same ELF object, which makes it a .gocobj. One
@@ -293,13 +232,9 @@ fi
 LLC_ARGS+=(-function-sections -goc-sym-abi="$SYM_ABI")
 # The converter names the ABI profile of the Go in PATH (from that
 # release's facts, gometa/data); goc-llc records it in the .gocobj header.
-# GOC_PROFILE overrides it (tests).
 PACK_BIN="$(goc_converter "$ROOT")" || exit 1
-PROFILE="${GOC_PROFILE:-$("$PACK_BIN" -print-profile -goarch "$GOC_ARCH")}" || exit 1
+PROFILE="$("$PACK_BIN" -print-profile -goarch "$GOC_ARCH")" || exit 1
 LLC_ARGS+=(-goc-profile="$PROFILE")
-if [[ "${GOC_FIXED_G:-0}" == "1" ]]; then
-  LLC_ARGS+=(-goc-fixed-g)
-fi
 "$LLC" "${LLC_ARGS[@]}" -goc-tables "$GOC_TABLES" -filetype=asm \
   -o "$TMP/body.s" "$LL"
 

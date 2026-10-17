@@ -10,7 +10,8 @@ echo "=== color-escape: build libGocPasses.so ==="
 
 PASS_BIN="$ROOT/color-escape.sh"
 # The patched clang (goc.h's color attributes are its native attributes).
-CLANG="$(bash -c 'ROOT="$0"; source "$ROOT/scripts/goc-product-lib.sh"; goc_resolve_clang' "$REPO")"
+CLANG="$(bash -c 'ROOT="$0"; source "$ROOT/scripts/goc-product-lib.sh"; goc_tools; echo "$GOC_CLANG $GOC_OPT $GOC_PASSES"' "$REPO")"
+read -r CLANG OPT PASSES <<<"$CLANG"
 INCDIR="$REPO/include"
 OUT="$REPO/build/test/color-escape"
 mkdir -p "$OUT"
@@ -80,22 +81,20 @@ while read -r name expect needle; do
 done < "$ROOT/EXPECTATIONS"
 
 # Host executables of the compiler's uptr helper bodies: color-escape, then
-# goc-inline-gate (the same pass goc build runs), then a native link. No
+# goc-uptr-inline (the same pass goc build runs), then a native link. No
 # runtime library: fake_g.h stands in for g, so goc_stack_lo/hi move.
-OPT="${OPT:-$(command -v opt-19 || command -v opt || echo /usr/lib/llvm-19/bin/opt)}"
-PLUGIN="${GOC_STACKMAP:-$REPO/build/llvm/libGocPasses.so}"
 build_host_uptr() {
   local base="$1"
   "$CLANG" -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
     -I "$INCDIR" -I "$ROOT" -o "$OUT/$base.ll" "$ROOT/$base.c"
   "$PASS_BIN" "$OUT/$base.ll" -o "$OUT/$base.color.ll" >"$OUT/$base.log" 2>&1
-  "$OPT" -load-pass-plugin="$PLUGIN" -passes=goc-inline-gate \
+  "$OPT" -load-pass-plugin="$PASSES" -passes=goc-uptr-inline \
     -S "$OUT/$base.color.ll" -o "$OUT/$base.gate.ll"
   # Only the static inline goc_uptr_is_*_encoded may stay defined; nothing
   # may be left as an external declaration.
   if grep -Eq '^declare .*@goc_(uptr_|stack_|dyn)' "$OUT/$base.gate.ll" &&
      grep -Eq 'call .*@goc_(uptr_(from|as|decode|require)|stack_|dyn)' "$OUT/$base.gate.ll"; then
-    fail_host "$base: a uptr helper call survived goc-inline-gate"
+    fail_host "$base: a uptr helper call survived goc-uptr-inline"
     return 1
   fi
   "$CLANG" -O0 "$OUT/$base.gate.ll" -o "$OUT/$base"

@@ -118,7 +118,7 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 4. **跨 goroutine 使用 sptr/uptr 是合同错误**（单字表示里没有 goroutine 指针）。`GOC_SPTR_WITH_G` 只在 todo 里。
 5. **C 调 Go**：`__go_extern` stub 已落地；非 main 包链入、string/切片/接口、色合同与 panic 语义仍见 `docs/todo.md`。
 6. **栈上传参的指向栈的指针**：被调用者在搬栈之后才读时不会被修正（栈参数区不在栈图里）（todo.md）。
-7. **帧地址修复的 tainted 值**（`p - x`、`p * k`）不能修复，只打印 note（`GOC_FRAMEADDR_TAINT`）。
+7. **帧地址修复的 tainted 值**（`p - x`、`p * k`）不能修复，只打印 note（`-goc-frameaddr-taint`）。
 8. 不支持：完整 ISO C 和宿主 libc、Go 可调用路径上的 AVX / x87 / EH、`stacksave`/`stackrestore`、变参和部分聚合的 ABIInternal（`docs/runtime-model.md`）。
 9. **`--fast-stack-alloca` 只能单线程**（池游标进程全局）。
 10. **`goc build -o` 的输出目录必须已存在**，否则在最后一步才报错。
@@ -135,5 +135,5 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 | `llvm/include/Goc/SlotMD.h` | pass 和 goc-llc 从不按 IR 值名认槽 | `GocX86FrameAddrFix.cpp` 按名字 `goc.oldfp` 找槽（`AI->getName() == "goc.oldfp"`） |
 | `docs/runtime-model.md` 第一段 | 生成的代码「participates in … write barriers for `gptr`」 | 没有写屏障代码 |
 | `docs/gocobj-format.md` header 表 | `stack_checks_in_code` 为 0 时转换器补栈检查 | `gocobj2goobj` 现在在该位为 0 时直接报错 |
-| `ARCHITECTURE.md` 流水线图 | `goc-lower fix-ir` 在 `opt` 之前，`goc-stackmap` 在 realbody 里 | `goc build -O>0` 时 inline-gate/O3/stackmap/reanchor 都在 `cmd/goc` 里跑，realbody 只在 `GOC_STACKMAP_PREPARED≠1` 时补跑 stackmap |
+| `ARCHITECTURE.md` 流水线图 | `goc-lower fix-ir` 在 `opt` 之前，`goc-stackmap` 在 realbody 里 | `goc build -O>0` 时 uptr-inline/O3/stackmap/reanchor 都在 `cmd/goc` 里跑，realbody 只在 `GOC_STACKMAP_PREPARED≠1` 时补跑 stackmap |
 | `toolexec_recognize_goobj.sh` | 写死追加 `GocCheckedAdd`、`StoreGptrWB` 等 8 个 `def` | 对应的符号不由当前流水线生成，看起来是旧原型的残留 |

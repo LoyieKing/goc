@@ -36,7 +36,6 @@ goc-llc 自己的选项：
 | `-goc-tables FILE` | 空 | 把 `.goc.*` 段以汇编文本写到 FILE（`realbody.sh` 写 `body.goc.s`） |
 | `-goc-profile NAME` | `goabi1-amd64`；arm64 目标且未指定时自动 `goabi1-arm64`（realbody.sh 总是传入转换器给出的 profile） | ABI profile（`AbiProfiles.def`），名字的架构必须和目标一致 |
 | `-goc-sym-abi 0\|1` | 0 | 表里 C 函数的 Go 符号 ABI：0 = ABI0（有 thunk 包着，或纯 C 对象），1 = ABIInternal |
-| `-goc-fixed-g` | off | g 常驻 profile 的 G 寄存器（配合 `-reserve-goc-r14`） |
 | `-goc-no-stack-check` | off | 不发栈检查（仅测试） |
 
 另外 goc-llc 在用户没给时自动追加 `-enable-tail-merge=false`。
@@ -62,7 +61,7 @@ arm64 换成：`-relocation-model=static -mtriple=aarch64-unknown-linux-gnu -mat
 - **输入**：机器码里的 `STACKMAP` 伪指令。
 - **规则**：每个 `STACKMAP` 后面、同一个机器块里必须有 CALL；没有就删掉。
 - **为什么**：`GocObjTables` 把记录挂到布局顺序上的下一个 CALL。被当成 safepoint 但被 ISel 展开成指令的 intrinsic（如 `llvm.umul.with.overflow`）后面没有 CALL，记录会挂到别的路径上，那里根槽可能还没初始化。
-- 调试：`GOC_STACKMAP_PLACEMENT_TRACE`。
+- 调试：`-goc-stackmap-placement-trace`。
 
 ## 4. 栈检查：共享策略 + 架构钩子
 
@@ -82,7 +81,7 @@ x86-64 钩子发的指令（文件头注释原文的整理）：
 
 ```
 check（SysV C 入口，R10/R11 可用）：
-    movq %fs:-8, %r11              # g；--fixed-g 时 g 已在 R14
+    movq %fs:-8, %r11              # g
   small: cmpq 16(%r11), %rsp
   big:   leaq -(frame-128)(%rsp), %r10 ; cmpq 16(%r11), %r10
   huge:  movq %rsp, %r10 ; subq $(frame-128), %r10 ; jb stub ; cmpq 16(%r11), %r10
@@ -127,11 +126,11 @@ AArch64 钩子按名字在目标自己的表里查 opcode 和寄存器，不需�
 2. 每次调用后：活着的 `FA` 寄存器 / 槽用 `LEA` 重新算（槽借死掉的 R11 再存回）。
 3. `D1` / `MS` 用 `delta = RBP_after - RBP_before` 平移。`RBP_before` 在调用前存进 `goc.oldfp`（`goc-reanchor` 建的槽，不在栈图里，搬栈时原样复制）。平移放在冷块里，只在 `delta != 0` 时进入，热路径每个调用一次存储一次比较。
 4. 从根槽（`goc.arganchor`、`goc.anchor`、`goc.spill.root`）复制到 CSR 的值：调用后从槽重读（Go 已经改过槽）。
-5. 系数未知的派生值（`p - x`、`p * k`）是 tainted，无法修复，计数后打印 note；`GOC_FRAMEADDR_TAINT=report` 列出，`=fatal` 让编译失败。
+5. 系数未知的派生值（`p - x`、`p * k`）是 tainted，无法修复，计数后打印 note；`-goc-frameaddr-taint=report` 列出，`=fatal` 让编译失败。
 6. 非调用指令写 RSP（动态 alloca）或 RBP，会让基于它的 FA 状态变成 tainted。
 
-调试环境变量：`GOC_FRAMEADDR_FIX=0`（不加这个 pass）、`GOC_FRAMEADDR_TRACE=<函数>`、`GOC_FRAMEADDR_STATS`、`GOC_FRAMEADDR_DEBUG`。
-`realbody.sh` 会 `grep -a goc-frameaddr-fix` 检查 LLC 二进制，没有就拒绝——普通 `llc-19` 会把 GEP CSE 到寄存器里并跨调用保留。
+调试选项：`-goc-frameaddr-trace=<函数>`、`-goc-frameaddr-stats`、`-goc-frameaddr-debug`（经 `--llc-extra` 传给 goc-llc）。这个 pass 总是加上，没有关掉的开关。
+`realbody.sh` 只用本树的 goc-llc——普通 `llc-19` 会把 GEP CSE 到寄存器里并跨调用保留。
 
 ## 6. arm64 专属：`GocAArch64Frame.cpp`
 

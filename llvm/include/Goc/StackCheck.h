@@ -69,7 +69,6 @@ struct CheckPlan {
   EntryABI ABI;
   FrameTier Tier;
   int64_t Frame;   ///< bytes the body allocates below the return address
-  bool FixedG;     ///< g is already in the profile's G register
   const AbiProfile *Profile;
 };
 
@@ -130,7 +129,6 @@ llvm::StringMap<FuncStackInfo> &stackInfo();
 struct StackCheckOptions {
   const AbiProfile *Profile;
   EntryABI CABI;   ///< entry ABI of the C functions (C when Go ABI thunks wrap them)
-  bool FixedG;
 };
 
 /// Runs after prologue/epilogue insertion, before the tables writer.

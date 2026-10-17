@@ -2,7 +2,7 @@
 
 合同：[`syntax-guide.md`](../syntax-guide.md) v0.2.1 §3.3。API 声明在 [`include/goc_uptr.h`](../../include/goc_uptr.h)。
 
-goc 没有运行时库。下面每个 helper 的实现都由编译器给出：`goc-inline-gate`（`llvm/lib/Transforms/StackMap/SMUptrInline.cpp`）把对它们的调用换成模块内的 `internal alwaysinline` 函数体，`goc build` 在 `-O0` 下也会跑这个 pass。所以 goc 生成的对象不引用任何外部 uptr 符号，也不需要额外链接一个 C 文件。amd64 和 arm64 都一样。
+goc 没有运行时库。下面每个 helper 的实现都由编译器给出：`goc-uptr-inline`（`llvm/lib/Transforms/StackMap/SMUptrInline.cpp`）把对它们的调用换成模块内的 `internal alwaysinline` 函数体，`goc build` 在 `-O0` 下也会跑这个 pass。所以 goc 生成的对象不引用任何外部 uptr 符号，也不需要额外链接一个 C 文件。amd64 和 arm64 都一样。
 
 ## 1. 字的布局（amd64 / arm64 用户态地址）
 
@@ -54,7 +54,7 @@ g 的读取是 `readnone`（g 在 goroutine 生命期内不变），`goc-stackma
 
 ## 6. 动态 alloca
 
-`goc-color-escape` 的 `lowerDynamicAllocas` 把动态 `alloca` 换成 `goc_dynalloc(bytes, &scope)` / 返回前的 `goc_dynrelease(&scope)`，结果是 `cptr`，不在 goroutine 栈上（Go 的 pcsp 描述不了函数中间的 SP 变化）。`goc-inline-gate` 按 `GOC_INLINE_DYNALLOC` 给出两种函数体：
+`goc-color-escape` 的 `lowerDynamicAllocas` 把动态 `alloca` 换成 `goc_dynalloc(bytes, &scope)` / 返回前的 `goc_dynrelease(&scope)`，结果是 `cptr`，不在 goroutine 栈上（Go 的 pcsp 描述不了函数中间的 SP 变化）。`goc-uptr-inline` 按 `GOC_INLINE_DYNALLOC` 给出两种函数体：
 
 | 模式 | 实现 |
 |------|------|
@@ -65,7 +65,7 @@ g 的读取是 `readnone`（g 在 goroutine 生命期内不变），`goc-stackma
 
 ## 7. 测试
 
-- `test/color-escape/run.sh`：09/10/11 三个宿主程序经 color-escape + `goc-inline-gate` 后直接链接，不带运行时。`test/color-escape/fake_g.h` 让可执行文件唯一的 TLS 变量正好落在 `%fs:-8`，指向一个假 g，测试就能移动 `stack.lo/hi`，跑的是编译器自己的 helper 函数体。11 号测试覆盖全部显式转换和五种错 tag（检查消息和 rc 132）。
+- `test/color-escape/run.sh`：09/10/11 三个宿主程序经 color-escape + `goc-uptr-inline` 后直接链接，不带运行时。`test/color-escape/fake_g.h` 让可执行文件唯一的 TLS 变量正好落在 `%fs:-8`，指向一个假 g，测试就能移动 `stack.lo/hi`，跑的是编译器自己的 helper 函数体。11 号测试覆盖全部显式转换和五种错 tag（检查消息和 rc 132）。
 - `test/e2e/arm64/run.sh`：arm64 下 helper 读 `x28`、没有外部引用，在 qemu 里的 goroutine 栈上跑通。
 - QuickJS：`js_check_stack_overflow` 用 `goc_stack_hi()`，libregexp 用 `goc_uptr_decode`，引擎的 uptr 存取全部走这些内联体。
 

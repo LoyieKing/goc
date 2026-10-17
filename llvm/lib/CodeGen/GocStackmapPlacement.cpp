@@ -5,10 +5,14 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cstdlib>
 
 using namespace llvm;
+
+static cl::opt<bool> GocStackmapPlacementTrace(
+    "goc-stackmap-placement-trace",
+    cl::desc("goc-llc: report each STACKMAP dropped because no CALL follows it"));
 
 namespace {
 // Each llvm.experimental.stackmap goc-stackmap/goc-reanchor emit names the
@@ -52,7 +56,7 @@ struct GocStackmapPlacement : MachineFunctionPass {
           Stray.push_back(&*It);
       }
     for (MachineInstr *MI : Stray) {
-      if (std::getenv("GOC_STACKMAP_PLACEMENT_TRACE"))
+      if (GocStackmapPlacementTrace)
         errs() << "goc-llc: drop stray STACKMAP id " << MI->getOperand(0).getImm()
                << " in " << MF.getName() << "\n";
       MI->eraseFromParent();

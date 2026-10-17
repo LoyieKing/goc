@@ -1,6 +1,6 @@
-//===- Goc/StackMap.h - stack-map and inline-gate passes -------*- C++ -*-===//
+//===- Goc/StackMap.h - stack-map and uptr-inline passes -------*- C++ -*-===//
 //
-// goc-inline-gate, goc-stackmap, and goc-reanchor: IR function
+// goc-uptr-inline, goc-stackmap, and goc-reanchor: IR function
 // passes that prepare call sites so LLVM records where live sptr/gptr values
 // sit, for the Go stack maps.
 //

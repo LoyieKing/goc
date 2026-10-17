@@ -37,7 +37,7 @@ Go 堆指针。与其它色没有隐式转换。活值进 stackmap；写入 Go �
 源码里的 `alloca(n)`。着色前降成 `goc_dynalloc`，结果是 `cptr`，活到函数返回。不是 goroutine 栈上的变长帧。合同见 syntax-guide §7.2。
 
 ### goc_dynalloc / goc_dynrelease
-`alloca` 的降级 API。`scope` 是函数水位。`--fast-stack-alloca` 时走每个对象一个的单 goroutine bump pool；否则 `malloc` / `free`。函数体由 `goc-inline-gate` 给出。失败是 FATAL（`goc FATAL uptr: …` 后 trap），不返回 `NULL`。
+`alloca` 的降级 API。`scope` 是函数水位。`--fast-stack-alloca` 时走每个对象一个的单 goroutine bump pool；否则 `malloc` / `free`。函数体由 `goc-uptr-inline` 给出。失败是 FATAL（`goc FATAL uptr: …` 后 trap），不返回 `NULL`。
 
 ## ABI
 

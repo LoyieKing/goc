@@ -1,8 +1,16 @@
 //===- SMUptrInline.cpp - inline uptr helpers, block naming ----------===//
 
 #include "Goc/Internal/StackMap.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/TargetParser/Triple.h"
 
 using namespace llvm;
+
+// --fast-stack-alloca of the driver: goc_dynalloc bumps a per-object pool.
+static cl::opt<bool> GocFastStackAlloca(
+    "goc-fast-stack-alloca",
+    cl::desc("goc-uptr-inline: goc_dynalloc bumps a 16 MiB per-object pool "
+             "(single goroutine only) instead of malloc/free per call"));
 
 namespace goc::sm {
 
@@ -20,20 +28,14 @@ namespace goc::sm {
 // stack.lo and stack.hi change only inside a call. The morestack prologue
 // that writes them is inserted after this IR, so a call O3 proved readonly
 // can still move the stack. Those loads stay volatile.
-bool gocArchArm64() {
-  static int Arm = -1;
-  if (Arm < 0) {
-    const char *Arch = std::getenv("GOC_ARCH");
-    Arm = (Arch && std::strcmp(Arch, "arm64") == 0) ? 1 : 0;
-  }
-  return Arm == 1;
-}
+// The module's target triple says which goroutine-g convention applies.
+bool gocArchArm64(const Module &M) { return Triple(M.getTargetTriple()).isAArch64(); }
 
 Value *tlsGWord(IRBuilder<> &B, uint64_t Off) {
   FunctionType *FT = FunctionType::get(B.getInt64Ty(), false);
   // arm64 keeps g in x28 (llc -mattr=+reserve-x28). amd64 reads FS:-8.
-  // Do not reserve r14 here: the installed llc has no -reserve-goc-r14.
-  const char *Asm = gocArchArm64() ? "mov $0, x28" : "movq %fs:-8, $0";
+  const char *Asm = gocArchArm64(*B.GetInsertBlock()->getModule()) ? "mov $0, x28"
+                                                                   : "movq %fs:-8, $0";
   InlineAsm *IA = InlineAsm::get(FT, Asm, "=r", /*hasSideEffects=*/false);
   CallInst *C = B.CreateCall(IA);
   // g does not change for the life of the goroutine, and FS/x28 is not
@@ -68,7 +70,7 @@ Function *uptrFatal(Module &M) {
   IRBuilder<> B(BasicBlock::Create(C, "entry", F));
   auto *AFT = FunctionType::get(I64, {I64, I64, Ptr, I64}, false);
   InlineAsm *IA;
-  if (gocArchArm64())
+  if (gocArchArm64(M))
     // Linux arm64 write is syscall 64 (x8).
     IA = InlineAsm::get(AFT, "svc #0", "={x0},{x8},{x0},{x1},{x2},~{memory}",
                         /*hasSideEffects=*/true);
@@ -78,7 +80,7 @@ Function *uptrFatal(Module &M) {
                         "={rax},{rax},{rdi},{rsi},{rdx},~{rcx},~{r11},~{memory},"
                         "~{dirflag},~{fpsr},~{flags}",
                         /*hasSideEffects=*/true);
-  B.CreateCall(IA, {B.getInt64(gocArchArm64() ? 64 : 1), B.getInt64(2),
+  B.CreateCall(IA, {B.getInt64(gocArchArm64(M) ? 64 : 1), B.getInt64(2),
                     F->getArg(0), F->getArg(1)});
   B.CreateCall(Intrinsic::getDeclaration(&M, Intrinsic::trap));
   B.CreateUnreachable();
@@ -459,10 +461,7 @@ Function *inlineDynReleaseHeap(Module &M) {
   return F;
 }
 
-bool fastStackAlloca() {
-  const char *Pool = std::getenv("GOC_INLINE_DYNALLOC");
-  return Pool && std::strcmp(Pool, "1") == 0;
-}
+bool fastStackAlloca() { return GocFastStackAlloca; }
 
 Function *uptrHelperFor(Module &M, StringRef N) {
   if (N == "goc_stack_hi")
@@ -520,7 +519,7 @@ bool rewriteUptrCall(CallInst *CI) {
   return true;
 }
 
-struct GocInlineGate : PassInfoMixin<GocInlineGate> {
+struct GocUptrInline : PassInfoMixin<GocUptrInline> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
     bool Changed = false;
     SmallVector<CallInst *, 16> calls;
@@ -552,7 +551,7 @@ struct GocNameBlocks : PassInfoMixin<GocNameBlocks> {
   static bool isRequired() { return true; }
 };
 
-void addGocInlineGate(FunctionPassManager &FPM) { FPM.addPass(GocInlineGate()); }
+void addGocUptrInline(FunctionPassManager &FPM) { FPM.addPass(GocUptrInline()); }
 void addGocNameBlocks(FunctionPassManager &FPM) { FPM.addPass(GocNameBlocks()); }
 
 } // namespace goc::sm

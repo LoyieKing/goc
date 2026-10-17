@@ -47,10 +47,9 @@ struct X86StackCheck : goc::StackCheckTarget {
                  const goc::CheckPlan &P, std::vector<goc::SPChange> &) const override {
     const TargetInstrInfo &TII = tii(MF);
     bool Go = P.ABI == goc::EntryABI::GoInternal;
-    Register G = P.FixedG ? X86::R14 : (Go ? X86::R13 : X86::R11);
+    Register G = Go ? X86::R13 : X86::R11;
     Register T = Go ? X86::R12 : X86::R10;
-    if (!P.FixedG)
-      loadG(MF, Check, G);
+    loadG(MF, Check, G);
     int64_t Off = P.Profile->StackGuard0Off;
     int64_t Over = P.Frame - P.Profile->StackSmall;
     MachineBasicBlock *Cmp = &Check;

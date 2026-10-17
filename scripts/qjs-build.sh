@@ -10,7 +10,7 @@ export GOC_ROOT="$ROOT"
 # build/qjs) or bellard (Fabrice Bellard's QuickJS 2026-06-04,
 # third_party/quickjs-bellard -> build/qjs-bellard). Both use the same shim,
 # flags and goc pipeline; see docs/benchmark.md for the port. There is no
-# uptr runtime object: goc-inline-gate gives the uptr helpers inline bodies.
+# uptr runtime object: goc-uptr-inline gives the uptr helpers inline bodies.
 QJS_FLAVOR="${QJS_FLAVOR:-ng}"
 case "$QJS_FLAVOR" in
   ng)

@@ -14,7 +14,7 @@ opt -passes=goc-color-escape     llvm/lib/Transforms/ColorEscape（分析在 lib
   ▼
 tools/goc/realbody.sh   （由 cmd/goc build / scripts/goc-go.sh 调用）
   ├─ goc-lower fix-ir                tools/goc-lower + goobj/lower   Go ABI 包装、IR 修正
-  ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-inline-gate
+  ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-uptr-inline
   ├─ opt default<O{0..3}>
   ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-stackmap    llvm/lib/Transforms/StackMap
   ├─ goc-llc -function-sections -goc-tables   llvm/tools/goc-llc（只是 llc 驱动）
@@ -62,7 +62,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `tools/goc-lower` | `goobj/lower` 的命令行外壳，realbody.sh 调用，发布包里是 `bin/goc-lower` |
 | `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
 | `gocobj` | `.gocobj` 的 Go 读写和校验库（与 Go 版本无关，ABI 常量见 `docs/go-abi-profiles.md`） |
-| `include/` | 用户头文件 `goc.h`、`goc_uptr.h`（uptr helper 的函数体由 `goc-inline-gate` 给出，没有运行时库，见 `docs/design/uptr.md`） |
+| `include/` | 用户头文件 `goc.h`、`goc_uptr.h`（uptr helper 的函数体由 `goc-uptr-inline` 给出，没有运行时库，见 `docs/design/uptr.md`） |
 | `test/` | 所有测试，入口是各目录的 `run.sh`：`clang`（前端 golden）、`color-escape`、`lit`（FileCheck）、`gocobj`（格式 golden）、`e2e/`（`realbody`、`goabi`、`stress`、`lines`、`arm64`、`qjs` QuickJS 宿主与测试脚本）。见 `test/README.md` |
 | `bench/` | 基准和 perf-gap 脚本，不在 CI 里 |
 | `third_party/` | QuickJS 源码说明（源码本身不进 git）、本地 LLVM 构建目录 |

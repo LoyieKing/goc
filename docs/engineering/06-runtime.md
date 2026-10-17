@@ -69,7 +69,7 @@ uptr 的编码（`docs/design/uptr.md`）：一个机器字。
 栈向下长，`abs < hi`，偏移是负数，MSB 天然为 1。搬栈后 `hi' = hi + delta`，同一个编码字解码出 `abs + delta`，自动正确。
 
 - 编译器何时插入：`goc-color-escape` 发现 sptr 存进非栈 cptr 槽 → `goc_uptr_from_ptr`；从这种槽读 → 解码（02 篇 §5）。
-- 实现：没有运行时库。`goc-inline-gate` 给 `goc_uptr_from_cptr/_sptr`、`goc_uptr_as_cptr/_sptr` 及 `_hi` 变体、`goc_uptr_from_ptr`、`goc_uptr_decode`、`goc_uptr_require_cptr`、`goc_stack_hi`/`goc_stack_lo` 生成内联函数体；
+- 实现：没有运行时库。`goc-uptr-inline` 给 `goc_uptr_from_cptr/_sptr`、`goc_uptr_as_cptr/_sptr` 及 `_hi` 变体、`goc_uptr_from_ptr`、`goc_uptr_decode`、`goc_uptr_require_cptr`、`goc_stack_hi`/`goc_stack_lo` 生成内联函数体；
   读 `g.stack.hi`：amd64 `movq %fs:-8, %rax; movq 8(%rax), %rax`，arm64 从 `x28` 读 g。错 tag 时 `write(2)` 一行 `goc FATAL uptr: …` 再 trap。`hoistTlsG` 让每个函数只读一次 g。
 - **限制**：表示里没有 goroutine 指针，解码用当前 g。持有 sptr/uptr 的对象（如 QuickJS 的 `JSContext`）只能在所属 goroutine 上用（syntax-guide §8.3）。`docs/todo.md` 计划了可选的 `GOC_SPTR_WITH_G=1`（两字表示），尚未实现。
 
@@ -77,7 +77,7 @@ uptr 的编码（`docs/design/uptr.md`）：一个机器字。
 
 Go 的 pcsp 表描述不了函数中间 SP 变化，所以 VLA / `alloca` 不能真的移动 SP。
 `goc-color-escape` 的 `lowerDynamicAllocas` 把它们改成 `goc_dynalloc` / `goc_dynrelease`（函数返回时释放），结果是 `cptr`。
-`--fast-stack-alloca`（`GOC_INLINE_DYNALLOC=1`，`goc go` 默认开）让 `goc-inline-gate` 用每个对象一个的 16 MiB BSS 池并内联指针碰撞，快很多，但池游标是普通全局变量，只能单 goroutine 使用；关掉时每次 `malloc` / `free`。细节见 `docs/design/uptr.md` §6。
+`--fast-stack-alloca`（`GOC_INLINE_DYNALLOC=1`，`goc go` 默认开）让 `goc-uptr-inline` 用每个对象一个的 16 MiB BSS 池并内联指针碰撞，快很多，但池游标是普通全局变量，只能单 goroutine 使用；关掉时每次 `malloc` / `free`。细节见 `docs/design/uptr.md` §6。
 
 ## 6. Go 与 C 之间的调用
 

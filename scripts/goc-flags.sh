@@ -2,8 +2,6 @@
 # Source this file. Each recognized flag exports the value the passes,
 # realbody and the converter already read. A flag overrides an inherited value.
 #
-# GOC_FLAG_MODE=driver accepts only --root.
-# GOC_FLAG_MODE=all (default) accepts every switch below.
 # On success GOC_FLAG_SHIFT is 1 or 2. On an unknown flag the function
 # returns 1 and shifts nothing.
 
@@ -20,10 +18,9 @@ goc_flag_seen() { [[ " ${GOC_FLAG_SEEN:-} " == *" $1 "* ]]; }
 # `goc build` does not: repository scripts still pass the same settings as
 # variables, and a flag on that command overrides them.
 goc_isolate_product_env() {
-  unset GOC_OPT_LEVEL GOC_DEFAULT_PTR_COLOR GOC_INLINE_DYNALLOC GOC_FIXED_G GOC_OPT_EXTRA \
-    GOC_LLC_EXTRA GOC_COLOR_REPORT GOC_CSR_ADJUST \
-    GOC_ARCH GOC_LLC_OPT GOC_IR_RENAMES GOC_LIBCALL_IMPL GOC_KEEP_TMP \
-    LLC OPT GOC_STACKMAP GOC_PKG
+  unset GOC_OPT_LEVEL GOC_DEFAULT_PTR_COLOR GOC_INLINE_DYNALLOC GOC_OPT_EXTRA \
+    GOC_LLC_EXTRA GOC_COLOR_REPORT GOC_ARCH GOC_IR_RENAMES GOC_LIBCALL_IMPL \
+    GOC_KEEP_TMP GOC_PKG
 }
 
 goc_need_arg() {
@@ -32,14 +29,7 @@ goc_need_arg() {
 }
 
 goc_consume_flag() {
-  local mode="${GOC_FLAG_MODE:-all}"
   GOC_FLAG_SHIFT=0
-  if [[ "$mode" == driver ]]; then
-    case "$1" in
-      --root|--root=*) ;;
-      *) return 1 ;;
-    esac
-  fi
   case "$1" in
     -O0|-O1|-O2|-O3)
       export GOC_OPT_LEVEL="${1#-O}"
@@ -101,82 +91,6 @@ goc_consume_flag() {
       goc_flag_mark arch
       GOC_FLAG_SHIFT=1
       ;;
-    --root)
-      local p
-      p="$(goc_need_arg --root "${2:-}")"
-      [[ -d "$p" ]] || goc_die "--root is not a directory: $p"
-      ROOT="$(cd "$p" && pwd)"
-      export GOC_ROOT="$ROOT"
-      goc_flag_mark root
-      GOC_FLAG_SHIFT=2
-      ;;
-    --root=*)
-      local p="${1#--root=}"
-      [[ -d "$p" ]] || goc_die "--root is not a directory: $p"
-      ROOT="$(cd "$p" && pwd)"
-      export GOC_ROOT="$ROOT"
-      goc_flag_mark root
-      GOC_FLAG_SHIFT=1
-      ;;
-    --llc)
-      local p
-      p="$(goc_need_arg --llc "${2:-}")"
-      export LLC="$p"
-      goc_flag_mark llc
-      GOC_FLAG_SHIFT=2
-      ;;
-    --llc=*)
-      export LLC="${1#--llc=}"
-      [[ -n "$LLC" ]] || goc_die "--llc needs a path"
-      goc_flag_mark llc
-      GOC_FLAG_SHIFT=1
-      ;;
-    --opt-bin)
-      local p
-      p="$(goc_need_arg --opt-bin "${2:-}")"
-      export OPT="$p"
-      goc_flag_mark opt-bin
-      GOC_FLAG_SHIFT=2
-      ;;
-    --opt-bin=*)
-      export OPT="${1#--opt-bin=}"
-      [[ -n "$OPT" ]] || goc_die "--opt-bin needs a path"
-      goc_flag_mark opt-bin
-      GOC_FLAG_SHIFT=1
-      ;;
-    --stackmap)
-      local p
-      p="$(goc_need_arg --stackmap "${2:-}")"
-      export GOC_STACKMAP="$p"
-      goc_flag_mark stackmap
-      GOC_FLAG_SHIFT=2
-      ;;
-    --stackmap=*)
-      export GOC_STACKMAP="${1#--stackmap=}"
-      [[ -n "$GOC_STACKMAP" ]] || goc_die "--stackmap needs a path"
-      goc_flag_mark stackmap
-      GOC_FLAG_SHIFT=1
-      ;;
-    --fixed-g)
-      export GOC_FIXED_G=1
-      goc_flag_mark fixed-g
-      GOC_FLAG_SHIFT=1
-      ;;
-    --no-fixed-g)
-      export GOC_FIXED_G=0
-      goc_flag_mark fixed-g
-      GOC_FLAG_SHIFT=1
-      ;;
-    --csr-adjust)
-      export GOC_CSR_ADJUST=1
-      goc_flag_mark csr-adjust
-      GOC_FLAG_SHIFT=1
-      ;;
-    --no-csr-adjust)
-      export GOC_CSR_ADJUST=0
-      goc_flag_mark csr-adjust
-      GOC_FLAG_SHIFT=1
-      ;;
     --keep-tmp)
       export GOC_KEEP_TMP="$(mktemp -d)"
       echo "goc: keeping temps in $GOC_KEEP_TMP" >&2
@@ -208,21 +122,6 @@ goc_consume_flag() {
     --llc-extra=*)
       export GOC_LLC_EXTRA="${1#--llc-extra=}"
       goc_flag_mark llc-extra
-      GOC_FLAG_SHIFT=1
-      ;;
-    --llc-opt)
-      local n
-      n="$(goc_need_arg --llc-opt "${2:-}")"
-      [[ "$n" =~ ^[0-3]$ ]] || goc_die "--llc-opt wants 0, 1, 2, or 3"
-      export GOC_LLC_OPT="$n"
-      goc_flag_mark llc-opt
-      GOC_FLAG_SHIFT=2
-      ;;
-    --llc-opt=*)
-      local n="${1#--llc-opt=}"
-      [[ "$n" =~ ^[0-3]$ ]] || goc_die "--llc-opt wants 0, 1, 2, or 3"
-      export GOC_LLC_OPT="$n"
-      goc_flag_mark llc-opt
       GOC_FLAG_SHIFT=1
       ;;
     --pkg)
@@ -285,16 +184,10 @@ goc_append_resolved_flags() {
   else
     _dest+=(--no-fast-stack-alloca)
   fi
-  [[ -n "${LLC:-}" ]] && _dest+=(--llc "$LLC")
-  [[ -n "${OPT:-}" ]] && _dest+=(--opt-bin "$OPT")
-  [[ -n "${GOC_STACKMAP:-}" ]] && _dest+=(--stackmap "$GOC_STACKMAP")
   [[ "${GOC_COLOR_REPORT:-}" == 1 ]] && _dest+=(--color-report)
   [[ -n "${GOC_ARCH:-}" ]] && _dest+=(--arch "$GOC_ARCH")
-  [[ "${GOC_FIXED_G:-0}" == 1 ]] && _dest+=(--fixed-g)
-  [[ "${GOC_CSR_ADJUST:-0}" == 1 ]] && _dest+=(--csr-adjust)
   [[ -n "${GOC_OPT_EXTRA:-}" ]] && _dest+=(--opt-extra "$GOC_OPT_EXTRA")
   [[ -n "${GOC_LLC_EXTRA:-}" ]] && _dest+=(--llc-extra "$GOC_LLC_EXTRA")
-  [[ -n "${GOC_LLC_OPT:-}" ]] && _dest+=(--llc-opt "$GOC_LLC_OPT")
   [[ -n "${GOC_IR_RENAMES:-}" ]] && _dest+=(--ir-renames "$GOC_IR_RENAMES")
   [[ -n "${GOC_LIBCALL_IMPL:-}" ]] && _dest+=(--libcall-impl "$GOC_LIBCALL_IMPL")
   if [[ -n "${GOC_KEEP_TMP:-}" ]]; then
@@ -309,7 +202,6 @@ goc_append_resolved_flags() {
 goc_flags_help() {
   cat <<'EOF'
 Flags (a flag overrides a same-named environment variable on `goc build`):
-  --root DIR             Repository or release root
 The patched clang is bin/clang in a release, or
 third_party/llvm-19.1.7-clang-build/bin/clang in a checkout.
   -O0|-O1|-O2|-O3        LLVM IR optimization level
@@ -324,18 +216,10 @@ third_party/llvm-19.1.7-clang-build/bin/clang in a checkout.
   --color-report         Print the pointer-color table; does not change colors
   --no-color-report
   --arch amd64|arm64     `goc go` accepts amd64 only
-  --llc PATH             llc binary
-  --opt-bin PATH         LLVM opt binary
-  --stackmap PATH        libGocPasses.so (all goc IR passes)
-  --fixed-g              Reserve r14 for g (off unless this flag is passed)
-  --no-fixed-g
-  --csr-adjust           Adjust frame addresses kept in callee-saved registers
-  --no-csr-adjust
   --keep-tmp             Keep the temporary directory
   --keep-tmp=DIR
   --opt-extra STRING     Extra flags for opt
   --llc-extra STRING     Extra flags for llc
-  --llc-opt 0|1|2|3      llc optimization level, when it differs from -O
   --pkg PATH             Go symbol prefix (default: main, or the import path)
   --ir-renames SPEC      Space-separated old:new IR renames
   --libcall-impl SPEC    Compiler-emitted libcall implementations

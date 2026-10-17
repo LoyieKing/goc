@@ -52,7 +52,7 @@ The product path does not read `!goc.color` after this pass: `libGocPasses.so` r
 
 Named builtins (`include/goc_uptr.h`) have no runtime library:
 
-- `goc-inline-gate` gives every `goc_uptr_*` / `goc_stack_*` call an inline body, with FATAL guards on tag mismatch
+- `goc-uptr-inline` gives every `goc_uptr_*` / `goc_stack_*` call an inline body, with FATAL guards on tag mismatch
 - `*_hi` variants recognized by color-escape (same encode metadata)
 
 See [`uptr.md`](uptr.md).

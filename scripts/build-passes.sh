@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build goc-llc and libGocPasses.so (CMake, llvm/CMakeLists.txt)
 # against the patched clang's LLVM.
-# Skips a pass that is already executable unless GOC_REBUILD_PASSES=1.
+# Rebuilds incrementally; GOC_REBUILD_PASSES=1 reconfigures.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 export GOC_ROOT="$ROOT"
@@ -22,8 +22,15 @@ fi
 LLC="$ROOT/build/llvm/goc-llc"
 SM="$ROOT/build/llvm/libGocPasses.so"
 
+# A configured build tree is rebuilt incrementally (a no-op when current).
+# Outputs without a tree (a CI cache keyed on llvm/**) are used as they are.
 if [[ "${GOC_REBUILD_PASSES:-}" != 1 && -x "$LLC" && -f "$SM" ]]; then
-  echo "build-passes: already built"
+  if [[ -f "$ROOT/build/llvm/CMakeCache.txt" ]]; then
+    cmake --build "$ROOT/build/llvm" >/dev/null
+    echo "build-passes: up to date"
+  else
+    echo "build-passes: using prebuilt outputs"
+  fi
   exit 0
 fi
 

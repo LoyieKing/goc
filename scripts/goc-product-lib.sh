@@ -1,4 +1,4 @@
-# Shared by goc go / goc check / goc toolchain, and by cmd/goc.
+# Shared by cmd/goc, goc go / goc check / goc toolchain, realbody and the tests.
 # Source this file. Caller sets ROOT and exports GOC_ROOT.
 # Product defaults and flag parsing live in goc-flags.sh.
 
@@ -13,17 +13,13 @@ goc_prepend_lib() {
   esac
 }
 
-# Patched Clang that ships with this tree. There is no flag and no
-# environment variable to point at another one. A release archive has
-# bin/clang. A checkout that built from source has the third_party tree.
+# The tools of this tree. A release has bin/{clang,opt,llvm-mc} and
+# passes/{goc-llc,libGocPasses.so}; a checkout has the patched clang build
+# in third_party/llvm-19.1.7-clang-build and the passes in build/llvm.
+# There is no flag and no environment variable to point at other tools.
 goc_resolve_clang() {
   local c
-  local candidates=(
-    "$ROOT/bin/clang"
-    "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"
-    "$ROOT/third_party/llvm-clang-build/bin/clang"
-  )
-  for c in "${candidates[@]}"; do
+  for c in "$ROOT/bin/clang" "$ROOT/third_party/llvm-19.1.7-clang-build/bin/clang"; do
     if [[ -x "$c" ]]; then
       echo "$c"
       return 0
@@ -40,54 +36,22 @@ goc_clang_libdir() {
   cd "$(dirname "$bin")/../lib" && pwd
 }
 
-goc_first_exec() {
-  local c
-  for c in "$@"; do
-    if [[ -n "$c" && -x "$c" ]]; then
-      echo "$c"
-      return 0
-    fi
-  done
-  return 1
-}
-
-# A tool installed next to the patched clang (opt, llc, llvm-mc, ...).
-goc_beside() {
-  local name="$1" clang bin
-  clang="$(goc_resolve_clang)"
-  bin="$(dirname "$(readlink -f "$clang")")"
-  goc_first_exec "$bin/$name" "$ROOT/bin/$name"
-}
-
-# Fill LD_LIBRARY_PATH, OPT, LLC, GOC_STACKMAP.
-# Clang itself is found by goc_resolve_clang. Callers do not export a path.
-goc_export_tools() {
-  local clang libdir toolroot=""
-  clang="$(goc_resolve_clang)"
-  libdir="$(goc_clang_libdir "$clang")"
-  goc_prepend_lib "$libdir"
-  # A release keeps passes next to bin/. A checkout uses the repo build outputs.
-  toolroot="$(cd "$(dirname "$(readlink -f "$clang")")/.." && pwd)"
-  if [[ -x "$toolroot/passes/goc-llc" ]]; then
-    export LLC="${LLC:-$toolroot/passes/goc-llc}"
-    export GOC_STACKMAP="${GOC_STACKMAP:-$toolroot/passes/libGocPasses.so}"
-    export OPT="${OPT:-$toolroot/bin/opt}"
+# Set GOC_CLANG GOC_OPT GOC_MC GOC_LLC GOC_PASSES and put the clang tree's
+# libLLVM on LD_LIBRARY_PATH (goc-llc and the passes load it).
+goc_tools() {
+  local bin
+  GOC_CLANG="$(goc_resolve_clang)"
+  bin="$(dirname "$(readlink -f "$GOC_CLANG")")"
+  GOC_OPT="$bin/opt"
+  GOC_MC="$bin/llvm-mc"
+  if [[ -x "$ROOT/passes/goc-llc" ]]; then
+    GOC_LLC="$ROOT/passes/goc-llc"
+    GOC_PASSES="$ROOT/passes/libGocPasses.so"
+  else
+    GOC_LLC="$ROOT/build/llvm/goc-llc"
+    GOC_PASSES="$ROOT/build/llvm/libGocPasses.so"
   fi
-  if [[ -z "${LLC:-}" && -x "$ROOT/passes/goc-llc" ]]; then
-    export LLC="$ROOT/passes/goc-llc"
-  fi
-  export LLC="${LLC:-$ROOT/build/llvm/goc-llc}"
-  if [[ -z "${GOC_STACKMAP:-}" && -f "$ROOT/passes/libGocPasses.so" ]]; then
-    export GOC_STACKMAP="$ROOT/passes/libGocPasses.so"
-  fi
-  export GOC_STACKMAP="${GOC_STACKMAP:-$ROOT/build/llvm/libGocPasses.so}"
-  if [[ -z "${OPT:-}" || ! -x "${OPT:-}" ]]; then
-    OPT="$(goc_beside opt 2>/dev/null || true)"
-    if [[ -z "$OPT" ]]; then
-      OPT="$(command -v opt-19 || command -v opt || true)"
-    fi
-    export OPT
-  fi
+  goc_prepend_lib "$(goc_clang_libdir "$GOC_CLANG")"
 }
 
 # goc-lower replaces the real-body Python and ripgrep steps. A release
@@ -116,15 +80,13 @@ goc_lower_bin() {
 }
 
 goc_require_tools() {
-  local clang
-  goc_export_tools
-  clang="$(goc_resolve_clang)"
-  [[ -x "$clang" ]] || goc_die "clang missing"
-  [[ -x "$LLC" ]] || goc_die "goc-llc missing ($LLC). See docs/build-from-source.md."
-  [[ -f "$GOC_STACKMAP" ]] || goc_die "libGocPasses.so missing ($GOC_STACKMAP)."
-  [[ -n "${OPT:-}" && -x "$OPT" ]] || goc_die "opt missing. See docs/build-from-source.md."
-  local missing ldd_args=("$LLC")
-  missing="$(ldd "${ldd_args[@]}" 2>/dev/null | awk '/not found/{print $1}' | sort -u)"
+  goc_tools
+  [[ -x "$GOC_OPT" ]] || goc_die "opt missing ($GOC_OPT). See docs/build-from-source.md."
+  [[ -x "$GOC_MC" ]] || goc_die "llvm-mc missing ($GOC_MC). See docs/build-from-source.md."
+  [[ -x "$GOC_LLC" ]] || goc_die "goc-llc missing ($GOC_LLC). Run scripts/build-passes.sh."
+  [[ -f "$GOC_PASSES" ]] || goc_die "libGocPasses.so missing ($GOC_PASSES). Run scripts/build-passes.sh."
+  local missing
+  missing="$(ldd "$GOC_LLC" 2>/dev/null | awk '/not found/{print $1}' | sort -u)"
   if [[ -n "$missing" ]]; then
     goc_die "LLVM libraries not loaded ($missing). The clang lib dir was prepended to LD_LIBRARY_PATH; libLLVM does not match these passes."
   fi

@@ -1,6 +1,6 @@
 # 工具链和 `goc go`
 
-linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就是 QuickJS 验证过的那组配置，写在命令行参数里。指针色、单字 `uptr`、默认架构都不改。`--fixed-g` 和 `--opt-extra=-inline-threshold=250` 仍然关着。
+linux/amd64。一条 `goc go` 把一个 Go 包里的 `.c` 编进去。默认就是 QuickJS 验证过的那组配置，写在命令行参数里。指针色、单字 `uptr`、默认架构都不改。`--opt-extra=-inline-threshold=250` 仍然关着。
 
 下载即用见 [quickstart.md](quickstart.md)。从仓库编出发布包见 [build-from-source.md](build-from-source.md)。
 

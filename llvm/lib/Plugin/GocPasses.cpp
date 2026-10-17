@@ -2,7 +2,7 @@
 //
 // opt -load-pass-plugin=libGocPasses.so -passes=<name>
 //   module:   goc-color-escape, print<goc-color>
-//   function: goc-inline-gate, goc-stackmap, goc-reanchor
+//   function: goc-uptr-inline, goc-stackmap, goc-reanchor
 //
 //===----------------------------------------------------------------------===//
 #include "Goc/ColorEscape.h"
