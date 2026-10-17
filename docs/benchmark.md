@@ -4,7 +4,7 @@
 
 > 原始数据不在源码分支里，放在单独的本地分支 `docs-data`。用 `git worktree add ../goc-data docs-data` 取出后，下面的路径相对 `../goc-data` 不变；也可以 `git checkout docs-data -- docs/perf-gap/data docs/benchmark/data` 放回原处（这两个目录已加入 .gitignore）。
 
-浏览器打开 [`docs/benchmark/report.html`](benchmark/report.html) 时图会直接嵌在页里（用的是同名的 SVG）。图里的标题、坐标轴和图例都用英文，正文仍是中文。每张性能图都包含全部五个引擎；Goja 的数字比其他几家大几倍的图用对数轴。
+图里的标题、坐标轴和图例都用英文，正文仍是中文。每张性能图都包含全部五个引擎；Goja 的数字比其他几家大几倍的图用对数轴。
 
 goc 编译两份 QuickJS：QuickJS-ng（goc-ng）和 Fabrice Bellard 的原版 QuickJS（goc-bellard，移植细节见“Bellard QuickJS 移植”一节）。每个 goc 构建都和用同一份源码编译的原生构建对照：goc-ng 对 native ng，goc-bellard 对 native Bellard。
 
@@ -22,7 +22,7 @@ qjscli 现在和 quickjs-ng 一样，用 `JS_DetectModule` 判断文件：能作
 
 ## 怎么测的
 
-整套流程在 `bench/bench-all.sh` 里，可以直接重跑。`bench/bench-summarize.py` 把原始输出汇总成 `all.json`，`bench/bench-charts.py` 画图，`bench/bench-tables.py` 生成本页的表，`bench/bench-report-html.py` 生成 `report.html`。内存部分由 `bench/bench-mem.sh` 单独测量，结果同样汇总进 `all.json`。
+整套流程在 `bench/bench-all.sh` 里，可以直接重跑。`bench/bench-summarize.py` 把原始输出汇总成 `all.json`，`bench/bench-charts.py` 画图，`bench/bench-tables.py` 生成本页的表。内存部分由 `bench/bench-mem.sh` 单独测量，结果同样汇总进 `all.json`。
 
 - 计时的套件都用 `taskset -c 3` 固定在同一个核上。每一轮五个引擎各跑一次，下一轮换一个起始引擎，这样五家交替运行、处在同一时段。
 - V8-v7：每个引擎 5 轮，总分和每个子项都取中位数。
@@ -37,9 +37,9 @@ qjscli 现在和 quickjs-ng 一样，用 `JS_DetectModule` 判断文件：能作
 
 ## 总览
 
-![相对 native ng 的速度](benchmark/charts/overview-speed.png)
+![相对 native ng 的速度](benchmark/charts/overview-speed.svg)
 
-![正确性](benchmark/charts/overview-correct.png)
+![正确性](benchmark/charts/overview-correct.svg)
 
 正确性上，两个 goc 构建都和各自的原生构建完全一致：goc-ng 与 native ng、goc-bellard 与 native Bellard，在 test262 抽样上失败的文件相同，在官方测试上逐函数相同（见下面的“正确性对照”表）。
 
@@ -83,7 +83,7 @@ goc-bellard 对 gcc 版 native Bellard 的 V8 比值（0.896）比 goc-ng 对 na
 
 ## V8-v7
 
-![V8-v7 各子项分数](benchmark/charts/v8.png)
+![V8-v7 各子项分数](benchmark/charts/v8.svg)
 
 `bench-v8` 的 `combined.js` 来自 QuickJS 2026-06-04 的 extras 包（`quickjs-extras-2026-06-04.tar.xz` 里的 `bench/js-v8`，主源码包不含这个目录）。`"use strict"` 仍是第一句，下一句是 `console` 兜底：goc 的 qjscli 没有 `console`，而 `run_harness.js` 用 `console.log`。每个子项取 5 轮中位数，所以子项之间不一定能算回总分。
 
@@ -113,7 +113,7 @@ goc-ng 和 native ng 最接近的是 NavierStokes（1.00）和 Richards（0.95�
 
 ### 微调用
 
-![微调用各用例耗时](benchmark/charts/microcall.png)
+![微调用各用例耗时](benchmark/charts/microcall.svg)
 
 `bench/microcall-bench.sh`，五个引擎都跑（goc-bellard 通过 `GOC_BELLARD_QJS` 加入，Bellard 用 `--stack-size 16M`，Goja 用 `gojacli`）。每个用例的 ms 取 5 轮中位数，越低越快；score 是调用类用例的 calls/ms 几何平均，越高越快，括号里是最小到最大。`arith` 和 `propget` 是对照组，不计入 score。
 
@@ -136,7 +136,7 @@ goc-ng 的调用速度是 native ng 的 0.96 倍。时间比最大的是 `depth4
 
 ## test262
 
-![test262 有失败的目录](benchmark/charts/test262.png)
+![test262 有失败的目录](benchmark/charts/test262.svg)
 
 tc39/test262 `7ab7faf` 的 `test/language`，由 `test/e2e/qjs/test262-sample.py` 抽样。每项一个新进程，`assert.js` + `sta.js`，直接 `eval`。跳过 `import` / `export` / `module-code`，以及 `module` / `async` / `raw` / `CanBlock`，还有 Atomics、SharedArrayBuffer、agent。每目录均匀抽取最多 80 个正例和 40 个反例。合格池 13898 正例 + 4252 反例，实跑 1526。不是官方全量 harness，也没有每项新 realm。
 
@@ -350,7 +350,7 @@ goc-ng 与 native ng 的失败路径相同，goc-bellard 与 native Bellard 的�
 
 ## QuickJS 官方测试
 
-![QuickJS 官方测试各文件通过数](benchmark/charts/qjs-tests.png)
+![QuickJS 官方测试各文件通过数](benchmark/charts/qjs-tests.svg)
 
 Bellard 2026-06-04 的 `tests/test_language.js`、`test_closure.js`、`test_loop.js`、`test_bigint.js`、`test_builtin.js`，由 `test/e2e/qjs/official-tests.py` 拆成每个函数一个进程。`test_builtin.js` 加了 `--std`（gojacli 没有这个参数，不加），QuickJS 四家因此能用到 `std` / `os`。goc-ng 与 native ng 都是 73/77，差的四个函数相同；goc-bellard 与 native Bellard 都是 77/77。失败信息前面多了 qjscli 的 `qjscli:runtime: <t>:` 前缀。Goja 是 58/77，其中 `test_weak_map_cycles` 报 `std is not defined`。
 
@@ -446,9 +446,9 @@ Bellard 2026-06-04 的 `tests/test_language.js`、`test_closure.js`、`test_loop
 
 ## SunSpider 1.0.2
 
-![SunSpider 各项相对 native ng 的耗时](benchmark/charts/sunspider.png)
+![SunSpider 各项相对 native ng 的耗时](benchmark/charts/sunspider.svg)
 
-![SunSpider 五引擎绝对耗时，对数轴](benchmark/charts/sunspider-log.png)
+![SunSpider 五引擎绝对耗时，对数轴](benchmark/charts/sunspider-log.svg)
 
 第一张图是每项耗时除以 native ng 的耗时（对数轴，虚线是 native ng），第二张是五家的绝对耗时（对数轴）。两张图都包含 Goja。
 
@@ -501,9 +501,9 @@ goc-ng 比 native ng 快的几项里，`date-format-xparb` 是 0.72，`bitops-ns
 
 ## microbench
 
-![microbench 分组](benchmark/charts/micro-groups.png)
+![microbench 分组](benchmark/charts/micro-groups.svg)
 
-![microbench 各项相对 native ng 的耗时](benchmark/charts/micro-ratio.png)
+![microbench 各项相对 native ng 的耗时](benchmark/charts/micro-ratio.svg)
 
 第二张图是每项耗时除以 native ng 的耗时，goc-ng、goc-bellard、native Bellard、Goja 四家并排（对数轴，虚线是 native ng），按 goc-ng 的比值从慢到快排。
 
@@ -645,9 +645,9 @@ goc-ng 各组对 native ng 在 0.96 到 1.28 之间：`arith` 是 0.96，`loop` 
 
 ## 内存占用
 
-![各负载的峰值 RSS](benchmark/charts/mem-peak.png)
+![各负载的峰值 RSS](benchmark/charts/mem-peak.svg)
 
-![多实例：总 RSS 和每个 runtime 的内存](benchmark/charts/mem-scaling.png)
+![多实例：总 RSS 和每个 runtime 的内存](benchmark/charts/mem-scaling.svg)
 
 这一节在 2026-10-09 约 00:19–01:02（CST）测量，由 `bench/bench-mem.sh` 一次跑完，紧接在计时套件和 clang 参考之后。单位 MiB 和 KiB 都按 1024 进位，越低越好。
 
@@ -853,4 +853,4 @@ goc-bellard 是用同一套 goc 流水线编译 Fabrice Bellard 的 QuickJS 2026
 | [data/raw/qjs-tests-results.json](benchmark/data/raw/qjs-tests-results.json) | 官方测试逐函数结果 |
 | [data/raw/bellard-clang/](benchmark/data/raw/bellard-clang/) | clang 版 Bellard 参考时段：`env.txt`，以及 `bellard-clang`、`bellard`、`goc-bellard` 三家的 V8 / SunSpider / microbench 原文 |
 
-图都在 [`docs/benchmark/charts/`](benchmark/charts/)，每张图有同名的 `.png` 和 `.svg`，本页嵌 PNG，`report.html` 嵌 SVG。图由 `bench/bench-charts.py` 从 `all.json` 生成，图中文字是英文，五个引擎（goc-ng、goc-bellard、native ng、native Bellard、Goja）在每张性能图里都有。
+图都在 [`docs/benchmark/charts/`](benchmark/charts/)，都是 SVG。图由 `bench/bench-charts.py` 从 `all.json` 生成，图中文字是英文，五个引擎（goc-ng、goc-bellard、native ng、native Bellard、Goja）在每张性能图里都有。

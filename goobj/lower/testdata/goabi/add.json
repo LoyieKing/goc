@@ -1,0 +1,87 @@
+{
+  "functions": [
+    {
+      "name": "add",
+      "ret": "i32",
+      "ret_attrs": [],
+      "ret_abi_attrs": [],
+      "params": [
+        "i32",
+        "i32"
+      ],
+      "param_attrs": [
+        [],
+        []
+      ],
+      "param_abi_attrs": [
+        [],
+        []
+      ],
+      "varargs": false,
+      "internal": false,
+      "non_c_calling_convention": false,
+      "abi": {
+        "go": {
+          "params": [
+            {
+              "type": "i32",
+              "location": {
+                "kind": "register",
+                "register": "rax"
+              }
+            },
+            {
+              "type": "i32",
+              "location": {
+                "kind": "register",
+                "register": "rbx"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "i32",
+              "location": {
+                "kind": "register",
+                "register": "rax"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        },
+        "sysv": {
+          "params": [
+            {
+              "type": "i32",
+              "location": {
+                "kind": "register",
+                "register": "rdi"
+              }
+            },
+            {
+              "type": "i32",
+              "location": {
+                "kind": "register",
+                "register": "rsi"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "i32",
+              "location": {
+                "kind": "register",
+                "register": "rax"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        }
+      },
+      "go_signature": "func add(int32, int32) int32",
+      "outgoing": 0,
+      "impl": "add.impl"
+    }
+  ],
+  "skipped": []
+}

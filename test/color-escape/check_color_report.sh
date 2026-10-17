@@ -5,8 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PASS="$ROOT/test/color-escape/color-escape.sh"
 SRC="$ROOT/test/color-escape/color_report.c"
-CLANG="${CLANG:-clang-19}"
-export LD_LIBRARY_PATH="$(llvm-config-19 --libdir)${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+CLANG="$(bash -c 'ROOT="$0"; source "$ROOT/scripts/goc-product-lib.sh"; goc_resolve_clang' "$ROOT")"
 
 if [[ ! -f "$ROOT/build/llvm/libGocPasses.so" ]]; then
   "$ROOT/scripts/build-passes.sh"

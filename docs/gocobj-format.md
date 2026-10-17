@@ -223,6 +223,5 @@ For an inlined static function that has no body in the object, the
 converter defines a one-byte stub (never referenced, so not linked): Go's
 linker reads every inlined function's FuncInfo.
 
-`test/gocobj/verify-real.sh` runs `goc-objdump verify` on every `.gocobj`
-under `build/`. `verify` also checks each table relocation against the ELF
+`goc-objdump verify FILE...` checks a `.gocobj`; it also checks each table relocation against the ELF
 relocation at the same place, when there is one.

@@ -40,9 +40,9 @@
 //
 // Spill slots share again (llc is not passed -no-stack-slot-sharing). Root
 // allocas are not spill slots, and goc-reanchor drops their lifetime markers
-// so StackColoring cannot merge them with a scalar. goc-pin-i64 stays out of
-// the default pipeline: pinning every i64 half was 137 slots in
-// JS_CallInternal. A short-lived spill of g used to share a colored slot with
+// so StackColoring cannot merge them with a scalar. Integer halves of a
+// stack address are not pinned to slots (that was 137 slots in
+// JS_CallInternal). A short-lived spill of g used to share a colored slot with
 // an i64 half (js_regexp_Symbol_replace). g is now one hoisted value, so its
 // home is a callee-saved spill, which StackSlotColoring does not recolor.
 // Stack-derived integers stay with goc-reanchor so growth can still adjust them.
@@ -54,7 +54,6 @@
 //   SMRoots.cpp       STACKMAP roots, TLS g hoist, frame-address remat
 //   SMStackMap.cpp    goc-stackmap
 //   SMReanchor.cpp    goc-reanchor
-//   SMPinI64.cpp      goc-pin-i64
 //   SMUptrInline.cpp  goc-inline-gate (inlined uptr helpers), goc-name-blocks
 
 #include "Goc/Internal/StackMap.h"
@@ -70,10 +69,6 @@ bool goc::parseStackMapPass(StringRef Name, FunctionPassManager &FPM,
   }
   if (Name == "goc-reanchor") {
     goc::sm::addGocReanchor(FPM);
-    return true;
-  }
-  if (Name == "goc-pin-i64") {
-    goc::sm::addGocPinI64(FPM);
     return true;
   }
   if (Name == "goc-name-blocks") {

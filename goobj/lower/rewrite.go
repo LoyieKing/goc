@@ -111,17 +111,6 @@ func FirstFnName(path string) (string, error) {
 	return string(m[1]), nil
 }
 
-// HasDefine reports whether IR contains `define … @name`, same as the old
-// ripgrep check on the single-function path.
-func HasDefine(path, name string) (bool, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return false, err
-	}
-	re := regexp.MustCompile(`define .* @` + regexp.QuoteMeta(name))
-	return re.Match(b), nil
-}
-
 // ObjectHasMagic requires the sentinel as a little-endian u32 in the goobj.
 func ObjectHasMagic(path string) error {
 	b, err := os.ReadFile(path)

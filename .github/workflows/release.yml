@@ -82,12 +82,9 @@ jobs:
 
       - name: Test
         run: |
-          # p27 builds libGocClang.so with the host clang++-19. That package
-          # does not ship llvm-config-19 or the Clang C++ headers.
-          sudo apt-get install -y llvm-19-dev libclang-19-dev
+          # LLVM 19's opt, FileCheck and not run the color-escape and lit tests.
+          sudo apt-get install -y llvm-19-dev llvm-19-tools
           command -v llvm-config-19 >/dev/null
-          inc="$(llvm-config-19 --includedir)"
-          test -f "$inc/clang/Frontend/FrontendPluginRegistry.h"
           ./scripts/ci-test.sh
 
       - name: Pack

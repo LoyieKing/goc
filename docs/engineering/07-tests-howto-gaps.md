@@ -11,7 +11,7 @@
 | `test/clang/` | 前端 Sema：打补丁的 clang 和树外插件的颜色规则 | `test/clang/run.sh`（`goc test`、`goc test --plugin`） |
 | `test/color-escape/` | `goc-color-escape`：期望颜色、报错、uptr 往返、颜色报表；用例清单在 `EXPECTATIONS` | `test/color-escape/run.sh` |
 | `test/lit/` | FileCheck：`ColorEscape/{implicit-uptr-store,return-sptr}.ll`、`StackMap/{name-blocks,stackmap-remat}.ll`、`CodeGen/{x86-stack-check,arm64-frame}.ll` | `test/lit/run.sh`（需要 `lit`；CI 固定 `lit==23.1.3`） |
-| `test/gocobj/` | `.gocobj` 格式金样（`v1.0/valid.gocobj` + `bad-*`），`gen/` 重新生成，`verify-real.sh` 校验一次构建写出的所有对象，`diff.sh` 测 `gocobj-diff` | `go test ./gocobj/`、`test/gocobj/diff.sh` |
+| `test/gocobj/` | `.gocobj` 格式金样（`v1.0/valid.gocobj` + `bad-*`），`gen/` 重新生成，`diff.sh` 测 `gocobj-diff` | `go test ./gocobj/`、`test/gocobj/diff.sh` |
 | `test/e2e/realbody/` | 一个 C 文件走完整流水线 | `run.sh` |
 | `test/e2e/repro/` | 可复现：同一文件构建两次 `.gocobj`/`.goobj` 逐字节相同；同一 `.gocobj` 转换 10 次结果相同 | `run.sh` |
 | `test/e2e/goabi/` | Go → C 的 ABIInternal thunk：标量、聚合、栈参数 | `run.sh` |

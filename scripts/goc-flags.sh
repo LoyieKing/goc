@@ -2,8 +2,7 @@
 # Source this file. Each recognized flag exports the value the passes,
 # realbody and the converter already read. A flag overrides an inherited value.
 #
-# GOC_FLAG_MODE=driver accepts only --root. --clang and --toolchain are
-# rejected in every mode: the patched clang ships next to goc.
+# GOC_FLAG_MODE=driver accepts only --root.
 # GOC_FLAG_MODE=all (default) accepts every switch below.
 # On success GOC_FLAG_SHIFT is 1 or 2. On an unknown flag the function
 # returns 1 and shifts nothing.
@@ -22,7 +21,7 @@ goc_flag_seen() { [[ " ${GOC_FLAG_SEEN:-} " == *" $1 "* ]]; }
 # variables, and a flag on that command overrides them.
 goc_isolate_product_env() {
   unset GOC_OPT_LEVEL GOC_DEFAULT_PTR_COLOR GOC_INLINE_DYNALLOC GOC_FIXED_G GOC_OPT_EXTRA \
-    GOC_LLC_EXTRA GOC_COLOR_REPORT GOC_CSR_ADJUST GOC_FRAMEADDR_MODE \
+    GOC_LLC_EXTRA GOC_COLOR_REPORT GOC_CSR_ADJUST \
     GOC_ARCH GOC_LLC_OPT GOC_IR_RENAMES GOC_LIBCALL_IMPL GOC_KEEP_TMP \
     LLC OPT GOC_STACKMAP GOC_PKG
 }
@@ -37,7 +36,7 @@ goc_consume_flag() {
   GOC_FLAG_SHIFT=0
   if [[ "$mode" == driver ]]; then
     case "$1" in
-      --clang|--clang=*|--toolchain|--toolchain=*|--root|--root=*) ;;
+      --root|--root=*) ;;
       *) return 1 ;;
     esac
   fi
@@ -63,15 +62,6 @@ goc_consume_flag() {
       goc_flag_mark default-ptr-color
       GOC_FLAG_SHIFT=1
       ;;
-    --ptr-color|--ptr-color=*|--no-ptr-color)
-      goc_die "the flag is --default-ptr-color"
-      ;;
-    --morestack|--no-morestack|--splittable|--nosplit|--no-nosplit|--sptr-maps|--no-sptr-maps)
-      goc_die "morestack, splittable frames, and sptr maps are always on when linking with Go. There is no switch."
-      ;;
-    --creserve|--creserve=*)
-      goc_die "each Go→C thunk is sized from its signature. There is no --creserve."
-      ;;
     --fast-stack-alloca)
       export GOC_INLINE_DYNALLOC=1
       goc_flag_mark fast-stack-alloca
@@ -81,9 +71,6 @@ goc_consume_flag() {
       export GOC_INLINE_DYNALLOC=0
       goc_flag_mark fast-stack-alloca
       GOC_FLAG_SHIFT=1
-      ;;
-    --inline-dynalloc|--no-inline-dynalloc)
-      goc_die "the flag is --fast-stack-alloca"
       ;;
     --color-report)
       export GOC_COLOR_REPORT=1
@@ -113,9 +100,6 @@ goc_consume_flag() {
       esac
       goc_flag_mark arch
       GOC_FLAG_SHIFT=1
-      ;;
-    --clang|--clang=*|--toolchain|--toolchain=*)
-      goc_die "goc ships its patched clang. There is no --clang or --toolchain."
       ;;
     --root)
       local p
@@ -328,7 +312,6 @@ Flags (a flag overrides a same-named environment variable on `goc build`):
   --root DIR             Repository or release root
 The patched clang is bin/clang in a release, or
 third_party/llvm-19.1.7-clang-build/bin/clang in a checkout.
-There is no --clang and no --toolchain.
   -O0|-O1|-O2|-O3        LLVM IR optimization level
   --default-ptr-color COLOR
                          Color of an unannotated T* (cptr, sptr, uptr, gptr)
@@ -364,7 +347,7 @@ plus the saved frame pointer.
 `goc build` emits every defined function and a Go entry for each. It stays
 at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
 frames, and sptr maps (amd64 and arm64) are always on for `goc go` and
-`goc build`. There is no --all or --goabi.
+`goc build`.
 Clang arguments go after `--`.
 EOF
 }

@@ -49,19 +49,6 @@ func main() {
 		}
 	case "magic-obj":
 		err = lower.ObjectHasMagic(need(2))
-	case "has-define":
-		if len(os.Args) != 4 {
-			usage()
-			os.Exit(2)
-		}
-		ok, e := lower.HasDefine(os.Args[2], os.Args[3])
-		if e != nil {
-			err = e
-			break
-		}
-		if !ok {
-			os.Exit(1)
-		}
 	default:
 		usage()
 		os.Exit(2)
@@ -88,6 +75,5 @@ func usage() {
   align-asm <file.s>
   fnname <ll>
   magic-obj <goobj>
-  has-define <ll> <function>
 `)
 }

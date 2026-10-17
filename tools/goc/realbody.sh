@@ -19,10 +19,6 @@ ABI0=0
 POS=()
 for a in "$@"; do
   case "$a" in
-    --all|--goabi|--all=*|--goabi=*)
-      echo "realbody: every defined function is emitted, with a Go entry. There is no --all or --goabi." >&2
-      exit 2
-      ;;
     --abi0) ABI0=1 ;;
     --*)
       echo "realbody: unknown flag $a" >&2
@@ -62,10 +58,6 @@ fi
 # safe with goc-llc's post-RA GocFrameAddrFix pass (llvm/lib/CodeGen).
 # Stock llc CSEs the GEP into a callee-saved register and keeps it across the
 # call; only GocFrameAddrFix re-derives it, so a stock LLC is refused.
-if [[ -n "${GOC_FRAMEADDR_MODE:-}" && "$GOC_FRAMEADDR_MODE" != gep ]]; then
-  echo "realbody: FATAL GOC_FRAMEADDR_MODE=$GOC_FRAMEADDR_MODE was removed; frame addresses are always GEPs repaired by goc-llc" >&2
-  exit 1
-fi
 if [[ -x "$ROOT/passes/goc-llc" ]]; then
   GOC_LLC_BIN="$ROOT/passes/goc-llc"
 else
@@ -135,10 +127,6 @@ fi
 if [[ "$IN" == *.ll ]]; then
   cp "$IN" "$LL"
 else
-  NATIVE_DEFS=(-DGOC_USE_INTREE_ATTRS)
-  if ! "$CLANG" --version 2>/dev/null | grep -q 'clang version 19'; then
-    NATIVE_DEFS=()
-  fi
   # Go-stack compatible codegen: no red zone (morestack copies the frame),
   # no stack protector, no async unwind tables.
   OPT_FLAGS=("-O$OPT_LEVEL")
@@ -158,7 +146,7 @@ else
     [[ -d /usr/aarch64-linux-gnu/include ]] && TARGET_ARGS+=(-isystem /usr/aarch64-linux-gnu/include)
   fi
   # -gline-tables-only: the FILE/LINE/INL_INDEX rows and the inline tree.
-  "$CLANG" "${NATIVE_DEFS[@]}" "${TARGET_ARGS[@]}" -mno-red-zone -fno-stack-protector \
+  "$CLANG" ${TARGET_ARGS[@]+"${TARGET_ARGS[@]}"} -mno-red-zone -fno-stack-protector \
     -fno-asynchronous-unwind-tables -gline-tables-only -I "$INC" \
     -emit-llvm -S "${OPT_FLAGS[@]}" \
     -o "$LL" "$IN"

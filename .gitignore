@@ -38,19 +38,10 @@ Thumbs.db
 # Written by `goc go` when a package has no assembly file.
 goc_marker_amd64.s
 
-# Test / pipeline scratch
-*.color.ll
-/build/
-PASS_LINES.txt
-goc-test*.txt
-goc-test*.log
-
 # Driver-local binaries
-cmd/goc-p8
-cmd/elfpack
 /bin/
 
-# Python bytecode (scripts import tools/goc helpers)
+# Python bytecode
 __pycache__/
 *.pyc
 

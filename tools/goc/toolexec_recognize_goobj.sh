@@ -38,22 +38,6 @@ append_goc_symabis() {
     prev="$arg"
   done
   [[ -n "$out" && -f "$out" ]] || return 0
-  # Package path from -p
-  local pkg="main" prev=""
-  for arg in "$@"; do
-    if [[ "$prev" == "-p" ]]; then pkg="$arg"; fi
-    prev="$arg"
-  done
-  {
-    echo "def ${pkg}.GocCheckedAdd ABIInternal"
-    echo "def ${pkg}.GocHoldLive ABIInternal"
-    echo "def ${pkg}.GocHoldArg ABIInternal"
-    echo "def ${pkg}.StoreGptrWB ABIInternal"
-    echo "def ${pkg}.GocHoldTwo ABIInternal"
-    echo "def ${pkg}.GocHoldRegOnly ABIInternal"
-    echo "def ${pkg}.GocFadd64 ABIInternal"
-    echo "def ${pkg}.GocFadd32 ABIInternal"
-  } >> "$out"
   # Defs for every TEXT of each object: gocobj2goobj writes them beside it
   # (foo.goobj -> foo.symabis). GOC_BINOBJ may be a space-separated list
   # (multi-TU builds).
@@ -68,7 +52,6 @@ append_goc_symabis() {
     cat "${side}.symabis" >> "$out"
     echo "toolexec: appended goc symabis from $(basename "${side}.symabis")" >&2
   done
-  echo "toolexec: appended goc ABIInternal symabis → $out" >&2
 }
 
 inject_binobj() {

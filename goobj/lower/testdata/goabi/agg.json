@@ -1,0 +1,115 @@
+{
+  "functions": [
+    {
+      "name": "pair",
+      "ret": "{ i64, i64 }",
+      "ret_attrs": [],
+      "ret_abi_attrs": [],
+      "params": [
+        "i64",
+        "{ i64, i64 }"
+      ],
+      "param_attrs": [
+        [],
+        []
+      ],
+      "param_abi_attrs": [
+        [],
+        []
+      ],
+      "varargs": false,
+      "internal": false,
+      "non_c_calling_convention": false,
+      "abi": {
+        "go": {
+          "params": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rax"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rbx"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rcx"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rax"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rbx"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        },
+        "sysv": {
+          "params": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rdi"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rsi"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rdx"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rax"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "rdx"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        }
+      },
+      "go_signature": "func pair(int64, struct { F0 uint64; F1 uint64 }) (uint64, uint64)",
+      "outgoing": 0,
+      "impl": "pair.impl"
+    }
+  ],
+  "skipped": []
+}

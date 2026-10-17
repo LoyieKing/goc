@@ -106,7 +106,7 @@ goc 的优化流水线和普通 `clang -O3` 并不完全一样：前端用 `-dis
 
 ### 2.1 四个套件
 
-![build matrix](perf-gap/charts/perf-gap-matrix.png)
+![build matrix](perf-gap/charts/perf-gap-matrix.svg)
 
 上图（主时段）把每份源码的五种构建都除以它自己的 gcc -O2 版：左边 ng，gcc 最慢、clang 快 13%～42%；右边 Bellard，gcc 最快，clang 慢 17%～38%，goc 再慢一截。
 
@@ -144,9 +144,9 @@ goc 的优化流水线和普通 `clang -O3` 并不完全一样：前端用 `-dis
 
 ### 2.2 V8 子项与 SunSpider 逐项
 
-![V8 layers](perf-gap/charts/perf-gap-v8-layers.png)
+![V8 layers](perf-gap/charts/perf-gap-v8-layers.svg)
 
-![SunSpider layers](perf-gap/charts/perf-gap-ss-layers.png)
+![SunSpider layers](perf-gap/charts/perf-gap-ss-layers.svg)
 
 每格是相邻两个构建的时间比（>1 表示后者慢）：compiler = clang-O2/gcc-O2，opt level = clang-O3/clang-O2，goc flags = gocflags/clang-O3，goc runtime = goc/gocflags，最后一列 goc/clang-O3。
 
@@ -158,7 +158,7 @@ goc 的优化流水线和普通 `clang -O3` 并不完全一样：前端用 `-dis
 
 四个套件的总账如下图（主时段数据）：每一层是相邻两个构建的时间比取对数（×100，约等于百分比），各层相加等于黑线表示的总差距。ng 这边编译器一层是负的（clang 比 gcc 快），Bellard 这边是正的。
 
-![layered decomposition](perf-gap/charts/perf-gap-layers.png)
+![layered decomposition](perf-gap/charts/perf-gap-layers.svg)
 
 ### 2.3 microbench 与 microcall
 
@@ -176,7 +176,7 @@ microcall（10 种 JS 调用形状，`bench/js/microcall.js`）上，goc/clang-O
 
 ### 2.4 模拟计数器
 
-![counters](perf-gap/charts/perf-gap-counters.png)
+![counters](perf-gap/charts/perf-gap-counters.svg)
 
 这台虚拟机没有硬件 PMU（`perf stat` 的 cycles/instructions 都是 `<not supported>`），所以计数器来自 callgrind 的模拟：Ir 是执行的指令数，D1/LL 是它的简单缓存模型，分支预测是它的简单模型（间接跳转只记“上一次的目标”）。输入是固定工作量的 V8（每个子项固定迭代次数，外加一个只解析不运行的 `Parse`），见 `bench/perfgap-callgrind.sh`。
 
@@ -262,7 +262,7 @@ C 微基准 `bench/perfgap/mech.c` 的 `interp`（31 个 handler 的 computed-go
 
 同一段代码，只差分发块复不复制，速度差 2.4 倍。【实测】
 
-![mech-c](perf-gap/charts/perf-gap-mech-c.png)
+![mech-c](perf-gap/charts/perf-gap-mech-c.svg)
 
 整机计时（开关时段，时间比，<1 表示变快）：
 
@@ -314,7 +314,7 @@ ng 的 SunSpider 和 microbench 也快了 6%～11%，但 V8 只快 1%～1.5%。�
 
 ### 4.2 总账
 
-![Ir decomposition](perf-gap/charts/perf-gap-ir-decomp.png)
+![Ir decomposition](perf-gap/charts/perf-gap-ir-decomp.svg)
 
 `bench/perfgap-cg-classify.py` 把 callgrind 记下的每一条执行过的指令地址用 objdump 映射回二进制，按指令形状分类（分类规则写在脚本开头），再和 gocflags 构建逐类相减。下表是 V8 8 个子项 + Parse 的合计，单位是**原生构建总 Ir 的百分点**（`data/ir-decomposition.json`）：
 
@@ -351,7 +351,7 @@ ng 的 SunSpider 和 microbench 也快了 6%～11%，但 V8 只快 1%～1.5%。�
 
 ### 4.3 一步一步：从 gocflags 走到 goc-bellard
 
-![steps](perf-gap/charts/perf-gap-steps.png)
+![steps](perf-gap/charts/perf-gap-steps.svg)
 
 | 步骤 | Ir 变化 | 主要来自 | V8 时间比 | SunSpider | micro |
 |---|---:|---|---:|---:|---:|
@@ -529,7 +529,7 @@ goc 版本里，libc 的服务要么由 shim 用 C 实现，要么桥接到 Go�
 | JS 函数调用 | 36.1 | 43.0 | 39.3 | 38.7 | 39.1 | 41.4 |
 | 正则 exec | 251.9 | 296.3 | 308.7 | 367.6 | 494.9 | 503.1 |
 
-![mech-js](perf-gap/charts/perf-gap-mech-js.png)
+![mech-js](perf-gap/charts/perf-gap-mech-js.svg)
 
 ### 5.1 libm：Go → cgo → glibc 的往返（每次 +50 ns）【实测】
 
@@ -599,7 +599,7 @@ callgrind 上 Bellard gocflags 的 Ir 比 clang-O3 少 1.2%，帧读写少 2.8 �
 | gocflags（全部） | 以上全部 | 1391 | 0.953 | 0.900 | 16.22G（−1.2%） |
 | gocpipe（全部 + goc 的 opt/llc 流水线） | | 1406 | 0.943 | 0.913 | 16.20G（−1.3%） |
 
-![flags](perf-gap/charts/perf-gap-flags.png)
+![flags](perf-gap/charts/perf-gap-flags.svg)
 
 观察到的事实【实测】：
 
@@ -653,7 +653,7 @@ gocpipe → gocpipe-sm 只加了 goc 的 stackmap pass 和 `GocFrameAddrFix`（�
 
 ## 8. 优化清单（按预期收益 / 风险排序）
 
-![toggles](perf-gap/charts/perf-gap-toggles.png)
+![toggles](perf-gap/charts/perf-gap-toggles.svg)
 
 “实测”一列是本次 A/B 计时的结果（开关时段，时间比，<1 表示变快）；“估计”是按 Ir 份额或探针推算的上限，未实测。
 

@@ -1,13 +1,12 @@
-/* goc.h — pointer-color surface for in-tree Clang or the plugin (syntax-guide v0.2.1)
+/* goc.h — pointer colors for goc's patched Clang (docs/syntax-guide.md v0.2.1)
  *
- * When compiled with -fplugin=libGocClang.so, native attributes
- *   __attribute__((goc_cptr|goc_sptr|goc_uptr|goc_auto_ptr|goc_gptr))
- * are registered by the plugin and lowered to AnnotateAttr "goc.color.*".
- * Without the plugin, fall back to clang::annotate (read by the IR color pass).
+ * The colors are native attributes of the patched Clang (clang/patches,
+ * clang/sema/SemaGocColors.cpp): __attribute__((goc_cptr|goc_sptr|goc_uptr|
+ * goc_auto_ptr|goc_gptr)). Clang mirrors them into the IR, where the color
+ * pass reads them.
  *
- * Product path: a stack pointer stored into non-stack cptr/auto T* is promoted
- * to uptr by the IR pass. Unsupported escapes and raw sptr returns stay hard
- * errors. No dsptr. The plugin still rejects a sptr store to heap/global.
+ * A stack pointer stored into non-stack cptr/auto T* is promoted to uptr by
+ * the IR pass. Unsupported escapes and raw sptr returns stay hard errors.
  */
 #ifndef GOC_H
 #define GOC_H
@@ -20,22 +19,11 @@
 extern "C" {
 #endif
 
-/* Prefer plugin-native spellings when the plugin is loaded (define GOC_USE_PLUGIN_ATTRS
- * from the goc driver). Otherwise annotate tokens survive into IR for the color pass. */
-/* Native goc_* attrs: in-tree Attr.td or -fplugin. */
-#if defined(GOC_USE_PLUGIN_ATTRS) || defined(GOC_USE_INTREE_ATTRS)
-#  define GOC_ANN_CPTR __attribute__((goc_cptr))
-#  define GOC_ANN_SPTR __attribute__((goc_sptr))
-#  define GOC_ANN_UPTR __attribute__((goc_uptr))
-#  define GOC_ANN_AUTO __attribute__((goc_auto_ptr))
-#  define GOC_ANN_GPTR __attribute__((goc_gptr))
-#else
-#  define GOC_ANN_CPTR __attribute__((annotate("goc.color.cptr")))
-#  define GOC_ANN_SPTR __attribute__((annotate("goc.color.sptr")))
-#  define GOC_ANN_UPTR __attribute__((annotate("goc.color.uptr")))
-#  define GOC_ANN_AUTO __attribute__((annotate("goc.color.auto")))
-#  define GOC_ANN_GPTR __attribute__((annotate("goc.color.gptr")))
-#endif
+#define GOC_ANN_CPTR __attribute__((goc_cptr))
+#define GOC_ANN_SPTR __attribute__((goc_sptr))
+#define GOC_ANN_UPTR __attribute__((goc_uptr))
+#define GOC_ANN_AUTO __attribute__((goc_auto_ptr))
+#define GOC_ANN_GPTR __attribute__((goc_gptr))
 
 #define cptr(T) T *GOC_ANN_CPTR
 #define sptr(T) T *GOC_ANN_SPTR

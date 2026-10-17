@@ -116,16 +116,6 @@ const DenseSet<const Argument *> &stackPointerArguments(const Module &M,
                                                         const DataLayout &DL);
 DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL);
 bool unmergeReportedAllocas(Function &F);
-bool isShift32(const Instruction &I, unsigned Opcode);
-bool isHalfMask(const Value *V);
-DenseSet<Value *> stackInts(Function &F, const DenseSet<Value *> &stackPtrs);
-bool integerResult(const Instruction &I);
-bool isPinSeed(const Instruction &I);
-bool growsFromPin(const Instruction &I, const DenseSet<Value *> &known);
-bool freezesStackAddress(const Instruction &I, const DenseSet<Value *> &stackInts,
-                         const DenseSet<Value *> &stackPtrs);
-bool useAfter(const Instruction *Def, const Instruction *UsePt);
-Instruction *pinStorePoint(Instruction *Def);
 bool gocArchArm64();
 Value *tlsGWord(IRBuilder<> &B, uint64_t Off);
 Function *uptrFatal(Module &M);
@@ -148,7 +138,6 @@ bool rewriteUptrCall(CallInst *CI);
 // Pass factories, for parseStackMapPass.
 void addGocStackMap(FunctionPassManager &FPM);
 void addGocReanchor(FunctionPassManager &FPM);
-void addGocPinI64(FunctionPassManager &FPM);
 void addGocInlineGate(FunctionPassManager &FPM);
 void addGocNameBlocks(FunctionPassManager &FPM);
 

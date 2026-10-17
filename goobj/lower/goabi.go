@@ -71,8 +71,8 @@ type goABIFile struct {
 }
 
 // RunGoABI rewrites eligible definitions to name.impl and returns the thunk
-// assembly plus the sidecar JSON. logText is the human summary printed by
-// the old goc_goabi.py.
+// assembly plus the sidecar JSON. logText is the human summary the driver
+// prints (testdata/goabi/*.log).
 func RunGoABI(text, arch string) (outLL, asm string, js []byte, logText string, err error) {
 	outLL, asm, js, logText, _, err = runGoABI(text, arch, false)
 	return

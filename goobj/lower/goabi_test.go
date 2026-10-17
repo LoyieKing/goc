@@ -2,18 +2,20 @@ package lower
 
 import (
 	"encoding/json"
+	"flag"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func TestGoABIMatchesPython(t *testing.T) {
-	script := filepath.Join("testdata", "goc_goabi.py")
-	if _, err := os.Stat(script); err != nil {
-		t.Fatalf("python oracle missing: %v", err)
-	}
+var update = flag.Bool("update", false, "rewrite testdata/goabi/* from the current output")
+
+// TestGoABIGolden compares the Go ABI thunk generator with the outputs
+// recorded in testdata/goabi (the IR, the thunk assembly, the goabi JSON and
+// the log). They were first taken from the Python generator this package
+// replaced; go test -run TestGoABIGolden -update rewrites them.
+func TestGoABIGolden(t *testing.T) {
 	cases := []struct {
 		name string
 		arch string
@@ -59,55 +61,36 @@ define ptr @box(ptr %p) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			dir := t.TempDir()
-			in := filepath.Join(dir, "in.ll")
-			if err := os.WriteFile(in, []byte(tc.ir), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			pyLL := filepath.Join(dir, "py.ll")
-			pyS := filepath.Join(dir, "py.s")
-			pyJ := filepath.Join(dir, "py.json")
-			cmd := exec.Command("python3", script, in, pyLL, pyS, pyJ)
-			cmd.Env = append(os.Environ(), "GOC_ARCH="+tc.arch)
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				t.Fatalf("python: %v\n%s", err, out)
-			}
 			gotLL, gotS, gotJ, gotLog, err := RunGoABI(tc.ir, tc.arch)
 			if err != nil {
 				t.Fatal(err)
 			}
-			wantLL, _ := os.ReadFile(pyLL)
-			wantS, _ := os.ReadFile(pyS)
-			wantJ, _ := os.ReadFile(pyJ)
-			if gotLL != string(wantLL) {
-				t.Errorf("IR mismatch\n--- py ---\n%s\n--- go ---\n%s", wantLL, gotLL)
-			}
-			if gotS != string(wantS) {
-				t.Errorf("asm mismatch\n--- py ---\n%s\n--- go ---\n%s", wantS, gotS)
-			}
-			if !jsonEqual(t, wantJ, gotJ) {
-				t.Errorf("json mismatch\n--- py ---\n%s\n--- go ---\n%s", wantJ, gotJ)
-			}
-			if gotLog != string(out) {
-				t.Errorf("log mismatch\n--- py ---\n%s\n--- go ---\n%s", out, gotLog)
+			for _, f := range []struct{ ext, got string }{
+				{"ll", gotLL}, {"s", gotS}, {"json", string(gotJ)}, {"log", gotLog},
+			} {
+				path := filepath.Join("testdata", "goabi", tc.name+"."+f.ext)
+				if *update {
+					if err := os.WriteFile(path, []byte(f.got), 0o644); err != nil {
+						t.Fatal(err)
+					}
+					continue
+				}
+				want, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if f.ext == "json" {
+					if !jsonEqual(t, want, gotJ) {
+						t.Errorf("%s mismatch\n--- want ---\n%s\n--- got ---\n%s", path, want, gotJ)
+					}
+					continue
+				}
+				if f.got != string(want) {
+					t.Errorf("%s mismatch\n--- want ---\n%s\n--- got ---\n%s", path, want, f.got)
+				}
 			}
 		})
 	}
-}
-
-func jsonEqual(t *testing.T, a, b []byte) bool {
-	t.Helper()
-	var ja, jb any
-	if err := json.Unmarshal(a, &ja); err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(b, &jb); err != nil {
-		t.Fatal(err)
-	}
-	ab, _ := json.Marshal(ja)
-	bb, _ := json.Marshal(jb)
-	return string(ab) == string(bb)
 }
 
 func TestFixIRMatchesShape(t *testing.T) {
@@ -124,4 +107,20 @@ func TestFixIRMatchesShape(t *testing.T) {
 	if !strings.Contains(string(got), `override-stack-alignment`) || !strings.Contains(string(got), `"no-realign-stack"`) {
 		t.Fatalf("fix-ir:\n%s", got)
 	}
+}
+
+// jsonEqual compares two JSON documents by value: the golden files keep the
+// Python generator's formatting.
+func jsonEqual(t *testing.T, a, b []byte) bool {
+	t.Helper()
+	var ja, jb any
+	if err := json.Unmarshal(a, &ja); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(b, &jb); err != nil {
+		t.Fatal(err)
+	}
+	ab, _ := json.Marshal(ja)
+	bb, _ := json.Marshal(jb)
+	return string(ab) == string(bb)
 }

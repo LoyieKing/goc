@@ -1,0 +1,271 @@
+{
+  "functions": [
+    {
+      "name": "sum9",
+      "ret": "i64",
+      "ret_attrs": [],
+      "ret_abi_attrs": [],
+      "params": [
+        "i64",
+        "i64",
+        "i64",
+        "i64",
+        "i64",
+        "i64",
+        "i64",
+        "i64",
+        "i64"
+      ],
+      "param_attrs": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "param_abi_attrs": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      "varargs": false,
+      "internal": false,
+      "non_c_calling_convention": false,
+      "abi": {
+        "go": {
+          "params": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x1"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x2"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x3"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x4"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x5"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x6"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x7"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x8"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        },
+        "sysv": {
+          "params": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x1"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x2"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x3"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x4"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x5"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x6"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x7"
+              }
+            },
+            {
+              "type": "i64",
+              "location": {
+                "kind": "stack",
+                "offset": 0
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "i64",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            }
+          ],
+          "stack_args_size": 8
+        }
+      },
+      "go_signature": "func sum9(int64, int64, int64, int64, int64, int64, int64, int64, int64) int64",
+      "outgoing": 16,
+      "impl": "sum9.impl"
+    },
+    {
+      "name": "box",
+      "ret": "ptr",
+      "ret_attrs": [],
+      "ret_abi_attrs": [],
+      "params": [
+        "ptr"
+      ],
+      "param_attrs": [
+        []
+      ],
+      "param_abi_attrs": [
+        []
+      ],
+      "varargs": false,
+      "internal": false,
+      "non_c_calling_convention": false,
+      "abi": {
+        "go": {
+          "params": [
+            {
+              "type": "ptr",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "ptr",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        },
+        "sysv": {
+          "params": [
+            {
+              "type": "ptr",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "ptr",
+              "location": {
+                "kind": "register",
+                "register": "x0"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        }
+      },
+      "go_signature": "func box(unsafe.Pointer) unsafe.Pointer",
+      "outgoing": 0,
+      "impl": "box.impl"
+    }
+  ],
+  "skipped": []
+}

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Draw docs/benchmark/charts/*.{svg,png} from docs/benchmark/data/all.json.
+"""Draw docs/benchmark/charts/*.svg from docs/benchmark/data/all.json.
 
-Every chart is written twice with the same name: .png (embedded in
-docs/benchmark.md) and .svg (embedded in docs/benchmark/report.html).
+Charts are SVG only (docs/benchmark.md embeds them).
 All chart text is English; the doc prose stays Chinese. Every performance
 chart shows all five engines, Goja included (log axes where Goja would dwarf
 the others). goc builds are drawn dark, the native build of the same engine
@@ -37,7 +36,6 @@ NE = len(ENG)
 LEG = dict(frameon=True, facecolor="white", edgecolor="none", framealpha=1)
 
 def save(fig, name):
-    fig.savefig(os.path.join(OUT, name + ".png"), dpi=150, bbox_inches="tight")
     fig.savefig(os.path.join(OUT, name + ".svg"), bbox_inches="tight")
     plt.close(fig)
     print("wrote", name)

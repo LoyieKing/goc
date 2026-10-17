@@ -4,7 +4,7 @@
 // metadata, never by IR value name: a Release (no-assertions) clang discards
 // value names, and the IR must mean the same either way.
 //
-//   !goc.root !{!"spill" | !"anchor" | !"arganchor" | !"pin"}
+//   !goc.root !{!"spill" | !"anchor" | !"arganchor"}
 //       on an alloca a goc pass created, naming its role.
 //   !goc.slot !{i64 N}
 //       a function-unique id of an alloca that a !goc.frame.words tag refers

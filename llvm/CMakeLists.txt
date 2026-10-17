@@ -1,6 +1,6 @@
 # goc's LLVM-side code, built against an installed LLVM 19:
 #   libGocPasses.so   opt plugin: goc-color-escape, print<goc-color>,
-#                     goc-inline-gate, goc-stackmap, goc-reanchor, goc-pin-i64
+#                     goc-inline-gate, goc-stackmap, goc-reanchor
 #   goc-llc           llc plus GocFrameAddrFix / GocStackmapPlacement, the Go
 #                     stack check (X86 and AArch64 hooks) and the .goc.* tables
 #
@@ -65,7 +65,7 @@ add_library(GocCore OBJECT ${GOC_COLOR_SRCS}
   lib/Analysis/StackMap/SafepointAnalysis.cpp
   lib/Transforms/StackMap/GocStackMap.cpp lib/Transforms/StackMap/SMRoots.cpp
   lib/Transforms/StackMap/SMStackMap.cpp lib/Transforms/StackMap/SMReanchor.cpp
-  lib/Transforms/StackMap/SMPinI64.cpp lib/Transforms/StackMap/SMUptrInline.cpp)
+  lib/Transforms/StackMap/SMUptrInline.cpp)
 
 # No LLVM libraries: the plugin resolves LLVM symbols from the loading opt.
 # Linking libLLVM in would run its static initializers a second time and

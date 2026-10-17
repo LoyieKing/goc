@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw docs/perf-gap/charts/*.{png,svg} from docs/perf-gap/data/*.json.
+"""Draw docs/perf-gap/charts/*.svg from docs/perf-gap/data/*.json.
 
 All chart text is English (the doc prose is Chinese). Needs matplotlib.
 Charts whose input file is missing are skipped.
@@ -34,7 +34,6 @@ SUITES = ["V8", "SunSpider", "microbench", "microcall"]
 FAM = {"ng": "quickjs-ng 0.17.0", "bellard": "Bellard QuickJS 2026-06-04"}
 
 def save(fig, name):
-    fig.savefig(os.path.join(OUT, name + ".png"), dpi=150, bbox_inches="tight")
     fig.savefig(os.path.join(OUT, name + ".svg"), bbox_inches="tight")
     plt.close(fig)
     print("wrote", name)

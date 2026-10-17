@@ -9,7 +9,8 @@ echo "=== color-escape: build libGocPasses.so ==="
 "$REPO/scripts/build-passes.sh"
 
 PASS_BIN="$ROOT/color-escape.sh"
-CLANG="${CLANG:-clang-19}"
+# The patched clang (goc.h's color attributes are its native attributes).
+CLANG="$(bash -c 'ROOT="$0"; source "$ROOT/scripts/goc-product-lib.sh"; goc_resolve_clang' "$REPO")"
 INCDIR="$REPO/include"
 OUT="$REPO/build/test/color-escape"
 mkdir -p "$OUT"

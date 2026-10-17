@@ -94,7 +94,7 @@ QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's orig
 | native Bellard | Bellard's QuickJS, native build (gcc) |
 | Goja | JS engine written in pure Go |
 
-![Speed relative to native ng](docs/benchmark/charts/overview-speed.png)
+![Speed relative to native ng](docs/benchmark/charts/overview-speed.svg)
 
 | Suite | goc-ng | goc-bellard | native ng | native Bellard | Goja | How to read |
 |---|---:|---:|---:|---:|---:|---|
@@ -107,11 +107,11 @@ QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's orig
 
 **Correctness:** both goc builds match their native counterparts test for test.
 
-![Correctness](docs/benchmark/charts/overview-correct.png)
+![Correctness](docs/benchmark/charts/overview-correct.svg)
 
 **V8-v7 sub-tests:**
 
-![V8-v7](docs/benchmark/charts/v8.png)
+![V8-v7](docs/benchmark/charts/v8.svg)
 
 | Test | goc-ng | goc-bellard | native ng | native Bellard | Goja |
 |---|---:|---:|---:|---:|---:|
@@ -127,17 +127,17 @@ QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's orig
 
 **SunSpider and microbench:**
 
-![SunSpider](docs/benchmark/charts/sunspider.png)
+![SunSpider](docs/benchmark/charts/sunspider.svg)
 
-![microbench](docs/benchmark/charts/micro-groups.png)
+![microbench](docs/benchmark/charts/micro-groups.svg)
 
 **Call microbenchmark:**
 
-![microcall](docs/benchmark/charts/microcall.png)
+![microcall](docs/benchmark/charts/microcall.svg)
 
 **Memory** (peak RSS in MiB; the last row is the extra memory per additional JS runtime, in KiB):
 
-![Peak RSS](docs/benchmark/charts/mem-peak.png)
+![Peak RSS](docs/benchmark/charts/mem-peak.svg)
 
 | Workload | goc-ng | goc-bellard | native ng | native Bellard | Goja |
 |---|---:|---:|---:|---:|---:|
@@ -147,7 +147,7 @@ QuickJS is the showcase: goc compiles both QuickJS-ng and Fabrice Bellard's orig
 | microbench | 10.7 | 10.5 | 4.5 | 4.3 | 567.3 |
 | Per extra runtime (KiB) | 224 | 199 | 209 | 189 | 105 |
 
-![Multiple instances](docs/benchmark/charts/mem-scaling.png)
+![Multiple instances](docs/benchmark/charts/mem-scaling.svg)
 
 goc builds carry a fixed overhead of about 5.3 to 5.4 MiB over native when idle. On the full V8 suite the ratio falls to 1.06.
 

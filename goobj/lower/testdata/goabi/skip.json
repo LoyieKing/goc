@@ -1,0 +1,90 @@
+{
+  "functions": [
+    {
+      "name": "fadd",
+      "ret": "float",
+      "ret_attrs": [],
+      "ret_abi_attrs": [],
+      "params": [
+        "float",
+        "double"
+      ],
+      "param_attrs": [
+        [],
+        []
+      ],
+      "param_abi_attrs": [
+        [],
+        []
+      ],
+      "varargs": false,
+      "internal": false,
+      "non_c_calling_convention": false,
+      "abi": {
+        "go": {
+          "params": [
+            {
+              "type": "float",
+              "location": {
+                "kind": "register",
+                "register": "xmm0"
+              }
+            },
+            {
+              "type": "double",
+              "location": {
+                "kind": "register",
+                "register": "xmm1"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "float",
+              "location": {
+                "kind": "register",
+                "register": "xmm0"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        },
+        "sysv": {
+          "params": [
+            {
+              "type": "float",
+              "location": {
+                "kind": "register",
+                "register": "xmm0"
+              }
+            },
+            {
+              "type": "double",
+              "location": {
+                "kind": "register",
+                "register": "xmm1"
+              }
+            }
+          ],
+          "results": [
+            {
+              "type": "float",
+              "location": {
+                "kind": "register",
+                "register": "xmm0"
+              }
+            }
+          ],
+          "stack_args_size": 0
+        }
+      },
+      "go_signature": "func fadd(float32, float64) float32",
+      "outgoing": 0,
+      "impl": "fadd.impl"
+    }
+  ],
+  "skipped": [
+    "hid",
+    "dots"
+  ]
+}

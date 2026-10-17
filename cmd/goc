@@ -29,9 +29,9 @@ Usage:
       One C file → Go object (patched clang, IR passes, goc-llc, gocobj2goobj). Default -O0.
   goc cc [clang-args…]
       Invoke the shipped clang with goc include/attrs
-  goc test [--plugin]
+  goc test
       Clang color tests and one file through the pipeline (test/clang,
-      test/e2e/realbody); --plugin: the out-of-tree clang plugin form only
+      test/e2e/realbody)
   goc version
   goc help | -h | --help
 
@@ -44,7 +44,6 @@ Usage:
 `goc build` emits every defined function and a Go entry for each. It stays
 at -O0 and still honors inherited GOC_*. A flag wins. Morestack, splittable
 frames, and sptr maps are always on (amd64 and arm64).
-There is no --all or --goabi.
 
 Download and use: docs/quickstart.md
 Build the package: docs/build-from-source.md
@@ -61,9 +60,6 @@ cmd_version() {
 
 resolve_clang() { goc_resolve_clang; }
 
-# Every clang this driver runs is the patched one next to goc.
-is_intree_clang() { return 0; }
-
 # In-tree and packed clangs need their own libLLVM. Prepend that lib dir so
 # goc-llc and opt (with libGocPasses.so) start without a hand-set LD_LIBRARY_PATH.
 prepend_clang_lib() {
@@ -79,7 +75,7 @@ prepend_clang_lib() {
 }
 
 cmd_cc() {
-  local CLANG PLUGIN INC
+  local CLANG
   GOC_FLAG_MODE=driver
   while [[ $# -gt 0 ]]; do
     if goc_consume_flag "$1" "${2:-}"; then
@@ -91,31 +87,7 @@ cmd_cc() {
   unset GOC_FLAG_MODE
   CLANG="$(resolve_clang)"
   prepend_clang_lib "$CLANG"
-  INC="$ROOT/include"
-  PLUGIN="$ROOT/clang/plugin/../build/libGocClang.so"
-  # Prefer plugin build dir next to plugin sources
-  if [[ ! -f "$PLUGIN" ]]; then
-    PLUGIN="$ROOT/build/libGocClang.so"
-  fi
-  if [[ ! -f "$PLUGIN" ]]; then
-    PLUGIN="$ROOT/clang/build/libGocClang.so"
-  fi
-
-  if is_intree_clang "$CLANG"; then
-    exec "$CLANG" -DGOC_USE_INTREE_ATTRS -I "$INC" "$@"
-  fi
-  # LEGACY plugin path
-  if [[ ! -f "$PLUGIN" ]]; then
-    make -C "$ROOT/clang/plugin" all OBJDIR="$ROOT/build" TARGET="$ROOT/build/libGocClang.so" || \
-      make -C "$ROOT/clang/plugin" all
-    PLUGIN="$ROOT/build/libGocClang.so"
-    [[ -f "$PLUGIN" ]] || PLUGIN="$ROOT/clang/plugin/../build/libGocClang.so"
-  fi
-  if [[ -f "$PLUGIN" ]]; then
-    exec "$CLANG" -fplugin="$PLUGIN" -DGOC_USE_PLUGIN_ATTRS -I "$INC" "$@"
-  fi
-  echo "goc cc: warning: no in-tree clang and no plugin; using annotate-only attrs" >&2
-  exec "$CLANG" -I "$INC" "$@"
+  exec "$CLANG" -I "$ROOT/include" "$@"
 }
 
 cmd_build() {
@@ -131,10 +103,6 @@ cmd_build() {
     fi
     case "$1" in
       -o) OUT_O="$2"; shift 2 ;;
-      --all|--goabi|--all=*|--goabi=*)
-        echo "goc build: every defined function is emitted, with a Go entry. There is no --all or --goabi." >&2
-        exit 2
-        ;;
       --abi0) ABI0=1; shift ;;
       --) shift; EXTRA+=("$@"); break ;;
       -h|--help)
@@ -185,12 +153,9 @@ cmd_build() {
     fi
   fi
 
-  local CLANG USE_PLUGIN=0
+  local CLANG
   CLANG="$(resolve_clang)"
   prepend_clang_lib "$CLANG"
-  if ! is_intree_clang "$CLANG"; then
-    USE_PLUGIN=1
-  fi
   local INC="$ROOT/include"
   # amd64 gep remat is only safe with goc-llc's GocFrameAddrFix. Passing
   # stock llc-19 here used to skip realbody's missing-binary check, so tail
@@ -204,7 +169,6 @@ cmd_build() {
     fi
   fi
   local REALBODY="$ROOT/tools/goc/realbody.sh"
-  local PLUGIN="$ROOT/build/libGocClang.so"
   local OPT_LEVEL="${GOC_OPT_LEVEL:-0}"
   case "$OPT_LEVEL" in
     0|1|2|3) ;;
@@ -269,22 +233,7 @@ cmd_build() {
                  -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
                  -fno-optimize-sibling-calls -Xclang -disable-llvm-passes)
   fi
-  if [[ $USE_PLUGIN -eq 0 ]]; then
-    CLANG_ARGS=(-DGOC_USE_INTREE_ATTRS "${CLANG_ARGS[@]}")
-    echo "goc build: in-tree/clang=$CLANG (no -fplugin)" >&2
-  else
-    if [[ ! -f "$PLUGIN" ]]; then
-      make -C "$ROOT/clang/plugin" all OBJDIR="$ROOT/build" 2>/dev/null || \
-        make -C "$ROOT/clang/plugin" all || true
-      PLUGIN="$ROOT/build/libGocClang.so"
-    fi
-    if [[ -f "$PLUGIN" ]]; then
-      CLANG_ARGS=(-fplugin="$PLUGIN" -DGOC_USE_PLUGIN_ATTRS "${CLANG_ARGS[@]}")
-      echo "goc build: LEGACY plugin path clang=$CLANG" >&2
-    else
-      echo "goc build: annotate-only path clang=$CLANG (no plugin built)" >&2
-    fi
-  fi
+  echo "goc build: clang=$CLANG" >&2
 
   if [[ "$GOC_ARCH" == arm64 ]]; then
     # IR datalayout must be aarch64. -ffixed-x28 matches llc's reservation
@@ -362,7 +311,7 @@ cmd_build() {
     # Inlining is done. Record maps on the surviving functions, then spill
     # frame addresses O3 left in SSA across calls. Nothing after this may
     # inline: a caller cannot retarget a callee's frame-word offsets.
-    # goc-pin-i64 is not run. Spill slots share; root allocas do not. The
+    # Spill slots share; root allocas do not. The
     # hoisted g value lives in a callee-saved register, not a colored spill.
     # Integer fragments stay in registers; the copier copies those spills
     # verbatim.
@@ -413,26 +362,19 @@ cmd_build() {
 }
 
 cmd_test() {
-  local PLUGIN_ONLY=0
   GOC_FLAG_MODE=driver
   while [[ $# -gt 0 ]]; do
     if goc_consume_flag "$1" "${2:-}"; then
       shift "$GOC_FLAG_SHIFT"
       continue
     fi
-    case "$1" in
-      --plugin) PLUGIN_ONLY=1; shift ;;
-      *) echo "unknown goc test flag: $1" >&2; exit 2 ;;
-    esac
+    echo "unknown goc test flag: $1" >&2; exit 2
   done
   unset GOC_FLAG_MODE
-  if [[ $PLUGIN_ONLY -eq 1 ]]; then
-    exec bash "$ROOT/test/clang/run.sh" --plugin-only
-  fi
   # realbody runs goc-llc, which needs the clang tree's libLLVM, the same
   # way goc build does.
   prepend_clang_lib "$(resolve_clang)"
-  bash "$ROOT/test/clang/run.sh" --intree-only
+  bash "$ROOT/test/clang/run.sh"
   bash "$ROOT/test/e2e/realbody/run.sh"
   echo "goc test: PASS"
 }

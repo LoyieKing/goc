@@ -94,7 +94,7 @@ int *bad_return(void) {
 | native Bellard | 原生编译的 Bellard QuickJS（gcc） |
 | Goja | 纯 Go 实现的 JS 引擎 |
 
-![相对 native ng 的速度](docs/benchmark/charts/overview-speed.png)
+![相对 native ng 的速度](docs/benchmark/charts/overview-speed.svg)
 
 | 套件 | goc-ng | goc-bellard | native ng | native Bellard | Goja | 怎么读 |
 |---|---:|---:|---:|---:|---:|---|
@@ -107,11 +107,11 @@ int *bad_return(void) {
 
 **正确性**：两个 goc 构建和各自的原生构建逐项结果完全一致。
 
-![正确性](docs/benchmark/charts/overview-correct.png)
+![正确性](docs/benchmark/charts/overview-correct.svg)
 
 **V8-v7 各子项**：
 
-![V8-v7](docs/benchmark/charts/v8.png)
+![V8-v7](docs/benchmark/charts/v8.svg)
 
 | 子项 | goc-ng | goc-bellard | native ng | native Bellard | Goja |
 |---|---:|---:|---:|---:|---:|
@@ -127,17 +127,17 @@ int *bad_return(void) {
 
 **SunSpider 与 microbench**：
 
-![SunSpider](docs/benchmark/charts/sunspider.png)
+![SunSpider](docs/benchmark/charts/sunspider.svg)
 
-![microbench](docs/benchmark/charts/micro-groups.png)
+![microbench](docs/benchmark/charts/micro-groups.svg)
 
 **函数调用微基准**：
 
-![microcall](docs/benchmark/charts/microcall.png)
+![microcall](docs/benchmark/charts/microcall.svg)
 
 **内存**（峰值 RSS，MiB；最后一行是每多一个 JS 运行时的增量，KiB）：
 
-![峰值 RSS](docs/benchmark/charts/mem-peak.png)
+![峰值 RSS](docs/benchmark/charts/mem-peak.svg)
 
 | 负载 | goc-ng | goc-bellard | native ng | native Bellard | Goja |
 |---|---:|---:|---:|---:|---:|
@@ -147,7 +147,7 @@ int *bad_return(void) {
 | microbench | 10.7 | 10.5 | 4.5 | 4.3 | 567.3 |
 | 每多一个运行时（KiB） | 224 | 199 | 209 | 189 | 105 |
 
-![多实例](docs/benchmark/charts/mem-scaling.png)
+![多实例](docs/benchmark/charts/mem-scaling.svg)
 
 goc 构建空载时比原生多出约 5.3 到 5.4 MiB。整套 V8 的峰值比值降到 1.06。
 
