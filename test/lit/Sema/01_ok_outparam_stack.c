@@ -10,3 +10,5 @@ int test_main(void) {
   fill(&local);
   return local;
 }
+
+// RUN: %goc-clang-ll -o %t.ll %s

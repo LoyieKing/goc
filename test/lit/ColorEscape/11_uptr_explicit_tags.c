@@ -59,3 +59,26 @@ int main(int argc, char **argv) {
     (void)goc_uptr_require_cptr((void *)(original + 0x200));
   return 20; /* the bad tag was not caught */
 }
+
+// A host executable of the compiler's uptr helper bodies: color-escape,
+// then goc-uptr-inline (as goc build runs them), then a native link.
+// fake_g.h stands in for g, so goc_stack_lo/hi move.
+// RUN: %goc-clang-ll -I %S -o %t.ll %s
+// RUN: %goc-color-escape %t.ll -o %t.color.ll
+// RUN: %opt-goc -passes=goc-uptr-inline -S %t.color.ll -o %t.gate.ll
+// No uptr helper call survives goc-uptr-inline:
+// RUN: FileCheck --check-prefix=GATE %s < %t.gate.ll
+// GATE-NOT: call {{.*}}@goc_{{(uptr_(from|as|decode|require)|stack_|dyn)}}
+// RUN: %goc-clang -O0 %t.gate.ll -o %t.exe
+// RUN: %t.exe
+// A wrong tag writes the message and traps (SIGILL).
+// RUN: not --crash %t.exe as_sptr 2>&1 | FileCheck --check-prefix=ASSPTR %s
+// ASSPTR: goc FATAL uptr: goc_uptr_as_sptr: MSB clear
+// RUN: not --crash %t.exe as_cptr 2>&1 | FileCheck --check-prefix=ASCPTR %s
+// ASCPTR: goc FATAL uptr: goc_uptr_as_cptr: MSB set
+// RUN: not --crash %t.exe from_cptr 2>&1 | FileCheck --check-prefix=FROMCPTR %s
+// FROMCPTR: goc FATAL uptr: goc_uptr_from_cptr: address has MSB set
+// RUN: not --crash %t.exe from_sptr 2>&1 | FileCheck --check-prefix=FROMSPTR %s
+// FROMSPTR: goc FATAL uptr: goc_uptr_from_sptr: offset cleared MSB
+// RUN: not --crash %t.exe require_cptr 2>&1 | FileCheck --check-prefix=REQUIRECPTR %s
+// REQUIRECPTR: goc FATAL uptr: sptr cannot be returned as cptr

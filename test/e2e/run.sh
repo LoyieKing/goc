@@ -187,7 +187,7 @@ case_arm64-stress() {
 
 case_arm64-stackargs() {
   qemu_ok "arm64 stackargs" || return 0
-  gogo stackargs-arm64 "$E/arm64/stackargs" --arch arm64 -O2 "${PLAIN[@]}"
+  gogo stackargs-arm64 "$E/arm64-stackargs" --arch arm64 -O2 "${PLAIN[@]}"
   local got
   got="$(timeout 60 "$QEMU" "$B/stackargs-arm64/stackargs-arm64" 2>&1)"
   [[ "$got" == "$(printf '801\n536')" ]] || fail "arm64 stackargs: $got"

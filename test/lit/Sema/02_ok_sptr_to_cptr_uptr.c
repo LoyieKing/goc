@@ -13,4 +13,4 @@ void store_stack_pointer(void) {
   g_node.field = p; /* source spelling stays T*; storage uses uptr */
 }
 
-int read_stack_pointer(void) { return *g_node.field; }
+// RUN: %goc-clang-ll -o %t.ll %s

@@ -8,3 +8,5 @@ void p21_sptr_across_call(sptr(int) p) {
   external_safepoint();
   slot = slot;
 }
+
+// RUN: %goc-clang-ll -o %t.ll %s

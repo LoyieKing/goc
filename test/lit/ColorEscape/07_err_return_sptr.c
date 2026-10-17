@@ -6,3 +6,6 @@ sptr(int) bad_ret(void) {
   sptr(int) p = &local;
   return p;
 }
+
+// RUN: not %goc-clang-ll -o %t.ll %s 2>&1 | FileCheck %s
+// CHECK: error: goc: sptr escape

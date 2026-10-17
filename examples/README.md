@@ -1,16 +1,16 @@
 # Examples
 
-| File | Intent |
+| Path | Intent |
 |------|--------|
-| `hello/` | `goc go examples/hello` links `hello_add` into a Go binary |
-| `hello_colors.c` | OK: `sptr` out-param + `cptr` loads |
-| `sptr_escape_bad.c` | ERROR: returns a stack pointer (Sema). Storing `sptr` into a plain `T *` global is allowed and is encoded as `uptr` |
+| `hello/` | `goc go examples/hello` links `hello_add` into a Go binary (`goc check` builds it) |
+| `colors/colors.c` | Pointer colors: an `sptr` out-parameter and `cptr` loads |
 
-Color checks only. Linking into Go is [docs/quickstart.md](../docs/quickstart.md). The verified program is `test/e2e/goabi`.
+Linking into Go is [docs/quickstart.md](../docs/quickstart.md). The color
+error cases (a returned stack pointer, a `gptr` stored as `cptr`) are lit
+tests in `test/lit/Sema/` and `test/lit/ColorEscape/`.
 
 ```bash
-./cmd/goc cc -emit-llvm -S -o /tmp/hello.ll examples/hello_colors.c
-./cmd/goc build examples/hello_colors.c -o /tmp/hello.goobj
-# Expect failure:
-./cmd/goc cc -c examples/sptr_escape_bad.c
+goc cc -emit-llvm -S -o /tmp/colors.ll examples/colors/colors.c
+goc build examples/colors/colors.c -o /tmp/colors.goobj
+goc cc -c test/lit/Sema/sptr_escape_bad.c   # fails: goc: sptr escape
 ```

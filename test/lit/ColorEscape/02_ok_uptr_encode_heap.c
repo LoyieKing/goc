@@ -12,3 +12,7 @@ void link_frame(void) {
   sptr(int) p = &local;
   g_holder.enc = goc_uptr_from_sptr((goc_sptr)p);
 }
+
+// RUN: %goc-clang-ll -o %t.ll %s
+// RUN: %goc-color-escape %t.ll -o %t.color.ll 2>&1 | FileCheck %s
+// CHECK: summary: 0 error(s)

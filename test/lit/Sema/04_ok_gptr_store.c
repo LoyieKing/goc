@@ -5,3 +5,5 @@ void p21_gptr_store(gptr(int) *slot, gptr(int) newv) {
   gptr(int) a = newv;
   *slot = a;
 }
+
+// RUN: %goc-clang-ll -o %t.ll %s

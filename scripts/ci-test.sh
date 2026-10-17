@@ -10,9 +10,7 @@ step() { echo "=== $1 ==="; shift; "$@"; }
 
 step "file sizes"        ./scripts/check-file-size.sh
 step "goc check"         "$GOC" check
-step "clang"             ./test/clang/run.sh
-step "color-escape"      ./test/color-escape/run.sh
-step "lit"               ./test/lit/run.sh
+step "lit"               ./test/lit/run.sh   # Sema, passes, goc-llc
 step "e2e"               ./test/e2e/run.sh
 step "go unit tests"     "${GOC_HOST_GO:-go}" test ./internal/... ./cmd/...
 step "gocobj goldens"    "$GOC" tool objdump verify test/gocobj/v1.0/valid.gocobj
