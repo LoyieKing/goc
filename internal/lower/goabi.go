@@ -207,7 +207,7 @@ func marshalIndent(v any) ([]byte, error) {
 	return b, nil
 }
 
-// WriteGoABI is the goc-lower goabi subcommand.
+// WriteGoABI writes the Go ABI thunks of one module.
 // WriteGoABI writes the renamed IR, the thunk assembly and goabi.json. With
 // a non-empty outTables (amd64) it also writes the thunks' .goc.* table
 // records as assembler text (docs/gocobj-format.md, 1.3).
@@ -314,7 +314,7 @@ func emitWrapperTables(a abiSet, goabi []llFunc) (string, error) {
 		// describe C entries only.
 		ts[i] = thunk{spills, stackPtrs, area, slots, 0}
 	}
-	b.WriteString("# .goc.* records of the Go ABI thunks (goc-lower goabi)\n")
+	b.WriteString("# .goc.* records of the Go ABI thunks (lower goabi)\n")
 	// A thunk has no stack check (nosplit: the linker charges its small
 	// frame to the caller's guard; the C body checks its own frame). Its
 	// SP_DELTA follows the push/sub/mov/pop, and its one safepoint, the call

@@ -39,7 +39,7 @@ var gprViews = map[string]map[int]string{
 	"r12": {1: "r12b", 2: "r12w", 4: "r12d", 8: "r12"},
 }
 
-// abiSet is the register file for one GOC_ARCH. The Python script mutated
+// abiSet is the register file for one target architecture. The Python script mutated
 // module globals; this value is passed explicitly.
 type abiSet struct {
 	arch                               string
@@ -52,7 +52,7 @@ func abiFor(arch string) (abiSet, error) {
 		arch = "amd64"
 	}
 	if arch != "amd64" && arch != "arm64" {
-		return abiSet{}, fmt.Errorf("GOC_ARCH must be amd64 or arm64, got %s", arch)
+		return abiSet{}, fmt.Errorf("arch must be amd64 or arm64, got %s", arch)
 	}
 	a := abiSet{arch: arch}
 	if arch == "arm64" {

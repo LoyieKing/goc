@@ -1,9 +1,9 @@
 // Package convert turns a .gocobj (docs/gocobj-format.md) into a Go object
 // file.
 //
-//	gocobj2goobj -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis]
+//	goc tool convert -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis]
 //
-// Main is that command line; tools/gocobj2goobj is a thin wrapper.
+// Main is that command line (goc tool convert).
 //
 // The conversion is table driven: the machine code, its ELF relocations and
 // the .goc.* tables (frame sizes, pc-value tables, GC maps, ABI, nosplit) go
@@ -28,7 +28,7 @@ import (
 	"github.com/LoyieKing/goc/internal/gometa"
 )
 
-// Main runs the gocobj2goobj command line on args (without the program
+// Main runs the converter command line on args (without the program
 // name) and returns the exit status.
 func Main(args []string) (rc int) {
 	defer func() {
@@ -40,7 +40,7 @@ func Main(args []string) (rc int) {
 			panic(r)
 		}
 	}()
-	flag := flag.NewFlagSet("gocobj2goobj", flag.ExitOnError)
+	flag := flag.NewFlagSet("goc tool convert", flag.ExitOnError)
 	in := flag.String("in", "", "input .gocobj")
 	out := flag.String("o", "", "output Go object file")
 	pkg := flag.String("p", "main", "package path")
@@ -51,6 +51,7 @@ func Main(args []string) (rc int) {
 	metaFile := flag.String("go-meta", "", "Go release facts (JSON from cmd/goc-gometa) instead of the embedded ones")
 	header := flag.String("header", "", "object header line (default: the one `go tool asm` writes)")
 	symabis := flag.String("symabis", "", "also write the asm symabis (def lines) of the functions here")
+	libcalls := flag.String("libcall-impl", "", "space-separated libcalls whose definition is <name>.impl (default: the core integer and string ones)")
 	flag.Parse(args)
 	goarch := *goarchFlag
 	if goarch == "" {
@@ -59,25 +60,7 @@ func Main(args []string) (rc int) {
 	if goarch == "" {
 		goarch = "amd64"
 	}
-	ver := *goversion
-	var meta *gometa.Meta
-	var err error
-	if *metaFile != "" {
-		meta, err = gometa.Load(*metaFile)
-		if err == nil && ver == "" {
-			ver = meta.SourceVersion
-			if v, e := goEnv("GOVERSION"); e == nil && sameMinor(v, meta.Go) {
-				ver = v
-			}
-		}
-	} else {
-		if ver == "" {
-			ver, err = goEnv("GOVERSION")
-		}
-		if err == nil {
-			meta, err = gometa.ForVersion(ver)
-		}
-	}
+	meta, ver, err := resolve(*metaFile, *goversion)
 	if err != nil {
 		fatalf("%v", err)
 	}
@@ -94,7 +77,7 @@ func Main(args []string) (rc int) {
 		return 0
 	}
 	if *in == "" || *out == "" {
-		fmt.Fprintln(os.Stderr, "usage: gocobj2goobj -in foo.gocobj -o foo.goobj [-p pkg] [-symabis file]")
+		fmt.Fprintln(os.Stderr, "usage: goc tool convert -in foo.gocobj -o foo.goobj [-p pkg] [-symabis file]")
 		return 2
 	}
 	f, err := gocobj.Open(*in)
@@ -103,7 +86,7 @@ func Main(args []string) (rc int) {
 	}
 	if errs := gocobj.Verify(f); len(errs) > 0 {
 		for _, e := range errs {
-			fmt.Fprintf(os.Stderr, "gocobj2goobj: %s: %v\n", *in, e)
+			fmt.Fprintf(os.Stderr, "goc tool convert: %s: %v\n", *in, e)
 		}
 		return 1
 	}
@@ -124,7 +107,7 @@ func Main(args []string) (rc int) {
 	} else if hdr[len(hdr)-1] != '\n' {
 		hdr += "\n"
 	}
-	c, err := newConverter(*in, f, *pkg, goarch)
+	c, err := newConverter(*in, f, *pkg, goarch, *libcalls)
 	if err != nil {
 		fatalf("%v", err)
 	}
@@ -139,6 +122,42 @@ func Main(args []string) (rc int) {
 	return 0
 }
 
+// resolve returns the facts of the target Go release and its version:
+// metaFile when given, else the embedded facts of ver (default: go env
+// GOVERSION of the go command in PATH).
+func resolve(metaFile, ver string) (*gometa.Meta, string, error) {
+	var meta *gometa.Meta
+	var err error
+	if metaFile != "" {
+		meta, err = gometa.Load(metaFile)
+		if err == nil && ver == "" {
+			ver = meta.SourceVersion
+			if v, e := goEnv("GOVERSION"); e == nil && sameMinor(v, meta.Go) {
+				ver = v
+			}
+		}
+	} else {
+		if ver == "" {
+			ver, err = goEnv("GOVERSION")
+		}
+		if err == nil {
+			meta, err = gometa.ForVersion(ver)
+		}
+	}
+	return meta, ver, err
+}
+
+// Profile names the goc ABI profile of the go command in PATH for goarch
+// (what -print-profile prints).
+func Profile(goarch string) (string, error) {
+	meta, _, err := resolve("", "")
+	if err != nil {
+		return "", err
+	}
+	p, err := profileFor(meta, goarch)
+	return p.Name, err
+}
+
 func sameMinor(v, minor string) bool {
 	m, ok := gometa.Minor(v)
 	return ok && m == minor
@@ -147,6 +166,6 @@ func sameMinor(v, minor string) bool {
 type exitCode int
 
 func fatalf(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "gocobj2goobj: "+format+"\n", args...)
+	fmt.Fprintf(os.Stderr, "goc tool convert: "+format+"\n", args...)
 	panic(exitCode(1))
 }

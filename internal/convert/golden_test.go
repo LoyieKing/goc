@@ -50,7 +50,7 @@ func TestGolden(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			c, err := newConverter(in, obj, pkg, goarch)
+			c, err := newConverter(in, obj, pkg, goarch, "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -60,7 +60,7 @@ func TestGolden(t *testing.T) {
 			}
 			got, _ := os.ReadFile(out)
 			if !bytes.Equal(got, want) {
-				t.Errorf("%s %s: object differs from golden (inspect with tools/gocobj-diff)", ver, name)
+				t.Errorf("%s %s: object differs from golden (inspect with goc-objdump diff)", ver, name)
 			}
 			wantSA, _ := os.ReadFile(filepath.Join(vdir, name+".symabis"))
 			if c.symabis() != string(wantSA) {

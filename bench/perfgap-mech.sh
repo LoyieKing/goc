@@ -2,26 +2,26 @@
 # Build bench/perfgap/mech.c with goc (same env as scripts/qjs-build.sh) and
 # natively (clang -O3, clang -O3 + goc codegen flags, gcc -O2), then run all
 # four pinned to one core. OUT defaults to build/perfgap-mech.
-# GOC_LLC_EXTRA (see tools/goc/realbody.sh) builds a goc variant.
+# goc build --llc-extra builds a goc variant.
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-export GOC_ROOT="$ROOT"
+# shellcheck source=../test/lib.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/test/lib.sh"
 OUT="${OUT:-$ROOT/build/perfgap-mech}"
 CPU="${CPU:-3}"
 ROUNDS="${ROUNDS:-5}"
 mkdir -p "$OUT"
-export GOC_OPT_LEVEL=3 GOC_DEFAULT_PTR_COLOR=cptr GOC_INLINE_DYNALLOC=1
+GOCB=("$GOC" build -O3 --default-ptr-color cptr --fast-stack-alloca)
 SRC="$ROOT/bench/perfgap"
 if [[ "${BUILD:-1}" == 1 ]]; then
-  env -u GOC_PKG "$ROOT/cmd/goc" build "$SRC/mech.c" -o "$OUT/mech.goobj" -DNDEBUG
-  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/mech.goobj" \
-    go build -a -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" -o "$OUT/mech-goc" . )
+  "${GOCB[@]}" "$SRC/mech.c" -o "$OUT/mech.goobj" -- -DNDEBUG
+  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= \
+    go build -a -toolexec "$GOC toolexec $OUT/mech.goobj --" -o "$OUT/mech-goc" . )
   # goc with LLVM's tail duplication limits raised (computed-goto dispatch)
   mkdir -p "$OUT/td"
-  env -u GOC_PKG GOC_LLC_EXTRA="-tail-dup-pred-size=1000 -tail-dup-succ-size=1000" \
-    "$ROOT/cmd/goc" build "$SRC/mech.c" -o "$OUT/td/mech.goobj" -DNDEBUG
-  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= GOC_BINOBJ="$OUT/td/mech.goobj" \
-    go build -a -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" -o "$OUT/mech-goc-taildup" . )
+  "${GOCB[@]}" --llc-extra "-tail-dup-pred-size=1000 -tail-dup-succ-size=1000" \
+    "$SRC/mech.c" -o "$OUT/td/mech.goobj" -- -DNDEBUG
+  ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= \
+    go build -a -toolexec "$GOC toolexec $OUT/td/mech.goobj --" -o "$OUT/mech-goc-taildup" . )
   GF_FULL="-fwrapv -fno-strict-aliasing -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
 -fno-optimize-sibling-calls -mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables \
 -mstack-alignment=8 -mllvm -no-stack-slot-sharing -mllvm -enable-shrink-wrap=false \

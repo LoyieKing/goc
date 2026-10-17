@@ -391,7 +391,7 @@ func emitGoExternTables(a abiSet, xs []goExtern) (string, error) {
 		ts[i] = info{spills, area}
 	}
 
-	b.WriteString("# .goc.* records of the C → Go stubs (goc-lower go_extern)\n")
+	b.WriteString("# .goc.* records of the C → Go stubs (lower go_extern)\n")
 	pcv := make([]string, len(xs))
 	b.WriteString("\t.section .goc.pcvalue,\"\",%progbits\n")
 	for i, x := range xs {

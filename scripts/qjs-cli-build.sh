@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Build the Go CLI against the goc-built QuickJS core and the tiny C host bridge.
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-export GOC_ROOT="$ROOT"
+# shellcheck source=../test/lib.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/test/lib.sh"
 # QJS_FLAVOR=ng (default) or bellard, as in scripts/qjs-build.sh. The Bellard
 # CLI is build/qjs-bellard/qjscli; the host files map the ng API they use onto
 # Bellard's with test/e2e/qjs/host/bellard_compat.h.
@@ -16,7 +16,6 @@ case "$QJS_FLAVOR" in
            EXTRA_OBJS=" $OUT/bellard_api.goobj" ;;
   *) echo "FAIL: QJS_FLAVOR must be ng or bellard" >&2; exit 1 ;;
 esac
-export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
 # QJSCLI_TAGS / QJSCLI_OUT build a variant of the same CLI package, e.g.
 # bench/bench-mem.sh uses QJSCLI_TAGS=qjsmem QJSCLI_OUT=build/qjs/qjsmem.
 TAGS="${QJSCLI_TAGS:-}"
@@ -25,14 +24,14 @@ BIN="${QJSCLI_OUT:-$OUT/qjscli}"
 # This checks the engine object and its moving-stack smoke before installing a
 # command that will run arbitrary input. The upstream QuickJS tree is untouched.
 "$ROOT/scripts/qjs-build.sh"
-export GOC_DEFAULT_PTR_COLOR=cptr GOC_INLINE_DYNALLOC=1
+GOCB=("$GOC" build -O3 --default-ptr-color cptr --fast-stack-alloca)
 
-"$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/cli_host.c" \
-  -o "$OUT/cli_host.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
-"$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/cli_std_os.c" \
-  -o "$OUT/cli_std_os.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
-"$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/cli_worker.c" \
-  -o "$OUT/cli_worker.goobj" "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
+"${GOCB[@]}" "$ROOT/test/e2e/qjs/host/cli_host.c" \
+  -o "$OUT/cli_host.goobj" -- "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
+"${GOCB[@]}" "$ROOT/test/e2e/qjs/host/cli_std_os.c" \
+  -o "$OUT/cli_std_os.goobj" -- "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
+"${GOCB[@]}" "$ROOT/test/e2e/qjs/host/cli_worker.c" \
+  -o "$OUT/cli_worker.goobj" -- "${HOST_DEFS[@]}" -D_GNU_SOURCE -DNDEBUG
 
 LDX=""  # test/e2e/qjs/cli/mem_instances.go labels its JSON by flavor
 [[ "$QJS_FLAVOR" == bellard ]] && LDX=" -X main.qjsFlavor=bellard"
@@ -40,9 +39,9 @@ BINOBJ=""
 for src in $ENGINE_TUS; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
 BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/cli_host.goobj $OUT/cli_std_os.goobj $OUT/cli_worker.goobj$EXTRA_OBJS"
 ( cd "$ROOT/test/e2e/qjs/cli" && \
-  CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
+  CGO_ENABLED=1 GOFLAGS= \
   go build -a -tags "$TAGS" -ldflags="-extldflags=-lm$LDX" \
-    -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" \
+    -toolexec "$GOC toolexec $BINOBJ --" \
     -o "$BIN" . )
 echo "CLI ready: $BIN"
 "$BIN" -e '

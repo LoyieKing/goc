@@ -5,7 +5,7 @@
 #
 #   GOCPIPE_MODE=pipe     clang -O3 frontend (goc's flags, -disable-llvm-passes)
 #                         -> opt default<O3> minus argpromotion,globalopt
-#                         -> llc with goc's flags (as tools/goc)
+#                         -> llc with goc's flags (as internal/pipeline)
 #   GOCPIPE_MODE=pipe-sm  as pipe, plus goc-stackmap + goc-reanchor and goc-llc
 #                         (GocFrameAddrFix): the stack-map and frame-address
 #                         guard codegen, on a stack that never moves.
@@ -60,7 +60,7 @@ fi
 "$LLC" -O3 -relocation-model=pic -march=x86-64 -frame-pointer=all -enable-shrink-wrap=false \
   -disable-tail-calls -no-stack-slot-sharing -no-x86-call-frame-opt -enable-tail-merge=false \
   ${GOCPIPE_LLC_EXTRA:-} -filetype=asm -o "$t/a.s" "$t/b.bc"
-# ALIGNFIX as in tools/goc (a no-op for correctness at 16-byte alignment,
+# ALIGNFIX as in internal/pipeline (a no-op for correctness at 16-byte alignment,
 # kept so the instruction selection matches goc's).
 sed -i -E 's/\bmovaps\b/movups/g; s/\bmovapd\b/movupd/g; s/\bmovdqa\b/movdqu/g' "$t/a.s"
 "$CLANG" -c -o "$out" "$t/a.s"

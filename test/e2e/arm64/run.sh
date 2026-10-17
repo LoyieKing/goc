@@ -1,22 +1,19 @@
 #!/usr/bin/env bash
 # Prove the linux/arm64 backend links, and run the ELFs under qemu-aarch64
 # when it is installed (ARM64_REQUIRE_QEMU=1 makes a missing qemu a failure).
+# Run by test/e2e/run.sh (case arm64), which skips it before go1.21.
 #
 #   1. leaf add, linked from a Go caller
 #   2. callit → leaf, the call reloc resolves
 #   3. return of &global (ADRP+ADD or ADRP+LDR)
 #   4. morestack prologue (ldr from x28, cmp, b.ls), emitted by goc-llc's
-#      AArch64 stack-check hook; the .gocobj passes goc-objdump verify
+#      AArch64 stack-check hook; the .gocobj passes goc tool objdump verify
 #   5. 9-int Go entry stores x8, llvm-mc assembles it, link if it can
 #   6. default amd64 goc build of a tiny C file still works
 #   plus: a linux/amd64 host TU is refused; the uptr helpers run on arm64
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}"
-# shellcheck source=goversion.sh
-source "$ROOT/test/e2e/arm64/goversion.sh"
-arm64_skip_old_go "arm64"
-export GOC_ROOT="$ROOT"
-GOC="$ROOT/cmd/goc"
+# shellcheck source=../../lib.sh
+source "$(cd "$(dirname "$0")/../.." && pwd)/lib.sh"
 
 TMP="$(mktemp -d)"
 [[ -n "${ARM64_KEEP:-}" ]] || trap 'rm -rf "$TMP"' EXIT; echo "tmp=$TMP"
@@ -36,11 +33,6 @@ run_arm64() {
   echo "qemu: $(basename "$1") ok"
 }
 fail() { echo "FAIL $*" >&2; exit 1; }
-
-# A caller's environment must not leak into a case.
-clean_env() {
-  env -u GOC_ARCH -u GOC_KEEP_TMP "$@"
-}
 
 header_has() {
   python3 - "$1" "$2" <<'PY'
@@ -133,13 +125,13 @@ func main() {
 EOF
 
 echo "== amd64 regression =="
-clean_env "$GOC" build "$TMP/leaf.c" -o "$TMP/add_amd64.goobj"
+"$GOC" build "$TMP/leaf.c" -o "$TMP/add_amd64.goobj"
 header_has "$TMP/add_amd64.goobj" "linux amd64"
 go tool nm "$TMP/add_amd64.goobj" | rg -q 'main\.add' || fail "amd64 object has no main.add"
 pass "amd64 goc build (header linux amd64, main.add)"
 
 echo "== arm64 leaf + call + &global =="
-clean_env GOC_ARCH=arm64 "$GOC" build "$TMP/leaf.c" -o "$TMP/leaf_arm.goobj"
+"$GOC" build "$TMP/leaf.c" -o "$TMP/leaf_arm.goobj" --arch arm64
 header_has "$TMP/leaf_arm.goobj" "linux arm64"
 go tool nm "$TMP/leaf_arm.goobj" | rg -q 'main\.add' || fail "arm64 object has no main.add"
 go tool nm "$TMP/leaf_arm.goobj" | rg -q 'main\.callit' || fail "arm64 object has no main.callit"
@@ -174,8 +166,7 @@ run_arm64 "$TMP/leaf.elf" "$(printf '42\n4\n0x')$(GOARCH=arm64 go tool nm "$TMP/
 pass "arm64 leaf linked; callit→add resolved; aglob has ADRP"
 
 echo "== arm64 morestack prologue =="
-clean_env GOC_ARCH=arm64 \
-  "$GOC" build "$TMP/leaf.c" -o "$TMP/ms.goobj"
+"$GOC" build "$TMP/leaf.c" -o "$TMP/ms.goobj" --arch arm64
 link_arm64 "$TMP/caller.go" "$TMP/ms.elf" "$TMP/ms.goobj"
 GOARCH=arm64 go tool objdump "$TMP/ms.elf" >"$TMP/ms.dis"
 python3 - "$TMP/ms.dis" <<'PY'
@@ -197,11 +188,11 @@ if "cmp" not in low and "subs" not in low:
     sys.exit("morestack prologue has no compare:\n" + head)
 print(head)
 PY
-# The tables describe that check: goc-objdump verify requires SP_DELTA 0 and
+# The tables describe that check: objdump verify requires SP_DELTA 0 and
 # an unsafe point at pc 0 for every function flagged needs_stack_check.
 [[ -f "$TMP/ms.gocobj" ]] || fail "no side .gocobj next to ms.goobj"
-( cd "$ROOT" && "${GOC_HOST_GO:-go}" run ./tools/goc-objdump verify "$TMP/ms.gocobj" ) || fail "arm64 .gocobj does not verify"
-( cd "$ROOT" && "${GOC_HOST_GO:-go}" run ./tools/goc-objdump dump "$TMP/ms.gocobj" ) | rg -q 'ARM64_CALL26 runtime\.morestack_noctxt' \
+"$GOC" tool objdump verify "$TMP/ms.gocobj" || fail "arm64 .gocobj does not verify"
+"$GOC" tool objdump dump "$TMP/ms.gocobj" | rg -q 'ARM64_CALL26 runtime\.morestack_noctxt' \
   || fail "tables list no morestack call"
 run_arm64 "$TMP/ms.elf" "$(printf '42\n4\n0x')$(GOARCH=arm64 go tool nm "$TMP/ms.elf" | awk '$3=="main.glob"{sub(/^0+/,"",$1); print $1}')"
 pass "arm64 morestack prologue reads g and compares"
@@ -225,10 +216,8 @@ KEEP="$TMP/goabi-tmp"
 mkdir -p "$KEEP"
 # The 9th Go argument moves through x8 into the AAPCS stack slot.
 # Stack maps stay off: arm64 has no frame-address repair.
-clean_env GOC_ARCH=arm64 \
-  GOC_KEEP_TMP="$KEEP" \
-  "$GOC" build "$TMP/sum9.c" -o "$TMP/sum9.goobj"
-# The thunk is assembled by llvm-mc inside realbody. The x8 store is the
+"$GOC" build "$TMP/sum9.c" -o "$TMP/sum9.goobj" --arch arm64 --keep-tmp="$KEEP"
+# The thunk is assembled by llvm-mc with the body. The x8 store is the
 # 9th Go argument (X8) moving to the AAPCS stack.
 thunk="$(find "$KEEP" -name 'thunks.s' -print -quit)"
 [[ -n "$thunk" ]] || fail "thunks.s was not kept"
@@ -244,7 +233,7 @@ run_arm64 "$TMP/sum9.elf" "45"
 pass "arm64 goabi thunk stores x8, assembled, linked"
 
 echo "== refuse an unported amd64 host =="
-if clean_env GOC_ARCH=arm64 "$GOC" build "$ROOT/test/e2e/qjs/host/cli_host.c" \
+if "$GOC" build "$ROOT/test/e2e/qjs/host/cli_host.c" --arch arm64 \
     -o "$TMP/host.goobj" >"$TMP/host.log" 2>&1; then
   fail "arm64 build of the QuickJS host should have been refused"
 fi
@@ -287,7 +276,7 @@ func main() {
 	println(uptrcheck())
 }
 EOF
-clean_env GOC_ARCH=arm64 "$GOC" build "$TMP/uptr.c" -o "$TMP/uptr.goobj" -ffreestanding
+"$GOC" build "$TMP/uptr.c" -o "$TMP/uptr.goobj" --arch arm64 -ffreestanding
 header_has "$TMP/uptr.goobj" "linux arm64"
 if go tool nm "$TMP/uptr.goobj" |
     rg -q ' U .*\bgoc_(uptr_(from|as)_[a-z_]+|uptr_decode|uptr_require_cptr|stack_(hi|lo)|dyn(alloc|release))$'; then

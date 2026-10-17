@@ -7,7 +7,7 @@
 # Vendored code (third_party/) and test
 # inputs (test/, testdata/) are not checked.
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 MAX="${GOC_MAX_FILE_LINES:-800}"
 
@@ -21,7 +21,7 @@ while IFS= read -r f; do
   fi
 done < <(git ls-files -- cmd internal llvm tools scripts \
   | grep -Ev '/testdata/' \
-  | grep -E '\.(c|cc|cpp|h|go|py|sh|s|S|td|def)$|^cmd/goc$')
+  | grep -E '\.(c|cc|cpp|h|go|py|sh|s|S|td|def)$')
 
 (( fail == 0 )) && echo "PASS file sizes (max $MAX lines)"
 exit $fail

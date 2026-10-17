@@ -4,8 +4,8 @@
 # Prereqs: third_party/quickjs-ng, the patched clang next to goc
 #          (bin/clang or third_party/llvm-19.1.7-clang-build), Go 1.24+.
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-export GOC_ROOT="$ROOT"
+# shellcheck source=../test/lib.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/test/lib.sh"
 # QJS_FLAVOR selects the engine tree: ng (default, third_party/quickjs-ng ->
 # build/qjs) or bellard (Fabrice Bellard's QuickJS 2026-06-04,
 # third_party/quickjs-bellard -> build/qjs-bellard). Both use the same shim,
@@ -36,10 +36,6 @@ esac
 export QJS_FLAVOR
 mkdir -p "$OUT"
 
-# shellcheck source=goc-product-lib.sh
-source "$ROOT/scripts/goc-product-lib.sh"
-goc_resolve_clang >/dev/null
-export GOC_OPT_LEVEL="${GOC_OPT_LEVEL:-3}"
 [[ -d "$QJS" ]] || { echo "FAIL: fetch QuickJS ($QJS_FLAVOR) to ${QJS#$ROOT/}, see third_party/README.md" >&2; exit 1; }
 # `patch -R --dry-run --batch` succeeds on an *unpatched* tree too ("Unreversed
 # patch detected! Ignoring -R." then a forward dry run), so the old check never
@@ -57,8 +53,9 @@ fi
 
 # -DNDEBUG: same as the native reference (CMake Release: clang-19 -O2 -DNDEBUG).
 QJS_DEFS=("${FLAVOR_DEFS[@]}" -D_GNU_SOURCE -DGOC_QJS_GSTACK=1 -DNDEBUG)
-export GOC_DEFAULT_PTR_COLOR=cptr   # bulk coloring: uncolored ptrs are cptr
-export GOC_INLINE_DYNALLOC=1        # bump the alloca pool in-line; no per-call memset
+# -O3, bulk coloring (uncolored pointers are cptr), the alloca pool bumped
+# in line (no per-call memset): what goc go does by default.
+GOCB=("$GOC" build -O3 --default-ptr-color cptr --fast-stack-alloca)
 # Bellard has no JS_SetPromiseHook: its smoke skips the promise-hook probe.
 [[ "$QJS_FLAVOR" == bellard ]] && QJS_PROMISE="${QJS_PROMISE:-0}"
 export QJS_EVAL="${QJS_EVAL:-1}" QJS_PROMISE="${QJS_PROMISE:-1}"
@@ -66,38 +63,37 @@ export QJS_EVAL="${QJS_EVAL:-1}" QJS_PROMISE="${QJS_PROMISE:-1}"
 echo "=== [1/4] freestanding libc shim → goobj ==="
 # Same mode as the QJS TUs, so cross-TU C references agree on names
 # (main.goc_abort.impl etc.). The ABIInternal thunks are dead weight here.
-env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/libc_shim.c" \
-  -o "$OUT/shim.goobj" "${QJS_DEFS[@]}"
+"${GOCB[@]}" "$ROOT/test/e2e/qjs/host/libc_shim.c" \
+  -o "$OUT/shim.goobj" -- "${QJS_DEFS[@]}"
 echo "  shim: $(go tool nm "$OUT/shim.goobj" | grep -c ' T ') TEXT"
 
 # Redirect QJS's libc references to the shim's goc_-prefixed symbols: -D for
-# source-level names, GOC_IR_RENAMES for compiler-emitted libcalls.
+# source-level names, --ir-renames for compiler-emitted libcalls.
 SHIM_NAMES=$(go tool nm "$OUT/shim.goobj" | awk '$2=="T"{print $3}' \
   | sed 's/^.*\.//; s/\.impl$//' | grep '^goc_' | sed 's/^goc_//' | sort -u \
   | grep -v -x -e memcpy -e memmove -e memset | tr '\n' ' ')
 # LLVM lowers some intrinsics (e.g. floor/trunc) to bare libcalls *after* the
 # Go ABI IR rename. Bind only names the shim actually defined as ABI0 .impl
 # bodies; varargs and other skipped functions retain their plain names.
-GOC_LIBCALL_IMPL=$(go tool nm "$OUT/shim.goobj" | awk '
+LIBCALL_IMPL=$(go tool nm "$OUT/shim.goobj" | awk '
   $2 == "T" && $3 ~ /^main\.[A-Za-z_][A-Za-z0-9_]*\.impl$/ {
     sub(/^main\./, "", $3); sub(/\.impl$/, "", $3); print $3
   }' | sort -u | tr '\n' ' ')
-export GOC_LIBCALL_IMPL
 SHIM_DEFS=""
 IR_RENAMES=""
 for n in $SHIM_NAMES; do
   SHIM_DEFS="$SHIM_DEFS -D$n=goc_$n"
   IR_RENAMES="$IR_RENAMES $n:goc_$n"
 done
-export GOC_IR_RENAMES="$IR_RENAMES"
+GOCB+=(--ir-renames "$IR_RENAMES" --libcall-impl "$LIBCALL_IMPL")
 echo "  shim redirects: $(echo $SHIM_NAMES | wc -w) symbols"
-env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/promise_probe.c" \
-  -o "$OUT/promise_probe.goobj" "${QJS_DEFS[@]}"
+"${GOCB[@]}" "$ROOT/test/e2e/qjs/host/promise_probe.c" \
+  -o "$OUT/promise_probe.goobj" -- "${QJS_DEFS[@]}"
 EXTRA_OBJS=""
 if [[ "$QJS_FLAVOR" == bellard ]]; then
   # Exported JS_FreeValue & co. (static inline in Bellard's quickjs.h).
-  env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/bellard_api.c" \
-    -o "$OUT/bellard_api.goobj" "${QJS_DEFS[@]}" $SHIM_DEFS
+  "${GOCB[@]}" "$ROOT/test/e2e/qjs/host/bellard_api.c" \
+    -o "$OUT/bellard_api.goobj" -- "${QJS_DEFS[@]}" $SHIM_DEFS
   EXTRA_OBJS=" $OUT/bellard_api.goobj"
 fi
 
@@ -108,8 +104,8 @@ for src in "${QJS_TUS[@]}"; do
   # emulated ng runtime finalizers first); quickjs.c's own one is renamed.
   [[ "$QJS_FLAVOR" == bellard && "$src" == quickjs ]] && \
     TU_DEFS=(-DJS_FreeRuntime=goc_bellard_JS_FreeRuntime)
-  env -u GOC_PKG "$ROOT/cmd/goc" build "$QJS/$src.c" -o "$OUT/$src.goobj" \
-    "${QJS_DEFS[@]}" "${TU_DEFS[@]}" $SHIM_DEFS
+  "${GOCB[@]}" "$QJS/$src.c" -o "$OUT/$src.goobj" \
+    -- "${QJS_DEFS[@]}" "${TU_DEFS[@]}" $SHIM_DEFS
   echo "  $src: $(go tool nm "$OUT/$src.goobj" | grep -c ' T ') TEXT"
 done
 
@@ -124,9 +120,9 @@ BINOBJ=""
 for src in "${QJS_TUS[@]}"; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
 BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/promise_probe.goobj$EXTRA_OBJS"
 ( cd "$ROOT/test/e2e/qjs/embed" && \
-  CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
+  CGO_ENABLED=1 GOFLAGS= \
   go build -a -ldflags="-extldflags=-lm" \
-    -toolexec "$ROOT/tools/goc/toolexec_recognize_goobj.sh" \
+    -toolexec "$GOC toolexec $BINOBJ --" \
     -o "$OUT/qjs_test" . )
 
 echo "=== [4/4] run on the goroutine stack ==="

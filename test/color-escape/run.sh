@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # goc-color-escape golden tests (build libGocPasses.so, then run every case in EXPECTATIONS)
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")" && pwd)"
-REPO="$(cd "$ROOT/../.." && pwd)"
+# shellcheck source=../lib.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/lib.sh"
+REPO="$ROOT"
+export OPT  # color-escape.sh runs this opt
+ROOT="$REPO/test/color-escape"
 cd "$ROOT"
 
 echo "=== color-escape: build libGocPasses.so ==="
 "$REPO/scripts/build-passes.sh"
 
 PASS_BIN="$ROOT/color-escape.sh"
-# The patched clang (goc.h's color attributes are its native attributes).
-CLANG="$(bash -c 'ROOT="$0"; source "$ROOT/scripts/goc-product-lib.sh"; goc_tools; echo "$GOC_CLANG $GOC_OPT $GOC_PASSES"' "$REPO")"
-read -r CLANG OPT PASSES <<<"$CLANG"
 INCDIR="$REPO/include"
 OUT="$REPO/build/test/color-escape"
 mkdir -p "$OUT"

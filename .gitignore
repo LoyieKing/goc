@@ -36,9 +36,9 @@ third_party/quickjs-bellard/
 Thumbs.db
 
 # Written by `goc go` when a package has no assembly file.
-goc_marker_amd64.s
+goc_marker_*.s
 
-# Driver-local binaries
+# bin/goc (go build -o bin/goc ./cmd/goc)
 /bin/
 
 # Python bytecode

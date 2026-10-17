@@ -4,7 +4,6 @@ import (
 	"debug/elf"
 	"encoding/binary"
 	"fmt"
-	"os"
 	"path"
 	"regexp"
 	"sort"
@@ -36,6 +35,7 @@ type fn struct {
 type converter struct {
 	path, pkg, tu string
 	arm64         bool
+	libcallImpl   map[string]bool // libcalls whose definition is <name>.impl
 	f             *gocobj.File
 	ef            *elf.File
 	syms          []elf.Symbol
@@ -65,12 +65,13 @@ func tuTag(f *gocobj.File) string {
 	return tuSuffixRE.ReplaceAllString(tuCharRE.ReplaceAllString(path.Base(f.Files[0]), "_"), "")
 }
 
-// libcallImpl: LLVM may synthesize a libcall after the IR-level Go ABI
+// LibcallImpl: LLVM may synthesize a libcall after the IR-level Go ABI
 // rename, so that reference is bare even if the defining TU emitted
-// <name>.impl. The QJS build supplies the eligible names from its shim
-// object; without that explicit contract keep the core integer libcalls.
-var libcallImpl = func() map[string]bool {
-	if names := os.Getenv("GOC_LIBCALL_IMPL"); names != "" {
+// <name>.impl. The QJS build supplies the eligible names (space separated)
+// from its shim object; without that explicit contract keep the core
+// integer libcalls.
+func libcallSet(names string) map[string]bool {
+	if names != "" {
 		out := map[string]bool{}
 		for _, name := range strings.Fields(names) {
 			out[name] = true
@@ -82,9 +83,9 @@ var libcallImpl = func() map[string]bool {
 		"bcmp": true, "strlen": true, "strcpy": true, "strcmp": true,
 		"vsnprintf": true, "snprintf": true,
 	}
-}()
+}
 
-func newConverter(p string, f *gocobj.File, pkg, goarch string) (*converter, error) {
+func newConverter(p string, f *gocobj.File, pkg, goarch, libcalls string) (*converter, error) {
 	want := map[string]elf.Machine{"amd64": elf.EM_X86_64, "arm64": elf.EM_AARCH64}[goarch]
 	if want == 0 {
 		return nil, fmt.Errorf("GOARCH=%s: only amd64 and arm64 objects are converted", goarch)
@@ -100,7 +101,7 @@ func newConverter(p string, f *gocobj.File, pkg, goarch string) (*converter, err
 	if err != nil {
 		return nil, err
 	}
-	c := &converter{path: p, arm64: goarch == "arm64", pkg: pkg, tu: tuTag(f), f: f, ef: ef, syms: syms,
+	c := &converter{path: p, libcallImpl: libcallSet(libcalls), arm64: goarch == "arm64", pkg: pkg, tu: tuTag(f), f: f, ef: ef, syms: syms,
 		byName: map[string]*fn{}, bySec: map[int][]*fn{}, abiByGoSym: map[string]goobj.ABI{},
 		goName: map[string]string{}, dataSym: map[int]*goobj.Sym{}, secSym: map[int]*goobj.Sym{},
 		gotSyms: map[string]*goobj.Sym{}}
@@ -184,7 +185,7 @@ func (c *converter) resolveText(sec int, addr uint64) (*goobj.Sym, int64) {
 		if addr >= x.off && addr < x.off+x.tab.TextSize {
 			if addr == x.off && strings.HasPrefix(x.sym.Name, c.pkg+".") {
 				base := strings.TrimPrefix(x.sym.Name, c.pkg+".")
-				if libcallImpl[base] {
+				if c.libcallImpl[base] {
 					impl := c.pkg + "." + base + ".impl"
 					if ab, ok := c.abiByGoSym[impl]; ok && ab == goobj.ABI0 {
 						// A same-TU ELF call or function pointer resolves by
@@ -216,7 +217,7 @@ func (c *converter) resolveCName(name string) *goobj.Sym {
 		// g in R14. The suffix names the relocation ABI, not the Go symbol.
 		return ctxt.LookupABI(strings.TrimSuffix(name, ".goabi"), goobj.ABIInternal)
 	}
-	if libcallImpl[name] {
+	if c.libcallImpl[name] {
 		return ctxt.LookupABI(c.pkg+"."+name+".impl", goobj.ABI0)
 	}
 	if g, ok := c.goName[name]; ok {
@@ -238,7 +239,7 @@ func (c *converter) resolveCName(name string) *goobj.Sym {
 	if strings.Contains(base, ".") {
 		return ctxt.Lookup(name) // Go/runtime symbol: verbatim
 	}
-	if suffix == ".impl" || libcallImpl[base] {
+	if suffix == ".impl" || c.libcallImpl[base] {
 		return ctxt.LookupABI(c.pkg+"."+base+".impl", goobj.ABI0)
 	}
 	return ctxt.Lookup(c.pkg + "." + base + suffix)

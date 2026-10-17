@@ -22,7 +22,7 @@
 set -euo pipefail
 PS="${PS:-/workspace/perf-study}"
 CMAKE="${CMAKE:-cmake}"
-# goc's codegen constraints (cmd/goc clang flags + tools/goc llc flags);
+# goc's codegen constraints (internal/pipeline clang and goc-llc flags);
 # override-stack-alignment=8 is approximated by -mstack-alignment=8.
 GF_FULL="-fwrapv -fno-strict-aliasing -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fno-optimize-sibling-calls -mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables -mstack-alignment=8 -mllvm -no-stack-slot-sharing -mllvm -enable-shrink-wrap=false -mllvm -no-x86-call-frame-opt -mllvm -enable-tail-merge=false"
 

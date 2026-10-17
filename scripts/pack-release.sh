@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
-# Pack a complete linux/amd64 goc release: the driver, the patched clang,
-# opt/llc/llvm-mc/llvm-objdump, the passes, and prebuilt gocobj2goobj and goc-lower.
-# Usage: scripts/pack-release.sh DEST
+# Pack a complete linux/amd64 goc release: bin/goc, the patched clang,
+# opt/llc/llvm-mc/llvm-objdump, goc-llc and the passes, include/ and the
+# hello example. Usage: scripts/pack-release.sh DEST
 # DEST is a directory, or a path ending in .tar / .tar.gz.
 set -euo pipefail
-SELF="$(cd "$(dirname "$0")" && pwd)"
-ROOT="${GOC_ROOT:-$(cd "$SELF/.." && pwd)}"
-export GOC_ROOT="$ROOT"
-# shellcheck source=goc-product-lib.sh
-source "$SELF/goc-product-lib.sh"
+# shellcheck source=../test/lib.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/test/lib.sh"
+die() { echo "pack-release: $*" >&2; exit 1; }
 
 dest="${1:?pack-release: need DEST}"
 ver="$(tr -d '[:space:]' <"$ROOT/VERSION")"
 name="goc-${ver}-linux-amd64"
 
-goc_require_tools
-clang="$GOC_CLANG"
-clangbin="$(dirname "$(readlink -f "$clang")")"
+for t in "$CLANG" "$OPT" "$LLC" "$PASSES"; do
+  [[ -e "$t" ]] || die "missing $t (scripts/build-clang.sh, scripts/build-passes.sh)"
+done
+clangbin="$(dirname "$(readlink -f "$CLANG")")"
 
 copy_tool() {
   local name="$1" src="$clangbin/$1"
-  [[ -n "$src" && -e "$src" ]] || goc_die "missing $name (run scripts/build-clang.sh)"
+  [[ -e "$src" ]] || die "missing $name (run scripts/build-clang.sh)"
   cp -a "$(readlink -f "$src")" "$stage/bin/$name"
   chmod a+rx "$stage/bin/$name"
 }
@@ -28,34 +27,20 @@ copy_tool() {
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 stage="$work/$name"
-mkdir -p "$stage/bin" "$stage/lib" "$stage/passes" "$stage/cmd" \
-  "$stage/scripts" "$stage/include" "$stage/examples/hello" \
-  "$stage/tools/goc"
+mkdir -p "$stage/bin" "$stage/lib" "$stage/passes" "$stage/include" "$stage/examples/hello"
 
-cp -a "$ROOT/cmd/goc" "$stage/cmd/goc"
-chmod a+rx "$stage/cmd/goc"
-ln -sfn ../cmd/goc "$stage/bin/goc"
+( cd "$ROOT" && CGO_ENABLED=0 GOFLAGS= GOTOOLCHAIN=local "${GOC_HOST_GO:-go}" build \
+    -trimpath -o "$stage/bin/goc" ./cmd/goc )
 cp -a "$ROOT/VERSION" "$stage/VERSION"
-for s in goc-flags.sh goc-go.sh goc-check.sh goc-product-lib.sh goc-toolchain.sh pack-release.sh; do
-  cp -a "$ROOT/scripts/$s" "$stage/scripts/$s"
-  chmod a+rx "$stage/scripts/$s"
-done
 cp -a "$ROOT/include/goc.h" "$ROOT/include/goc_uptr.h" "$stage/include/"
 cp -a "$ROOT/examples/hello/go.mod" "$ROOT/examples/hello/main.go" \
   "$ROOT/examples/hello/add.c" "$stage/examples/hello/"
-cp -a "$ROOT/tools/goc/realbody.sh" "$stage/tools/goc/"
-chmod a+rx "$stage/tools/goc/realbody.sh"
-cp -a "$ROOT/tools/goc/toolexec_recognize_goobj.sh" "$stage/tools/goc/"
-cp -a "$ROOT/tools/goc/converter.sh" "$stage/tools/goc/"
-# bin/gocobj2goobj below serves every supported Go release
-# (docs/multi-go-version.md).
-chmod a+rx "$stage/tools/goc/toolexec_recognize_goobj.sh"
 
-cp -a "$(readlink -f "$clang")" "$stage/bin/clang-19"
+cp -a "$(readlink -f "$CLANG")" "$stage/bin/clang-19"
 ln -sfn clang-19 "$stage/bin/clang"
 chmod a+rx "$stage/bin/clang-19"
-libdir="$(goc_clang_libdir "$clang")"
-[[ -e "$libdir/libLLVM.so.19.1" ]] || goc_die "no libLLVM.so.19.1 in $libdir"
+libdir="$LIBDIR"
+[[ -e "$libdir/libLLVM.so.19.1" ]] || die "no libLLVM.so.19.1 in $libdir"
 cp -a "$libdir/libLLVM.so.19.1" "$stage/lib/libLLVM.so.19.1"
 ln -sfn libLLVM.so.19.1 "$stage/lib/libLLVM.so"
 # build-clang.sh sets LLVM_LINK_LLVM_DYLIB, so clang links libclang-cpp.
@@ -63,27 +48,22 @@ if [[ -e "$libdir/libclang-cpp.so.19.1" ]]; then
   cp -a "$libdir/libclang-cpp.so.19.1" "$stage/lib/libclang-cpp.so.19.1"
   ln -sfn libclang-cpp.so.19.1 "$stage/lib/libclang-cpp.so"
 fi
-[[ -d "$libdir/clang" ]] || goc_die "no clang resource dir in $libdir"
+[[ -d "$libdir/clang" ]] || die "no clang resource dir in $libdir"
 cp -a "$libdir/clang" "$stage/lib/clang"
 
 copy_tool opt
 copy_tool llc
 copy_tool llvm-mc
 copy_tool llvm-objdump
-cp -a "$GOC_LLC" "$stage/passes/goc-llc"
-cp -a "$GOC_PASSES" "$stage/passes/libGocPasses.so"
+cp -a "$LLC" "$stage/passes/goc-llc"
+cp -a "$PASSES" "$stage/passes/libGocPasses.so"
 chmod a+rx "$stage/passes/goc-llc"
-
-( cd "$ROOT" && CGO_ENABLED=0 "${GOC_HOST_GO:-go}" build -o "$stage/bin/gocobj2goobj" ./tools/gocobj2goobj/ )
-chmod a+rx "$stage/bin/gocobj2goobj"
-( cd "$ROOT" && "${GOC_HOST_GO:-go}" build -o "$stage/bin/goc-lower" ./tools/goc-lower/ )
-chmod a+rx "$stage/bin/goc-lower"
 
 # Drop the absolute build-machine directory from RUNPATH. $ORIGIN/../lib
 # is already the first entry, and it is the one the unpacked tree uses.
 # patchelf can also add that entry to the passes. Without it, the python
 # fallback only shortens an existing $ORIGIN/../lib:<abs> string; the
-# driver still prepends lib/ onto LD_LIBRARY_PATH for the passes.
+# goc binary still prepends lib/ onto LD_LIBRARY_PATH for the passes.
 rpath_origin() {
   local bin="$1"
   if command -v patchelf >/dev/null 2>&1; then

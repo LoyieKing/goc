@@ -293,7 +293,7 @@ GlobalVariable *dynPoolOff(Module &M) {
   return G;
 }
 
-// --fast-stack-alloca (GOC_INLINE_DYNALLOC=1): pool bump, not a call.
+// --fast-stack-alloca (goc-uptr-inline -goc-inline-dynalloc): pool bump, not a call.
 Function *inlineDynAllocPool(Module &M) {
   LLVMContext &C = M.getContext();
   auto *I64 = Type::getInt64Ty(C);

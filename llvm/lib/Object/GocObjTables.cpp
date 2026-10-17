@@ -35,7 +35,7 @@ static bool hasSptr(const Function &F) {
   return false;
 }
 
-// The frame slots that hold sptr values (goc-lower meta: sptrSlots): every
+// The frame slots that hold sptr values (internal/lower meta: sptrSlots): every
 // (alloca, offset) named by a !goc.frame.words tag, and every alloca that
 // receives a direct store of an sptr-colored pointer.
 static std::vector<SptrTarget> sptrTargets(const Function &F) {

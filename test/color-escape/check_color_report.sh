@@ -2,10 +2,11 @@
 # print<goc-color> (GOC_COLOR_REPORT=1 in color-escape.sh) lists resolved
 # pointer colors without changing the IR.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=../lib.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/lib.sh"
+export OPT  # color-escape.sh runs this opt
 PASS="$ROOT/test/color-escape/color-escape.sh"
 SRC="$ROOT/test/color-escape/color_report.c"
-CLANG="$(bash -c 'ROOT="$0"; source "$ROOT/scripts/goc-product-lib.sh"; goc_resolve_clang' "$ROOT")"
 
 if [[ ! -f "$ROOT/build/llvm/libGocPasses.so" ]]; then
   "$ROOT/scripts/build-passes.sh"

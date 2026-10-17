@@ -3,8 +3,8 @@
 # SemaGocColors). Each case must compile; examples/sptr_escape_bad.c is the
 # error case.
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
-export GOC_ROOT="$ROOT"
+# shellcheck source=../lib.sh
+source "$(cd "$(dirname "$0")/.." && pwd)/lib.sh"
 OUT="$ROOT/build/test/clang"
 INC="$ROOT/include"
 CASES=("$ROOT"/test/clang/[0-9]*.c)
@@ -29,10 +29,6 @@ compile() {
   echo "PASS $base"
 }
 
-# shellcheck source=../../scripts/goc-product-lib.sh
-source "$ROOT/scripts/goc-product-lib.sh"
-CLANG="$(goc_resolve_clang)"
-goc_prepend_lib "$(goc_clang_libdir "$CLANG")"
 for c in "${CASES[@]}"; do compile "$CLANG" "$c" 0; done
 compile "$CLANG" "$BAD" 1
 echo "PASS clang"

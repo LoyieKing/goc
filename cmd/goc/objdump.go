@@ -1,14 +1,3 @@
-// goc-objdump prints and checks .gocobj files (docs/gocobj-format.md) and
-// compares Go object files.
-//
-//	goc-objdump dump FILE...
-//	goc-objdump verify FILE...
-//	goc-objdump diff [-v] A.goobj B.goobj
-//
-// verify exits 1 if any file breaks an invariant. diff compares two Go
-// objects semantically (symbols, relocations, decoded pc-value tables,
-// funcdata, FuncInfo) and exits 0 for no difference, 1 for a difference,
-// 2 for an error.
 package main
 
 import (
@@ -20,34 +9,38 @@ import (
 	"github.com/LoyieKing/goc/internal/goobj"
 )
 
-func usage() {
-	fmt.Fprintln(os.Stderr, "usage: goc-objdump dump|verify FILE...\n       goc-objdump diff [-v] A.goobj B.goobj")
-	os.Exit(2)
+func objdumpUsage() int {
+	fmt.Fprintln(os.Stderr, "usage: goc tool objdump dump|verify FILE...\n       goc tool objdump diff [-v] A.goobj B.goobj")
+	return 2
 }
 
-func main() {
-	if len(os.Args) < 2 {
-		usage()
+// objdump prints and checks .gocobj files (docs/design/gocobj-format.md)
+// and compares Go object files. verify exits 1 if any file breaks an
+// invariant; diff exits 0 for no difference, 1 for a difference, 2 for an
+// error.
+func objdump(args []string) int {
+	if len(args) < 1 {
+		return objdumpUsage()
 	}
-	switch os.Args[1] {
+	switch args[0] {
 	case "diff":
-		os.Exit(diff(os.Args[2:]))
+		return objdiff(args[1:])
 	case "dump", "verify":
 	default:
-		usage()
+		return objdumpUsage()
 	}
-	if len(os.Args) < 3 {
-		usage()
+	if len(args) < 2 {
+		return objdumpUsage()
 	}
 	rc := 0
-	for _, path := range os.Args[2:] {
+	for _, path := range args[1:] {
 		f, err := gocobj.Open(path)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s: %v\n", path, err)
 			rc = 1
 			continue
 		}
-		if os.Args[1] == "dump" {
+		if args[0] == "dump" {
 			gocobj.Dump(os.Stdout, f)
 			continue
 		}
@@ -61,15 +54,15 @@ func main() {
 			fmt.Printf("%s: ok\n", path)
 		}
 	}
-	os.Exit(rc)
+	return rc
 }
 
-func diff(args []string) int {
+func objdiff(args []string) int {
 	fs := flag.NewFlagSet("diff", flag.ExitOnError)
 	verbose := fs.Bool("v", false, "print every difference, not just the first 20")
 	fs.Parse(args)
 	if fs.NArg() != 2 {
-		usage()
+		return objdumpUsage()
 	}
 	n, diffs, err := goobj.Diff(fs.Arg(0), fs.Arg(1))
 	if err != nil {
@@ -85,9 +78,9 @@ func diff(args []string) int {
 		fmt.Println(d)
 	}
 	if len(diffs) > 0 {
-		fmt.Printf("goc-objdump diff: %d differences\n", len(diffs))
+		fmt.Printf("goc tool objdump diff: %d differences\n", len(diffs))
 		return 1
 	}
-	fmt.Printf("goc-objdump diff: no semantic difference (%d symbols)\n", n)
+	fmt.Printf("goc tool objdump diff: no semantic difference (%d symbols)\n", n)
 	return 0
 }

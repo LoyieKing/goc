@@ -97,7 +97,7 @@ func AlignASM(path string) error {
 
 var fnNameRE = regexp.MustCompile(`define [^@]*@([A-Za-z_][A-Za-z0-9_]*)`)
 
-// FirstFnName is the first LLVM define name, using the same pattern cmd/goc
+// FirstFnName is the first LLVM define name, using the same pattern internal/pipeline
 // used to ask ripgrep for.
 func FirstFnName(path string) (string, error) {
 	b, err := os.ReadFile(path)
