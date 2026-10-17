@@ -1,17 +1,46 @@
 #!/usr/bin/env bash
-# Build bench/perfgap/mech.c with goc (same switches as ports/quickjs/build.sh) and
-# natively (clang -O3, clang -O3 + goc codegen flags, gcc -O2), then run all
-# four pinned to one core. OUT defaults to build/perfgap-mech.
-# goc build --llc-extra builds a goc variant.
+# Mechanism probes for docs/perf-gap.md.
+#
+#   perf-gap/mech.sh [c]   build bench/perf-gap/mech/mech.c with goc (same switches
+#                          as ports/quickjs/build.sh) and natively (clang -O3,
+#                          clang -O3 + goc codegen flags, gcc -O2), then run them
+#                          all pinned to one core. OUT defaults to build/perf-gap-mech.
+#                          goc build --llc-extra builds a goc variant.
+#   perf-gap/mech.sh js    run bench/js/mech.js (JS mechanism probes, ns/op) on
+#                          several engines, pinned, ROUNDS interleaved rounds.
+#                          Commands come from ENGINE_MAP (default
+#                          docs/perf-gap/data/raw-toggles/engines.txt).
+#                          OUT=docs/perf-gap/data/mech-js  ROUNDS=3  CPU=3  ENGINES="a b ..."
 set -euo pipefail
-# shellcheck source=../test/lib.sh
-source "$(cd "$(dirname "$0")/.." && pwd)/test/lib.sh"
-OUT="${OUT:-$ROOT/build/perfgap-mech}"
+MODE="${1:-c}"
 CPU="${CPU:-3}"
+if [[ "$MODE" == js ]]; then
+  ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+  MAP="${ENGINE_MAP:-$ROOT/docs/perf-gap/data/raw-toggles/engines.txt}"
+  OUT="${OUT:-$ROOT/docs/perf-gap/data/mech-js}"
+  ROUNDS="${ROUNDS:-3}"
+  ENGINES="${ENGINES:-bellard-gcc-O2-NDEBUG bellard-clang-O3 bellard-clang-O3-gocflags bellard-gocpipe-sm goc-bellard goc-bellard-fast goc-bellard-best ng-clang-O2 ng-clang-O3 ng-clang-O3-gocflags goc-ng goc-ng-fast goc-ng-best}"
+  mkdir -p "$OUT"
+  for ((r = 1; r <= ROUNDS; r++)); do
+    for e in $ENGINES; do
+      c=$(awk -v n="$e" '$1==n {$1=""; print substr($0,2)}' "$MAP")
+      [[ -n "$c" ]] || { echo "no command for $e" >&2; exit 1; }
+      # shellcheck disable=SC2086
+      taskset -c "$CPU" $c "$ROOT/bench/js/mech.js" > "$OUT/$e-r$r.txt" 2>&1 || echo "FAIL $e r$r"
+      echo "r$r $e $(wc -l < "$OUT/$e-r$r.txt") lines"
+    done
+  done
+  echo MECHJSDONE
+  exit 0
+fi
+[[ "$MODE" == c ]] || { echo "usage: $0 [c|js]" >&2; exit 2; }
+# shellcheck source=../../test/lib.sh
+source "$(cd "$(dirname "$0")/../.." && pwd)/test/lib.sh"
+OUT="${OUT:-$ROOT/build/perf-gap-mech}"
 ROUNDS="${ROUNDS:-5}"
 mkdir -p "$OUT"
 GOCB=("$GOC" build -O3 --default-ptr-color cptr --fast-stack-alloca)
-SRC="$ROOT/bench/perfgap"
+SRC="$ROOT/bench/perf-gap/mech"
 if [[ "${BUILD:-1}" == 1 ]]; then
   "${GOCB[@]}" "$SRC/mech.c" -o "$OUT/mech.goobj" -- -DNDEBUG
   ( cd "$SRC" && CGO_ENABLED=0 GOFLAGS= \

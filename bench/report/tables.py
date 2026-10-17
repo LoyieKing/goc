@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Print the markdown tables of docs/benchmark.md from data/all.json.
 
-Usage: bench-tables.py [ALL_JSON] > /tmp/tables.md
+Usage: report/tables.py [ALL_JSON] > /tmp/tables.md
 Each table is preceded by a line `<!-- table: NAME -->` so it can be pasted
 into the doc section by section.
 """
 import json, os, sys
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 D = json.load(open(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "docs/benchmark/data/all.json")))
 ENG = ["goc-ng", "goc-bellard", "ng", "bellard", "goja"]
 HDR = "| goc-ng | goc-bellard | native ng | native Bellard | Goja |"

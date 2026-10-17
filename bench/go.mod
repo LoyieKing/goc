@@ -1,4 +1,4 @@
-module gojacli
+module goc.local/bench
 
 go 1.24.4
 

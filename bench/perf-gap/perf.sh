@@ -5,7 +5,7 @@
 # OUT/<engine>.<suite>.txt (perf report --sort sym, self %).
 #   ENGINE_MAP=file ENGINES="a b" SUITES="..." OUT=dir
 set -uo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 PS=/workspace/perf-study
 MAP="${ENGINE_MAP:-$ROOT/docs/perf-gap/data/raw/engines.txt}"
 OUT="${OUT:-$PS/perf-gap-prof}"

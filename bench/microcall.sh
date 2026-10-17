@@ -3,7 +3,7 @@
 # Higher is faster. Controls (arith, propget) are printed but not scored.
 # goc (goc-ng) and native ng always run; goc-bellard, Bellard QuickJS and Goja
 # run too when GOC_BELLARD_QJS / BELLARD_QJS / GOJA_CLI point at their binaries
-# (bench/bench-all.sh sets all three).
+# (bench/all.sh sets all three).
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 JS="$ROOT/bench/js/microcall.js"

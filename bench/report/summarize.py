@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarize bench/bench-all.sh raw output into docs/benchmark/data/all.json.
+"""Summarize bench/all.sh raw output into docs/benchmark/data/all.json.
 
 Rule: per engine, per item, take the median across rounds (V8 sub-scores and
 total, SunSpider ms/iter, microbench ns/op, microcall calls/ms). An item
@@ -7,11 +7,14 @@ that failed in any round has no number. Geometric means only use items every
 engine finished, so all columns cover the same items (the SunSpider
 "nogoja" set also covers the four QuickJS builds without Goja).
 
-Usage: bench-summarize.py [RAW_DIR] [OUT_JSON] [--test262 DIR]
+Usage: report/summarize.py [RAW_DIR] [OUT_JSON] [--test262 DIR]
 """
-import glob, json, math, os, re, statistics, sys, importlib.util
+import glob, json, os, re, sys, importlib.util
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from lib.stats import med, gmean  # noqa: E402
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RAW = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else os.path.join(ROOT, "docs/benchmark/data/raw")
 OUT = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else os.path.join(ROOT, "docs/benchmark/data/all.json")
 T262 = sys.argv[sys.argv.index("--test262") + 1] if "--test262" in sys.argv else "/workspace/perf-study/t262/test262-head"
@@ -36,12 +39,6 @@ MICRO_GROUPS = [
     ("regexp", lambda k: k.startswith("regexp_")),
     ("date", lambda k: k.startswith("date_")),
 ]
-
-def med(xs):
-    return statistics.median(xs) if xs else None
-
-def gmean(xs):
-    return math.exp(sum(math.log(x) for x in xs) / len(xs))
 
 def rounds(prefix, e):
     fs = glob.glob(os.path.join(RAW, "%s-%s-r*.txt" % (prefix, e)))
@@ -216,7 +213,7 @@ for g, n in PAIR.items():
               "qjs_diff": sorted(k for k in rq[n] if (rq[n][k] == "pass") != (rq[g][k] == "pass"))}
 out["parity"] = par
 
-# ---- memory (bench/bench-mem.sh)
+# ---- memory (bench/mem.sh)
 def lsq(xs, ys):
     mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
     return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)

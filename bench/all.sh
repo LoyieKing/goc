@@ -4,8 +4,8 @@
 # Timed suites are pinned to one core (taskset -c $CPU) and interleaved: each
 # round runs every engine once, and the engine order rotates between rounds.
 # Correctness suites (test262 sample, QuickJS official tests) run afterwards,
-# in parallel, unpinned. Raw output goes to $OUT; bench/bench-summarize.py
-# turns it into all.json and bench/bench-charts.py draws the charts.
+# in parallel, unpinned. Raw output goes to $OUT; bench/report/summarize.py
+# turns it into all.json and bench/report/charts.py draws the charts.
 #
 # Inputs (override with env):
 #   GOC      build/qjs/qjscli          (goc-ng: ports/quickjs/build.sh, O3 + NDEBUG)
@@ -16,7 +16,7 @@
 #   NG       native QuickJS-ng 0.17.0 qjs (CMake Release, clang-19 -O2 -DNDEBUG)
 #   BELLARD  Bellard QuickJS 2026-06-04 qjs (upstream Makefile, gcc -O2)
 #   BELLARD_CLANG  same Bellard sources, upstream Makefile with CONFIG_CLANG=y CC=clang-19 (-O2), reference only
-#   GOJA     gojacli from bench/gojacli (Goja cfe4039)
+#   GOJA     goja CLI built from bench/goja (Goja cfe4039): cd bench && go build -o $PS/goja-cli/gojacli ./goja
 #   V8JS     bench-v8 combined.js (QuickJS bench/js-v8) with a console prelude
 #   SSDIR    SunSpider 1.0.2 wrapped by bench/sunspider-wrap.py
 #   MICROJS  Bellard tests/microbench.js
@@ -25,9 +25,9 @@
 #   ROUNDS_V8 / ROUNDS_SS / ROUNDS_MICRO / ROUNDS_MICROCALL  (default 5/3/3/5)
 #   SKIP     space-separated subset of: v8 ss micro microcall t262 qjs
 #   ENGINE_MAP  optional file of "NAME COMMAND..." lines; a NAME listed there overrides
-#            the built-in command table (used by bench/perfgap-bench.sh for extra builds)
+#            the built-in command table (used by bench/perf-gap/run.sh for extra builds)
 #   MICROCALL_PER_ENGINE=1  run bench/js/microcall.js once per engine per round
-#            (microcall-<engine>-r<round>.txt) instead of bench/microcall-bench.sh
+#            (microcall-<engine>-r<round>.txt) instead of bench/microcall.sh
 set -uo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 PS=/workspace/perf-study
@@ -48,7 +48,7 @@ ROUNDS_MICRO="${ROUNDS_MICRO:-3}" ROUNDS_MICROCALL="${ROUNDS_MICROCALL:-5}"
 SKIP="${SKIP:-}"
 BELLARD_CLANG="${BELLARD_CLANG:-$PS/bellard/clang-O2/qjs}"
 # ENGINES may be overridden, e.g. the clang reference run:
-#   ENGINES="bellard-clang bellard" SKIP="microcall t262 qjs" OUT=docs/benchmark/data/raw/bellard-clang bench/bench-all.sh
+#   ENGINES="bellard-clang bellard" SKIP="microcall t262 qjs" OUT=docs/benchmark/data/raw/bellard-clang bench/all.sh
 read -r -a ENGINES <<< "${ENGINES:-goc-ng goc-bellard ng bellard goja}"
 mkdir -p "$OUT"
 
@@ -131,7 +131,7 @@ if ! skip microcall && [[ "${MICROCALL_PER_ENGINE:-0}" == 1 ]]; then
   done
 elif ! skip microcall; then
   for ((r = 1; r <= ROUNDS_MICROCALL; r++)); do
-    GOC_QJS="$GOC" GOC_BELLARD_QJS="$GOCB" NATIVE_QJS="$NG" BELLARD_QJS="$BELLARD" GOJA_CLI="$GOJA" pin "$ROOT/bench/microcall-bench.sh" > "$OUT/microcall-r$r.txt" 2>&1
+    GOC_QJS="$GOC" GOC_BELLARD_QJS="$GOCB" NATIVE_QJS="$NG" BELLARD_QJS="$BELLARD" GOJA_CLI="$GOJA" pin "$ROOT/bench/microcall.sh" > "$OUT/microcall-r$r.txt" 2>&1
     echo "microcall r$r $(grep '^score' "$OUT/microcall-r$r.txt")"
   done
 fi

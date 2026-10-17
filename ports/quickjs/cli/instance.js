@@ -1,5 +1,5 @@
 // Per-instance script for the multi-instance memory probe (qjsmem, the C
-// thread harness in bench/qjsmem and bench/gojamem all evaluate this).
+// thread harness in bench/qjsmem and bench/goja -mem all evaluate this).
 var o = { a: 1, b: [1, 2, 3], c: "x" };
 function f(x) { return x * 2 + o.b.length; }
 var s = 0;

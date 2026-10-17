@@ -11,7 +11,7 @@
 #                         guard codegen, on a stack that never moves.
 # Use as CC for Bellard's Makefile; non-compile invocations go to clang.
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 CLANG="${GOCPIPE_CLANG:-clang-19}"
 OPT="${OPT:-opt-19}"
 MODE="${GOCPIPE_MODE:-pipe}"

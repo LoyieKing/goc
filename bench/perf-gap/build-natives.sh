@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the native reference QuickJS binaries used by docs/perf-gap.md.
 #
-#   PS=/workspace/perf-study bench/perfgap-build-natives.sh
+#   PS=/workspace/perf-study bench/perf-gap/build-natives.sh
 #
 # Expects $PS/native (quickjs-ng 0.17.0 source tree, the one native ng is built
 # from) and $PS/bellard/quickjs-2026-06-04.tar.xz. Existing builds are left alone
@@ -78,9 +78,9 @@ flag1 noshrink   "-mllvm -enable-shrink-wrap=false"
 flag1 nocfo      "-mllvm -no-x86-call-frame-opt"
 flag1 notailmerge "-mllvm -enable-tail-merge=false"
 flag1 signedchar "-fsigned-char"
-# goc's pipeline natively (bench/perfgap-gocpipe-cc.sh): the IR pipeline and
+# goc's pipeline natively (bench/perf-gap/gocpipe-cc.sh): the IR pipeline and
 # llc flags of goc without its runtime; -sm adds the stack maps + frame guards.
-GP="$(cd "$(dirname "$0")" && pwd)/perfgap-gocpipe-cc.sh"
+GP="$(cd "$(dirname "$0")" && pwd)/gocpipe-cc.sh"
 GOCPIPE_MODE=pipe    bellard gocpipe    "$GP" CONFIG_CLANG=y "-O3 -DNDEBUG"
 GOCPIPE_MODE=pipe-sm bellard gocpipe-sm "$GP" CONFIG_CLANG=y "-O3 -DNDEBUG"
 # the same with default<O3>'s inliner threshold restored (-inline-threshold=250)

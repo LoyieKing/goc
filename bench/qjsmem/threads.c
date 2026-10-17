@@ -10,7 +10,7 @@
  * JS_SetMaxStackSize is set to half of the thread stack.
  * When all N are parked it prints one JSON line with VmRSS / VmHWM from
  * /proc/self/status, then again after malloc_trim(0).
- * Built by bench/bench-mem.sh against each engine's own objects.
+ * Built by bench/mem.sh against each engine's own objects.
  */
 #include <malloc.h>
 #include <pthread.h>

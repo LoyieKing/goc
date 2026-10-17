@@ -6,7 +6,7 @@ if (typeof console === "undefined") globalThis.console = { log: print };
 const now = (typeof performance !== "undefined" && performance.now)
   ? () => performance.now() : () => Date.now();
 // qjscli passes no script arguments: a prelude may set globalThis.__N (work
-// multiplier) and globalThis.__ONLY (run one probe), see bench/perfgap-mech.sh.
+// multiplier) and globalThis.__ONLY (run one probe), see bench/perf-gap/mech.sh.
 const N = globalThis.__N || 1;
 const ONLY = globalThis.__ONLY || null;
 function bench(name, n, f) {

@@ -4,13 +4,13 @@
 # the counter source: Ir (instructions retired), simulated D1/LL cache misses
 # and simulated branch mispredicts (Bcm conditional, Bim indirect).
 #
-#   ENGINE_MAP=file (NAME COMMAND... lines, as bench/perfgap-bench.sh writes)
+#   ENGINE_MAP=file (NAME COMMAND... lines, as bench/perf-gap/run.sh writes)
 #   ENGINES="a b c"   default: every engine in ENGINE_MAP
 #   SUITES="Richards ..."  V8 suites of the fixed-work V8 (perf-study js/v8fixed-q.js)
 #   SIM=1             cache + branch simulation (default 1; 0 = Ir only, ~3x faster)
 #   JOBS=6 CPUS=0-2,4-7 OUT=dir
 set -uo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 PS=/workspace/perf-study
 MAP="${ENGINE_MAP:-$ROOT/docs/perf-gap/data/raw/engines.txt}"
 OUT="${OUT:-$PS/cg-gap}"
@@ -23,12 +23,12 @@ SIM="${SIM:-1}"
 export GODEBUG="${GODEBUG:-asyncpreemptoff=1}"
 V8F="${V8F:-$PS/js/v8fixed-q.js}"
 # v8fixed-q.js = scale 0.25 + the first 11532 lines of the V8-v7 bundle that
-# bench/bench-all.sh uses ($PS/js/v8.js, everything before its run harness)
-# + bench/perfgap/v8fixed-harness.js (fixed repetitions per suite).
+# bench/all.sh uses ($PS/js/v8.js, everything before its run harness)
+# + bench/perf-gap/mech/v8fixed-harness.js (fixed repetitions per suite).
 if [[ ! -f "$V8F" ]]; then
   V8F="$OUT/js/v8fixed-q.js"; mkdir -p "$OUT/js"
   { echo "globalThis.__SCALE=0.25;"; head -n 11532 "$PS/js/v8.js"
-    cat "$ROOT/bench/perfgap/v8fixed-harness.js"; } > "$V8F"
+    cat "$ROOT/bench/perf-gap/mech/v8fixed-harness.js"; } > "$V8F"
 fi
 SUITES="${SUITES:-Richards DeltaBlue Crypto RayTrace EarleyBoyer RegExp Splay NavierStokes}"
 mkdir -p "$OUT/js"

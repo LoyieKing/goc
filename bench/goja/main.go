@@ -1,5 +1,8 @@
-// gojacli: minimal Goja runner for docs/benchmark.md.
-// Usage: gojacli [--micro] file.js
+// goja: the Goja runner of the benchmarks (docs/benchmark).
+//
+//	goja [--micro] file.js   run a script
+//	goja -mem N script.js    multi-instance memory probe (mem.go)
+//
 // Globals: print, console.log, performance.now (Go monotonic clock, ms).
 // --micro aliases Date.prototype.toGMTString to toUTCString (Goja lacks it and
 // Bellard's microbench.js date_parse needs it).
@@ -16,13 +19,17 @@ import (
 
 func main() {
 	args := os.Args[1:]
+	if len(args) > 0 && args[0] == "-mem" {
+		memMain(args[1:])
+		return
+	}
 	micro := false
 	if len(args) > 0 && args[0] == "--micro" {
 		micro = true
 		args = args[1:]
 	}
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: gojacli [--micro] file.js")
+		fmt.Fprintln(os.Stderr, "usage: goja [--micro] file.js | goja -mem N script.js")
 		os.Exit(2)
 	}
 	src, err := os.ReadFile(args[0])

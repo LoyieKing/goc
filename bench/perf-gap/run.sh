@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Toggle experiments for docs/perf-gap.md, timed like bench/perfgap-bench.sh
-# (pinned, interleaved rounds via bench/bench-all.sh), each set with its own
-# reference builds in the same session.
+# Perf-gap benchmarks: the same QuickJS source built several ways, timed with
+# bench/all.sh's pinned, interleaved method. Each set carries its own
+# reference builds so every number in a set comes from one session.
 #
+#   SET=matrix   (default) the build matrix: gcc/clang -O2/-O3, NDEBUG, the goc
+#                codegen flags, goc itself; V8, SunSpider, micro, microcall
 #   SET=toggles  tail duplication (native + goc), the shim experiment
 #                (docs/perf-gap/experiments/shim-fast.patch), goc's pipeline
 #                built natively (gocpipe*), -inline-threshold=250 (inl250) and
@@ -10,16 +12,33 @@
 #   SET=flags    Bellard clang -O3 plus one goc codegen flag at a time; V8 + SunSpider
 #
 # goc variants come from /workspace/perf-study/goc-variants (see docs/perf-gap.md,
-# "reproduce"); natives from bench/perfgap-build-natives.sh.
+# "reproduce"); natives from bench/perf-gap/build-natives.sh.
 set -euo pipefail
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 PS="${PS:-/workspace/perf-study}"
 GV="${GV:-$PS/goc-variants}"
-SET="${SET:-toggles}"
-OUT="${OUT:-$ROOT/docs/perf-gap/data/raw-$SET}"
+SET="${SET:-matrix}"
+if [[ "$SET" == matrix ]]; then DEF_OUT="$ROOT/docs/perf-gap/data/raw"; else DEF_OUT="$ROOT/docs/perf-gap/data/raw-$SET"; fi
+OUT="${OUT:-$DEF_OUT}"
 mkdir -p "$OUT"
 B="--stack-size 16M"; N="-C --stack-size 16384"; G="--stack-size 16384"
 case "$SET" in
+matrix)
+  cat > "$OUT/engines.txt" <<MAP
+ng-gcc-O2 $PS/native/b-gcc-O2/qjs $N
+ng-clang-O2 $PS/native/b-O2/qjs $N
+ng-clang-O3 $PS/native/b-O3/qjs $N
+ng-clang-O3-gocflags $PS/native/b-gocfull/qjs $N
+goc-ng $ROOT/build/qjs/qjscli $G
+bellard-gcc-O2 $PS/bellard/quickjs-2026-06-04/qjs $B
+bellard-gcc-O2-NDEBUG $PS/bellard/gcc-O2-NDEBUG/qjs $B
+bellard-clang-O2 $PS/bellard/clang-O2/qjs $B
+bellard-clang-O2-NDEBUG $PS/bellard/clang-O2-NDEBUG/qjs $B
+bellard-clang-O3 $PS/bellard/clang-O3-NDEBUG/qjs $B
+bellard-clang-O3-gocflags $PS/bellard/clang-O3-gocfull/qjs $B
+goc-bellard $ROOT/build/qjs-bellard/qjscli $G
+MAP
+  SK="t262 qjs"; RV=; RS=; RM=; RC= ;;
 toggles)
   cat > "$OUT/engines.txt" <<MAP
 bellard-gcc-O2-NDEBUG $PS/bellard/gcc-O2-NDEBUG/qjs $B
@@ -62,7 +81,7 @@ flags)
     done
   } > "$OUT/engines.txt"
   SK="t262 qjs micro microcall"; RV=5; RS=3; RM=3; RC=3 ;;
-*) echo "SET must be toggles or flags" >&2; exit 1 ;;
+*) echo "SET must be matrix, toggles or flags" >&2; exit 1 ;;
 esac
 for c in $(awk '{print $2}' "$OUT/engines.txt"); do
   [[ -x "$c" ]] || { echo "missing $c" >&2; exit 1; }
@@ -72,4 +91,4 @@ ENGINES="$(cut -d' ' -f1 "$OUT/engines.txt" | tr '\n' ' ')" \
 ENGINE_MAP="$OUT/engines.txt" MICROCALL_PER_ENGINE=1 SKIP="${SKIP:-$SK}" OUT="$OUT" \
 ROUNDS_V8="${ROUNDS_V8:-$RV}" ROUNDS_SS="${ROUNDS_SS:-$RS}" ROUNDS_MICRO="${ROUNDS_MICRO:-$RM}" \
 ROUNDS_MICROCALL="${ROUNDS_MICROCALL:-$RC}" \
-  "$ROOT/bench/bench-all.sh"
+  "$ROOT/bench/all.sh"

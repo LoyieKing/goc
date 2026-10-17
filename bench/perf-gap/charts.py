@@ -3,25 +3,20 @@
 
 All chart text is English (the doc prose is Chinese). Needs matplotlib.
 Charts whose input file is missing are skipped.
-Usage: perfgap-charts.py [DATA_DIR] [OUT_DIR]
+Usage: perf-gap/charts.py [DATA_DIR] [OUT_DIR]
 """
 import json, math, os, sys
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from lib.plot import plt, LEG, saver, title  # noqa: E402
+import matplotlib.ticker  # noqa: E402
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DD = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "docs/perf-gap/data")
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "docs/perf-gap/charts")
-os.makedirs(OUT, exist_ok=True)
-plt.rcParams.update({
-    "font.family": ["DejaVu Sans"], "axes.unicode_minus": False, "svg.fonttype": "none",
-    "font.size": 10, "axes.spines.top": False, "axes.spines.right": False,
-    "axes.grid": True, "grid.alpha": 0.3, "axes.axisbelow": True,
-})
+save = saver(OUT)
 DATE = "2026-09-27"
-LEG = dict(frameon=True, facecolor="white", edgecolor="none", framealpha=1)
 BUILDS = ["gcc-O2", "clang-O2", "clang-O3", "clang-O3-gocflags", "goc"]
 BCOL = {"gcc-O2": "#f59e0b", "clang-O2": "#93c5fd", "clang-O3": "#3b82f6",
         "clang-O3-gocflags": "#6366f1", "goc": "#047857"}
@@ -32,16 +27,6 @@ LSHORT = ["compiler\nclang-O2 / gcc-O2", "opt level\nclang-O3 / clang-O2",
 LCOL = ["#f59e0b", "#3b82f6", "#6366f1", "#047857"]
 SUITES = ["V8", "SunSpider", "microbench", "microcall"]
 FAM = {"ng": "quickjs-ng 0.17.0", "bellard": "Bellard QuickJS 2026-06-04"}
-
-def save(fig, name):
-    fig.savefig(os.path.join(OUT, name + ".svg"), bbox_inches="tight")
-    plt.close(fig)
-    print("wrote", name)
-
-def title(ax, t, sub):
-    ax.set_title(t, fontsize=13, fontweight="bold", loc="left", pad=24 + 12 * sub.count("\n"))
-    ax.annotate(sub, xy=(0, 1), xycoords="axes fraction", xytext=(0, 8), textcoords="offset points",
-                fontsize=9, color="#475569", va="bottom", ha="left")
 
 def load(n):
     p = os.path.join(DD, n)
@@ -300,7 +285,7 @@ if MC:
                         "pointer chase", "indirect call"])
     ax.set_ylabel("ns per operation (lower is better)")
     ax.legend(fontsize=7.5, ncol=4, loc="upper left", **LEG)
-    title(ax, "C mechanism microbenchmarks (bench/perfgap/mech.c)",
+    title(ax, "C mechanism microbenchmarks (bench/perf-gap/mech/mech.c)",
           "same C file built several ways (f-X = clang -O3 plus only goc flag X), pinned CPU, best of the recorded runs; %s" % DATE)
     save(fig, "perf-gap-mech-c")
 
@@ -341,7 +326,7 @@ if MJ and "bellard-clang-O3" in MJ:
     ax.set_xlim(0.15, 10)
     ax.set_xlabel("time per op relative to Bellard clang -O3 (log scale, lower is better)")
     ax.legend(fontsize=8, loc="lower right", **LEG)
-    title(ax, "JS mechanism probes (bench/js/perfgap-mech.js)",
+    title(ax, "JS mechanism probes (bench/js/mech.js)",
           "one runtime service per loop; median of 3 pinned rounds;\ngoc-bellard-fast = shim experiment, best = fast + tail-dup + inline-threshold 250; %s" % DATE)
     save(fig, "perf-gap-mech-js")
 

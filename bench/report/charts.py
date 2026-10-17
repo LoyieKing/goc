@@ -8,48 +8,24 @@ the others). goc builds are drawn dark, the native build of the same engine
 in the light shade of the same hue.
 Needs matplotlib.
 
-Usage: bench-charts.py [ALL_JSON] [OUT_DIR]
+Usage: report/charts.py [ALL_JSON] [OUT_DIR]
 """
 import json, os, sys
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter, LogLocator, NullFormatter
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from lib.plot import plt, LEG, saver, title, plain_log  # noqa: E402
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ALL = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "docs/benchmark/data/all.json")
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "docs/benchmark/charts")
-os.makedirs(OUT, exist_ok=True)
+save = saver(OUT)
 D = json.load(open(ALL))
 
-plt.rcParams.update({
-    "font.family": ["DejaVu Sans"],
-    "axes.unicode_minus": False, "svg.fonttype": "none", "font.size": 10,
-    "axes.spines.top": False, "axes.spines.right": False,
-    "axes.grid": True, "grid.alpha": 0.3, "axes.axisbelow": True,
-})
 ENG = ["goc-ng", "goc-bellard", "ng", "bellard", "goja"]
 LABEL = {"goc-ng": "goc-ng", "goc-bellard": "goc-bellard", "ng": "native ng", "bellard": "native Bellard", "goja": "Goja"}
 COLOR = {"goc-ng": "#1d4ed8", "ng": "#93c5fd", "goc-bellard": "#047857", "bellard": "#6ee7b7", "goja": "#94a3b8"}
 DATE = "2026-10-09"
 NE = len(ENG)
-LEG = dict(frameon=True, facecolor="white", edgecolor="none", framealpha=1)
-
-def save(fig, name):
-    fig.savefig(os.path.join(OUT, name + ".svg"), bbox_inches="tight")
-    plt.close(fig)
-    print("wrote", name)
-
-def title(ax, t, sub):
-    ax.set_title(t, fontsize=13, fontweight="bold", loc="left", pad=24 + 12 * sub.count("\n"))
-    ax.annotate(sub, xy=(0, 1), xycoords="axes fraction", xytext=(0, 8), textcoords="offset points",
-                fontsize=9, color="#475569", va="bottom", ha="left")
-
-def plain_log(axis):
-    """Log axis with plain-number tick labels (1, 2, 5, 10, ...)."""
-    axis.set_major_locator(LogLocator(base=10, subs=(1, 2, 5)))
-    axis.set_major_formatter(FuncFormatter(lambda v, _: "%g" % v))
-    axis.set_minor_formatter(NullFormatter())
 
 def grouped(ax, cats, series, engines, fmt, width=0.8, rot=0, fs=7.5, log=False):
     n = len(engines)
@@ -176,7 +152,7 @@ grouped(ax, gn, {e: [G[g][e] for g in gn] for e in ENG}, ENG, lambda v: "%.0f" %
 plain_log(ax.yaxis)
 ax.set_ylabel("ns/op, geometric mean within group\n(log axis, lower is better)")
 ax.set_ylim(min(G[g][e] for g in gn for e in ENG) * 0.6, max(G[g][e] for g in gn for e in ENG) * 10)
-title(ax, "microbench by group", "Bellard tests/microbench.js, median of %d rounds per test, geometric mean per group (groups: bench/bench-summarize.py)." % mb["rounds"]["goc-ng"])
+title(ax, "microbench by group", "Bellard tests/microbench.js, median of %d rounds per test, geometric mean per group (groups: bench/report/summarize.py)." % mb["rounds"]["goc-ng"])
 ax.legend(ncol=NE, loc="upper left", **LEG)
 save(fig, "micro-groups")
 
@@ -206,7 +182,7 @@ if all(e in mc.get("score_median", {}) for e in ENG):
     ax.set_ylim(min(cm[c][e] for c in cases for e in ENG) * 0.6, max(cm[c][e] for c in cases for e in ENG) * 8)
     ax.set_ylabel("ms per case (log axis, lower is better)")
     sm = mc["score_median"]
-    title(ax, "microcall: time per case", "bench/microcall-bench.sh, median of %d rounds; arith and propget are controls.\nScore (calls/ms, higher is better): %s." % (
+    title(ax, "microcall: time per case", "bench/microcall.sh, median of %d rounds; arith and propget are controls.\nScore (calls/ms, higher is better): %s." % (
         len(mc["rounds"]), ", ".join("%s %g" % (LABEL[e], sm[e]) for e in ENG)))
     ax.legend(ncol=NE, loc="upper left", **LEG)
     save(fig, "microcall")

@@ -1,7 +1,7 @@
 //go:build qjsmem
 
 // Multi-instance memory probe, built only with -tags qjsmem
-// (bench/bench-mem.sh runs ports/quickjs/build.sh --tags qjsmem -o build/qjs/qjsmem
+// (bench/mem.sh runs ports/quickjs/build.sh --tags qjsmem -o build/qjs/qjsmem
 // ports/quickjs/build.sh). The default qjscli binary does not contain it.
 //
 //	qjsmem --mem-instances N

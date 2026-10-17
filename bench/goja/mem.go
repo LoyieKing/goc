@@ -1,5 +1,5 @@
-// gojamem: multi-instance memory probe for Goja (docs/benchmark.md, 内存占用).
-// Usage: gojamem N script.js
+// The multi-instance memory probe for Goja (docs/benchmark, 内存占用).
+// Usage: goja -mem N script.js
 // Starts N goroutines; each owns one goja.Runtime, runs the script, then
 // blocks with the runtime alive. Runtimes are created one after another, the
 // same order as the goc and C harnesses. Prints one JSON line with process
@@ -44,17 +44,17 @@ func snap() memSnap {
 		ms.StackSys, ms.StackInuse, ms.Sys, uint64(ms.NumGC), runtime.NumGoroutine()}
 }
 
-func main() {
-	if len(os.Args) != 3 {
-		fmt.Fprintln(os.Stderr, "usage: gojamem N script.js")
+func memMain(args []string) {
+	if len(args) != 2 {
+		fmt.Fprintln(os.Stderr, "usage: goja -mem N script.js")
 		os.Exit(2)
 	}
-	n, err := strconv.Atoi(os.Args[1])
+	n, err := strconv.Atoi(args[0])
 	if err != nil || n < 0 {
 		fmt.Fprintln(os.Stderr, "N must be >= 0")
 		os.Exit(2)
 	}
-	src, err := os.ReadFile(os.Args[2])
+	src, err := os.ReadFile(args[1])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)

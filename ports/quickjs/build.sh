@@ -11,7 +11,7 @@
 #                     the ng API onto it with host/bellard_compat.h)
 #   --engine-only     stop after the embed smoke (build/<flavor>/qjs_test)
 #   --tags, -o        build tags and output of the CLI (default
-#                     build/<flavor>/qjscli); bench/bench-mem.sh builds the
+#                     build/<flavor>/qjscli); bench/mem.sh builds the
 #                     qjsmem variant with --tags qjsmem -o build/qjs/qjsmem
 #
 # The smoke reads QJS_EVAL, QJS_PROMISE and QJS_GROWTH_SWEEP (default 300).

@@ -69,7 +69,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 
 ## Go 模块
 
-仓库根目录是 Go 模块 `github.com/LoyieKing/goc`，包含 `goobj/...` 和 `tools/...`。`test/*`、`bench/gojamem`、`bench/gojacli`、`examples/hello` 各自是独立的模块。
+仓库根目录是 Go 模块 `github.com/LoyieKing/goc`，包含 `goobj/...` 和 `tools/...`。`test/*`、`bench/goja (-mem)`、`bench/goja`、`examples/hello` 各自是独立的模块。
 
 ## 测试
 

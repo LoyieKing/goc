@@ -14,7 +14,7 @@
 # N in $NS. goc-ng: build/qjs/qjsmem (qjscli built with -tags qjsmem, see
 # ports/quickjs/cli/mem_instances.go); goc-bellard: build/qjs-bellard/qjsmem (the
 # same probe, --flavor bellard). native ng / Bellard: bench/qjsmem/threads.c
-# linked against each engine's own build. Goja: bench/gojamem. Not pinned
+# linked against each engine's own build. Goja: bench/goja (goja -mem). Not pinned
 # (see the doc for why). ng also runs with MALLOC_ARENA_MAX=1 (engine
 # "ng-arena1").
 #   -> $OUT/mem-inst-r<round>.txt, one MEMINST JSON line per (engine, N).
@@ -48,7 +48,7 @@ ENGINES=(goc-ng goc-bellard ng bellard goja)
 mkdir -p "$OUT" "$HB"
 skip() { [[ " $SKIP " == *" $1 "* ]]; }
 
-cmd() {  # same command lines as bench/bench-all.sh
+cmd() {  # same command lines as bench/all.sh
   case "$1" in
     goc-ng)  echo "$GOC --stack-size 16384 --script" ;;
     goc-bellard) echo "$GOCB --stack-size 16384 --script" ;;
@@ -88,7 +88,7 @@ clang-19 -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"ng"' -I"$NGDIR" "$ROOT/bench/qjsmem
   "$NGDIR/b-O2/libqjs.a" -lm -lpthread -o "$HB/threads-ng" || exit 1
 gcc -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"bellard"' -I"$BDIR" "$ROOT/bench/qjsmem/threads.c" \
   "$BDIR"/.obj/{quickjs,libregexp,libunicode,cutils,dtoa}.o -lm -lpthread -o "$HB/threads-bellard" || exit 1
-( cd "$ROOT/bench/gojamem" && go build -o "$HB/gojamem" . ) || exit 1
+( cd "$ROOT/bench" && go build -o "$HB/goja" ./goja ) || exit 1
 INST="$ROOT/ports/quickjs/cli/instance.js"
 
 {
@@ -98,7 +98,7 @@ INST="$ROOT/ports/quickjs/cli/instance.js"
   echo "go: $(go version)"
   echo "GOGC=${GOGC:-<unset, default 100>} GOMEMLIMIT=${GOMEMLIMIT:-<unset>}"
   for e in "${ENGINES[@]}"; do echo "$e: $(cmd "$e")  sha256=$(sha256sum "$(cmd "$e" | cut -d' ' -f1)" | cut -c1-16)"; done
-  for b in "$GOCMEM" "$GOCBMEM" "$HB/threads-ng" "$HB/threads-bellard" "$HB/gojamem"; do
+  for b in "$GOCMEM" "$GOCBMEM" "$HB/threads-ng" "$HB/threads-bellard" "$HB/goja"; do
     echo "harness: ${b#$ROOT/}  sha256=$(sha256sum "$b" | cut -c1-16)"
   done
   echo "rounds: $ROUNDS; N: $NS; C harness thread stack: ${QJSMEM_STACK_KB:-1024} KiB"
@@ -149,7 +149,7 @@ if ! skip inst; then
           ng)        line=$("$HB/threads-ng" "$n" "$INST" 2>/dev/null) ;;
           ng-arena1) line=$(MALLOC_ARENA_MAX=1 "$HB/threads-ng" "$n" "$INST" 2>/dev/null) ;;
           bellard)   line=$("$HB/threads-bellard" "$n" "$INST" 2>/dev/null) ;;
-          goja)      line=$("$HB/gojamem" "$n" "$INST" 2>/dev/null) ;;
+          goja)      line=$("$HB/goja" -mem "$n" "$INST" 2>/dev/null) ;;
         esac
         line=$(grep '^MEMINST ' <<< "$line")
         [[ -n "$line" ]] || line='MEMINST {"error":"no output"}'
