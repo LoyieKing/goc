@@ -135,9 +135,14 @@ Function *inlineStackBound(Module &M, StringRef Name, uint64_t Off);
 Function *inlineUptrDecode(Module &M);
 Function *inlineUptrFromPtr(Module &M);
 Function *inlineUptrRequireCptr(Module &M);
-GlobalVariable *externGlobal(Module &M, StringRef Name, Type *Ty);
-Function *inlineDynAlloc(Module &M);
-Function *inlineDynRelease(Module &M);
+enum class UptrConv { FromCptr, AsCptr, FromSptr, AsSptr };
+Function *inlineUptrConv(Module &M, UptrConv K, bool ExplicitHi);
+Function *inlineDynAllocPool(Module &M);
+Function *inlineDynReleasePool(Module &M);
+Function *inlineDynAllocHeap(Module &M);
+Function *inlineDynReleaseHeap(Module &M);
+bool fastStackAlloca();
+Function *uptrHelperFor(Module &M, StringRef Name);
 bool rewriteUptrCall(CallInst *CI);
 
 // Pass factories, for parseStackMapPass.

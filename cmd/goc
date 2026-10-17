@@ -179,15 +179,10 @@ cmd_build() {
       echo "goc build: FATAL GOC_CSR_ADJUST is x86-only" >&2
       exit 1
     fi
-    case "$SRC" in
-      *runtime/uptr/*) ;;
-      *)
-        if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$SRC"; then
-          echo "goc build: FATAL $SRC is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
-          exit 1
-        fi
-        ;;
-    esac
+    if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$SRC"; then
+      echo "goc build: FATAL $SRC is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
+      exit 1
+    fi
   fi
 
   local CLANG USE_PLUGIN=0
@@ -330,17 +325,19 @@ cmd_build() {
     fi
     BODY_LL="$TMP/a.color.nodbg.ll"
   fi
+  # goc-inline-gate gives every goc_uptr_* / goc_stack_* / goc_dynalloc call
+  # an internal alwaysinline body (there is no runtime library), at every -O.
+  # It does not restrict inlining: call-bearing functions may inline.
+  if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate \
+      -S "$BODY_LL" -o "$TMP/a.gate.ll"; then
+    cleanup_build_tmp
+    exit 1
+  fi
+  BODY_LL="$TMP/a.gate.ll"
   local STACKMAP_PREPARED=0
   if [[ "$OPT_LEVEL" != 0 ]]; then
-    # goc-inline-gate is a no-op: call-bearing functions may inline. Maps are
-    # recorded after O3 on the merged frame. Stack-pointer arguments and slots
-    # that keep &s->token are reanchored so copystack adjusts them.
-    if ! "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate \
-        -S "$BODY_LL" -o "$TMP/a.gate.ll"; then
-      cleanup_build_tmp
-      exit 1
-    fi
-    BODY_LL="$TMP/a.gate.ll"
+    # Maps are recorded after O3 on the merged frame. Stack-pointer arguments
+    # and slots that keep &s->token are reanchored so copystack adjusts them.
     local PIPELINE
     PIPELINE="$("$OPT" "-passes=default<O$OPT_LEVEL>" -print-pipeline-passes -disable-output /dev/null)"
     # Stack maps, recorded after this pipeline, model SysV outgoing areas.

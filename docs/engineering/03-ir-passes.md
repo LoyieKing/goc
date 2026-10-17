@@ -91,10 +91,10 @@ goc-reanchor
 
 ## 5. `goc-inline-gate`（function pass，O3 前）
 
-`SMUptrInline.cpp`。`goc_stack_hi` / `goc_uptr_decode` / `goc_uptr_from_ptr` 等本来在另一个 TU（`runtime/uptr`），每次调用都是一次外部 call。
-这个 pass（`rewriteUptrCall`）把对它们的调用改成调用模块内新建的 `goc.inline.*` 帮助函数（`inlineStackBound`、`inlineUptrDecode`、`inlineUptrFromPtr`、`inlineUptrRequireCptr`），带 `alwaysinline` 函数体，O3 再内联掉。读 `g` 用 `tlsGWord`：amd64 是 `movq %fs:-8`，arm64 是 `mov x28`，标成 `readnone` 以便后面合并；
+`SMUptrInline.cpp`。goc 没有运行时库：`goc_stack_hi` / `goc_stack_lo`、`goc_uptr_*`（含 `_hi` 变体）和 `goc_dynalloc` / `goc_dynrelease` 的实现都在这里。
+这个 pass（`rewriteUptrCall`）把对它们的调用改成调用模块内新建的 `goc.inline.*` 帮助函数（`inlineStackBound`、`inlineUptrDecode`、`inlineUptrFromPtr`、`inlineUptrRequireCptr`、`inlineUptrConv`、`inlineDynAlloc*`），带 `alwaysinline` 函数体，O3 再内联掉；`-O0` 下也跑，留下的是模块内的 internal 函数。错 tag 调 `goc.uptr.fatal`（`write(2)` 一行消息再 trap）。见 `docs/design/uptr.md`。读 `g` 用 `tlsGWord`：amd64 是 `movq %fs:-8`，arm64 是 `mov x28`，标成 `readnone` 以便后面合并；
 `stack.lo` / `stack.hi` 的加载保持 `volatile`（它们只在调用里变，但 O3 证明为 readonly 的调用里也可能搬栈）。
-`GOC_INLINE_DYNALLOC=1` 时还内联 alloca 池的指针碰撞（单线程限定，池游标是进程全局的）。
+`GOC_INLINE_DYNALLOC=1` 时 alloca 走每个对象一个的 16 MiB BSS 池（内联指针碰撞，单 goroutine 限定）；否则每次 `malloc` / `free`。
 名字是历史遗留：它不再限制内联（`cmd/goc` 注释写作「goc-inline-gate is a no-op: call-bearing functions may inline」，指的就是这一点），含调用的函数照样可以被内联。
 
 ## 6. O3 + `goc-name-blocks`

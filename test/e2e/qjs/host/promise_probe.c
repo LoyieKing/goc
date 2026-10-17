@@ -6,7 +6,7 @@
 #else
 #include "../../../../third_party/quickjs-ng/quickjs.h"
 #endif
-#include "../../../../runtime/goc_uptr.h"
+#include "../../../../include/goc_uptr.h"
 
 typedef struct GocLink {
   struct GocLink *next;

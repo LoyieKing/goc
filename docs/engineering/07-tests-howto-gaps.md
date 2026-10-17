@@ -102,7 +102,7 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 | 6 | `.gocobj` header | arch 编号（现在 1 amd64、2 arm64），`gocobj/format.go` 和 `docs/gocobj-format.md` |
 | 7 | `tools/gocobj2goobj` | `goVersion` 加该架构的重定位映射（参照 `arm64.go`） |
 | 8 | `goobj/lower/goabi_<arch>.go` | Go ABIInternal → C 调用约定的 thunk |
-| 9 | `SMUptrInline.cpp` `tlsGWord`、`runtime/uptr` | 怎么读 g |
+| 9 | `SMUptrInline.cpp` `tlsGWord`、`uptrFatal` | 怎么读 g、FATAL 的系统调用 |
 | 10 | `cmd/goc`、`tools/goc/realbody.sh` | `GOC_ARCH` 白名单、clang 目标参数、llc 参数、`llvm-mc` triple |
 | 11 | `test/e2e/<arch>/` + CI | qemu 运行 |
 
@@ -112,7 +112,7 @@ go run ./tools/gocobj-diff a.goobj b.goobj      # 改转换器前后对比
 
 来自代码、`docs/todo.md`、`docs/runtime-model.md`：
 
-1. **`goc go` 只支持 linux/amd64**；arm64 只有 `goc build` 和 `test/e2e/arm64`（qemu）。QuickJS 宿主用 x86 syscall 和 SSE 汇编，arm64 上被拒绝；`runtime/uptr` 的 TLS 读只有 amd64 汇编。
+1. **`goc go` 只支持 linux/amd64**；arm64 只有 `goc build` 和 `test/e2e/arm64`（qemu）。QuickJS 宿主用 x86 syscall 和 SSE 汇编，arm64 上被拒绝。
 2. （已解决）原来只有 go1.24 的映射；现在支持 go1.23–1.27（multi-go-version.md）。
 3. **`gptr` 写屏障没有实现**（06 篇 §3），`gptr` 也不会进栈图；合同（syntax-guide）里写了。
 4. **跨 goroutine 使用 sptr/uptr 是合同错误**（单字表示里没有 goroutine 指针）。`GOC_SPTR_WITH_G` 只在 todo 里。

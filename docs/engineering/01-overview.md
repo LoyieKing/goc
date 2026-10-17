@@ -126,7 +126,6 @@ flag 解析统一在 `scripts/goc-flags.sh` 的 `goc_consume_flag`：每个 flag
 | `gometa/` | 各 Go 版本的事实（内嵌 JSON） | `meta.go`、`data/go1.23.json`…`go1.27.json` |
 | `goobjw/` | 自己的 goobj writer / reader | `link.go`、`write.go`、`dwarf.go`、`read.go` |
 | `tools/golangc-metadata-resolver/` | 从 GOROOT 生成事实 JSON | `main.go`、`consts.go`、`reviewed.go`（审查过的 Go 函数指纹） |
-| `runtime/` | uptr 运行时 | `uptr/goc_uptr_runtime.c`、`uptr/goc_uptr_tls_amd64.S`、`UPTR-MSB.md`、`TLS-HI.md` |
 | `test/` | 全部测试（见 07 篇） | `README.md` |
 | `examples/` | `hello/`（最小程序）、`hello_colors.c`、`sptr_escape_bad.c` | |
 | `bench/` | 基准与 perf-gap 脚本，不在 CI | |

@@ -62,8 +62,7 @@ go build -toolexec tools/goc/toolexec_recognize_goobj.sh
 | `tools/goc-lower` | `goobj/lower` 的命令行外壳，realbody.sh 调用，发布包里是 `bin/goc-lower` |
 | `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
 | `gocobj` | `.gocobj` 的 Go 读写和校验库（与 Go 版本无关，ABI 常量见 `docs/go-abi-profiles.md`） |
-| `runtime/` | uptr 运行时（`runtime/uptr`）和头文件 |
-| `include/` | 用户头文件 `goc.h`、`goc_uptr.h` |
+| `include/` | 用户头文件 `goc.h`、`goc_uptr.h`（uptr helper 的函数体由 `goc-inline-gate` 给出，没有运行时库，见 `docs/design/uptr.md`） |
 | `test/` | 所有测试，入口是各目录的 `run.sh`：`clang`（前端 golden）、`color-escape`、`lit`（FileCheck）、`gocobj`（格式 golden）、`e2e/`（`realbody`、`goabi`、`stress`、`lines`、`arm64`、`qjs` QuickJS 宿主与测试脚本）。见 `test/README.md` |
 | `bench/` | 基准和 perf-gap 脚本，不在 CI 里 |
 | `third_party/` | QuickJS 源码说明（源码本身不进 git）、本地 LLVM 构建目录 |

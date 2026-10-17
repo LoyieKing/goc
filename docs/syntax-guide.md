@@ -302,16 +302,16 @@ goc_cptr goc_dynalloc(size_t bytes, void **scope);
 void     goc_dynrelease(void **scope);
 ```
 
-`scope` 是水位。函数入口置 `NULL`。这次执行里第一次分配记下水位；池地址永非 `NULL`，所以后面的 `alloca` 不改它。返回时水位以上全部丢掉，再把 `*scope` 清掉。失败不返回 `NULL`，直接 `goc_uptr_fatal`：`scope` 为空、尺寸溢出、池耗尽。pool 路径上，释放时水位不在池内也是致命错误。
+`scope` 是水位。函数入口置 `NULL`。这次执行里第一次分配记下水位；池地址永非 `NULL`，所以后面的 `alloca` 不改它。返回时水位以上全部丢掉，再把 `*scope` 清掉。失败不返回 `NULL`，直接 FATAL（stderr 一行 `goc FATAL uptr: …`，然后 trap）：`scope` 为空、尺寸溢出、池耗尽。pool 路径上，释放时水位不在池内也是致命错误。
 
-两套实现，签名和颜色相同：
+没有运行时库，两套实现都由编译器内联（`goc-inline-gate`），签名和颜色相同：
 
 | 构建 | 行为 |
 |---|---|
-| 定义 `GOC_DYNALLOC_POOL` | 进程全局 bump pool。默认 16 MiB，`-DGOC_DYNALLOC_POOL_SIZE=` 可改。只许一个 goroutine 调用；两个同时调用会踩同一个游标。不清零，与 C `alloca` 一致。 |
-| 未定义 | 每次 `malloc` / `free`。freestanding 路径清零。指针仍是 `cptr`。 |
+| `--fast-stack-alloca`（`GOC_INLINE_DYNALLOC=1`） | 每个对象一个 16 MiB 的 BSS bump pool，指针碰撞内联进调用点。只许一个 goroutine 调用；两个同时调用会踩同一个游标。不清零，与 C `alloca` 一致。 |
+| `--no-fast-stack-alloca` | 每次 `malloc` / `free`（可用 `GOC_IR_RENAMES` 改名）。不清零。指针仍是 `cptr`。 |
 
-`--fast-stack-alloca`（传给 pass 的变量仍是 `GOC_INLINE_DYNALLOC=1`）只把 pool 路径的 bump 内联进调用点，不改变上面的合同。快很多。游标是进程全局的，只能单线程用；多线程同时调用有线程安全问题。
+每个对象的池各自按函数返回 LIFO 嵌套，所以一个对象一个池和整个进程一个池同样正确。细节见 `docs/design/uptr.md` §6。
 
 引擎自己的栈预算不是本条。`alloca` 不再消耗 goroutine 栈之后，用绝对 SP 减去 `alloca_size` 去比一个创建时记下的栈顶，是那个引擎的事。编译器不改那些函数。
 

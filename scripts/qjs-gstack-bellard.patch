@@ -19,7 +19,7 @@ https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz). Everything is under
  #include "dtoa.h"
  
 +#ifdef GOC_QJS_GSTACK
-+#include "../../runtime/goc_uptr.h"
++#include "../../include/goc_uptr.h"
 +#endif
 +
  #define OPTIMIZE         1
@@ -73,7 +73,7 @@ https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz). Everything is under
  } StackElem;
  
 +#ifdef GOC_QJS_GSTACK
-+#include "../../runtime/goc_uptr.h"
++#include "../../include/goc_uptr.h"
 +/* pc, cptr, and capture are heap bytecode and the subject string.
 +   An integer cast keeps them off the GC-root path: goc_uptr_decode
 +   returns "may point at the stack", so every later push re-encodes

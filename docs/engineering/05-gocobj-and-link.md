@@ -96,7 +96,7 @@ profile 由 `profileFor` 用该版本的 `abi`/`arch` 事实匹配 `gocobj.Profi
 | 4 | `gometa/data/go1.X.json`、`goobjw/` | 各版本事实（CI 检查与解析器输出一致）与据此写对象的 writer |
 | 5 | `goobj/lower/goabi_x86.go`、`goabi_a64.go` | thunk 按 Go 1.24 ABIInternal 生成（生成文件的首行就写着 `Go 1.24 ABIInternal -> SysV entry thunks`）：参数寄存器分配、X15 清零、溢出区 |
 | 6 | `llvm/lib/Target/X86/GocX86StackCheck.cpp`、`GocAArch64StackCheck.cpp` | g 的取法（`FS:-8` / X28）、morestack 的寄存器约定（R14 装 g、X3 装返回地址） |
-| 7 | `SMUptrInline.cpp`（`tlsGWord`）、`runtime/uptr/goc_uptr_tls_amd64.S` | `g.stack.lo` 在 `g+0`、`g.stack.hi` 在 `g+8` |
+| 7 | `SMUptrInline.cpp`（`tlsGWord`） | `g.stack.lo` 在 `g+0`、`g.stack.hi` 在 `g+8` |
 | 8 | `llvm/lib/Target/AArch64/GocAArch64Frame.cpp` | Go arm64 帧布局：LR 在 `0(RSP)` |
 | 9 | `UNSAFE_POINT` 的取值 | −1 safe / −2 unsafe（Go 的 `abi.UnsafePointSafe`/`Unsafe`），在 GocObjTables 里产生 |
 | 10 | `tools/goc/toolexec_recognize_goobj.sh` | 依赖 `go build -toolexec` 调 `asm -gensymabis` / `compile` 的参数形状；`pack` 不在 GOTOOLDIR 时（1.25+）用 `go tool pack` |

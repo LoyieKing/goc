@@ -333,11 +333,11 @@ There is no --clang and no --toolchain.
   --default-ptr-color COLOR
                          Color of an unannotated T* (cptr, sptr, uptr, gptr)
   --no-default-ptr-color Leave that color unset; each pointer is inferred
-  --fast-stack-alloca    Inline the alloca pool bump. Much faster.
-                         The pool cursor is process-global, so this is
-                         single-threaded only. Concurrent calls are not
-                         thread-safe.
-  --no-fast-stack-alloca Leave alloca as a call to goc_dynalloc
+  --fast-stack-alloca    alloca bumps a 16 MiB pool per object, inline.
+                         Much faster. The pool cursor is a plain global,
+                         so this is single-goroutine only. Concurrent
+                         calls are not thread-safe.
+  --no-fast-stack-alloca alloca is one malloc/free per call
   --color-report         Print the pointer-color table; does not change colors
   --no-color-report
   --arch amd64|arm64     `goc go` accepts amd64 only

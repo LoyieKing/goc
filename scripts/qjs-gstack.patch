@@ -6,7 +6,7 @@ diff --git a/quickjs.c b/quickjs.c
  #include "dtoa.h"
  
 +#ifdef GOC_QJS_GSTACK
-+#include "../../runtime/goc_uptr.h"
++#include "../../include/goc_uptr.h"
 +#endif
 +
  #if defined(EMSCRIPTEN) || defined(_MSC_VER)
@@ -39,7 +39,7 @@ diff --git a/libregexp.c b/libregexp.c
  } StackElem;
  
 +#ifdef GOC_QJS_GSTACK
-+#include "../../runtime/goc_uptr.h"
++#include "../../include/goc_uptr.h"
 +/* pc, cptr, and capture are heap bytecode and the subject string.
 +   An integer cast keeps them off the GC-root path: goc_uptr_decode
 +   returns "may point at the stack", so every later push re-encodes

@@ -9,7 +9,7 @@
 #      AArch64 stack-check hook; the .gocobj passes goc-objdump verify
 #   5. 9-int Go entry stores x8, llvm-mc assembles it, link if it can
 #   6. default amd64 goc build of a tiny C file still works
-#   plus: a linux/amd64 host TU is refused; runtime/uptr is compiled for arm64
+#   plus: a linux/amd64 host TU is refused; the uptr helpers run on arm64
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}"
 # shellcheck source=goversion.sh
@@ -252,15 +252,48 @@ fi
 rg -q 'not ported' "$TMP/host.log" || { cat "$TMP/host.log" >&2; fail "refusal did not say the TU is not ported"; }
 pass "arm64 refuses the linux/amd64 QuickJS host"
 
-echo "== runtime/uptr for aarch64 =="
-# -ffreestanding keeps clang on its own stdint/stddef. The aarch64 target
-# has no glibc multiarch headers on this amd64 host, and this TU does not
-# use libc.
-clean_env GOC_ARCH=arm64 "$GOC" build "$ROOT/runtime/uptr/goc_uptr_runtime.c" \
-  -o "$TMP/uptr.goobj" -ffreestanding \
-  -DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS -I"$ROOT/runtime/uptr"
+echo "== arm64 uptr helpers (compiler bodies, x28) =="
+# goc-inline-gate gives every goc_uptr_* / goc_stack_* helper an inline body;
+# no runtime object is linked. On arm64 g is x28.
+cat >"$TMP/uptr.c" <<'EOF'
+#include "goc_uptr.h"
+
+static int global_word = 3;
+
+int uptrcheck(void) {
+  int local = 5;
+  uintptr_t lo = goc_stack_lo(), hi = goc_stack_hi();
+  if (!(lo < (uintptr_t)&local && (uintptr_t)&local < hi))
+    return 1;
+  goc_uptr u = goc_uptr_from_ptr(&local);
+  if (!goc_uptr_is_stack_encoded(u) || goc_uptr_decode(u) != (void *)&local)
+    return 2;
+  goc_uptr c = goc_uptr_from_ptr(&global_word);
+  if ((void *)c != (void *)&global_word || goc_uptr_decode(c) != (void *)&global_word)
+    return 3;
+  goc_uptr e = goc_uptr_from_sptr((goc_sptr)&local);
+  if (goc_uptr_as_sptr(e) != (void *)&local)
+    return 4;
+  if (goc_uptr_as_cptr(goc_uptr_from_cptr((goc_cptr)&global_word)) != (void *)&global_word)
+    return 5;
+  return 0;
+}
+EOF
+cat >"$TMP/uptr.go" <<'EOF'
+package main
+
+func uptrcheck() int32
+
+func main() {
+	println(uptrcheck())
+}
+EOF
+clean_env GOC_ARCH=arm64 "$GOC" build "$TMP/uptr.c" -o "$TMP/uptr.goobj" -ffreestanding
 header_has "$TMP/uptr.goobj" "linux arm64"
-go tool nm "$TMP/uptr.goobj" | rg -q 'goc_runtime_getg' || fail "uptr object has no goc_runtime_getg"
+if go tool nm "$TMP/uptr.goobj" |
+    rg -q ' U .*\bgoc_(uptr_(from|as)_[a-z_]+|uptr_decode|uptr_require_cptr|stack_(hi|lo)|dyn(alloc|release))$'; then
+  fail "uptr object still references an out-of-line helper"
+fi
 # The body must read x28, not the amd64 FS load. Go's objdump spells an
 # arm64 float-pair store FSTPQ; that is not the segment register.
 GOARCH=arm64 go tool objdump "$TMP/uptr.goobj" >"$TMP/uptr.dis" || true
@@ -272,6 +305,8 @@ if ! rg -qi 'r28|x28' "$TMP/uptr.dis"; then
   head -80 "$TMP/uptr.dis" >&2
   fail "uptr disassembly does not read x28/r28"
 fi
-pass "runtime/uptr arm64 reads x28"
+link_arm64 "$TMP/uptr.go" "$TMP/uptr.elf" "$TMP/uptr.goobj"
+run_arm64 "$TMP/uptr.elf" "0"
+pass "arm64 uptr helpers inline, read x28, round-trip on the goroutine stack"
 
 echo "arm64: all cases passed ($RAN ELFs run under qemu)"

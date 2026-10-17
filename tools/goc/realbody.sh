@@ -125,18 +125,12 @@ trap cleanup EXIT
 
 LL="$TMP/body.ll"
 if [[ "$GOC_ARCH" == arm64 && "$IN" == *.c ]]; then
-  # runtime/uptr is the one TU that has an aarch64 path. Every other file
-  # that still contains the amd64 host sequence is refused rather than
-  # compiled into a binary that reads FS or traps in syscall.
-  case "$IN" in
-    *runtime/uptr/*) ;;
-    *)
-      if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$IN"; then
-        echo "realbody: FATAL $IN is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
-        exit 1
-      fi
-      ;;
-  esac
+  # A file that still contains the amd64 host sequence is refused rather
+  # than compiled into a binary that reads FS or traps in syscall.
+  if grep -E -q 'movq[[:space:]]+%%fs:-8|"syscall"' "$IN"; then
+    echo "realbody: FATAL $IN is a linux/amd64 host (movq %%fs:-8 or syscall) and is not ported to arm64" >&2
+    exit 1
+  fi
 fi
 if [[ "$IN" == *.ll ]]; then
   cp "$IN" "$LL"
@@ -188,6 +182,24 @@ fi
 LOWER="$(goc_lower_bin)"
 "$LOWER" fix-ir "$LL"
 
+# The pass plugin: goc-inline-gate below, goc-stackmap further down.
+if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
+  SMPASS="$GOC_STACKMAP"
+elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
+  SMPASS="$ROOT/passes/libGocPasses.so"
+else
+  SMPASS="$ROOT/build/llvm/libGocPasses.so"
+fi
+[[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
+if [[ "$IN" != *.ll ]]; then
+  # As in cmd/goc (which runs it before handing realbody a .ll): every
+  # goc_uptr_* / goc_stack_* / goc_dynalloc call gets an inline body; there
+  # is no runtime library. Before rename-ir, so the malloc/free of the
+  # non-pool goc_dynalloc can be redirected too.
+  "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate -S "$LL" -o "$TMP/body.gate.ll"
+  cp "$TMP/body.gate.ll" "$LL"
+fi
+
 MAGIC_OK=0
 if grep -qE '28C0DE42|0x28c0de42|683728450' "$LL"; then
   MAGIC_OK=1
@@ -205,16 +217,6 @@ GOABI_JSON="$TMP/goabi.json"
 if [[ "$IN" != *.ll && "$OPT_LEVEL" != 0 ]]; then
   # Same contract as cmd/goc: inline first, record maps after. Strip the two
   # passes that rewrite internal SysV calls before those maps are taken.
-  if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
-    SMPASS="$GOC_STACKMAP"
-  elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
-    SMPASS="$ROOT/passes/libGocPasses.so"
-  else
-    SMPASS="$ROOT/build/llvm/libGocPasses.so"
-  fi
-  [[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
-  "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-inline-gate -S "$LL" -o "$TMP/body.gate.ll"
-  cp "$TMP/body.gate.ll" "$LL"
   PIPELINE="$("$OPT" "-passes=default<O$OPT_LEVEL>" -print-pipeline-passes -disable-output /dev/null)"
   PIPELINE="${PIPELINE//,argpromotion/}"
   PIPELINE="${PIPELINE//,globalopt/}"
@@ -242,14 +244,6 @@ fi
 # Record the stack-map roots on the IR goc-llc compiles: the tables take
 # their locations from the STACKMAP instructions of this very compile.
 if [[ "${GOC_STACKMAP_PREPARED:-0}" != "1" ]]; then
-  if [[ -n "${GOC_STACKMAP:-}" && -f "$GOC_STACKMAP" ]]; then
-    SMPASS="$GOC_STACKMAP"
-  elif [[ -f "$ROOT/passes/libGocPasses.so" ]]; then
-    SMPASS="$ROOT/passes/libGocPasses.so"
-  else
-    SMPASS="$ROOT/build/llvm/libGocPasses.so"
-  fi
-  [[ -f "$SMPASS" ]] || { echo "realbody: FATAL missing $SMPASS" >&2; exit 1; }
   "$OPT" -load-pass-plugin="$SMPASS" -passes=goc-stackmap -S "$LL" \
     -o "$TMP/body.sm.ll"
   [[ -s "$TMP/body.sm.ll" ]] || { echo "realbody: FATAL empty stackmap IR" >&2; exit 1; }

@@ -1,5 +1,6 @@
 #include "goc.h"
 #include "goc_uptr.h"
+#include "fake_g.h"
 
 #include <stdint.h>
 
@@ -21,12 +22,10 @@ int main(void) {
   uintptr_t hi = original + 0x1000;
   const uintptr_t delta = 0x100;
 
-  goc_test_set_stack_lo(lo);
-  goc_test_set_stack_hi(hi);
+  goc_fake_g_set(lo, hi);
   holder.pointer = &local;
   relay.pointer = holder.pointer;
 
-  goc_test_set_stack_lo(lo + delta);
-  goc_test_set_stack_hi(hi + delta);
+  goc_fake_g_set(lo + delta, hi + delta);
   return (uintptr_t)relay.pointer == original + delta ? 0 : 1;
 }

@@ -38,7 +38,7 @@ LDX=""  # test/e2e/qjs/cli/mem_instances.go labels its JSON by flavor
 [[ "$QJS_FLAVOR" == bellard ]] && LDX=" -X main.qjsFlavor=bellard"
 BINOBJ=""
 for src in $ENGINE_TUS; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
-BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/uptr.goobj $OUT/cli_host.goobj $OUT/cli_std_os.goobj $OUT/cli_worker.goobj$EXTRA_OBJS"
+BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/cli_host.goobj $OUT/cli_std_os.goobj $OUT/cli_worker.goobj$EXTRA_OBJS"
 ( cd "$ROOT/test/e2e/qjs/cli" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
   go build -a -tags "$TAGS" -ldflags="-extldflags=-lm$LDX" \

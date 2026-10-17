@@ -6,20 +6,20 @@ using namespace llvm;
 
 namespace goc::sm {
 
-// Runs before O3. Call-bearing functions may inline. Maps are recorded on the
-// merged frame afterwards. A stack-pointer argument kept in a callee-saved
-// register, and a local that stores &s->token, are reanchored / tagged so
-// copystack adjusts them. Source noinline is left untouched.
+// Runs before O3 (and at O0: there is no runtime TU to call into). Every
+// uptr / stack-bound / dynamic-alloca helper that C code or goc-color-escape
+// can call gets an internal alwaysinline body here, so a goc object never
+// references an out-of-line helper. Call-bearing functions may inline. Maps
+// are recorded on the merged frame afterwards. A stack-pointer argument kept
+// in a callee-saved register, and a local that stores &s->token, are
+// reanchored / tagged so copystack adjusts them. Source noinline is left
+// untouched.
 //
-// goc_stack_hi / goc_uptr_decode / goc_uptr_from_ptr are out of line in
-// another TU, so every JS entry pays a PLT call to read g and add.
-// Give each an alwaysinline body here. goc-inline-gate runs before O3, and
-// that pipeline inlines the body. g is invariant for the goroutine. The
-// FS:-8 / x28 read is readnone, and hoistTlsG (in goc-stackmap, after O3)
-// leaves one read per function. stack.lo and stack.hi change only inside a
-// call. The morestack prologue that writes them is inserted after this IR,
-// so a call O3 proved readonly can still move the stack. Those loads stay
-// volatile.
+// g is invariant for the goroutine. The FS:-8 / x28 read is readnone, and
+// hoistTlsG (in goc-stackmap, after O3) leaves one read per function.
+// stack.lo and stack.hi change only inside a call. The morestack prologue
+// that writes them is inserted after this IR, so a call O3 proved readonly
+// can still move the stack. Those loads stay volatile.
 bool gocArchArm64() {
   static int Arm = -1;
   if (Arm < 0) {
@@ -43,25 +43,52 @@ Value *tlsGWord(IRBuilder<> &B, uint64_t Off) {
   C->setDoesNotThrow();
   C->addFnAttr(Attribute::WillReturn);
   Value *G = B.CreateIntToPtr(C, B.getPtrTy());
+  // g.stack.lo is at g+0, g.stack.hi at g+8 (stackguard0 at g+16).
   LoadInst *L = B.CreateLoad(
       B.getInt64Ty(), B.CreateGEP(B.getInt8Ty(), G, B.getInt64(Off)));
   L->setVolatile(true);
   return L;
 }
 
+// goc.uptr.fatal(msg, len): write(2, msg, len), then trap. Freestanding: no
+// libc, and the message must survive a trap that the Go traceback cannot
+// attribute. One cold internal copy per module.
 Function *uptrFatal(Module &M) {
-  if (Function *F = M.getFunction("goc_uptr_fatal"))
+  if (Function *F = M.getFunction("goc.uptr.fatal"))
     return F;
-  auto *FT = FunctionType::get(Type::getVoidTy(M.getContext()),
-                               {PointerType::getUnqual(M.getContext())}, false);
-  auto *F = Function::Create(FT, GlobalValue::ExternalLinkage, "goc_uptr_fatal", M);
+  LLVMContext &C = M.getContext();
+  auto *I64 = Type::getInt64Ty(C);
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *FT = FunctionType::get(Type::getVoidTy(C), {Ptr, I64}, false);
+  auto *F = Function::Create(FT, GlobalValue::InternalLinkage, "goc.uptr.fatal", M);
   F->setDoesNotReturn();
   F->setDoesNotThrow();
+  F->addFnAttr(Attribute::NoInline);
+  F->addFnAttr(Attribute::Cold);
+  IRBuilder<> B(BasicBlock::Create(C, "entry", F));
+  auto *AFT = FunctionType::get(I64, {I64, I64, Ptr, I64}, false);
+  InlineAsm *IA;
+  if (gocArchArm64())
+    // Linux arm64 write is syscall 64 (x8).
+    IA = InlineAsm::get(AFT, "svc #0", "={x0},{x8},{x0},{x1},{x2},~{memory}",
+                        /*hasSideEffects=*/true);
+  else
+    // Linux amd64 write is syscall 1; the kernel clobbers rcx and r11.
+    IA = InlineAsm::get(AFT, "syscall",
+                        "={rax},{rax},{rdi},{rsi},{rdx},~{rcx},~{r11},~{memory},"
+                        "~{dirflag},~{fpsr},~{flags}",
+                        /*hasSideEffects=*/true);
+  B.CreateCall(IA, {B.getInt64(gocArchArm64() ? 64 : 1), B.getInt64(2),
+                    F->getArg(0), F->getArg(1)});
+  B.CreateCall(Intrinsic::getDeclaration(&M, Intrinsic::trap));
+  B.CreateUnreachable();
   return F;
 }
 
 void emitUptrFatal(IRBuilder<> &B, Module &M, const char *Msg) {
-  B.CreateCall(uptrFatal(M), {B.CreateGlobalString(Msg)});
+  std::string Text = std::string("goc FATAL uptr: ") + Msg + "\n";
+  Value *Str = B.CreateGlobalString(Text, "goc.uptr.fatal.msg");
+  B.CreateCall(uptrFatal(M), {Str, B.getInt64(Text.size())});
   B.CreateUnreachable();
 }
 
@@ -178,33 +205,107 @@ Function *inlineUptrRequireCptr(Module &M) {
   return F;
 }
 
-GlobalVariable *externGlobal(Module &M, StringRef Name, Type *Ty) {
-  if (GlobalVariable *G = M.getGlobalVariable(Name))
-    return G;
-  return new GlobalVariable(M, Ty, false, GlobalValue::ExternalLinkage,
-                            nullptr, Name);
-}
-
-// Pool bump, not a call. Only sound when the linked runtime was built with
-// GOC_DYNALLOC_POOL (the exported cursor). QJS sets GOC_INLINE_DYNALLOC=1.
-Function *inlineDynAlloc(Module &M) {
+// The explicit tag conversions of goc_uptr.h. The *_hi forms take stack.hi
+// as an argument; the others read the current g. A wrong tag is fatal.
+Function *inlineUptrConv(Module &M, UptrConv K, bool ExplicitHi) {
+  static const char *const Names[] = {"from_cptr", "as_cptr", "from_sptr", "as_sptr"};
+  static const char *const Msgs[] = {
+      "goc_uptr_from_cptr: address has MSB set (not encodeable as cptr)",
+      "goc_uptr_as_cptr: MSB set (expected absolute cptr encoding)",
+      "goc_uptr_from_sptr: offset cleared MSB (abs not below stack.hi?)",
+      "goc_uptr_as_sptr: MSB clear (expected stack-offset encoding)"};
+  unsigned I = static_cast<unsigned>(K);
   LLVMContext &C = M.getContext();
   auto *I64 = Type::getInt64Ty(C);
   auto *Ptr = PointerType::getUnqual(C);
+  FunctionType *FT = ExplicitHi ? FunctionType::get(Ptr, {Ptr, I64}, false)
+                                : FunctionType::get(Ptr, {Ptr}, false);
+  std::string Name = std::string("goc.inline.uptr.") + Names[I] + (ExplicitHi ? "_hi" : "");
+  Function *F = alwaysInlineUptr(M, Name, FT);
+  if (!F->empty())
+    return F;
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
+  BasicBlock *Ok = BasicBlock::Create(C, "ok", F);
+  IRBuilder<> B(Entry);
+  Value *Arg = F->getArg(0);
+  Value *W = B.CreatePtrToInt(Arg, I64);
+  Value *MSB = ConstantInt::get(I64, 1ULL << 63);
+  auto stackHi = [&]() -> Value * { return ExplicitHi ? F->getArg(1) : tlsGWord(B, 8); };
+  auto msbSet = [&](Value *V) { return B.CreateICmpNE(B.CreateAnd(V, MSB), B.getInt64(0)); };
+  Value *Result = Arg;
+  switch (K) {
+  case UptrConv::FromCptr:
+  case UptrConv::AsCptr:
+    // An absolute cptr word must have MSB clear.
+    B.CreateCondBr(msbSet(W), Bad, Ok);
+    B.SetInsertPoint(Ok);
+    break;
+  case UptrConv::FromSptr: {
+    // Offset from stack.hi: negative, so MSB set.
+    Value *Off = B.CreateSub(W, stackHi());
+    B.CreateCondBr(msbSet(Off), Ok, Bad);
+    B.SetInsertPoint(Ok);
+    Result = B.CreateIntToPtr(Off, Ptr);
+    break;
+  }
+  case UptrConv::AsSptr:
+    B.CreateCondBr(msbSet(W), Ok, Bad);
+    B.SetInsertPoint(Ok);
+    Result = B.CreateIntToPtr(B.CreateAdd(stackHi(), W), Ptr);
+    break;
+  }
+  B.CreateRet(Result);
+  B.SetInsertPoint(Bad);
+  emitUptrFatal(B, M, Msgs[I]);
+  return F;
+}
+
+// Alloca pool: 16 MiB, one per module, bumped in-line. The pool lives in the
+// object's BSS, so it needs no init call and no allocator. Each module's
+// allocations nest LIFO by function return, so a pool per object is as
+// correct as one per process. The cursor is a plain global: one goroutine
+// only (QuickJS). JS_DEFAULT_STACK_SIZE is 1 MiB, but the goc CLI sets
+// --stack-size 16384 KiB (EarleyBoyer and deep recursion exceed 1 MiB of
+// nested frames), so the pool matches that limit and does not trap before
+// QuickJS's own stack check.
+constexpr uint64_t DynPoolBytes = 16ULL << 20;
+
+GlobalVariable *dynPool(Module &M) {
+  if (GlobalVariable *G = M.getGlobalVariable("goc.alloca.pool", true))
+    return G;
+  auto *Ty = ArrayType::get(Type::getInt8Ty(M.getContext()), DynPoolBytes);
+  auto *G = new GlobalVariable(M, Ty, false, GlobalValue::InternalLinkage,
+                               ConstantAggregateZero::get(Ty), "goc.alloca.pool");
+  G->setAlignment(Align(16));
+  return G;
+}
+
+GlobalVariable *dynPoolOff(Module &M) {
+  if (GlobalVariable *G = M.getGlobalVariable("goc.alloca.off", true))
+    return G;
+  auto *I64 = Type::getInt64Ty(M.getContext());
+  auto *G = new GlobalVariable(M, I64, false, GlobalValue::InternalLinkage,
+                               ConstantInt::get(I64, 0), "goc.alloca.off");
+  G->setAlignment(Align(8));
+  return G;
+}
+
+// --fast-stack-alloca (GOC_INLINE_DYNALLOC=1): pool bump, not a call.
+Function *inlineDynAllocPool(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *I64 = Type::getInt64Ty(C);
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *Null = ConstantPointerNull::get(Ptr);
   auto *FT = FunctionType::get(Ptr, {I64, Ptr}, false);
   Function *F = alwaysInlineUptr(M, "goc.inline.dynalloc", FT);
   if (!F->empty())
     return F;
-  GlobalVariable *Pool = externGlobal(M, "goc_alloca_pool", Ptr);
-  GlobalVariable *Off = externGlobal(M, "goc_alloca_off", I64);
-  GlobalVariable *Sz = externGlobal(M, "goc_alloca_pool_size", I64);
-  FunctionCallee Init = M.getOrInsertFunction(
-      "goc_alloca_pool_init", FunctionType::get(Type::getVoidTy(C), false));
+  GlobalVariable *Pool = dynPool(M);
+  GlobalVariable *Off = dynPoolOff(M);
 
   BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
   BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
-  BasicBlock *Ready = BasicBlock::Create(C, "ready", F);
-  BasicBlock *DoInit = BasicBlock::Create(C, "doinit", F);
   BasicBlock *Bump = BasicBlock::Create(C, "bump", F);
   BasicBlock *Exhaust = BasicBlock::Create(C, "exhaust", F);
   BasicBlock *Mark = BasicBlock::Create(C, "mark", F);
@@ -212,86 +313,190 @@ Function *inlineDynAlloc(Module &M) {
   Value *Bytes = F->getArg(0);
   Value *Scope = F->getArg(1);
   Value *Overflow = B.CreateICmpUGT(Bytes, ConstantInt::get(I64, ~uint64_t{15}));
-  Value *BadArg = B.CreateOr(
-      B.CreateICmpEQ(Scope, ConstantPointerNull::get(cast<PointerType>(Ptr))),
-      Overflow);
-  B.CreateCondBr(BadArg, Bad, Ready);
+  B.CreateCondBr(B.CreateOr(B.CreateICmpEQ(Scope, Null), Overflow), Bad, Bump);
   B.SetInsertPoint(Bad);
   emitUptrFatal(B, M, "dynamic alloca size overflow");
-  B.SetInsertPoint(Ready);
-  Value *Pool0 = B.CreateLoad(Ptr, Pool);
-  B.CreateCondBr(
-      B.CreateICmpEQ(Pool0, ConstantPointerNull::get(cast<PointerType>(Ptr))),
-      DoInit, Bump);
-  B.SetInsertPoint(DoInit);
-  B.CreateCall(Init);
-  Value *Pool1 = B.CreateLoad(Ptr, Pool);
-  B.CreateBr(Bump);
   B.SetInsertPoint(Bump);
-  PHINode *PoolV = B.CreatePHI(Ptr, 2);
-  PoolV->addIncoming(Pool0, Ready);
-  PoolV->addIncoming(Pool1, DoInit);
   Value *Cur = B.CreateLoad(I64, Off);
   Value *Aligned = B.CreateAnd(B.CreateAdd(Bytes, B.getInt64(15)), B.getInt64(~15));
-  Value *Limit = B.CreateLoad(I64, Sz);
-  Value *Left = B.CreateSub(Limit, Cur);
+  Value *Left = B.CreateSub(B.getInt64(DynPoolBytes), Cur);
   B.CreateCondBr(B.CreateICmpUGT(Aligned, Left), Exhaust, Mark);
   B.SetInsertPoint(Exhaust);
   emitUptrFatal(B, M, "alloca pool exhausted");
   B.SetInsertPoint(Mark);
-  Value *Base = B.CreateGEP(B.getInt8Ty(), PoolV, Cur);
+  // The first bump in a function saves the watermark. A pool address is
+  // never NULL, so a later alloca in the same function leaves it alone.
+  // Native alloca does not zero, and neither does the pool.
+  Value *Base = B.CreateGEP(B.getInt8Ty(), Pool, Cur);
   Value *Mark0 = B.CreateLoad(Ptr, Scope);
-  Value *NeedMark = B.CreateICmpEQ(Mark0, ConstantPointerNull::get(cast<PointerType>(Ptr)));
-  Value *NewMark = B.CreateSelect(NeedMark, Base, Mark0);
-  B.CreateStore(NewMark, Scope);
+  B.CreateStore(B.CreateSelect(B.CreateICmpEQ(Mark0, Null), Base, Mark0), Scope);
   B.CreateStore(B.CreateAdd(Cur, Aligned), Off);
   B.CreateRet(Base);
   return F;
 }
 
-Function *inlineDynRelease(Module &M) {
+Function *inlineDynReleasePool(Module &M) {
   LLVMContext &C = M.getContext();
   auto *I64 = Type::getInt64Ty(C);
   auto *Ptr = PointerType::getUnqual(C);
+  auto *Null = ConstantPointerNull::get(Ptr);
   auto *FT = FunctionType::get(Type::getVoidTy(C), {Ptr}, false);
   Function *F = alwaysInlineUptr(M, "goc.inline.dynrelease", FT);
   if (!F->empty())
     return F;
-  GlobalVariable *Pool = externGlobal(M, "goc_alloca_pool", Ptr);
-  GlobalVariable *Off = externGlobal(M, "goc_alloca_off", I64);
+  GlobalVariable *Pool = dynPool(M);
+  GlobalVariable *Off = dynPoolOff(M);
   BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
   BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
   BasicBlock *Empty = BasicBlock::Create(C, "empty", F);
   BasicBlock *Check = BasicBlock::Create(C, "check", F);
   BasicBlock *Corrupt = BasicBlock::Create(C, "corrupt", F);
   BasicBlock *Drop = BasicBlock::Create(C, "drop", F);
+  BasicBlock *Done = BasicBlock::Create(C, "done", F);
   IRBuilder<> B(Entry);
   Value *Scope = F->getArg(0);
-  B.CreateCondBr(B.CreateICmpEQ(Scope, ConstantPointerNull::get(cast<PointerType>(Ptr))),
-                 Bad, Empty);
+  B.CreateCondBr(B.CreateICmpEQ(Scope, Null), Bad, Empty);
   B.SetInsertPoint(Bad);
   emitUptrFatal(B, M, "missing dynamic alloca scope");
   B.SetInsertPoint(Empty);
   Value *Mark = B.CreateLoad(Ptr, Scope);
-  BasicBlock *Done = BasicBlock::Create(C, "done", F);
-  B.CreateCondBr(B.CreateICmpEQ(Mark, ConstantPointerNull::get(cast<PointerType>(Ptr))),
-                 Done, Check);
+  B.CreateCondBr(B.CreateICmpEQ(Mark, Null), Done, Check);
   B.SetInsertPoint(Check);
-  Value *PoolV = B.CreateLoad(Ptr, Pool);
   Value *Cur = B.CreateLoad(I64, Off);
-  Value *End = B.CreateGEP(B.getInt8Ty(), PoolV, Cur);
-  Value *Ok = B.CreateAnd(B.CreateICmpUGE(Mark, PoolV), B.CreateICmpULE(Mark, End));
+  Value *End = B.CreateGEP(B.getInt8Ty(), Pool, Cur);
+  Value *Ok = B.CreateAnd(B.CreateICmpUGE(Mark, Pool), B.CreateICmpULE(Mark, End));
   B.CreateCondBr(Ok, Drop, Corrupt);
   B.SetInsertPoint(Corrupt);
   emitUptrFatal(B, M, "alloca pool watermark corrupt");
   B.SetInsertPoint(Drop);
-  Value *Delta = B.CreateSub(B.CreatePtrToInt(Mark, I64), B.CreatePtrToInt(PoolV, I64));
+  // Drop every byte this function bumped.
+  Value *Delta = B.CreateSub(B.CreatePtrToInt(Mark, I64), B.CreatePtrToInt(Pool, I64));
   B.CreateStore(Delta, Off);
-  B.CreateStore(ConstantPointerNull::get(cast<PointerType>(Ptr)), Scope);
+  B.CreateStore(Null, Scope);
   B.CreateBr(Done);
   B.SetInsertPoint(Done);
   B.CreateRetVoid();
   return F;
+}
+
+// --no-fast-stack-alloca: one malloc per alloca, chained on the scope and
+// freed at return. Off the goroutine stack either way: Go pcsp cannot
+// describe a mid-frame SP change, and the pointer must stay a cptr across
+// stack growth. Block header: {previous, size}, 16 bytes, so the payload
+// keeps malloc's 16-byte alignment.
+Function *inlineDynAllocHeap(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *I64 = Type::getInt64Ty(C);
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *Null = ConstantPointerNull::get(Ptr);
+  auto *FT = FunctionType::get(Ptr, {I64, Ptr}, false);
+  Function *F = alwaysInlineUptr(M, "goc.inline.dynalloc.heap", FT);
+  if (!F->empty())
+    return F;
+  FunctionCallee Malloc = M.getOrInsertFunction("malloc", FunctionType::get(Ptr, {I64}, false));
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
+  BasicBlock *Alloc = BasicBlock::Create(C, "alloc", F);
+  BasicBlock *Oom = BasicBlock::Create(C, "oom", F);
+  BasicBlock *Link = BasicBlock::Create(C, "link", F);
+  IRBuilder<> B(Entry);
+  Value *Bytes = F->getArg(0);
+  Value *Scope = F->getArg(1);
+  Value *Overflow = B.CreateICmpUGT(Bytes, ConstantInt::get(I64, ~uint64_t{15}));
+  B.CreateCondBr(B.CreateOr(B.CreateICmpEQ(Scope, Null), Overflow), Bad, Alloc);
+  B.SetInsertPoint(Bad);
+  emitUptrFatal(B, M, "dynamic alloca size overflow");
+  B.SetInsertPoint(Alloc);
+  Value *Size = B.CreateAdd(Bytes, B.getInt64(16));
+  Value *Block = B.CreateCall(Malloc, {Size});
+  B.CreateCondBr(B.CreateICmpEQ(Block, Null), Oom, Link);
+  B.SetInsertPoint(Oom);
+  emitUptrFatal(B, M, "malloc failed for dynamic alloca");
+  B.SetInsertPoint(Link);
+  B.CreateStore(B.CreateLoad(Ptr, Scope), Block);
+  B.CreateStore(Size, B.CreateGEP(B.getInt8Ty(), Block, B.getInt64(8)));
+  B.CreateStore(Block, Scope);
+  B.CreateRet(B.CreateGEP(B.getInt8Ty(), Block, B.getInt64(16)));
+  return F;
+}
+
+Function *inlineDynReleaseHeap(Module &M) {
+  LLVMContext &C = M.getContext();
+  auto *Ptr = PointerType::getUnqual(C);
+  auto *Null = ConstantPointerNull::get(Ptr);
+  auto *FT = FunctionType::get(Type::getVoidTy(C), {Ptr}, false);
+  Function *F = alwaysInlineUptr(M, "goc.inline.dynrelease.heap", FT);
+  if (!F->empty())
+    return F;
+  FunctionCallee Free = M.getOrInsertFunction(
+      "free", FunctionType::get(Type::getVoidTy(C), {Ptr}, false));
+  BasicBlock *Entry = BasicBlock::Create(C, "entry", F);
+  BasicBlock *Bad = BasicBlock::Create(C, "bad", F);
+  BasicBlock *Start = BasicBlock::Create(C, "start", F);
+  BasicBlock *Loop = BasicBlock::Create(C, "loop", F);
+  BasicBlock *Body = BasicBlock::Create(C, "body", F);
+  BasicBlock *Done = BasicBlock::Create(C, "done", F);
+  IRBuilder<> B(Entry);
+  Value *Scope = F->getArg(0);
+  B.CreateCondBr(B.CreateICmpEQ(Scope, Null), Bad, Start);
+  B.SetInsertPoint(Bad);
+  emitUptrFatal(B, M, "missing dynamic alloca scope");
+  B.SetInsertPoint(Start);
+  Value *Head = B.CreateLoad(Ptr, Scope);
+  B.CreateStore(Null, Scope);
+  B.CreateBr(Loop);
+  B.SetInsertPoint(Loop);
+  PHINode *Cur = B.CreatePHI(Ptr, 2);
+  Cur->addIncoming(Head, Start);
+  B.CreateCondBr(B.CreateICmpEQ(Cur, Null), Done, Body);
+  B.SetInsertPoint(Body);
+  Value *Prev = B.CreateLoad(Ptr, Cur);
+  B.CreateCall(Free, {Cur});
+  Cur->addIncoming(Prev, Body);
+  B.CreateBr(Loop);
+  B.SetInsertPoint(Done);
+  B.CreateRetVoid();
+  return F;
+}
+
+bool fastStackAlloca() {
+  const char *Pool = std::getenv("GOC_INLINE_DYNALLOC");
+  return Pool && std::strcmp(Pool, "1") == 0;
+}
+
+Function *uptrHelperFor(Module &M, StringRef N) {
+  if (N == "goc_stack_hi")
+    return inlineStackBound(M, "goc.inline.stack_hi", 8);
+  if (N == "goc_stack_lo")
+    return inlineStackBound(M, "goc.inline.stack_lo", 0);
+  if (N == "goc_uptr_decode")
+    return inlineUptrDecode(M);
+  if (N == "goc_uptr_from_ptr")
+    return inlineUptrFromPtr(M);
+  if (N == "goc_uptr_require_cptr")
+    return inlineUptrRequireCptr(M);
+  static const struct {
+    const char *Name;
+    UptrConv K;
+    bool Hi;
+  } Convs[] = {
+      {"goc_uptr_from_cptr", UptrConv::FromCptr, false},
+      {"goc_uptr_from_cptr_hi", UptrConv::FromCptr, true},
+      {"goc_uptr_as_cptr", UptrConv::AsCptr, false},
+      {"goc_uptr_as_cptr_hi", UptrConv::AsCptr, true},
+      {"goc_uptr_from_sptr", UptrConv::FromSptr, false},
+      {"goc_uptr_from_sptr_hi", UptrConv::FromSptr, true},
+      {"goc_uptr_as_sptr", UptrConv::AsSptr, false},
+      {"goc_uptr_as_sptr_hi", UptrConv::AsSptr, true},
+  };
+  for (const auto &Cv : Convs)
+    if (N == Cv.Name)
+      return inlineUptrConv(M, Cv.K, Cv.Hi);
+  if (N == "goc_dynalloc")
+    return fastStackAlloca() ? inlineDynAllocPool(M) : inlineDynAllocHeap(M);
+  if (N == "goc_dynrelease")
+    return fastStackAlloca() ? inlineDynReleasePool(M) : inlineDynReleaseHeap(M);
+  return nullptr;
 }
 
 bool rewriteUptrCall(CallInst *CI) {
@@ -300,29 +505,12 @@ bool rewriteUptrCall(CallInst *CI) {
     return false;
   StringRef N = Callee->getName();
   Module &M = *CI->getModule();
-  Function *Helper = nullptr;
-  if (N == "goc_stack_hi")
-    Helper = inlineStackBound(M, "goc.inline.stack_hi", 8);
-  else if (N == "goc_stack_lo")
-    Helper = inlineStackBound(M, "goc.inline.stack_lo", 0);
-  else if (N == "goc_uptr_decode")
-    Helper = inlineUptrDecode(M);
-  else if (N == "goc_uptr_from_ptr")
-    Helper = inlineUptrFromPtr(M);
-  else if (N == "goc_uptr_require_cptr")
-    Helper = inlineUptrRequireCptr(M);
-  else if (const char *pool = std::getenv("GOC_INLINE_DYNALLOC")) {
-    if (std::strcmp(pool, "1") == 0 && N == "goc_dynalloc")
-      Helper = inlineDynAlloc(M);
-    else if (std::strcmp(pool, "1") == 0 && N == "goc_dynrelease")
-      Helper = inlineDynRelease(M);
-    else
-      return false;
-  }
-  else
+  Function *Helper = uptrHelperFor(M, N);
+  if (!Helper)
     return false;
   if (CI->arg_size() != Helper->arg_size())
-    return false;
+    report_fatal_error(Twine("goc: call to ") + N + " has " + Twine(CI->arg_size()) +
+                       " arguments; goc_uptr.h declares " + Twine(Helper->arg_size()));
   IRBuilder<> B(CI);
   SmallVector<Value *, 2> Args(CI->args());
   CallInst *New = B.CreateCall(Helper, Args);

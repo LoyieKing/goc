@@ -5,7 +5,6 @@
 arm64 后端已经接上：goc-llc 生成栈检查和 morestack 冷块（`llvm/lib/Target/AArch64`），每个有调用的帧在 0(SP) 留 LR 副本供 Go 回溯，记录 sptr 栈图，调用后修正被调用者保存寄存器和溢出槽里的帧地址；`gocobj2goobj` 映射 `R_AARCH64_*`；Go ABI thunk 按 arm64 ABIInternal。`test/e2e/arm64` 和 arm64 压力测试在 qemu-aarch64 里运行。还没做的：
 
 - QuickJS 宿主（`test/e2e/qjs` 下的 CLI 宿主和 libc shim）用 x86 syscall 和 SSE 汇编，arm64 上被拒绝，所以 QuickJS 还没在 qemu 里跑。
-- `runtime/uptr` 的 TLS 读取只有 amd64 汇编（`goc_uptr_tls_amd64.S`）。
 - 通过栈传参、指向栈的指针，被调用方在栈移动之后才读时不会被修正（栈参数区不在栈图里）。
 
 ## `sptr` / `uptr` 带上所属 goroutine

@@ -50,10 +50,9 @@ The product path does not read `!goc.color` after this pass: `libGocPasses.so` r
 
 ## uptr MSB
 
-Named builtins are no longer identity stubs at runtime/IR-lower:
+Named builtins (`include/goc_uptr.h`) have no runtime library:
 
-- Host: link `runtime/uptr` (`include/goc_uptr.h`) 
-- Encode/decode are runtime calls (`goc_uptr_*`) with FATAL guards on tag mismatch
+- `goc-inline-gate` gives every `goc_uptr_*` / `goc_stack_*` call an inline body, with FATAL guards on tag mismatch
 - `*_hi` variants recognized by color-escape (same encode metadata)
 
-See [`runtime/UPTR-MSB.md`](../../runtime/UPTR-MSB.md).
+See [`uptr.md`](uptr.md).

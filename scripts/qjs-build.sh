@@ -9,7 +9,8 @@ export GOC_ROOT="$ROOT"
 # QJS_FLAVOR selects the engine tree: ng (default, third_party/quickjs-ng ->
 # build/qjs) or bellard (Fabrice Bellard's QuickJS 2026-06-04,
 # third_party/quickjs-bellard -> build/qjs-bellard). Both use the same shim,
-# uptr runtime, flags and goc pipeline; see docs/benchmark.md for the port.
+# flags and goc pipeline; see docs/benchmark.md for the port. There is no
+# uptr runtime object: goc-inline-gate gives the uptr helpers inline bodies.
 QJS_FLAVOR="${QJS_FLAVOR:-ng}"
 case "$QJS_FLAVOR" in
   ng)
@@ -56,23 +57,18 @@ fi
 
 # -DNDEBUG: same as the native reference (CMake Release: clang-19 -O2 -DNDEBUG).
 QJS_DEFS=("${FLAVOR_DEFS[@]}" -D_GNU_SOURCE -DGOC_QJS_GSTACK=1 -DNDEBUG)
-UPTR_DEFS=(-DGOC_UPTR_FREESTANDING -DGOC_UPTR_HAVE_TLS -DGOC_DYNALLOC_POOL)
 export GOC_DEFAULT_PTR_COLOR=cptr   # bulk coloring: uncolored ptrs are cptr
 export GOC_INLINE_DYNALLOC=1        # bump the alloca pool in-line; no per-call memset
 # Bellard has no JS_SetPromiseHook: its smoke skips the promise-hook probe.
 [[ "$QJS_FLAVOR" == bellard ]] && QJS_PROMISE="${QJS_PROMISE:-0}"
 export QJS_EVAL="${QJS_EVAL:-1}" QJS_PROMISE="${QJS_PROMISE:-1}"
 
-echo "=== [1/4] freestanding libc shim + uptr runtime → goobj ==="
+echo "=== [1/4] freestanding libc shim → goobj ==="
 # Same mode as the QJS TUs, so cross-TU C references agree on names
 # (main.goc_abort.impl etc.). The ABIInternal thunks are dead weight here.
 env -u GOC_PKG "$ROOT/cmd/goc" build "$ROOT/test/e2e/qjs/host/libc_shim.c" \
   -o "$OUT/shim.goobj" "${QJS_DEFS[@]}"
 echo "  shim: $(go tool nm "$OUT/shim.goobj" | grep -c ' T ') TEXT"
-env -u GOC_PKG -u GOC_DEFAULT_PTR_COLOR -u GOC_IR_RENAMES \
-  "$ROOT/cmd/goc" build "$ROOT/runtime/uptr/goc_uptr_runtime.c" \
-  -o "$OUT/uptr.goobj" -I "$ROOT/runtime" "${UPTR_DEFS[@]}"
-echo "  uptr runtime: $(go tool nm "$OUT/uptr.goobj" | grep -c ' T ') TEXT"
 
 # Redirect QJS's libc references to the shim's goc_-prefixed symbols: -D for
 # source-level names, GOC_IR_RENAMES for compiler-emitted libcalls.
@@ -126,7 +122,7 @@ gcc -c -o "$ROOT/test/e2e/qjs/embed/goc_libm_glibc.syso" "$ROOT/test/e2e/qjs/hos
 cp -f "$ROOT/test/e2e/qjs/embed/goc_libm_glibc.syso" "$ROOT/test/e2e/qjs/cli/goc_libm_glibc.syso"
 BINOBJ=""
 for src in "${QJS_TUS[@]}"; do BINOBJ="$BINOBJ $OUT/$src.goobj"; done
-BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/uptr.goobj $OUT/promise_probe.goobj$EXTRA_OBJS"
+BINOBJ="${BINOBJ# } $OUT/shim.goobj $OUT/promise_probe.goobj$EXTRA_OBJS"
 ( cd "$ROOT/test/e2e/qjs/embed" && \
   CGO_ENABLED=1 GOFLAGS= GOC_BINOBJ="$BINOBJ" \
   go build -a -ldflags="-extldflags=-lm" \

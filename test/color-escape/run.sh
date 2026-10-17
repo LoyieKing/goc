@@ -78,35 +78,84 @@ while read -r name expect needle; do
   run_one "$ROOT/$name" "$expect" "${needle:-}"
 done < "$ROOT/EXPECTATIONS"
 
-echo "=== color-escape: automatic uptr storage round-trip ==="
-UPTR_SRC="$ROOT/09_auto_uptr_storage_roundtrip.c"
-UPTR_LL="$OUT/09_auto_uptr_storage_roundtrip.ll"
-UPTR_COLOR_LL="$OUT/09_auto_uptr_storage_roundtrip.color.ll"
-UPTR_BIN="$OUT/09_auto_uptr_storage_roundtrip"
-"$CLANG" -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
-  -I "$INCDIR" -I "$REPO/runtime" -o "$UPTR_LL" "$UPTR_SRC"
-"$PASS_BIN" "$UPTR_LL" -o "$UPTR_COLOR_LL" >"$OUT/09_auto_uptr_storage_roundtrip.log" 2>&1
-"$CLANG" -O0 -I "$INCDIR" -I "$REPO/runtime" \
-  "$UPTR_COLOR_LL" "$REPO/runtime/uptr/goc_uptr_runtime.c" -o "$UPTR_BIN"
-"$UPTR_BIN"
-echo "PASS automatic uptr storage round-trip after stack.hi movement"
-REPORT_LINES+=("PASS automatic uptr storage round-trip after stack.hi movement")
-PASS=$((PASS + 1))
+# Host executables of the compiler's uptr helper bodies: color-escape, then
+# goc-inline-gate (the same pass goc build runs), then a native link. No
+# runtime library: fake_g.h stands in for g, so goc_stack_lo/hi move.
+OPT="${OPT:-$(command -v opt-19 || command -v opt || echo /usr/lib/llvm-19/bin/opt)}"
+PLUGIN="${GOC_STACKMAP:-$REPO/build/llvm/libGocPasses.so}"
+build_host_uptr() {
+  local base="$1"
+  "$CLANG" -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
+    -I "$INCDIR" -I "$ROOT" -o "$OUT/$base.ll" "$ROOT/$base.c"
+  "$PASS_BIN" "$OUT/$base.ll" -o "$OUT/$base.color.ll" >"$OUT/$base.log" 2>&1
+  "$OPT" -load-pass-plugin="$PLUGIN" -passes=goc-inline-gate \
+    -S "$OUT/$base.color.ll" -o "$OUT/$base.gate.ll"
+  # Only the static inline goc_uptr_is_*_encoded may stay defined; nothing
+  # may be left as an external declaration.
+  if grep -Eq '^declare .*@goc_(uptr_|stack_|dyn)' "$OUT/$base.gate.ll" &&
+     grep -Eq 'call .*@goc_(uptr_(from|as|decode|require)|stack_|dyn)' "$OUT/$base.gate.ll"; then
+    fail_host "$base: a uptr helper call survived goc-inline-gate"
+    return 1
+  fi
+  "$CLANG" -O0 "$OUT/$base.gate.ll" -o "$OUT/$base"
+}
+fail_host() {
+  echo "FAIL $1"
+  REPORT_LINES+=("FAIL $1")
+  FAIL=$((FAIL + 1))
+}
+pass_host() {
+  echo "PASS $1"
+  REPORT_LINES+=("PASS $1")
+  PASS=$((PASS + 1))
+}
 
-MIXED_SRC="$ROOT/10_auto_uptr_mixed_destination.c"
-MIXED_LL="$OUT/10_auto_uptr_mixed_destination.ll"
-MIXED_COLOR_LL="$OUT/10_auto_uptr_mixed_destination.color.ll"
-MIXED_BIN="$OUT/10_auto_uptr_mixed_destination"
-"$CLANG" -emit-llvm -S -O0 -Xclang -disable-O0-optnone \
-  -I "$INCDIR" -I "$REPO/runtime" -o "$MIXED_LL" "$MIXED_SRC"
-"$PASS_BIN" "$MIXED_LL" -o "$MIXED_COLOR_LL" >"$OUT/10_auto_uptr_mixed_destination.log" 2>&1
-"$CLANG" -O0 -I "$INCDIR" -I "$REPO/runtime" \
-  "$MIXED_COLOR_LL" "$REPO/runtime/uptr/goc_uptr_runtime.c" -o "$MIXED_BIN"
-"$MIXED_BIN"
-"$MIXED_BIN" local
-echo "PASS mixed stack/global uptr storage after stack.hi movement"
-REPORT_LINES+=("PASS mixed stack/global uptr storage after stack.hi movement")
-PASS=$((PASS + 1))
+echo "=== color-escape: automatic uptr storage round-trip ==="
+if build_host_uptr 09_auto_uptr_storage_roundtrip; then
+  if "$OUT/09_auto_uptr_storage_roundtrip"; then
+    pass_host "automatic uptr storage round-trip after stack.hi movement"
+  else
+    fail_host "automatic uptr storage round-trip (rc=$?)"
+  fi
+fi
+
+if build_host_uptr 10_auto_uptr_mixed_destination; then
+  if "$OUT/10_auto_uptr_mixed_destination" && "$OUT/10_auto_uptr_mixed_destination" local; then
+    pass_host "mixed stack/global uptr storage after stack.hi movement"
+  else
+    fail_host "mixed stack/global uptr storage"
+  fi
+fi
+
+echo "=== color-escape: explicit uptr tags ==="
+if build_host_uptr 11_uptr_explicit_tags; then
+  set +e
+  "$OUT/11_uptr_explicit_tags"
+  rc=$?
+  set -e
+  if [[ $rc -eq 0 ]]; then
+    pass_host "explicit uptr round trips (sptr/cptr, _hi, stack.hi movement)"
+  else
+    fail_host "explicit uptr round trips (rc=$rc)"
+  fi
+  # A wrong tag writes the message and traps (SIGILL: rc 132).
+  for mode in as_sptr:"goc_uptr_as_sptr: MSB clear" \
+              as_cptr:"goc_uptr_as_cptr: MSB set" \
+              from_cptr:"goc_uptr_from_cptr: address has MSB set" \
+              from_sptr:"goc_uptr_from_sptr: offset cleared MSB" \
+              require_cptr:"sptr cannot be returned as cptr"; do
+    arg="${mode%%:*}" want="goc FATAL uptr: ${mode#*:}"
+    set +e
+    "$OUT/11_uptr_explicit_tags" "$arg" 2>"$OUT/11_$arg.err"
+    rc=$?
+    set -e
+    if [[ $rc -eq 132 ]] && grep -qF "$want" "$OUT/11_$arg.err"; then
+      pass_host "wrong tag ($arg) is fatal: $want"
+    else
+      fail_host "wrong tag ($arg): rc=$rc, stderr: $(cat "$OUT/11_$arg.err")"
+    fi
+  done
+fi
 
 echo "=== color-escape summary: $PASS passed, $FAIL failed ==="
 {

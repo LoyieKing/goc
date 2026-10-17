@@ -38,5 +38,5 @@ Go 链接器把它当普通 Go 函数链接。不走 cgo，不切栈。
 - 根目录 `ARCHITECTURE.md` 是一页纸版本；本组文档是它的展开版。
 - 格式权威：`docs/gocobj-format.md`（`.gocobj`）、`docs/go-abi-profiles.md`（ABI 常量）、`docs/stackmap-format.md`。
 - 语言合同：`docs/syntax-guide.md`（指针颜色语义）。
-- 运行时：`docs/runtime-model.md`、`runtime/UPTR-MSB.md`、`runtime/TLS-HI.md`。
+- 运行时：`docs/runtime-model.md`、`docs/design/uptr.md`。
 - 待办：`docs/todo.md`。

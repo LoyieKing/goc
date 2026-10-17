@@ -8,9 +8,11 @@
  * Decode only with owner g's hi; wrong tag / cross-g → FATAL.
  * No dsptr. No silent sptr→uptr promote (frontend still errors).
  *
- * Inside a Go binary (GOC_UPTR_HAVE_TLS) the current-g API reads the live
- * g->stack.hi; the *_hi variants and goc_test_set_stack_hi serve host tests.
- * Implementation: runtime/uptr. Protocol notes: runtime/UPTR-MSB.md.
+ * There is no runtime library: goc-inline-gate (SMUptrInline.cpp) gives
+ * every function declared here an inline body, at every -O. The current-g
+ * API reads the live g (amd64 %fs:-8, arm64 x28): stack.lo at g+0,
+ * stack.hi at g+8. A wrong tag writes "goc FATAL uptr: ..." and traps.
+ * Protocol and helpers: docs/design/uptr.md.
  */
 #ifndef GOC_UPTR_H
 #define GOC_UPTR_H
@@ -41,13 +43,13 @@ static inline bool goc_uptr_is_cptr_encoded(goc_uptr u) {
   return ((uintptr_t)u & GOC_UPTR_MSB) == 0;
 }
 
-/* ---- Explicit-hi API (tests / IR lower / no TLS) ---- */
+/* ---- Explicit-hi API ---- */
 goc_uptr goc_uptr_from_cptr_hi(goc_cptr p, uintptr_t stack_hi);
 goc_uptr goc_uptr_from_sptr_hi(goc_sptr p, uintptr_t stack_hi);
 goc_cptr goc_uptr_as_cptr_hi(goc_uptr u, uintptr_t stack_hi);
 goc_sptr goc_uptr_as_sptr_hi(goc_uptr u, uintptr_t stack_hi);
 
-/* ---- Current-g API (goc_stack_hi → TLS g->stack.hi when HAVE_TLS) ---- */
+/* ---- Current-g API (stack.hi of the running goroutine) ---- */
 goc_uptr goc_uptr_from_cptr(goc_cptr p);
 goc_uptr goc_uptr_from_sptr(goc_sptr p);
 goc_cptr goc_uptr_as_cptr(goc_uptr u);
@@ -57,28 +59,16 @@ goc_uptr goc_uptr_from_ptr(void *p);
 void *goc_uptr_decode(goc_uptr u);
 void *goc_uptr_require_cptr(void *p);
 
-/* Stack.hi provider: test override > TLS g->stack.hi > host approx. */
+/* The running goroutine's g.stack.hi / g.stack.lo. */
 uintptr_t goc_stack_hi(void);
 uintptr_t goc_stack_lo(void);
-void goc_test_set_stack_hi(uintptr_t hi);
-void goc_test_set_stack_lo(uintptr_t lo);
-void goc_test_clear_stack_bounds(void);
-
-/* TLS hooks (goc_uptr_tls_amd64.S). Present when GOC_UPTR_HAVE_TLS .syso linked. */
-uintptr_t goc_runtime_stack_hi(void);
-uintptr_t goc_runtime_stack_lo(void);
-uintptr_t goc_runtime_getg(void);
-
-void goc_uptr_fatal(const char *msg) __attribute__((noreturn));
 
 /* Lowered C alloca(size): allocations stay live until the containing function
- * returns, then goc_dynrelease releases the invocation's entire scope. */
+ * returns, then goc_dynrelease releases the invocation's entire scope.
+ * --fast-stack-alloca: a 16 MiB bump pool per object, one goroutine only.
+ * Otherwise malloc/free per alloca. */
 void *goc_dynalloc(size_t bytes, void **scope);
 void goc_dynrelease(void **scope);
-
-/* GOC_DYNALLOC_POOL: single-thread bump pool instead of malloc per alloca.
- * Define it only when one goroutine owns every goc_dynalloc (QuickJS).
- * Default pool is 16 MiB; override with -DGOC_DYNALLOC_POOL_SIZE=bytes. */
 
 #ifdef __cplusplus
 }
