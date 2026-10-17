@@ -1,13 +1,10 @@
-#!/usr/bin/env bash
-# Run the tests.conf-selected QuickJS tests through the goc-built Go CLI.
-set -euo pipefail
+#!/usr/bin/env python3
+"""Run the tests.conf-selected QuickJS tests through the goc-built Go CLI.
 
-ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}"
-export GOC_ROOT="$ROOT"
-OUT="$ROOT/build/qjs"
-mkdir -p "$OUT"
-
-python3 - "$ROOT" "$OUT" "${QJS_CLI_TEST_TIMEOUT:-20}" <<'PY'
+Usage: ports/quickjs/tests/cli_tests.py [--timeout SECONDS]
+(build/qjs/qjscli comes from ports/quickjs/build.sh). Writes
+build/qjs/qjs-cli-tests.json.
+"""
 import json
 import os
 import re
@@ -19,14 +16,17 @@ import time
 from pathlib import Path, PurePosixPath
 
 
-root = Path(sys.argv[1]).resolve()
-out_dir = Path(sys.argv[2]).resolve()
-try:
-    timeout_seconds = float(sys.argv[3])
-    if not (0 < timeout_seconds <= 3600):
-        raise ValueError
-except ValueError:
-    print("QJS_CLI_TEST_TIMEOUT must be greater than 0 and at most 3600 seconds", file=sys.stderr)
+import argparse
+
+parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+parser.add_argument("--timeout", type=float, default=20.0, help="per-test timeout in seconds (default 20)")
+args = parser.parse_args()
+root = Path(__file__).resolve().parents[3]
+out_dir = root / "build" / "qjs"
+out_dir.mkdir(parents=True, exist_ok=True)
+timeout_seconds = args.timeout
+if not (0 < timeout_seconds <= 3600):
+    print("--timeout must be greater than 0 and at most 3600 seconds", file=sys.stderr)
     raise SystemExit(2)
 
 config_path = root / "third_party/quickjs-ng/tests.conf"
@@ -64,7 +64,7 @@ if unknown_config:
 testdir = config["config"].get("testdir", "tests")
 tests_root = (root / "third_party/quickjs-ng" / testdir).resolve()
 try:
-    tests_root.relative_to(root / "third_party/quickjs-ng")
+    tests_root.relative_to((root / "third_party/quickjs-ng").resolve())
 except ValueError:
     print(f"tests.conf testdir escapes the QuickJS tree: {testdir}", file=sys.stderr)
     raise SystemExit(2)
@@ -449,7 +449,7 @@ counts = {status: sum(1 for item in records if item["status"] == status)
           for status in ("pass", "fail", "unsupported")}
 summary = {
     "schemaVersion": 1,
-    "runner": "test/e2e/qjs/cli-tests.sh",
+    "runner": "ports/quickjs/tests/cli_tests.py",
     "binary": str(cli),
     "testsConf": str(config_path.relative_to(root)),
     "testDirectory": testdir,
@@ -471,4 +471,3 @@ print(
 )
 print(f"JSON {summary_path}")
 raise SystemExit(summary["exitStatus"])
-PY

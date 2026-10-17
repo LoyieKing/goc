@@ -10,7 +10,7 @@ process. PASS is
 exit status 0. test_builtin.js is run with `--std`, matching QuickJS
 `make test` (`qjs --std tests/test_builtin.js`).
 
-Usage: official-tests.py --tests DIR --engine NAME=CMD [--engine ...] [--out F.json]
+Usage: official.py --tests DIR --engine NAME=CMD [--engine ...] [--out F.json]
 A later engine is compared function-by-function against the first.
 """
 import argparse, concurrent.futures as cf, json, os, re, shlex, subprocess, sys, tempfile

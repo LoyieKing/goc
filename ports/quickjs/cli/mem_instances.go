@@ -1,8 +1,8 @@
 //go:build qjsmem
 
 // Multi-instance memory probe, built only with -tags qjsmem
-// (bench/bench-mem.sh runs QJSCLI_TAGS=qjsmem QJSCLI_OUT=build/qjs/qjsmem
-// scripts/qjs-cli-build.sh). The default qjscli binary does not contain it.
+// (bench/bench-mem.sh runs ports/quickjs/build.sh --tags qjsmem -o build/qjs/qjsmem
+// ports/quickjs/build.sh). The default qjscli binary does not contain it.
 //
 //	qjsmem --mem-instances N
 //
@@ -29,7 +29,7 @@ import (
 //go:embed instance.js
 var memInstanceScript string
 
-// qjsFlavor is set by scripts/qjs-cli-build.sh for QJS_FLAVOR=bellard
+// qjsFlavor is set by ports/quickjs/build.sh for --flavor bellard
 // (-X main.qjsFlavor=bellard); the ng build keeps the default.
 var qjsFlavor = "ng"
 

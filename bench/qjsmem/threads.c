@@ -5,7 +5,7 @@
  * Starts N pthreads. Each owns one JSRuntime + JSContext, evaluates the
  * script, then blocks with the runtime alive. Threads are started one after
  * another (the next starts once the previous has finished evaluating), the
- * same order as the goc harness (test/e2e/qjs/cli/mem_instances.go). Thread stack
+ * same order as the goc harness (ports/quickjs/cli/mem_instances.go). Thread stack
  * size: QJSMEM_STACK_KB (default 1024 KiB); RSS only counts touched pages.
  * JS_SetMaxStackSize is set to half of the thread stack.
  * When all N are parked it prints one JSON line with VmRSS / VmHWM from

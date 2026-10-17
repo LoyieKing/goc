@@ -1,9 +1,9 @@
-goc: Bellard QuickJS 2026-06-04 on moving goroutine stacks (QJS_FLAVOR=bellard).
-Applied by scripts/qjs-build.sh to third_party/quickjs-bellard (pristine
+goc: Bellard QuickJS 2026-06-04 on moving goroutine stacks (--flavor bellard).
+Applied by ports/quickjs/build.sh to third_party/quickjs-bellard (pristine
 https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz). Everything is under
 #ifdef GOC_QJS_GSTACK, so a native build of the patched tree is unchanged.
  - quickjs.c js_check_stack_overflow: measure depth from the current
-   g.stack.hi (same as scripts/qjs-gstack.patch for quickjs-ng).
+   g.stack.hi (same as ng-gstack.patch for quickjs-ng).
  - quickjs.c JS_AtomGetStrRT: the pure-ASCII fast path copies into the
    caller's buffer instead of returning the atom's heap bytes (a function
    returning either a stack buffer or a heap pointer is rejected by the goc

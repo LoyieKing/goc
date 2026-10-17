@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build bench/perfgap/mech.c with goc (same env as scripts/qjs-build.sh) and
+# Build bench/perfgap/mech.c with goc (same switches as ports/quickjs/build.sh) and
 # natively (clang -O3, clang -O3 + goc codegen flags, gcc -O2), then run all
 # four pinned to one core. OUT defaults to build/perfgap-mech.
 # goc build --llc-extra builds a goc variant.

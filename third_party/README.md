@@ -26,20 +26,20 @@ Host tools also useful from distro packages: `clang-19`, `llc-19`,
 git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng
 ```
 
-Do **not** commit the cloned tree. `scripts/qjs-build.sh` builds it with
+Do **not** commit the cloned tree. `ports/quickjs/build.sh` builds it with
 `JS_NAN_BOXING=0`.
 
-## Bellard QuickJS (optional, `QJS_FLAVOR=bellard`)
+## Bellard QuickJS (optional, `--flavor bellard`)
 
 ```bash
 curl -LO https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz
 tar xf quickjs-2026-06-04.tar.xz
 mv quickjs-2026-06-04 third_party/quickjs-bellard
-QJS_FLAVOR=bellard scripts/qjs-cli-build.sh   # -> build/qjs-bellard/qjscli
+ports/quickjs/build.sh --flavor bellard   # -> build/qjs-bellard/qjscli
 ```
 
-Unpack the pristine release; `scripts/qjs-build.sh` applies
-`scripts/qjs-gstack-bellard.patch` itself. Do **not** commit the tree.
+Unpack the pristine release; `ports/quickjs/build.sh` applies
+`ports/quickjs/patches/bellard-gstack.patch` itself. Do **not** commit the tree.
 
 ## CMake
 

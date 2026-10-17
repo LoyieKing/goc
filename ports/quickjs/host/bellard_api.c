@@ -1,12 +1,12 @@
 /* Exported entry points the Go side links by name (//go:linkname) that
  * Bellard's QuickJS only provides as static inline functions in quickjs.h.
  * quickjs-ng exports them from quickjs.c, so this TU is built only for
- * QJS_FLAVOR=bellard. The header's inline bodies are renamed on include and
+ * --flavor bellard. The header's inline bodies are renamed on include and
  * re-exported under the public name. */
 #define JS_FreeValue goc_bellard_inline_JS_FreeValue
 #define JS_FreeValueRT goc_bellard_inline_JS_FreeValueRT
 #define JS_DupValue goc_bellard_inline_JS_DupValue
-#include "../../../../third_party/quickjs-bellard/quickjs.h"
+#include "../../../third_party/quickjs-bellard/quickjs.h"
 #undef JS_FreeValue
 #undef JS_FreeValueRT
 #undef JS_DupValue

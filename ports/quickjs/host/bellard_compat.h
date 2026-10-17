@@ -1,6 +1,6 @@
-/* quickjs-ng API used by the goc CLI host (test/e2e/qjs/host/cli_*.c), mapped
+/* quickjs-ng API used by the goc CLI host (ports/quickjs/host/cli_*.c), mapped
  * onto Bellard's QuickJS 2026-06-04 public API. Included right after
- * third_party/quickjs-bellard/quickjs.h, only for QJS_FLAVOR=bellard
+ * third_party/quickjs-bellard/quickjs.h, only for --flavor bellard
  * (-DGOC_QJS_BELLARD). Nothing here changes the ng build.
  *
  * Known gaps (documented in docs/benchmark.md):

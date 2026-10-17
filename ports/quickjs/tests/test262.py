@@ -17,7 +17,7 @@ test source through a global indirect eval (so global var declarations are
 configurable; that is why global-code/decl-* fail on every engine).
 
 Usage:
-  test262-sample.py --test262 DIR --engine NAME=CMD [--engine ...] [--out F.json] [-j N]
+  test262.py --test262 DIR --engine NAME=CMD [--engine ...] [--out F.json] [-j N]
 CMD is split on spaces; the test file path is appended. A second engine is
 compared file-by-file against the first.
 """

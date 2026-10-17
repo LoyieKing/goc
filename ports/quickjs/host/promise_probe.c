@@ -2,11 +2,11 @@
  * through JSRuntime.parent_promise, even when the C call tree grows the g stack.
  */
 #ifdef GOC_QJS_BELLARD
-#include "../../../../third_party/quickjs-bellard/quickjs.h"
+#include "../../../third_party/quickjs-bellard/quickjs.h"
 #else
-#include "../../../../third_party/quickjs-ng/quickjs.h"
+#include "../../../third_party/quickjs-ng/quickjs.h"
 #endif
-#include "../../../../include/goc_uptr.h"
+#include "../../../include/goc_uptr.h"
 
 typedef struct GocLink {
   struct GocLink *next;

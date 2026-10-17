@@ -8,8 +8,8 @@
 # turns it into all.json and bench/bench-charts.py draws the charts.
 #
 # Inputs (override with env):
-#   GOC      build/qjs/qjscli          (goc-ng: scripts/qjs-cli-build.sh, O3 + NDEBUG)
-#   GOCB     build/qjs-bellard/qjscli  (goc-bellard: QJS_FLAVOR=bellard scripts/qjs-cli-build.sh)
+#   GOC      build/qjs/qjscli          (goc-ng: ports/quickjs/build.sh, O3 + NDEBUG)
+#   GOCB     build/qjs-bellard/qjscli  (goc-bellard: ports/quickjs/build.sh --flavor bellard)
 # goc commands pass --script. qjscli follows quickjs-ng's JS_DetectModule,
 # which treats any source that compiles as a module as a module. These
 # benchmarks are classic scripts, same as native ng's -C.
@@ -137,7 +137,7 @@ elif ! skip microcall; then
 fi
 
 if ! skip t262; then
-  python3 "$ROOT/test/e2e/qjs/test262-sample.py" --test262 "$T262" \
+  python3 "$ROOT/ports/quickjs/tests/test262.py" --test262 "$T262" \
     --engine "goc-ng=$(cmd goc-ng)" --engine "goc-bellard=$(cmd goc-bellard)" \
     --engine "ng=$(cmd ng)" --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
     --out "$OUT/test262-results.json" > "$OUT/test262-summary.txt" 2>&1
@@ -145,7 +145,7 @@ if ! skip t262; then
 fi
 
 if ! skip qjs; then
-  python3 "$ROOT/test/e2e/qjs/official-tests.py" --tests "$QJSTESTS" \
+  python3 "$ROOT/ports/quickjs/tests/official.py" --tests "$QJSTESTS" \
     --engine "goc-ng=$(cmd goc-ng)" --engine "goc-bellard=$(cmd goc-bellard)" \
     --engine "ng=$(cmd ng)" --engine "bellard=$(cmd bellard)" --engine "goja=$(cmd goja)" \
     --out "$OUT/qjs-tests-results.json" > "$OUT/qjs-tests-summary.txt" 2>&1

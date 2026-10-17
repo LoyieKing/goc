@@ -233,7 +233,7 @@ run_arm64 "$TMP/sum9.elf" "45"
 pass "arm64 goabi thunk stores x8, assembled, linked"
 
 echo "== refuse an unported amd64 host =="
-if "$GOC" build "$ROOT/test/e2e/qjs/host/cli_host.c" --arch arm64 \
+if "$GOC" build "$ROOT/ports/quickjs/host/cli_host.c" --arch arm64 \
     -o "$TMP/host.goobj" >"$TMP/host.log" 2>&1; then
   fail "arm64 build of the QuickJS host should have been refused"
 fi

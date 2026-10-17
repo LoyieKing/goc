@@ -8,7 +8,7 @@
  * xmm0 / xmm1 go in, xmm0 comes out. The result matches glibc, including
  * Math.sin(1) == "0.8414709848078965".
  *
- * qjs-build.sh assembles this into test/e2e/qjs/embed and test/e2e/qjs/cli as a .syso.
+ * ports/quickjs/build.sh assembles this into embed/ and cli/ as a .syso.
  * The call runs on the goroutine stack. libm does not switch stacks.
  */
 .section .text, "ax", @progbits

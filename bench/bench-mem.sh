@@ -12,8 +12,8 @@
 #
 # Part 2, multi-instance scaling: N JS runtimes kept alive in one process,
 # N in $NS. goc-ng: build/qjs/qjsmem (qjscli built with -tags qjsmem, see
-# test/e2e/qjs/cli/mem_instances.go); goc-bellard: build/qjs-bellard/qjsmem (the
-# same probe, QJS_FLAVOR=bellard). native ng / Bellard: bench/qjsmem/threads.c
+# ports/quickjs/cli/mem_instances.go); goc-bellard: build/qjs-bellard/qjsmem (the
+# same probe, --flavor bellard). native ng / Bellard: bench/qjsmem/threads.c
 # linked against each engine's own build. Goja: bench/gojamem. Not pinned
 # (see the doc for why). ng also runs with MALLOC_ARENA_MAX=1 (engine
 # "ng-arena1").
@@ -76,11 +76,11 @@ MB="$HB/microbench.js"
 
 # ---- harnesses
 if [[ ! -x "$GOCMEM" || "${REBUILD:-0}" == 1 ]]; then
-  QJSCLI_TAGS=qjsmem QJSCLI_OUT="$GOCMEM" "$ROOT/scripts/qjs-cli-build.sh" > "$HB/qjsmem-build.log" 2>&1 \
+  "$ROOT/ports/quickjs/build.sh" --tags qjsmem -o "$GOCMEM" > "$HB/qjsmem-build.log" 2>&1 \
     || { echo "qjsmem build failed, see $HB/qjsmem-build.log"; exit 1; }
 fi
 if [[ ! -x "$GOCBMEM" || "${REBUILD:-0}" == 1 ]]; then
-  QJS_FLAVOR=bellard QJSCLI_TAGS=qjsmem QJSCLI_OUT="$GOCBMEM" "$ROOT/scripts/qjs-cli-build.sh" \
+  "$ROOT/ports/quickjs/build.sh" --flavor bellard --tags qjsmem -o "$GOCBMEM" \
     > "$HB/qjsmem-bellard-build.log" 2>&1 \
     || { echo "goc-bellard qjsmem build failed, see $HB/qjsmem-bellard-build.log"; exit 1; }
 fi
@@ -89,7 +89,7 @@ clang-19 -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"ng"' -I"$NGDIR" "$ROOT/bench/qjsmem
 gcc -O2 -D_GNU_SOURCE -DQJSMEM_ENGINE='"bellard"' -I"$BDIR" "$ROOT/bench/qjsmem/threads.c" \
   "$BDIR"/.obj/{quickjs,libregexp,libunicode,cutils,dtoa}.o -lm -lpthread -o "$HB/threads-bellard" || exit 1
 ( cd "$ROOT/bench/gojamem" && go build -o "$HB/gojamem" . ) || exit 1
-INST="$ROOT/test/e2e/qjs/cli/instance.js"
+INST="$ROOT/ports/quickjs/cli/instance.js"
 
 {
   echo "date: $(date '+%Y-%m-%d %H:%M:%S %Z')"
