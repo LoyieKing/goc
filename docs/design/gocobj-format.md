@@ -5,11 +5,11 @@ normal relocatable ELF file (machine code in `.text` or `.text.<sym>`, data in
 `.data.*`/`.rodata.*`/`.bss.*`, ELF symbols and relocations) plus a few
 `.goc.*` sections that carry what Go's linker needs and ELF cannot say:
 frame sizes, pointer maps, pc-value tables, and relocations in a Go-neutral
-form. `gocobj2goobj` turns it into a Go object file. Nothing in a `.gocobj`
+form. The converter (`internal/convert`, `goc tool convert`) turns it into a Go object file. Nothing in a `.gocobj`
 depends on the Go version except the ABI profile name in the header
-(see [go-abi-profiles.md](go-abi-profiles.md)).
+(see [go-versions.md](go-versions.md) §10).
 
-The Go reader and checker live in `gocobj/`; `goc-objdump dump|verify` prints
+The Go reader and checker live in `internal/gocobj/`; `goc tool objdump dump|verify` prints
 and checks a file. Golden files are in `test/gocobj/`.
 
 ## Encoding
@@ -47,7 +47,7 @@ and checks a file. Golden files are in `test/gocobj/`.
 | 8 | u16 | major (1) |
 | 10 | u16 | minor (1) |
 | 12 | u8 | arch: 1 amd64, 2 arm64 |
-| 13 | u8 | flags: bit 0 `stack_checks_in_code` (entry checks are already in the machine code; goc-llc always sets it, and gocobj2goobj rejects an object with it clear) |
+| 13 | u8 | flags: bit 0 `stack_checks_in_code` (entry checks are already in the machine code; goc-llc always sets it, and the converter rejects an object with it clear) |
 | 14 | u16 | reserved, 0 |
 | 16 | u32 strref | ABI profile, e.g. `go1.24-amd64` |
 | 20 | u32 strref | producer (goc and LLVM versions) |
@@ -189,7 +189,7 @@ ceil(nbits/8) bytes pointer bitmap` (bit `i` = pointer word `i`).
 `.goc.types` is reserved and will be specified when the backend emits it
 (a minor version bump).
 
-## What `goc-objdump verify` checks
+## What `goc tool objdump verify` checks
 
 - header magic, major, known arch and ABI profile; ptr size from the profile
 - every name a record uses exists in the ELF symbol table exactly once
@@ -214,14 +214,43 @@ ceil(nbits/8) bytes pointer bitmap` (bit `i` = pointer word `i`).
 assembler text, including the stack check and morestack block it emitted
 (shared `GocStackCheck` pass plus the per-arch hook), the SP_DELTA and
 UNSAFE_POINT pc tables, the gcmap bitmaps, and (1.4) the FILE, LINE and
-INL_INDEX tables and inline tree from the debug locations. `goc-lower goabi` appends the Go
-ABI thunks and their records. `tools/goc/realbody.sh` assembles everything
+INL_INDEX tables and inline tree from the debug locations. `internal/lower` (WriteGoABI) appends the Go
+ABI thunks and their records. `internal/pipeline` assembles everything
 with `llvm-mc` into one ELF, which is the `.gocobj` (saved next to the
-`.goobj`), and runs `gocobj2goobj -symabis`. The converter does not decode or
+`.goobj`), and runs the converter, which also writes the `.symabis`. The converter does not decode or
 emit instructions; `.llvm_stackmaps` and `meta.json` are no longer read.
 For an inlined static function that has no body in the object, the
 converter defines a one-byte stub (never referenced, so not linked): Go's
 linker reads every inlined function's FuncInfo.
 
-`goc-objdump verify FILE...` checks a `.gocobj`; it also checks each table relocation against the ELF
+`goc tool objdump verify FILE...` checks a `.gocobj`; it also checks each table relocation against the ELF
 relocation at the same place, when there is one.
+
+## Pointer maps in the Go object
+
+amd64. `stackguard0` is at offset 16 in `g`.
+
+### stackmap bytes
+
+```text
+offset 0  uint32 n
+offset 4  uint32 nbit
+offset 8  n * ceil(nbit/8) bytes of bitmap
+```
+
+FUNCDATA `$0` is ArgsPointerMaps. FUNCDATA `$1` is LocalsPointerMaps.
+Symbols use the `gclocals·` prefix so the linker accepts them.
+
+Locals bits come from the STACKMAP records requested by `libGocPasses.so`
+(live gptr/sptr slots at each call). goc-llc turns them into bitmaps in
+`.goc.gcmaps`; the converter copies them. Args bits come from IR pointer
+parameters.
+
+A bit `i` means the word at `SP+i*8`. Do not derive the offset from frame-index
+creation order.
+
+### goobj
+
+`internal/convert` writes the object the Go linker accepts. The writer is goc's own
+(`internal/goobj`, driven by the per-release facts in `internal/gometa`); it copies no Go
+toolchain code and does not overlay `GOROOT`.

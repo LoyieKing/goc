@@ -1,6 +1,6 @@
-# 04 goc-llc 与机器 pass
+# 代码生成：goc-llc 与机器 pass
 
-[← 03 IR pass](03-ir-passes.md) · [索引](../engineering-architecture.md) · [下一篇：.gocobj 与链接 →](05-gocobj-and-link.md)
+[← 前端与 IR pass](frontend-ir.md) · [ARCHITECTURE](../../ARCHITECTURE.md) · [目标文件与链接 →](objects-link.md)
 
 ## 1. 为什么要自己的 llc
 
@@ -33,16 +33,16 @@ goc-llc 自己的选项：
 
 | 选项 | 默认 | 含义 |
 |---|---|---|
-| `-goc-tables FILE` | 空 | 把 `.goc.*` 段以汇编文本写到 FILE（`realbody.sh` 写 `body.goc.s`） |
-| `-goc-profile NAME` | `goabi1-amd64`；arm64 目标且未指定时自动 `goabi1-arm64`（realbody.sh 总是传入转换器给出的 profile） | ABI profile（`AbiProfiles.def`），名字的架构必须和目标一致 |
+| `-goc-tables FILE` | 空 | 把 `.goc.*` 段以汇编文本写到 FILE（`internal/pipeline` 写 `body.goc.s`） |
+| `-goc-profile NAME` | `goabi1-amd64`；arm64 目标且未指定时自动 `goabi1-arm64`（`internal/pipeline` 总是传入转换器给出的 profile） | ABI profile（`AbiProfiles.def`），名字的架构必须和目标一致 |
 | `-goc-sym-abi 0\|1` | 0 | 表里 C 函数的 Go 符号 ABI：0 = ABI0（有 thunk 包着，或纯 C 对象），1 = ABIInternal |
 | `-goc-no-stack-check` | off | 不发栈检查（仅测试） |
 
 另外 goc-llc 在用户没给时自动追加 `-enable-tail-merge=false`。
 
-`realbody.sh` 传给 goc-llc 的参数（amd64）：
+`internal/pipeline` 传给 goc-llc 的参数（amd64，`llcArgs`）：
 `-O<n> -relocation-model=pic -march=x86-64 -frame-pointer=all -enable-shrink-wrap=false -disable-tail-calls -no-x86-call-frame-opt -enable-tail-merge=false -tail-dup-pred-size=1000 -tail-dup-succ-size=1000 -function-sections -goc-sym-abi=N -goc-tables body.goc.s -filetype=asm`。
-每一项都有理由（注释在 `realbody.sh`）：
+每一项都有理由（注释在 `internal/pipeline/pipeline.go`）：
 
 | 参数 | 为什么 |
 |---|---|
@@ -92,7 +92,7 @@ check（SysV C 入口，R10/R11 可用）：
 ```
 
 为什么冷块要存这么多：morestack 会破坏 Go 不当成被调用者保存的所有寄存器，而 C 代码期望 RBX/R12–R15 跨调用不变。
-冷块里保存的参数寄存器有自己的指针位图（`stubSlots`），所以搬栈时实参里的栈指针也会被修正（02 篇 `pc=133 locals=20`）。
+冷块里保存的参数寄存器有自己的指针位图（`stubSlots`），所以搬栈时实参里的栈指针也会被修正（[walkthrough.md](walkthrough.md) §3.4 的 `pc=133 locals=20`）。
 
 AArch64 钩子：
 
@@ -130,7 +130,7 @@ AArch64 钩子按名字在目标自己的表里查 opcode 和寄存器，不需�
 6. 非调用指令写 RSP（动态 alloca）或 RBP，会让基于它的 FA 状态变成 tainted。
 
 调试选项：`-goc-frameaddr-trace=<函数>`、`-goc-frameaddr-stats`、`-goc-frameaddr-debug`（经 `--llc-extra` 传给 goc-llc）。这个 pass 总是加上，没有关掉的开关。
-`realbody.sh` 只用本树的 goc-llc——普通 `llc-19` 会把 GEP CSE 到寄存器里并跨调用保留。
+`goc` 只用本树的 goc-llc——普通 `llc-19` 会把 GEP CSE 到寄存器里并跨调用保留。
 
 ## 6. arm64 专属：`GocAArch64Frame.cpp`
 
@@ -142,25 +142,25 @@ Go 的 arm64 回溯从每个帧的 `0(RSP)` 读返回地址（每个帧把自己
 | `GocA64SaveLR` | PEI 之后 | 序言建好帧后 `str x30, [sp]` |
 | `GocA64FrameAddrFix` | PEI 之后 | 调用前把旧 SP 存到 `8(RSP)`（LR 区的填充字）；调用后对每个可能存着帧派生值的活 CSR / 溢出槽做和 copystack `adjustpointer` 相同的修正：`old.lo <= v < old.hi ? v + delta : v`，`delta = SP - oldSP`，`old.hi = g.stack.hi - delta` |
 
-02 篇 §4 有实际生成的 arm64 汇编。arm64 的其它差别：g 在 X28（clang `-ffixed-x28`、llc `+reserve-x28`），没有 TLS 读取；
-`-relocation-model=static` + clang `-fno-pic`，外部数据用 ADRP+ADD/LDR，不经过 GOT；跳转表不压缩（goc-llc 在压缩之后插代码，会把表项撑大）；不跑 `goc-lower align-asm`（没有 SSE，SP 本来就 16 字节对齐）。
+[walkthrough.md](walkthrough.md) §4 有实际生成的 arm64 汇编。arm64 的其它差别：g 在 X28（clang `-ffixed-x28`、llc `+reserve-x28`），没有 TLS 读取；
+`-relocation-model=static` + clang `-fno-pic`，外部数据用 ADRP+ADD/LDR，不经过 GOT；跳转表不压缩（goc-llc 在压缩之后插代码，会把表项撑大）；不跑 `AlignASM`（没有 SSE，SP 本来就 16 字节对齐）。
 
 ## 7. `GocObjTables`（lib/Object）
 
 最后一个机器 pass。`GocObjTables.cpp` 逐函数收集：在每个调用后、每个函数尾放标签（`.Lgoc_call*`、`.Lgoc_ret*`、`.Lgoc_end*`、`.Lgoc_sm*`、`.Lgoc_ln*`…），
 收集 STACKMAP、重定位、行号、内联树、sptr 槽（`!goc.frame.words` 指到的 (alloca, offset)，以及直接存入 sptr 值的 alloca）。
 模块结束时 `GocObjTablesWriter.cpp` 把这些段**以汇编指令写出**（`.uleb128 .Lgoc_ret0-bump.impl` 这种标签差），
-`realbody.sh` 把它接在函数汇编后面，由 `llvm-mc` 算出所有偏移——于是一个 ELF 就是 `.gocobj`。
+`internal/pipeline` 把它接在函数汇编后面，由 `llvm-mc` 算出所有偏移——于是一个 ELF 就是 `.gocobj`。
 
 写出的段：`.goc.header` `.goc.strtab` `.goc.files` `.goc.funcs` `.goc.relocs` `.goc.stackmaps` `.goc.gcmaps` `.goc.pcvalue` `.goc.inltree` `.goc.data`。
-thunk 的表（`.goc.funcs` `.goc.wrappers` 等）由 `goobj/lower/goabi.go` 写进 `thunks.goc.s`。格式见 05 篇。
+thunk 的表（`.goc.funcs` `.goc.wrappers` 等）由 `internal/lower/goabi.go` 写进 `thunks.goc.s`。格式见 [gocobj-format.md](gocobj-format.md)。
 
 架构差别只在这里一点点：x86 的调用重定位记在返回地址前 4 字节（CALL，addend −4）；AArch64 的 BL 记在指令本身（ARM64_CALL26，addend 0）。
 
 ## 8. 之后：汇编 → `.gocobj`
 
-`realbody.sh`：
-1. amd64：`goc-lower align-asm body.s` 把 LLVM 仍选出的对齐 SSE 访存（`movaps` 等）改成非对齐（没有栈重对齐，帧只有 8 字节对齐）。
-   相关的 IR 侧处理在 `goc-lower fix-ir`：给每个定义的函数加 `no-realign-stack`，x86 再加 `override-stack-alignment=8`（日志里的 `realbody: override-stack-alignment=8`）。
+`internal/pipeline` 的 `backend`：
+1. amd64：`lower.AlignASM(body.s)` 把 LLVM 仍选出的对齐 SSE 访存（`movaps` 等）改成非对齐（没有栈重对齐，帧只有 8 字节对齐）。
+   相关的 IR 侧处理在 `lower.FixIR`：给每个定义的函数加 `no-realign-stack`，x86 再加 `override-stack-alignment=8`（日志里的 `realbody: override-stack-alignment=8`）。
 2. `cat body.s thunks.s body.goc.s thunks.goc.s > body.thunks.s`。
 3. `llvm-mc -filetype=obj -triple=x86_64-unknown-linux-gnu`（或 aarch64）→ `body.llc.o`，复制为 `foo.gocobj`。不调用 `ld`。

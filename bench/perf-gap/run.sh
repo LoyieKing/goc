@@ -6,12 +6,12 @@
 #   SET=matrix   (default) the build matrix: gcc/clang -O2/-O3, NDEBUG, the goc
 #                codegen flags, goc itself; V8, SunSpider, micro, microcall
 #   SET=toggles  tail duplication (native + goc), the shim experiment
-#                (docs/perf-gap/experiments/shim-fast.patch), goc's pipeline
+#                (docs/research/experiments/shim-fast.patch), goc's pipeline
 #                built natively (gocpipe*), -inline-threshold=250 (inl250) and
 #                all three together (best); all suites
 #   SET=flags    Bellard clang -O3 plus one goc codegen flag at a time; V8 + SunSpider
 #
-# goc variants come from /workspace/perf-study/goc-variants (see docs/perf-gap.md,
+# goc variants come from /workspace/perf-study/goc-variants (see docs/research/perf-gap.md,
 # "reproduce"); natives from bench/perf-gap/build-natives.sh.
 set -euo pipefail
 ROOT="${GOC_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"

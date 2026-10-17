@@ -1,9 +1,9 @@
-// Package gometa holds the Go-version-dependent facts gocobj2goobj needs to
+// Package gometa holds the Go-version-dependent facts the converter needs to
 // write a Go object file: object-format constants, relocation and symbol
 // kind numbers, funcdata/pcdata indices, ABI facts and the few writer
 // behaviours that changed between releases. One JSON file per Go minor
 // release is produced by cmd/goc-gometa from that
-// release's GOROOT/src and embedded here (docs/go-metadata-schema.md).
+// release's GOROOT/src and embedded here (docs/design/go-versions.md §12).
 package gometa
 
 import (
@@ -195,7 +195,7 @@ func ForVersion(version string) (*Meta, error) {
 	if err != nil {
 		return nil, fmt.Errorf("no Go object metadata for %s (embedded: %s); run\n"+
 			"\tgo run ./cmd/goc-gometa -goroot $(go env GOROOT) -o internal/gometa/data/%s.json\n"+
-			"and rebuild, or pass -go-meta=<file> (docs/multi-go-version.md)",
+			"and rebuild, or pass -go-meta=<file> (docs/design/go-versions.md)",
 			version, strings.Join(Releases(), " "), minor)
 	}
 	return Parse(b)

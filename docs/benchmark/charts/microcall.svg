@@ -1036,7 +1036,7 @@ L 778.728125 363.541969
     <text style="font-size: 6.5px; font-family: 'DejaVu Sans'" transform="translate(742.664143 186.880422) rotate(-90)">331</text>
    </g>
    <g id="text_75">
-    <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #475569" transform="translate(53.328125 33.128219)">scripts/microcall-bench.sh, median of 5 rounds; arith and propget are controls.</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #475569" transform="translate(53.328125 33.128219)">bench/microcall.sh, median of 5 rounds; arith and propget are controls.</text>
     <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #475569" transform="translate(53.328125 43.20625)">Score (calls/ms, higher is better): goc-ng 27907, goc-bellard 27772, native ng 29096, native Bellard 31277, Goja 6828.</text>
    </g>
    <g id="text_76">

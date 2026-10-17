@@ -318,7 +318,7 @@ Promise.resolve(1).then(x => x + 6);
 
 // runGrowthSweep evaluates growthSweepSource on n fresh goroutines with
 // different stack pre-fills. Each goroutine owns its own runtime and context
-// (sptr/uptr values must not cross goroutines, syntax-guide §8.3). It is the
+// (sptr/uptr values must not cross goroutines, docs/language.md §8.3). It is the
 // stack-copy stress for frame addresses that live in registers or spill slots
 // across calls: any stale address shows up as a wrong result or a crash.
 func runGrowthSweep(n int) {

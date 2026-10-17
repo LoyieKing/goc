@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Same-session five-engine benchmark run for docs/benchmark.md.
+# Same-session five-engine benchmark run for docs/benchmark/README.md.
 #
 # Timed suites are pinned to one core (taskset -c $CPU) and interleaved: each
 # round runs every engine once, and the engine order rotates between rounds.

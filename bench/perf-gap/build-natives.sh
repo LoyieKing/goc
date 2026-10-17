@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the native reference QuickJS binaries used by docs/perf-gap.md.
+# Build the native reference QuickJS binaries used by docs/research/perf-gap.md.
 #
 #   PS=/workspace/perf-study bench/perf-gap/build-natives.sh
 #
@@ -54,7 +54,7 @@ bellard clang-O2-NDEBUG   clang-19 CONFIG_CLANG=y  "-O2 -DNDEBUG"
 bellard clang-O3-NDEBUG   clang-19 CONFIG_CLANG=y  "-O3 -DNDEBUG"
 bellard clang-O3-gocfull  clang-19 CONFIG_CLANG=y  "-O3 -DNDEBUG $GF_FULL"
 
-# ---- toggle builds (docs/perf-gap.md, "mechanism experiments")
+# ---- toggle builds (docs/research/perf-gap.md, "mechanism experiments")
 # Tail duplication of the computed-goto dispatch: LLVM only duplicates a block
 # into at most 16 predecessors / successors by default (tail-dup-pred-size,
 # tail-dup-succ-size), so JS_CallInternal keeps one shared `jmp *` for ~250

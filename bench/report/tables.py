@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print the markdown tables of docs/benchmark.md from data/all.json.
+"""Print the markdown tables of docs/benchmark/README.md from data/all.json.
 
 Usage: report/tables.py [ALL_JSON] > /tmp/tables.md
 Each table is preceded by a line `<!-- table: NAME -->` so it can be pasted

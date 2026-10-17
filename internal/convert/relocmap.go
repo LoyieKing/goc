@@ -2,7 +2,7 @@ package convert
 
 // How ELF relocations map onto Go relocation types. Types are named by
 // their objabi constant; the numbers, which Go renumbers between releases
-// (docs/go-version-diffs.md), come from the release's metadata
+// (docs/design/go-versions.md §11), come from the release's metadata
 // (gometa) when the object is written.
 
 import (
@@ -86,7 +86,7 @@ func profileFor(m *gometa.Meta, goarch string) (gocobj.Profile, error) {
 	if !a.StackCopyAdjustsFP {
 		return gocobj.Profile{}, fmt.Errorf("goc does not support GOARCH=%s with %s: its runtime does not adjust "+
 			"saved frame pointers when it copies a stack (runtime.adjustframe), and goc's code addresses locals "+
-			"from the frame pointer (docs/multi-go-version.md)", goarch, m.Go)
+			"from the frame pointer (docs/design/go-versions.md)", goarch, m.Go)
 	}
 	got := gocobj.Profile{Arch: goarch, PtrSize: a.PtrSize, GReg: a.GReg,
 		StackGuard0Off: m.ABI.GOffsets["stackguard0"], StackSmall: m.ABI.StackSmall,
@@ -106,7 +106,7 @@ func profileFor(m *gometa.Meta, goarch string) (gocobj.Profile, error) {
 	}
 	if best.Name == "" {
 		return gocobj.Profile{}, fmt.Errorf("%s %s has ABI facts no goc profile states: %+v\n"+
-			"add one to llvm/include/Goc/AbiProfiles.def and gocobj/abi.go (docs/multi-go-version.md)", m.Go, goarch, got)
+			"add one to llvm/include/Goc/AbiProfiles.def and internal/gocobj/abi.go (docs/design/go-versions.md)", m.Go, goarch, got)
 	}
 	return best, nil
 }

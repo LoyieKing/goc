@@ -10,7 +10,7 @@ import (
 )
 
 // Reader decodes a Go object file (the part after the text header) for
-// tools: gocobj-diff and the tests.
+// tools: goc tool objdump diff and the tests.
 type Reader struct {
 	Meta   *gometa.Meta
 	Header string // the "go object ..." line

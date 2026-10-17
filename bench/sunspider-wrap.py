@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wrap WebKit SunSpider 1.0.2 tests for docs/benchmark.md.
+"""Wrap WebKit SunSpider 1.0.2 tests for docs/benchmark/README.md.
 
 Each test body goes into `function __t(){...}`; `document.write` and
 `getElementById` are stubbed; `console.log` falls back to `print`. The

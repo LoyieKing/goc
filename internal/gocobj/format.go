@@ -1,5 +1,5 @@
 // Package gocobj reads, writes and checks .gocobj files: relocatable ELF
-// objects with extra .goc.* sections. The format is in docs/gocobj-format.md.
+// objects with extra .goc.* sections. The format is in docs/design/gocobj-format.md.
 // Nothing here depends on the Go version except the ABI profile table.
 package gocobj
 

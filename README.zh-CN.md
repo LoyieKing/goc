@@ -2,272 +2,64 @@
 
 [English](README.md) | 简体中文
 
-一个 C 语言方言，旨在解决 Go 无法与 C 语言编写的库高效通信的问题。
+一种让 Go 直接调用、不经过 cgo 的 C 方言。
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-goc 编译出来的 C 代码可以直接跑在 goroutine 的栈上，Go 调用它就像调用一个普通 Go 函数，不需要经过 cgo。目前是实验性质，只支持 linux/amd64。
+goc 把 C 编成 Go 的目标文件。C 跑在 goroutine 的栈上，Go 像调用普通 Go 函数一样调用它。goc 还在实验阶段：宿主是 linux/amd64，目标是 amd64 和 arm64（qemu 或 arm64 机器上运行），Go 1.18–1.27。
 
-## 背景
+## 为什么
 
-C 语言和 Go 无法高效交互，核心原因是 Go 的可增长栈。
+Go 的 goroutine 栈起步很小，长大时会整块搬走。每个 Go 函数入口都检查栈够不够，编译器还记下哪些栈槽是指针，搬栈后运行时据此修正。C 两样都不做，所以 cgo 每次调用都切到系统的大栈，每次几十纳秒。
 
-### Go 的可增长栈
+goc 让 C 遵守 Go 的栈规则。打过补丁的 Clang/LLVM 生成 Go 需要的入口栈检查、pc 表和栈图；C 指针分颜色，编译器才知道哪些指向栈：
 
-为了支持大量 goroutine 同时存在，Go 给每个 goroutine 只分配很小的初始栈（几 KB）。但 Go 程序几乎从来不会栈溢出，因为每个 Go 函数入口都会检查栈够不够用；不够时，运行时会分配一块更大的新栈，把旧栈的内容整体搬过去，再继续执行。
-
-栈会搬家，带来的问题是：指向栈的指针在搬家后会失效，变成野指针。Go 分几种情况处理：
-
-- **栈上有指向栈的指针。** 编译器会记录每个函数的栈上哪些位置存的是指针。搬栈时，运行时根据这份记录，把指向旧栈的指针逐个改成指向新栈。这要求每个函数的栈帧大小在编译期固定，所以 Go 不支持在栈上分配变长数组。
-- **堆上有指向栈的指针。** 搬栈时运行时只修正栈上的指针，不会去改堆里的。所以 Go 必须保证堆上永远不会有指向栈的指针。它的做法是逃逸分析：一个变量的地址只要可能被存到堆上或全局变量里，编译器就直接把这个变量分配到堆上。例如：
-
-  ```go
-  var sink *int
-
-  func f() {
-      x := 42
-      sink = &x // x 会被编译器放到堆上，而不是栈上
-  }
-  ```
-
-- **Go 调用非 Go 代码。** C 代码不知道栈会搬家，不会在入口检查栈够不够，编译器也没有它的指针记录。所以 C 代码不能直接跑在 goroutine 的栈上，Go 的做法是每次调用都换到一个足够大、不会搬家的栈上去执行它。这样做很安全，但每次调用都要付出一笔固定开销。
-
-### 已有方案
-
-- **cgo**（Go 官方）：每次调用 C 函数都切换到系统线程的大栈上执行，并通知调度器。安全、通用，但每次调用有几十纳秒的固定开销，对调用频繁、每次很短的 C 函数来说是明显的瓶颈。
-- **[directcgo](https://github.com/maxpoletaev/directcgo)**（社区实验项目）：先把 goroutine 的栈撑到足够大（64 KB），然后直接在 goroutine 栈上调用 C 函数，不切换栈。调用开销降到几纳秒，但每个 goroutine 都要占用一大块栈内存；C 函数用的栈一旦超过预留，就可能写坏内存。只适合短小、栈用量可预估的函数。
-- **syscall 及其衍生**（如 purego）：不需要 C 编译器就能调用已编译好的动态库，本质上同样是切换到系统栈执行，性能和 cgo 在同一量级。直接在 goroutine 栈上执行外部代码的写法，则可能出现爆栈问题。
-
-这几种方案在“使用已经编译好的 C 库”上都做得很好。但如果我们能重新编译 C 库，就能更进一步：让 C 代码自己懂 Go 的栈。
-
-### 我们的方案
-
-发明一种 C 的方言：goc。为 C 引入 Go 可增长栈的特性，让 Go 能直接调用 goc 代码，而不用考虑任何栈风险。
-
-goc 编译出来的每个函数都和 Go 函数一样：入口会检查栈够不够，编译器会记录栈上的指针，栈搬家时指针会被正确修正。所以它可以直接跑在 goroutine 的栈上，Go 调用它时不需要切换栈。
-
-#### 栈指针
-
-这是整个方案的核心。C 代码里到处是指针，而 Go 搬栈时只会修正它知道的那些指针。要让 C 安全地跑在会搬家的栈上，编译器必须知道每一个指针可能指向哪里、会被存到哪里。
-
-为此，goc 给 C 的指针加上了“颜色”：
-
-| 指针色 | 含义 |
+| 颜色 | 指向 |
 |---|---|
-| `cptr` | 指向栈以外的内存（C 堆、全局变量），可以存到任何地方 |
-| `sptr` | 指向栈上的对象，只能放在栈上，不能存到堆或全局变量里；栈搬家时由运行时修正 |
-| `uptr` | 可能指向栈也可能不指向栈，可以存到任何地方；指向栈时存的是相对位置，搬家后依然有效 |
-| `gptr` | 指向 Go 的堆对象，遵守 Go 垃圾回收的规则 |
+| `cptr` | C 堆或全局，可以存到任何地方 |
+| `sptr` | goroutine 栈；只待在寄存器和栈槽里，搬栈时被修正 |
+| `uptr` | 可能是栈；栈地址存成相对栈顶的位置，存进堆里也不失效 |
+| `gptr` | Go 堆 |
 
-不同颜色之间不能随意互相转换。普通的 `T *` 由编译器根据指针的用法自动推断成合适的颜色，所以像 QuickJS 这样的现有 C 代码几乎不用改写。例如把指向栈的指针存进全局变量是允许的，编译器会自动把这处存储改成 `uptr` 编码；而真正无法补救的用法（比如返回指向局部变量的指针）会在编译时报错：
+普通的 `T *` 按用法推断颜色，所以 QuickJS 这样现成的 C 几乎不用改。返回局部变量的地址是编译错误。C 仍然经过 LLVM 的完整优化。
+
+用 goc 编的 QuickJS，V8-v7 分数（2026-10-09，Ryzen 9 7900X）：goc-ng 是原生 QuickJS-ng 的 92%、Goja 的 4.1 倍；goc-bellard 是 gcc 编的 Bellard QuickJS 的 90%、Goja 的 4.7 倍。两者的 test262 抽样和官方测试结果都和各自的原生版一致。
+
+![相对原生 ng 的速度](docs/benchmark/charts/overview-speed.svg)
+
+## 上手
+
+```bash
+tar -xzf goc-0.0.2-linux-amd64.tar.gz      # 从 Releases 页下载
+export PATH="$PWD/goc-0.0.2-linux-amd64/bin:$PATH"
+goc check                                  # PASS goc check
+goc go ./mypkg                             # 把 mypkg/*.c 编进这个 Go 包
+```
 
 ```c
+// add.c
 #include "goc.h"
-
-static int *g_slot;
-
-void keep(sptr(int) p) {
-  g_slot = p;       /* 允许：自动按 uptr 存储，读出时自动还原 */
-}
-
-int *bad_return(void) {
-  int local = 1;
-  return &local;    /* 编译错误：不能返回指向栈的指针 */
-}
-```
-
-完整规则见 [docs/syntax-guide.md](docs/syntax-guide.md)。
-
-#### 编译
-
-我们基于 Clang/LLVM 修改出了 goc 的编译器：前端负责检查和推断指针颜色，后端生成符合 Go 栈规则的机器码，最后直接输出 Go 工具链可以链接的目标文件。这样 goc 能和 Go 无缝交互，同时 C 代码仍然享有 LLVM 的全套优化，保持生产级的 C 性能：V8 基准上，goc-ng 达到原生 QuickJS-ng 的约 92%，是纯 Go 实现的 JS 引擎 Goja 的约 4.1 倍；goc-bellard 达到 gcc 版 Bellard 的约 90%，是 Goja 的约 4.7 倍（见下文“跑分”）。
-
-## 跑分
-
-以 QuickJS 作为示例：goc 能完整编译 QuickJS-ng 和 Fabrice Bellard 的原版 QuickJS。下面五个 JS 引擎在同一台机器、同一时段测量（2026-10-09，AMD Ryzen 9 7900X）：
-
-| 引擎 | 说明 |
-|---|---|
-| goc-ng | goc 编译的 QuickJS-ng |
-| goc-bellard | goc 编译的 Bellard 原版 QuickJS |
-| native ng | 原生编译的 QuickJS-ng（clang） |
-| native Bellard | 原生编译的 Bellard QuickJS（gcc） |
-| Goja | 纯 Go 实现的 JS 引擎 |
-
-![相对 native ng 的速度](docs/benchmark/charts/overview-speed.svg)
-
-| 套件 | goc-ng | goc-bellard | native ng | native Bellard | Goja | 怎么读 |
-|---|---:|---:|---:|---:|---:|---|
-| V8-v7 总分 | 1534 | 1781 | 1662 | 1988 | 377 | 分数，越高越快 |
-| SunSpider 几何平均（ms） | 11.18 | 9.39 | 10.99 | 8.24 | 61.49 | 时间，越低越快 |
-| microbench 几何平均（ns） | 46.7 | 35.5 | 42.9 | 31.4 | 152.1 | 时间，越低越快 |
-| 函数调用微基准（calls/ms） | 27907 | 27772 | 29096 | 31277 | 6828 | 分数，越高越快 |
-| test262 抽样通过 | 1502/1526 | 1501/1526 | 1502/1526 | 1501/1526 | 1453/1526 | |
-| QuickJS 官方测试 | 73/77 | 77/77 | 73/77 | 77/77 | 58/77 | |
-
-**正确性**：两个 goc 构建和各自的原生构建逐项结果完全一致。
-
-![正确性](docs/benchmark/charts/overview-correct.svg)
-
-**V8-v7 各子项**：
-
-![V8-v7](docs/benchmark/charts/v8.svg)
-
-| 子项 | goc-ng | goc-bellard | native ng | native Bellard | Goja |
-|---|---:|---:|---:|---:|---:|
-| Richards | 1034 | 1124 | 1088 | 1349 | 364 |
-| DeltaBlue | 1022 | 1083 | 1096 | 1268 | 374 |
-| Crypto | 987 | 1284 | 1049 | 1420 | 173 |
-| RayTrace | 2423 | 2627 | 2776 | 2948 | 385 |
-| EarleyBoyer | 2922 | 3059 | 3213 | 3574 | 653 |
-| RegExp | 493 | 622 | 548 | 659 | 322 |
-| Splay | 4307 | 4860 | 4889 | 5528 | 789 |
-| NavierStokes | 1962 | 2646 | 1959 | 2702 | 267 |
-| **总分** | **1534** | **1781** | **1662** | **1988** | **377** |
-
-**SunSpider 与 microbench**：
-
-![SunSpider](docs/benchmark/charts/sunspider.svg)
-
-![microbench](docs/benchmark/charts/micro-groups.svg)
-
-**函数调用微基准**：
-
-![microcall](docs/benchmark/charts/microcall.svg)
-
-**内存**（峰值 RSS，MiB；最后一行是每多一个 JS 运行时的增量，KiB）：
-
-![峰值 RSS](docs/benchmark/charts/mem-peak.svg)
-
-| 负载 | goc-ng | goc-bellard | native ng | native Bellard | Goja |
-|---|---:|---:|---:|---:|---:|
-| 空脚本 | 8.2 | 8.1 | 2.8 | 2.8 | 5.6 |
-| V8-v7 整套 | 164.4 | 155.8 | 155.6 | 146.9 | 1470.7 |
-| SunSpider（最大值） | 14.6 | 15.4 | 8.0 | 7.4 | 23.0 |
-| microbench | 10.7 | 10.5 | 4.5 | 4.3 | 567.3 |
-| 每多一个运行时（KiB） | 224 | 199 | 209 | 189 | 105 |
-
-![多实例](docs/benchmark/charts/mem-scaling.svg)
-
-goc 构建空载时比原生多出约 5.3 到 5.4 MiB。整套 V8 的峰值比值降到 1.06。
-
-goc 比原生慢的部分，主要来自为了遵守 Go 栈规则而多做的工作：栈检查、指针编解码、栈上的指针记录等。同一份 Bellard 源码用 clang -O2 编译时，goc-bellard 的 V8 是这份构建的 95%，SunSpider 慢 2%，microbench 慢 8%。2026-09-27 的机制研究在 [docs/perf-gap.md](docs/perf-gap.md)。当前分数、图表和测量方法在 [docs/benchmark.md](docs/benchmark.md)。
-
-## 架构
-
-```mermaid
-flowchart LR
-    A["C 源码"] --> B["改造的 Clang 前端<br/>检查、推断指针颜色"]
-    B --> C["LLVM 优化"]
-    C --> D["goc 后端<br/>栈检查、指针记录"]
-    D --> E["Go 目标文件"]
-    E --> F["Go 链接器<br/>和 Go 代码链接成一个程序"]
-```
-
-| 目录 | 作用 |
-|---|---|
-| `cmd/goc` | 命令行入口 |
-| `include/goc.h` | 指针颜色的写法 |
-| `clang/` | Clang 前端的修改 |
-| `llvm/` | goc 的 LLVM pass（颜色/逃逸变换、栈图插件）和 `goc-llc` |
-| `goobj/` | Go 侧的库：vendored 的 Go 目标文件写入器、Go ABI 降级 |
-| `tools/` | `goc` 流水线脚本、`gocobj2goobj`（`.gocobj` → Go 目标文件）、`goc-lower` |
-| `runtime/` | goc 运行时支持 |
-| `test/` | 测试，包括 QuickJS |
-| `bench/` | 基准测试和性能差距分析 |
-| `scripts/` | 构建、发布和测试脚本 |
-| `docs/` | 文档 |
-
-更多细节见 [ARCHITECTURE.md](ARCHITECTURE.md)。
-
-## 使用方法
-
-**依赖**：linux/amd64、Go 1.24+。发布包里已经带了打过补丁的 Clang。
-
-下载和最小例子在 [docs/quickstart.md](docs/quickstart.md)。
-
-```bash
-tar -xzf goc-0.0.2-linux-amd64.tar.gz
-cd goc-0.0.2-linux-amd64
-export PATH="$PWD/bin:$PATH"
-goc check
-goc go examples/hello -o /tmp/hello
-/tmp/hello
-```
-
-从这个仓库编出那个包见 [docs/build-from-source.md](docs/build-from-source.md)：
-
-```bash
-git clone https://github.com/LoyieKing/goc.git
-cd goc
-./scripts/build-clang.sh
-./scripts/build-passes.sh
-./cmd/goc check
-```
-
-**从 Go 调用 goc**：最小例子是 `examples/hello`。黄金测试在 `test/e2e/goabi`：
-
-```bash
-./test/e2e/goabi/run.sh
-```
-
-C 这边写普通函数，Go 这边写一个没有函数体的声明，就能直接调用：
-
-```c
-// goabi.c
-int goabi_add2(int a, int b) { return a + b; }
+int hello_add(int a, int b) { return a + b; }
 ```
 
 ```go
 // main.go
-func goabi_add2(a, b int32) int32
+func hello_add(a, b int32) int32           // 函数体在 add.c
 ```
-
-**编译 QuickJS**：
-
-```bash
-git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng
-./scripts/qjs-cli-build.sh       # 输出 build/qjs/qjscli
-```
-
-Bellard 版 QuickJS 放到 `third_party/quickjs-bellard` 后，用 `QJS_FLAVOR=bellard ./scripts/qjs-cli-build.sh` 编译。跑分脚本和方法见 [docs/benchmark.md](docs/benchmark.md)，每一步的细节和常见问题见 [docs/guide.md](docs/guide.md)。
-
-**目前的限制**：
-
-- 只支持 linux/amd64。
-- Go 调用 goc 的函数签名只支持基本类型、指针和小结构体。
-- 指向栈的指针只能在创建它的 goroutine 里使用。
-- goc 调用 Go 目前还需要手写调用代码。
-
-## 未来规划
-
-详见 [docs/todo.md](docs/todo.md)：
-
-- **开箱即用的 goc 编译器**：发布包是 goc 加打过补丁的 Clang（[docs/quickstart.md](docs/quickstart.md)）。`goc go` 和 `goc check` 用命令行参数。没有传入 clang 路径的参数。
-- **量化 goc 与 Go 互相调用的开销**：测出 Go 调 goc、goc 调 Go 每次调用的开销，并和 Go 调 Go、cgo 对比。
-- **QuickJS 直接使用 Go 的 GC**：JS 对象直接分配在 Go 堆上，交给 Go 的垃圾回收器回收。
-- **支持 linux/arm64。**
-- **goc 调用 Go**：像 Go 调用 goc 一样，只写声明就能调用。
-- **跨 goroutine 使用栈指针。**
-- **指针颜色的可视化和编辑器支持**：在编辑器里查看每个指针被推断成了什么颜色。
-- **继续缩小和原生 C 的性能差距。**
 
 ## 文档
 
-| 文档 | |
+| | |
 |---|---|
-| [docs/quickstart.md](docs/quickstart.md) | 下载发布包，直接用 `goc` |
-| [docs/build-from-source.md](docs/build-from-source.md) | 从仓库编出发布包 |
-| [docs/guide.md](docs/guide.md) | 使用指南 |
-| [docs/toolchain.md](docs/toolchain.md) | `goc go` 的参数，以及 clang 放在哪 |
-| [docs/syntax-guide.md](docs/syntax-guide.md) | 语言规则 |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 流水线、目录、pass 和工具 |
-| [docs/runtime-model.md](docs/runtime-model.md) | uptr 编码、alloca、不支持的内容 |
-| [docs/benchmark.md](docs/benchmark.md) | 跑分 |
-| [docs/perf-gap.md](docs/perf-gap.md) | 性能差距分析 |
-| [docs/todo.md](docs/todo.md) | 后续计划 |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献 |
+| [docs/quickstart.md](docs/quickstart.md) | 安装、第一个程序、参数、C 调用 Go |
+| [docs/language.md](docs/language.md) | 指针颜色和语言合同 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 流水线、目录、设计文档 |
+| [docs/build-from-source.md](docs/build-from-source.md) | 编 Clang、pass 和发布包 |
+| [docs/benchmark/README.md](docs/benchmark/README.md) | 五引擎对照和复现方法 |
+| [ports/quickjs/README.md](ports/quickjs/README.md) | 用 goc 编译和测试 QuickJS |
+| [docs/contributing.md](docs/contributing.md) · [CONTRIBUTING.md](CONTRIBUTING.md) | 测试、扩展、已知缺口 |
+| [docs/roadmap.md](docs/roadmap.md) | 还没做的事 |
 
-## License
+## 许可
 
-MIT — Copyright (c) 2026 Loyie King. 见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。
+MIT，见 [LICENSE](LICENSE)。打过补丁的 LLVM/Clang 是 Apache-2.0 WITH LLVM-exception，见 [NOTICE](NOTICE)。

@@ -1,4 +1,4 @@
-// Package convert turns a .gocobj (docs/gocobj-format.md) into a Go object
+// Package convert turns a .gocobj (docs/design/gocobj-format.md) into a Go object
 // file.
 //
 //	goc tool convert -in foo.gocobj -o foo.goobj [-p main] [-symabis foo.symabis]
@@ -16,7 +16,7 @@
 // The object is written by internal/goobj, driven by the target Go release's
 // facts (gometa): the release is `go env GOVERSION` of the go command in
 // PATH unless -goversion or -go-meta says otherwise
-// (docs/multi-go-version.md).
+// (docs/design/go-versions.md).
 package convert
 
 import (

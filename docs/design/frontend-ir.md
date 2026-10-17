@@ -1,6 +1,6 @@
-# 03 前端与 IR pass
+# 前端与 IR pass
 
-[← 02 走一遍](02-walkthrough.md) · [索引](../engineering-architecture.md) · [下一篇：goc-llc →](04-goc-llc.md)
+[← 走一遍](walkthrough.md) · [ARCHITECTURE](../../ARCHITECTURE.md) · [代码生成 →](codegen.md)
 
 ## 1. 前端：颜色怎么进 IR
 
@@ -14,15 +14,13 @@
 #define gptr(T) T *GOC_ANN_GPTR
 ```
 
-`GOC_ANN_*` 有两种展开：
-- 定义了 `GOC_USE_INTREE_ATTRS`（打补丁的 clang，驱动默认加）或 `GOC_USE_PLUGIN_ATTRS`（树外插件）→ 原生属性 `__attribute__((goc_cptr))` 等。
-- 都没定义 → `__attribute__((annotate("goc.color.cptr")))`，IR pass 也能读。
+`GOC_ANN_*` 只有一种展开：打过补丁的 clang 认识的原生属性 `__attribute__((goc_cptr))` 等。别的编译器不认识这些属性，`goc.h` 只给 goc 的 clang 用。
 
 没写颜色的裸 `T *` 等于 `auto_ptr`，由 IR pass 推断；`--default-ptr-color` 给推断不出来的指针一个默认色（产品默认 `cptr`）。
 
 ### 1.2 打补丁的 Clang 19.1.7（`clang/`）
 
-`scripts/build-clang.sh` 下载 LLVM 19.1.7，`scripts/apply-patches.sh` 打补丁，产物在 `third_party/llvm-19.1.7-clang-build`：
+`scripts/build-clang.sh` 下载 LLVM 19.1.7、打补丁，产物在 `third_party/llvm-19.1.7-clang-build`：
 
 | 补丁 / 文件 | 改了什么 |
 |---|---|
@@ -30,9 +28,8 @@
 | `clang/sema/SemaGocColors.cpp` | 复制到 `lib/Sema/`：(1) 把 `Goc*Attr` 镜像成 `AnnotateAttr("goc.color.*")`，CodeGen 因此产出 `llvm.var.annotation` / `llvm.global.annotations`；(2) 翻译单元结束时做 AST 级逃逸检查 |
 | `clang/patches/0003-mirror-goc-colors-before-codegen.patch` | `ParseAST.cpp`：在 `HandleTopLevelDecl` 前镜像（CodeGen 是增量的，等到 TU 结束就晚了） |
 | `clang/patches/0004-wire-sema-goc-colors.patch` | `CMakeLists.txt`、`Sema.h`、`Sema.cpp` 的接线 |
-| `clang/plugin/GocClangPlugin.cpp` | 同一套规则的树外插件（`goc test --plugin`），不是产品路径 |
 
-所以 **颜色进 IR 的载体是 annotate**（02 篇 §5 有真实输出），之后 `goc-color-escape` 把它们读出来变成 metadata。
+所以 **颜色进 IR 的载体是 annotate**（[walkthrough.md](walkthrough.md) §5 有真实输出），之后 `goc-color-escape` 把它们读出来变成 metadata。
 
 ## 2. `libGocPasses.so`：注册了什么
 
@@ -44,10 +41,10 @@
 | module | `print<goc-color>` | `GocColorPrinterPass`：在**克隆的模块**上跑 `runColorEscape(*Clone, &errs())`，只打印、不改 IR |
 | function | `goc-stackmap` `goc-reanchor` `goc-name-blocks` `goc-uptr-inline` | `goc::parseStackMapPass`（`llvm/lib/Transforms/StackMap/GocStackMap.cpp`） |
 
-`cmd/goc` 的调用顺序（`-O>0`）：
+`internal/pipeline` 的调用顺序（`-O>0`）：
 
 ```
-goc-color-escape            （GOC_COLOR_REPORT=1 时：print<goc-color>,goc-color-escape）
+goc-color-escape            （--color-report 时：print<goc-color>,goc-color-escape）
 goc-uptr-inline
 default<O3> 的文本管线去掉 ,argpromotion 和 ,globalopt  +  function(goc-name-blocks)
 goc-stackmap
@@ -62,12 +59,12 @@ goc-reanchor
 | `!goc.color !{!"sptr"\|"cptr"\|"uptr"…}` | 指令、alloca | 这个值的颜色 | color-escape 写；stackmap 读（`isSptrColored`） |
 | `!goc.prov !{!"stack"\|"cheap"…}` | 同上 | 来源 | color-escape 写 |
 | `!goc.uptr_encoded` | uptr 编码调用 | 这是 pass 插入的编码 | color-escape |
-| `!goc.root !{!"spill"\|"anchor"\|"arganchor"\|"pin"}` | pass 新建的 alloca | 槽的角色 | stackmap / reanchor / pin-i64 写，goc-llc 读 |
+| `!goc.root !{!"spill"\|"anchor"\|"arganchor"}` | pass 新建的 alloca | 槽的角色 | stackmap / reanchor 写，goc-llc 读 |
 | `!goc.slot !{i64 N}` + 函数上的 `!goc.nextslot` | alloca | 函数内唯一槽号 | 同上 |
 | `!goc.frame.words !{!"goc.frame.words", i64 N, i64 off…}` | 写入指令或 alloca | 槽 N 在这些偏移上的 8 字节字是指针 | reanchor / stackmap 写；goc-llc 的 `GocObjTables` 读成 `sptr_slots` |
 
 `llvm/include/Goc/SlotMD.h` 的原则：**pass 之间靠 metadata 认槽，不靠 IR 值名**，因为 Release 版 clang 会丢弃值名。
-（例外：`GocX86FrameAddrFix.cpp` 仍按名字找 `goc.oldfp`，见 07 篇。）
+（例外：`GocX86FrameAddrFix.cpp` 仍按名字找 `goc.oldfp`。pass 自己建的 alloca 名字在 Release 版 clang 下也保留，所以这不会出错，但和原则不一致，见 [roadmap.md](../roadmap.md)。）
 
 ## 4. `goc-color-escape`（module pass）
 
@@ -91,17 +88,16 @@ goc-reanchor
 ## 5. `goc-uptr-inline`（function pass，O3 前）
 
 `SMUptrInline.cpp`。goc 没有运行时库：`goc_stack_hi` / `goc_stack_lo`、`goc_uptr_*`（含 `_hi` 变体）和 `goc_dynalloc` / `goc_dynrelease` 的实现都在这里。
-这个 pass（`rewriteUptrCall`）把对它们的调用改成调用模块内新建的 `goc.inline.*` 帮助函数（`inlineStackBound`、`inlineUptrDecode`、`inlineUptrFromPtr`、`inlineUptrRequireCptr`、`inlineUptrConv`、`inlineDynAlloc*`），带 `alwaysinline` 函数体，O3 再内联掉；`-O0` 下也跑，留下的是模块内的 internal 函数。错 tag 调 `goc.uptr.fatal`（`write(2)` 一行消息再 trap）。见 `docs/design/uptr.md`。读 `g` 用 `tlsGWord`：amd64 是 `movq %fs:-8`，arm64 是 `mov x28`，标成 `readnone` 以便后面合并；
+这个 pass（`rewriteUptrCall`）把对它们的调用改成调用模块内新建的 `goc.inline.*` 帮助函数（`inlineStackBound`、`inlineUptrDecode`、`inlineUptrFromPtr`、`inlineUptrRequireCptr`、`inlineUptrConv`、`inlineDynAlloc*`），带 `alwaysinline` 函数体，O3 再内联掉；`-O0` 下也跑，留下的是模块内的 internal 函数。错 tag 调 `goc.uptr.fatal`（`write(2)` 一行消息再 trap）。见 [runtime.md](runtime.md) §4。读 `g` 用 `tlsGWord`：amd64 是 `movq %fs:-8`，arm64 是 `mov x28`，标成 `readnone` 以便后面合并；
 `stack.lo` / `stack.hi` 的加载保持 `volatile`（它们只在调用里变，但 O3 证明为 readonly 的调用里也可能搬栈）。
-`GOC_INLINE_DYNALLOC=1` 时 alloca 走每个对象一个的 16 MiB BSS 池（内联指针碰撞，单 goroutine 限定）；否则每次 `malloc` / `free`。
-名字是历史遗留：它不再限制内联（`cmd/goc` 注释写作「goc-uptr-inline is a no-op: call-bearing functions may inline」，指的就是这一点），含调用的函数照样可以被内联。
+`--fast-stack-alloca`（pass 参数 `-goc-fast-stack-alloca`）时 alloca 走每个对象一个的 16 MiB BSS 池（内联指针碰撞，单 goroutine 限定）；否则每次 `malloc` / `free`。
 
 ## 6. O3 + `goc-name-blocks`
 
-`cmd/goc` 用 `opt -passes=default<O3> -print-pipeline-passes` 取出文本管线，再删掉 `,argpromotion` 和 `,globalopt`：
+`internal/pipeline` 用 `opt -passes=default<O3> -print-pipeline-passes` 取出文本管线，再删掉 `,argpromotion` 和 `,globalopt`：
 这两个会把内部函数改成 fastcc、减少参数，栈图按 SysV 出参区建模，改了就对不上。
 `goc-name-blocks` 给所有没名字的、被取地址的基本块命名：LLVM 19 的 `.ll` 读取器会把同一张表里一个编号块和一个命名块合并（QuickJS 的 computed goto 表会触发）。
-`GOC_OPT_EXTRA` 追加 opt 参数（文本管线不带 `default<O3>` 的内联阈值 250，见 `docs/perf-gap.md`）。
+`--opt-extra` 追加 opt 参数（文本管线不带 `default<O3>` 的内联阈值 250，见 [research/perf-gap.md](../research/perf-gap.md)）。
 
 **关键约束**：内联必须发生在栈图之前。栈图记录在合并后的帧上；栈图之后再内联，调用者没法重定位被调用者已经发出的帧偏移和 stackmap ID。
 
@@ -114,7 +110,7 @@ goc-reanchor
 2. `stackAddresses`：找出栈派生的值（alloca、alloca 的 GEP、从存着这些地址的槽里 load 出来的值），以及「调用者传进来的实参是 alloca」的形参。
 3. 只看**指针类型**的非 alloca 值：带 sptr 颜色、或栈派生。整型不报（槽里放的小整数会让运行时报 `bad pointer in frame`）。
 4. 对跨 safepoint 存活的这种值（`CrossCallLiveness`：后向传播，不能只看支配关系），建 `goc.spill.root` 槽，定义处 volatile 存，每个 safepoint 前插 `llvm.experimental.stackmap(ID, 0, 槽地址…)`，之后 volatile 重读。
-5. 帧地址（alloca + 常量偏移）不进根槽，而是在 safepoint 之后 `rematFrameAddress` 重新计算成 GEP（最后由 goc-llc 的帧地址修复兜底，见 04 篇）。
+5. 帧地址（alloca + 常量偏移）不进根槽，而是在 safepoint 之后 `rematFrameAddress` 重新计算成 GEP（最后由 goc-llc 的帧地址修复兜底，见 [codegen.md](codegen.md)）。
 
 - **输入**：O3 之后的 IR。
 - **输出**：根槽 + stackmap 调用；stackmap ID 高 32 位是 `GocStackMapTag = 0x474f430000000000`（ASCII "GOC"）。
@@ -125,7 +121,7 @@ goc-reanchor
 
 `SMReanchor.cpp`。处理 `goc-stackmap` 没覆盖的栈地址：
 
-- **指针实参**：建 `goc.arganchor`，入口存、stackmap 记、safepoint 后重读（02 篇 §3.2 的例子）。即使本 TU 证明不了实参是栈地址也照做——调用者可能传自己帧里的地址（例如 goroutine 栈上的 Go slice）。堆指针放在被标记的槽里没关系：Go 只改落在旧栈范围内的值。
+- **指针实参**：建 `goc.arganchor`，入口存、stackmap 记、safepoint 后重读（[walkthrough.md](walkthrough.md) §3.2 的例子）。即使本 TU 证明不了实参是栈地址也照做——调用者可能传自己帧里的地址（例如 goroutine 栈上的 Go slice）。堆指针放在被标记的槽里没关系：Go 只改落在旧栈范围内的值。
 - **存着 `&s->token` 这类地址的局部槽**：打 `!goc.frame.words` 标签（`goc.anchor`），让搬栈改写槽里存的指针。
 - **`goc.oldfp`**：给每个函数建一个 i64 槽，goc-llc 的 `GocX86FrameAddrFix` 在调用前把 RBP 存进去，调用后用 `RBP - goc.oldfp` 算搬动距离。它不在任何栈图里，所以搬栈时原样复制。
 - `unmergeReportedAllocas`、`addOldFramePointerSlot` 总是运行（`asm` 帧地址模式已删除）。
@@ -134,14 +130,40 @@ goc-reanchor
 
 ## 9. `-O0` 路径的差别
 
-`cmd/goc` 在 `-O0` 时只跑 `goc-color-escape`，**不跑** uptr-inline / O3 / goc-stackmap / goc-reanchor，`GOC_STACKMAP_PREPARED=0`；
-`realbody.sh` 看到没准备好，会自己补跑一次 `goc-stackmap`（但不跑 `goc-reanchor`）。`goc build` 的默认就是 `-O0`。
+`-O0` 时前端（`internal/pipeline` 的 `frontend`）跑 `goc-color-escape` 和 `goc-uptr-inline`，**不跑** O3 / goc-stackmap / goc-reanchor；
+后端（`backend`）看到栈图还没做，在 Go ABI 改写之后补跑一次 `goc-stackmap`（不跑 `goc-reanchor`）。`goc build` 的默认就是 `-O0`。
 
 ## 10. 想看一个 pass 的效果
 
 ```bash
 opt -load-pass-plugin=build/llvm/libGocPasses.so -passes=goc-color-escape -S in.ll -o out.ll
 opt -load-pass-plugin=build/llvm/libGocPasses.so -passes='print<goc-color>' -disable-output in.ll   # 需要 -g 的 IR
-test/color-escape/color-escape.sh in.ll -o out.ll        # 测试用包装（GOC_COLOR_REPORT=1 先打印报表）
-GOC_KEEP_TMP=1 ./cmd/goc build foo.c -o out/foo.goobj -O3  # 保留 a.*.ll 每一步
+bin/goc build foo.c -o out/foo.goobj -O3 --keep-tmp=/tmp/k   # 保留 /tmp/k/a.*.ll 每一步
+bin/goc build foo.c -o out/foo.goobj --color-report           # 打印颜色报表
 ```
+
+## 11. 颜色在 IR 里的表示（速查）
+
+| 源码 | 机制 |
+|---|---|
+| `cptr(T)` / `sptr(T)` / `uptr(T)` / `auto_ptr(T)` / `gptr(T)` | `T *` + 原生属性，Sema 镜像成 `annotate("goc.color.<名字>")` |
+| 裸 `T *` | 等于 `auto_ptr`（没有 annotate，pass 推断） |
+| `goc_uptr_from_sptr` / `from_cptr` / `as_*` | pass 认识的具名 builtin（`include/goc_uptr.h`） |
+
+Clang 19 产出：
+
+- 局部变量：`call void @llvm.var.annotation(..., "goc.color.sptr", ...)`
+- 结构体字段（在 GEP 上）：`call ptr @llvm.ptr.annotation(..., "goc.color.uptr", ...)`
+- 全局变量：`@llvm.global.annotations` 的条目
+
+`goc-color-escape` 之后：指令上的 `!goc.color !{!"sptr"}`（以及 `cptr`/`uptr`/`gptr`/`auto`），可选的 `!goc.prov !{!"stack"|"cheap"|"goheap"}`，来自 `goc_uptr_from_*` 的值带 `!goc.uptr_encoded`。
+
+强制的逃逸规则（`CECheck.cpp`）：
+
+1. `sptr` / 原始栈来源存进非栈位置：报错（隐式 `T *` 槽除外，改成 uptr 编码）。
+2. 返回栈指针：报错。
+3. 往 `uptr` 字段存未编码的值：报错。
+4. `gptr` 与 `cptr`/`sptr`/`uptr`/`auto` 互存：报错。
+5. 只在栈上用的 `auto_ptr` 字段 / 局部变量收成 `sptr`，不强制 uptr。
+
+产品路径在这个 pass 之后不再读 `!goc.color`：`libGocPasses.so` 在调用点记录活的 sptr 槽，goc-llc 把这些记录写成 `.goc.gcmaps` 位图，最后成为 Go 的栈图。

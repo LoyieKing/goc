@@ -159,7 +159,7 @@ jobs:
     needs: toolchain
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # Every supported Go release is required (docs/multi-go-version.md).
+    # Every supported Go release is required (docs/design/go-versions.md).
     # One goc tool convert serves them all from the facts in internal/gometa/data; the
     # toolchain job above does not depend on Go. The repository's tools need
     # go1.23 to build: for an older release a second Go builds them
@@ -254,7 +254,7 @@ jobs:
 
       # The release facts goc tool convert embeds must be what the resolver reads
       # from this GOROOT (a newer patch release may only change
-      # source_version; any other change needs review: docs/go-metadata-schema.md).
+      # source_version; any other change needs review: docs/design/go-versions.md §12).
       - name: internal/gometa/data is what the resolver reads
         run: |
           m="$(go env GOVERSION | cut -d. -f1,2)"

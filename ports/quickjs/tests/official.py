@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bellard QuickJS tests/ run one function per process (docs/benchmark.md).
+"""Bellard QuickJS tests/ run one function per process (docs/benchmark/README.md).
 
 Files: test_language.js test_closure.js test_loop.js test_bigint.js
 test_builtin.js from bellard/quickjs 2026-06-04 (pass --tests DIR). For every

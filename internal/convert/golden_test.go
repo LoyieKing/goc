@@ -15,7 +15,7 @@ import (
 // testdata/golden holds .gocobj files and the objects the old converter
 // (built against each release's cmd/internal/obj writer, go1.23-1.27) or,
 // for go1.18-1.22, this converter when those releases were added (checked
-// with gocobj-diff against go1.23 and by linking: docs/multi-go-version.md)
+// with goc tool objdump diff against go1.23 and by linking: docs/design/go-versions.md)
 // made of them. The converter must reproduce them byte for byte. arm64 has
 // goldens from go1.21, the first release goc supports it on.
 func TestGolden(t *testing.T) {
@@ -60,7 +60,7 @@ func TestGolden(t *testing.T) {
 			}
 			got, _ := os.ReadFile(out)
 			if !bytes.Equal(got, want) {
-				t.Errorf("%s %s: object differs from golden (inspect with goc-objdump diff)", ver, name)
+				t.Errorf("%s %s: object differs from golden (inspect with goc tool objdump diff)", ver, name)
 			}
 			wantSA, _ := os.ReadFile(filepath.Join(vdir, name+".symabis"))
 			if c.symabis() != string(wantSA) {

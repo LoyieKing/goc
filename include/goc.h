@@ -1,4 +1,4 @@
-/* goc.h — pointer colors for goc's patched Clang (docs/syntax-guide.md v0.2.1)
+/* goc.h — pointer colors for goc's patched Clang (docs/language.md)
  *
  * The colors are native attributes of the patched Clang (clang/patches,
  * clang/sema/SemaGocColors.cpp): __attribute__((goc_cptr|goc_sptr|goc_uptr|
@@ -55,7 +55,7 @@ uintptr_t goc_stack_hi(void);
 uintptr_t goc_stack_lo(void);
 bool goc_stack_check(size_t need);
 
-/* alloca(n) lowering (syntax-guide §7.2). Compiler-inserted. Result is cptr,
+/* alloca(n) lowering (docs/language.md §7.2). Compiler-inserted. Result is cptr,
  * not a goroutine-stack sptr. scope is the function watermark. */
 goc_cptr goc_dynalloc(size_t bytes, void **scope);
 void goc_dynrelease(void **scope);

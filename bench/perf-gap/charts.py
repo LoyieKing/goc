@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw docs/perf-gap/charts/*.svg from docs/perf-gap/data/*.json.
+"""Draw docs/research/charts/*.svg from docs/perf-gap/data/*.json (docs-data branch).
 
 All chart text is English (the doc prose is Chinese). Needs matplotlib.
 Charts whose input file is missing are skipped.
@@ -14,7 +14,7 @@ import matplotlib.ticker  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DD = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "docs/perf-gap/data")
-OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "docs/perf-gap/charts")
+OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "docs/research/charts")
 save = saver(OUT)
 DATE = "2026-09-27"
 BUILDS = ["gcc-O2", "clang-O2", "clang-O3", "clang-O3-gocflags", "goc"]

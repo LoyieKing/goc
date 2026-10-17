@@ -113,7 +113,7 @@ struct SptrTarget {
   bool operator==(const SptrTarget &O) const { return Alloca == O.Alloca && Off == O.Off; }
 };
 
-// .goc.funcs flag bits (docs/gocobj-format.md).
+// .goc.funcs flag bits (docs/design/gocobj-format.md).
 enum : uint64_t {
   FlagInternal = 1u << 5,
   FlagHasSptr = 1u << 6,

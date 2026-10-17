@@ -1,47 +1,11 @@
-# Third-party dependencies (fetch only — not vendored)
+# third_party
 
-This directory is intentionally empty of large blobs. Fetch and build locally;
-paths under `third_party/` are gitignored except this README.
+Nothing here is in git except this file. Everything below is fetched or built locally and is gitignored.
 
-## LLVM / Clang 19.1.7
+| Path | What | How to get it |
+|---|---|---|
+| `llvm-19.1.7-clang-build/` | The patched Clang 19.1.7 and its LLVM tools | `scripts/build-clang.sh` downloads, patches and builds it ([docs/build-from-source.md](../docs/build-from-source.md)) |
+| `quickjs-ng/` | QuickJS-ng (optional) | `git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng` |
+| `quickjs-bellard/` | Bellard's QuickJS (optional) | unpack the pristine `quickjs-2026-06-04.tar.xz` from <https://bellard.org/quickjs/> and rename the directory |
 
-```bash
-# Source tarball (example)
-curl -L -o llvmorg-19.1.7.tar.gz \
-  https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.7.tar.gz
-tar xf llvmorg-19.1.7.tar.gz
-# Expect directory: llvm-project-llvmorg-19.1.7  or rename to llvm-project-19.1.7
-
-export LLVM_SRC=$PWD/llvm-project-19.1.7   # adjust name
-$GOC_ROOT/scripts/apply-patches.sh "$LLVM_SRC"
-# Then cmake/ninja as in ../clang/README.md
-```
-
-Host tools also useful from distro packages: `clang-19`, `llc-19`,
-`llvm-config-19`, `cmake`, `ninja-build`.
-
-## quickjs-ng (optional)
-
-```bash
-git clone https://github.com/quickjs-ng/quickjs.git third_party/quickjs-ng
-```
-
-Do **not** commit the cloned tree. `ports/quickjs/build.sh` builds it with
-`JS_NAN_BOXING=0`.
-
-## Bellard QuickJS (optional, `--flavor bellard`)
-
-```bash
-curl -LO https://bellard.org/quickjs/quickjs-2026-06-04.tar.xz
-tar xf quickjs-2026-06-04.tar.xz
-mv quickjs-2026-06-04 third_party/quickjs-bellard
-ports/quickjs/build.sh --flavor bellard   # -> build/qjs-bellard/qjscli
-```
-
-Unpack the pristine release; `ports/quickjs/build.sh` applies
-`ports/quickjs/patches/bellard-gstack.patch` itself. Do **not** commit the tree.
-
-## CMake
-
-Any recent CMake ≥ 3.20 works. You may unpack an official binary under
-`third_party/cmake-*-linux-x86_64/` (gitignored) if your OS package is too old.
+`ports/quickjs/build.sh` applies its own patches to the QuickJS trees; do not commit them. See [ports/quickjs/README.md](../ports/quickjs/README.md).

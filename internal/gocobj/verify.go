@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// Verify checks the invariants listed in docs/gocobj-format.md and returns
+// Verify checks the invariants listed in docs/design/gocobj-format.md and returns
 // every violation found (nil means the file is valid).
 func Verify(f *File) []error {
 	var errs []error

@@ -2,10 +2,10 @@
 //
 // The few Go runtime facts that generated code has to match. Everything else
 // in a .gocobj is Go-version independent. A .gocobj records the profile name in
-// its .goc.header; gocobj2goobj refuses a profile it was not built for.
+// its .goc.header; the converter refuses a profile it was not built for.
 //
 // One profile covers every Go release whose facts are equal: goabi1 is
-// go1.23 through go1.27 (docs/go-version-diffs.md).
+// go1.23 through go1.27 (docs/design/go-versions.md §11).
 // cmd/goc-gometa reads these facts from a GOROOT into
 // internal/gometa/data, and internal/convert picks the profile from them, so a new Go release
 // needs no change here unless it moves one of them.

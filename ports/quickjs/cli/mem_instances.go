@@ -7,7 +7,7 @@
 //	qjsmem --mem-instances N
 //
 // Starts N goroutines. Each one owns a QuickJS runtime and context, evaluates
-// bench/qjsmem/instance.js, then stays blocked with the runtime alive. The
+// ports/quickjs/cli/instance.js, then stays blocked with the runtime alive. The
 // runtimes are created one after another: the goc libc shim heap has no
 // locks, so two goroutines must never be inside QuickJS at the same time.
 // Once all N are parked it prints one JSON line with process RSS

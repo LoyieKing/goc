@@ -11,7 +11,7 @@ follows LLVM's. Two products: `libGocPasses.so` (every IR pass, loaded with
 | `include/Goc/Internal/` | State shared by the files of one pass family (`ColorEscape.h`, `StackMap.h`); not an API |
 | `lib/Analysis/GocColor/` | Pointer-color seeding and propagation (`ColorAnalysis.cpp`) and the `print<goc-color>` table (`ColorPrinter.cpp`) |
 | `lib/Analysis/StackMap/` | Read-only safepoint, liveness and stack-address queries used by the stack-map passes |
-| `lib/Transforms/ColorEscape/` | IR pass `goc-color-escape`: escape checks, implicit uptr encode/decode, dynamic alloca lowering, metadata |
+| `lib/Transforms/ColorEscape/` | IR pass `goc-color-escape`: escape checks, implicit uptr encode/decode, dynamic alloca lowering, metadata. A raw `sptr` return is a compile error; there is no `dsptr` ([docs/language.md](../docs/language.md), [docs/design/frontend-ir.md](../docs/design/frontend-ir.md)) |
 | `lib/Transforms/StackMap/` | IR passes `goc-stackmap`, `goc-reanchor`, `goc-uptr-inline`, `goc-name-blocks`: stack-map roots and frame-address rematerialization |
 | `lib/Plugin/` | `libGocPasses.so`: registers the passes above, plus `print<goc-color>` |
 | `lib/CodeGen/` | Target-independent machine passes: the Go stack check and `GocStackmapPlacement` |
@@ -27,5 +27,5 @@ opt -load-pass-plugin=build/llvm/libGocPasses.so -passes=goc-color-escape -S in.
 opt -load-pass-plugin=build/llvm/libGocPasses.so -passes='print<goc-color>' -disable-output in.ll  # needs -g IR
 ```
 
-The pipeline that strings these together is in `../ARCHITECTURE.md`;
-FileCheck tests are in `../test/lit`.
+The pipeline that strings these together is in [ARCHITECTURE.md](../ARCHITECTURE.md);
+FileCheck tests are in [test/lit](../test/lit).

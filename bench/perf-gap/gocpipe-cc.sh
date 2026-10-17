@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compiler wrapper for docs/perf-gap.md: a *native* build through goc's
+# Compiler wrapper for docs/research/perf-gap.md: a *native* build through goc's
 # optimization pipeline and codegen flags, without the goc runtime (no uptr
 # coloring, no morestack prologue, no Go ABI thunks, no libc shim).
 #
@@ -40,14 +40,14 @@ t="$(mktemp -d)"; trap 'rm -rf "$t"' EXIT
 # glibc's SSE spills (movaps) need the SysV 16-byte alignment at every call.
 # Intermediates stay bitcode: with a textual .ll between opt and codegen this
 # Bellard build crashed deterministically on the V8 file (the .ll printed from
-# a working .bc also crashed; see docs/perf-gap.md, caveats).
+# a working .bc also crashed; see docs/research/perf-gap.md, caveats).
 PIPELINE="$("$OPT" "-passes=default<O3>" -print-pipeline-passes -disable-output /dev/null)"
 PIPELINE="${PIPELINE//,argpromotion/}"
 PIPELINE="${PIPELINE//,globalopt/}"
 # GOCPIPE_PIPELINE=default: plain -passes=default<O3> (bisecting aid)
 [[ "${GOCPIPE_PIPELINE:-}" == default ]] && PIPELINE="default<O3>"
 # GOCPIPE_OPT_EXTRA: e.g. -inline-threshold=250 (the textual pipeline drops
-# default<O3>'s inliner threshold; see docs/perf-gap.md)
+# default<O3>'s inliner threshold; see docs/research/perf-gap.md)
 # shellcheck disable=SC2086
 "$OPT" "-passes=$PIPELINE" ${GOCPIPE_OPT_EXTRA:-} "$t/a.bc" -o "$t/b.bc"
 LLC=llc-19

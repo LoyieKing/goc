@@ -1,22 +1,19 @@
-# 02 走一遍：从 add.c 到二进制
+# 走一遍：从 add.c 到二进制
 
-[← 01 总览](01-overview.md) · [索引](../engineering-architecture.md) · [下一篇：IR pass →](03-ir-passes.md)
+[ARCHITECTURE](../../ARCHITECTURE.md) · [前端与 IR pass →](frontend-ir.md)
 
-本篇所有输出都是在 efe840d 上实际跑出来的（x86-64 Linux，Go 1.24）。复现方法：
+本篇所有输出都是用 `bin/goc`（Go 版 CLI）实际跑出来的（x86-64 Linux，Go 1.24）。复现方法：
 
 ```bash
 # 产品路径：一条命令编整个包
-./cmd/goc go examples/hello -o /tmp/hello && /tmp/hello        # → hello 42
+bin/goc go examples/hello -o /tmp/hello && /tmp/hello        # → hello 42
 
-# 单文件，保留中间产物（cmd/goc 一个临时目录，realbody.sh 一个目录）
-GOC_KEEP_TMP=/tmp/rb GOC_OPT_LEVEL=3 GOC_DEFAULT_PTR_COLOR=cptr \
-  ./cmd/goc build foo.c -o out/foo.goobj
-#   stderr 打印 "goc build: kept /tmp/tmp.XXXX"：a.ll a.color.ll a.gate.ll a.opt.ll a.sm.ll a.reanchor.ll
-#   /tmp/rb：body.ll body.impl.ll thunks.s thunks.goc.s goabi.json body.s body.goc.s body.thunks.s body.llc.o
+# 单文件，保留中间产物
+bin/goc build foo.c -o out/foo.goobj -O3 --default-ptr-color cptr --keep-tmp=/tmp/k
+#   /tmp/k：a.ll a.color.ll a.gate.ll a.opt.ll a.sm.ll a.reanchor.ll
+#           body.ll body.impl.ll thunks.s thunks.goc.s goabi.json body.s body.goc.s body.thunks.s body.llc.o
 #   out/：foo.goobj foo.gocobj foo.symabis foo.ll
 ```
-
-> 注意：`-o` 的目录必须已存在，否则最后一步 `gocobj2goobj` 报 `open …: no such file or directory`。
 
 ## 1. 产品路径：`goc go examples/hello`
 
@@ -38,25 +35,32 @@ func main() {
 }
 ```
 
-`scripts/goc-go.sh` 做的事（按顺序）：
+`goc go`（`cmd/goc/gocmd.go`）做的事（按顺序）：
 
-1. `goc_isolate_product_env` 清掉继承的 `GOC_*`，`goc_product_defaults` 设 `GOC_OPT_LEVEL=3`、`GOC_DEFAULT_PTR_COLOR=cptr`、`GOC_INLINE_DYNALLOC=1`。
-2. 检查 `go env GOOS/GOARCH` 是 `linux/amd64`。
+1. 默认参数 `-O3 --default-ptr-color cptr --fast-stack-alloca`，命令行可以覆盖。goc 不读任何 `GOC_*` 环境变量。
+2. `GOOS=linux`，`GOARCH` 取 `--arch`（默认 amd64），`CGO_ENABLED=0`。
 3. 包里没有 `.s` 时写一个 `goc_marker_amd64.s`（只有一个 `TEXT ·gocMarker`）。Go 只有在包里有汇编文件时才接受无体声明。
-4. 对每个 `*.c` 调 `cmd/goc build src -o build/goc-go/<hash>/<base>.goobj <flags>`。
-5. `GOC_BINOBJ=<所有 .goobj>`，然后 `CGO_ENABLED=0 go build -a -toolexec tools/goc/toolexec_recognize_goobj.sh`。
+4. 对每个 `*.c` 在进程内跑一遍 `goc build` 的管线，输出到 `build/goc-go/<hash>/<base>.goobj`。
+5. `go build -a -toolexec "goc toolexec -pkg main <所有 .goobj> --"`。
 
-实际日志（节选）：
+实际日志：
 
 ```
-goc-color-escape: summary: 0 error(s), scoped dynamic allocas=0, implicit uptr stores=0, decoded pointer loads=0, guarded returns=0 in module '/tmp/tmp.QDOl4KPpTz/a.ll'
+goc go: -O3 --default-ptr-color cptr --fast-stack-alloca --pkg main
+goc go: wrote /tmp/wt/hello/goc_marker_amd64.s
+goc go: compile /tmp/wt/hello/add.c
+goc build: clang=/workspace/goc/third_party/llvm-19.1.7-clang-build/bin/clang
+goc-color-escape: default-ptr-color=cptr
+goc-color-escape: summary: 0 error(s), scoped dynamic allocas=0, implicit uptr stores=0, decoded pointer loads=0, guarded returns=0 in module '/tmp/goc-build4011883560/a.ll'
 goc build: O3 inlined before stack maps
 realbody: override-stack-alignment=8 (no aligned SSE on the C stack)
 goabi: 1 rewritten, 0 left SysV-only
-realbody: wrote /workspace/goc/build/goc-go/0cfdae83286705bf/add.goobj (encoding=clang-real-isel, TEXT syms=2)
+goc build: wrote /workspace/goc/build/goc-go/98af4de2ac0aff45/add.goobj
+# goc.local/hello
 toolexec: appended goc symabis from add.symabis
+# goc.local/hello
 toolexec: packed add.goobj into $WORK/b001/_pkg_.a
-goc go: /workspace/archtrace/hello/hello
+goc go: /tmp/wt/hello.bin
 hello 42
 ```
 
@@ -64,44 +68,44 @@ hello 42
 
 ### 2.1 clang → `a.ll`
 
-`cmd/goc` 的 clang 参数（`cmd_build`）：`-mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables -I include -emit-llvm -S -O3`，
-`-O>0` 时再加 `-fwrapv -fno-strict-aliasing -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fno-optimize-sibling-calls -Xclang -disable-llvm-passes`，以及 `-gline-tables-only` 和 `-DGOC_USE_INTREE_ATTRS`。
+`internal/pipeline` 的 clang 参数（`frontend`）：`-mno-red-zone -fno-stack-protector -fno-asynchronous-unwind-tables -I include -emit-llvm -S -O3 -gline-tables-only`，
+`-O>0` 时再加 `-fwrapv -fno-strict-aliasing -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fno-optimize-sibling-calls -Xclang -disable-llvm-passes`。
 
 为什么：
 - **不要红区**：红区是 SP 下面 128 字节「不用调整 SP 就能用」的区域；Go 的抢占信号和搬栈都不认它。
-- **`-disable-llvm-passes`**：clang 只出未优化 IR。颜色分析必须在 SROA/内联之前看到原始的指针存储；O3 由 `cmd/goc` 自己之后跑。
-- **保留帧指针**：goc 的栈图用 `BP - off` 描述槽（见 05 篇 `sptr_slots`）。
+- **`-disable-llvm-passes`**：clang 只出未优化 IR。颜色分析必须在 SROA/内联之前看到原始的指针存储；O3 由 `internal/pipeline` 自己之后跑。
+- **保留帧指针**：goc 的栈图用 `BP - off` 描述槽（见 [objects-link.md](objects-link.md) 的 `sptr_slots`）。
 
 ```llvm
-define dso_local i32 @hello_add(i32 noundef %a, i32 noundef %b) #0 !dbg !9 {
-entry:
-  %a.addr = alloca i32, align 4
-  %b.addr = alloca i32, align 4
-  store i32 %a, ptr %a.addr, align 4
-  store i32 %b, ptr %b.addr, align 4
-  %0 = load i32, ptr %a.addr, align 4, !dbg !13
-  %1 = load i32, ptr %b.addr, align 4, !dbg !14
-  %add = add i32 %0, %1, !dbg !15
-  ret i32 %add, !dbg !16
+define dso_local i32 @hello_add(i32 noundef %0, i32 noundef %1) #0 !dbg !9 {
+  %3 = alloca i32, align 4
+  %4 = alloca i32, align 4
+  store i32 %0, ptr %3, align 4
+  store i32 %1, ptr %4, align 4
+  %5 = load i32, ptr %3, align 4, !dbg !12
+  %6 = load i32, ptr %4, align 4, !dbg !13
+  %7 = add i32 %5, %6, !dbg !14
+  ret i32 %7, !dbg !15
 }
 ```
+
+Release 版 clang 不保留 IR 值名，所以参数和局部变量都是编号（`%0`、`%3`）。pass 之间靠 metadata 认槽，不靠名字。
 
 ### 2.2 opt 各 pass → `a.reanchor.ll`
 
 没有指针、没有调用，`goc-color-escape`/`goc-stackmap`/`goc-reanchor` 都没东西可做，O3 把它化简成：
 
 ```llvm
-define dso_local noundef i32 @hello_add(i32 noundef %a, i32 noundef %b) #0 !dbg !10 {
-entry:
-  %add = add i32 %b, %a, !dbg !14
-  ret i32 %add, !dbg !15
+define dso_local noundef i32 @hello_add(i32 noundef %0, i32 noundef %1) #0 !dbg !10 {
+  %3 = add i32 %1, %0, !dbg !13
+  ret i32 %3, !dbg !14
 }
 ```
 
-### 2.3 `goc-lower goabi`：改名 + 生成 thunk
+### 2.3 Go ABI 改写：改名 + 生成 thunk
 
-`realbody.sh` 调 `goc-lower goabi body.ll body.impl.ll thunks.s goabi.json thunks.goc.s`：C 本体改名为 `hello_add.impl`（SysV 调用约定），
-另生成一个叫 `hello_add` 的 **Go ABIInternal 入口**（`goobj/lower/goabi_x86.go`）。Go 的 ABIInternal 第 1、2 个整数参数在 RAX、RBX，SysV 在 RDI、RSI：
+`internal/pipeline` 调 `lower.WriteGoABI(body.ll → body.impl.ll, thunks.s, goabi.json, thunks.goc.s)`：C 本体改名为 `hello_add.impl`（SysV 调用约定），
+另生成一个叫 `hello_add` 的 **Go ABIInternal 入口**（`internal/lower/goabi_x86.go`）。Go 的 ABIInternal 第 1、2 个整数参数在 RAX、RBX，SysV 在 RDI、RSI：
 
 ```asm
 # Go 1.24 ABIInternal -> SysV entry thunks — generated
@@ -138,15 +142,16 @@ hello_add.impl:                         # @hello_add.impl
 .Lgoc_end0:
 ```
 
-### 2.5 `.gocobj`：用 `goc-objdump` 看
+### 2.5 `.gocobj`：用 `goc tool objdump` 看
 
 ```
-$ go run ./tools/goc-objdump dump out/add.gocobj
+$ goc tool objdump dump out/add.gocobj
 gocobj 1.4 arch=1 flags=0x1 profile="goabi1-amd64" producer="goc-llc (LLVM 19.1.7)"
-file 0 /workspace/archtrace/add.c
-func hello_add.impl size=9 frame=8 args=0 abi=0 kind=0 flags=0xe id=0 file=0 line=3 sysvptr=0x0
+file 0 add.c
+file 1 /tmp/wt/add.c
+func hello_add.impl size=9 frame=8 args=0 abi=0 kind=0 flags=0xe id=0 file=1 line=3 sysvptr=0x0
   pcvalue SP_DELTA: 0=8
-  pcvalue FILE: 0=0
+  pcvalue FILE: 0=1
   pcvalue LINE: 0=3
 func hello_add size=25 frame=8 args=8 abi=1 kind=1 flags=0xc id=0 file=0 line=0 sysvptr=0x0
   pcvalue SP_DELTA: 0=0 1=8 23=8 24=0
@@ -163,16 +168,16 @@ func hello_add size=25 frame=8 args=8 abi=1 kind=1 flags=0xc id=0 file=0 line=0 
 
 ```
 $ go tool nm out/add.goobj | grep -E ' T |R gcl'
-     7df R gclocals.goc.main.hello_add.args
-     7e8 R gclocals.goc.main.hello_add.locals
-     7c6 T main.hello_add
-     7bd T main.hello_add.impl
+     7f4 R gclocals.goc.main.hello_add.args
+     7fd R gclocals.goc.main.hello_add.locals
+     7db T main.hello_add
+     7d2 T main.hello_add.impl
 $ cat out/add.symabis
 def main.hello_add.impl ABI0
 def main.hello_add ABIInternal
 ```
 
-`-p main` 让符号带上包前缀 `main.`。`symabis` 告诉 Go 的 asm/compile：`main.hello_add` 是 ABIInternal 定义，于是 `main.go` 里的无体声明直接链到它，不再要 ABI 包装。
+`--pkg main`（转换器的 `-p`）让符号带上包前缀 `main.`。`symabis` 告诉 Go 的 asm/compile：`main.hello_add` 是 ABIInternal 定义，于是 `main.go` 里的无体声明直接链到它，不再要 ABI 包装。
 
 ## 3. 逐阶段：带调用和栈指针的 `call.c`
 
@@ -205,26 +210,24 @@ int sum2(void) {
 `a.color.ll` 里（`--default-ptr-color cptr`）：
 
 ```llvm
-define dso_local i32 @sum2() #2 {
-entry:
-  %x = alloca i32, align 4, !goc.color !22, !goc.prov !23   ; !22 = !{!"sptr"}  !23 = !{!"stack"}
+define dso_local i32 @sum2() #1 !dbg !26 {
+  %1 = alloca i32, align 4, !goc.color !27, !goc.prov !14   ; !27 = !{!"sptr"}  !14 = !{!"stack"}
+  %2 = alloca ptr, align 8, !goc.color !27, !goc.prov !14
   ...
-define dso_local void @fill(ptr noundef %p) #0 {
-entry:
-  %p.addr = alloca ptr, align 8, !goc.color !14, !goc.prov !15
-  store ptr %p, ptr %p.addr, align 8
-  %0 = load ptr, ptr %p.addr, align 8, !goc.color !14, !goc.prov !17
+define dso_local void @fill(ptr noundef %0) #0 !dbg !10 {
+  %2 = alloca ptr, align 8, !goc.color !13, !goc.prov !14   ; !13 = !{!"cptr"}
+  store ptr %0, ptr %2, align 8
+  %3 = load ptr, ptr %2, align 8, !dbg !15, !goc.color !13, !goc.prov !16   ; !16 = !{!"cheap"}
 ```
 
-`%x` 是局部变量的地址 → `sptr`（来源 `stack`）。O3 之后 `q` 被消掉，`sum2` 直接把 `%x` 传给 `bump`：
+`%1`（`x`）是局部变量的地址 → `sptr`（来源 `stack`）。O3 之后 `q` 被消掉，`sum2` 直接把 `x` 的地址传给 `bump`：
 
 ```llvm
-define dso_local i32 @bump(ptr nocapture noundef %p) #1 {
-entry:
-  call void @fill(ptr noundef %p) #4
-  %0 = load i32, ptr %p, align 4
-  %add = add i32 %0, 1
-  ret i32 %add
+define dso_local i32 @bump(ptr nocapture noundef %0) #1 !dbg !15 {
+  call void @fill(ptr noundef %0) #4, !dbg !16
+  %2 = load i32, ptr %0, align 4, !dbg !17
+  %3 = add i32 %2, 1, !dbg !18
+  ret i32 %3, !dbg !19
 }
 ```
 
@@ -233,24 +236,23 @@ entry:
 `goc-stackmap` 在这个例子里没有插入记录（没有 SSA 栈指针跨调用存活；指针实参归 `goc-reanchor` 管）。`goc-reanchor` 的输出：
 
 ```llvm
-define dso_local i32 @bump(ptr nocapture noundef %p) #1 !goc.nextslot !17 {
-entry:
-  %goc.arganchor = alloca ptr, align 8, !goc.frame.words !19, !goc.root !20, !goc.slot !21
-  store volatile ptr %p, ptr %goc.arganchor, align 8
-  %goc.oldfp = alloca i64, align 8
-  call void (i64, i32, ...) @llvm.experimental.stackmap(i64 5138399369279569921, i32 0, ptr %goc.arganchor)
-  call void @fill(ptr noundef %p) #5
-  %goc.reanchor = load volatile ptr, ptr %goc.arganchor, align 8
-  %0 = load i32, ptr %goc.reanchor, align 4
-  %add = add i32 %0, 1
-  ret i32 %add
+define dso_local i32 @bump(ptr nocapture noundef %0) #1 !dbg !15 !goc.nextslot !16 {
+  %goc.arganchor = alloca ptr, align 8, !dbg !17, !goc.frame.words !18, !goc.root !19, !goc.slot !20
+  store volatile ptr %0, ptr %goc.arganchor, align 8, !dbg !17
+  %goc.oldfp = alloca i64, align 8, !dbg !17
+  call void (i64, i32, ...) @llvm.experimental.stackmap(i64 5138399369279569921, i32 0, ptr %goc.arganchor), !dbg !17
+  call void @fill(ptr noundef %0) #5, !dbg !17
+  %goc.reanchor = load volatile ptr, ptr %goc.arganchor, align 8, !dbg !21
+  %2 = load i32, ptr %goc.reanchor, align 4, !dbg !21
+  %3 = add i32 %2, 1, !dbg !22
+  ret i32 %3, !dbg !23
 }
 ```
 
-1. 新建槽 `%goc.arganchor`（`!goc.root !{"arganchor"}`），入口处 `store volatile` 把 `p` 存进去。
+1. 新建槽 `%goc.arganchor`（`!goc.root !{"arganchor"}`），入口处 `store volatile` 把 `p`（`%0`）存进去。
 2. 调用前插一条 stackmap，**操作数是槽的地址**（不是 `p` 的值）。ID `5138399369279569921` = `0x474F430080000001`，高位是 ASCII `"GOC"`。
 3. 调用后从槽里 `load volatile` 重新读出 `p`。搬栈时 Go 会改槽里的值，重读就拿到新地址。
-4. `%goc.oldfp` 是给 goc-llc 帧地址修复用的旧帧指针槽（04 篇）。
+4. `%goc.oldfp` 是给 goc-llc 帧地址修复用的旧帧指针槽（[codegen.md](codegen.md)）。
 
 ### 3.3 goc-llc → `body.s`（x86-64）
 
@@ -296,10 +298,10 @@ bump.impl:
 ### 3.4 `.gocobj` 里的 `bump.impl`
 
 ```
-func bump.impl size=211 frame=24 args=0 abi=0 kind=0 flags=0x9 id=0 file=0 line=6 sysvptr=0x1
+func bump.impl size=211 frame=24 args=0 abi=0 kind=0 flags=0x9 id=0 file=1 line=6 sysvptr=0x1
   pcvalue SP_DELTA: 0=0 15=24 46=0 47=8 48=16 ... 72=232 187=104 ... 206=0
   pcvalue UNSAFE_POINT: 0=-2 15=-1 46=-2
-  pcvalue FILE: 0=0 23=0 32=0
+  pcvalue FILE: 0=1 23=1 32=1
   pcvalue LINE: 0=6 23=7 32=8
   gcmaps args=0 locals=7
     pc=32 args= locals=40
@@ -315,35 +317,35 @@ func bump.impl size=211 frame=24 args=0 abi=0 kind=0 flags=0x9 id=0 file=0 line=
 - `stackmap … locs=[{2 8 6 -8}]`：类型 2（Direct）、8 字节、DWARF 寄存器 6（RBP）、偏移 -8，就是 `goc.arganchor`。
 - `gcmaps … pc=32 locals=40`：返回地址 pc=32（调用 `fill.impl` 之后）处，locals 位图是 `0x40`，只有一位为 1，对应那个槽。`pc=133` 是 morestack 调用点自己的位图。
 - 两个 reloc 的 `flags=0x1` = safepoint_call。`bump` 调 `fill.impl` 和 morestack 都是 safepoint。
-- `sum2.impl` 的两个 gcmaps 位图都是 `00`：`%x` 存的是 `int`，不是指针，帧里没有需要修正的字。
+- `sum2.impl` 的两个 gcmaps 位图都是 `00`：`x` 存的是 `int`，不是指针，帧里没有需要修正的字。
 
-`goc-objdump verify out/call.gocobj` 输出 `ok`。
+`goc tool objdump verify out/call.gocobj` 输出 `out/call.gocobj: ok`。
 
 ### 3.5 Go 侧
 
 ```
 $ go tool nm out/call.goobj | grep -E ' T '
-    18d7 T main.bump
-    1719 T main.bump.impl
-    18c1 T main.fill
-    170d T main.fill.impl
-    18ed T main.sum2
-    17ec T main.sum2.impl
+    18ed T main.bump
+    172f T main.bump.impl
+    18d7 T main.fill
+    1723 T main.fill.impl
+    1903 T main.sum2
+    1802 T main.sum2.impl
 $ go tool objdump -s 'main.bump$' out/call.goobj
-TEXT main.bump(SB)
-  :1  0x18d7  55          PUSHQ BP
-  :1  0x18d8  4889e5      MOVQ SP, BP
-  :1  0x18db  4889c7      MOVQ AX, DI
-  :1  0x18de  e800000000  CALL 0x18e3  [1:5]R_CALL:main.bump.impl
-  :1  0x18e3  66450fefff  PXOR X15, X15
-  :1  0x18e8  4889ec      MOVQ BP, SP
-  :1  0x18eb  5d          POPQ BP
-  :1  0x18ec  c3          RET
+TEXT main.bump(SB) /tmp/wt/call.c
+  call.c:1  0x18ed  55          PUSHQ BP
+  call.c:1  0x18ee  4889e5      MOVQ SP, BP
+  call.c:1  0x18f1  4889c7      MOVQ AX, DI
+  call.c:1  0x18f4  e800000000  CALL 0x18f9  [1:5]R_CALL:main.bump.impl
+  call.c:1  0x18f9  66450fefff  PXOR X15, X15
+  call.c:1  0x18fe  4889ec      MOVQ BP, SP
+  call.c:1  0x1901  5d          POPQ BP
+  call.c:1  0x1902  c3          RET
 ```
 
-ELF 的 `R_X86_64_PLT32` 已经按 `relocmap.go` 的表换成了 Go 的 `R_CALL`。
+ELF 的 `R_X86_64_PLT32` 已经按 `internal/convert/relocmap.go` 的表换成了 Go 的 `R_CALL`。
 
-## 4. 同一个文件编 arm64（`GOC_ARCH=arm64`）
+## 4. 同一个文件编 arm64（`--arch arm64`）
 
 ```asm
 bump.impl:
@@ -378,7 +380,7 @@ bump.impl:
 	...
 ```
 
-这一版 arm64 的 `body.ll` 里有 2 条 `llvm.experimental.stackmap`，即 arm64 也记录栈图（与部分旧注释不一致，见 07 篇）。
+arm64 的 `body.ll` 里同样有 2 条 `llvm.experimental.stackmap`：arm64 也记录栈图。
 
 ## 5. 一个 uptr 例子
 
@@ -394,23 +396,23 @@ void keep(sptr(int) p) { g_slot = p; }   /* sptr stored into cptr -> uptr encode
 `a.ll` 里颜色以 annotate 形式进 IR：
 
 ```llvm
-@.str = private unnamed_addr constant [15 x i8] c"goc.color.cptr\00", section "llvm.metadata"
-@llvm.global.annotations = appending global [1 x { ptr, ptr, ptr, i32, ptr }] [{ ... } { ptr @g_slot, ptr @.str, ptr @.str.1, i32 3, ptr null }], section "llvm.metadata"
+@.str.2 = private unnamed_addr constant [15 x i8] c"goc.color.cptr\00", section "llvm.metadata"
+@llvm.global.annotations = appending global [1 x { ptr, ptr, ptr, i32, ptr }] [{ ptr, ptr, ptr, i32, ptr } { ptr @g_slot, ptr @.str.2, ptr @.str.1, i32 3, ptr null }], section "llvm.metadata"
 ```
 
 `goc-color-escape` 之后：
 
 ```llvm
-define dso_local void @keep(ptr noundef %p) #0 {
-entry:
-  %p.addr = alloca ptr, align 8, !goc.color !14, !goc.prov !15              ; sptr, stack
-  store ptr %p, ptr %p.addr, align 8
-  %0 = load ptr, ptr %p.addr, align 8, !goc.color !14, !goc.prov !15
-  %goc.uptr.store = call ptr @goc_uptr_from_ptr(ptr %0), !goc.color !18, !goc.uptr_encoded !19   ; uptr
-  store ptr %goc.uptr.store, ptr @g_slot, align 8
-  ret void
+define dso_local void @keep(ptr noundef %0) #0 !dbg !10 {
+  %2 = alloca ptr, align 8, !goc.color !13, !goc.prov !14              ; sptr, stack
+  store ptr %0, ptr %2, align 8
+  call void @llvm.var.annotation.p0.p0(ptr %2, ptr @.str, ptr @.str.1, i32 4, ptr null)
+  %3 = load ptr, ptr %2, align 8, !dbg !15, !goc.color !13, !goc.prov !14
+  %goc.uptr.store = call ptr @goc_uptr_from_ptr(ptr %3), !dbg !16, !goc.color !17, !goc.uptr_encoded !18   ; uptr
+  store ptr %goc.uptr.store, ptr @g_slot, align 8, !dbg !16
+  ret void, !dbg !19
 }
 ```
 
-`goc_uptr_from_ptr` 把栈地址编码成「MSB=1 + 相对 `g.stack.hi` 的偏移」（06 篇），搬栈后再解码仍然正确。
+`goc_uptr_from_ptr` 把栈地址编码成「MSB=1 + 相对 `g.stack.hi` 的偏移」（[runtime.md](runtime.md) §4），搬栈后再解码仍然正确。
 `goc-uptr-inline` 会给这类 helper 一个 `alwaysinline` 的函数体（`SMUptrInline.cpp`），O3 把它内联掉。

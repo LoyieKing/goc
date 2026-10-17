@@ -1,4 +1,4 @@
-/* goc_uptr.h — uptr encode/decode (syntax-guide v0.2.1 §3.3)
+/* goc_uptr.h — uptr encode/decode (docs/language.md §3.3)
  *
  * Protocol (amd64 and arm64 user VA):
  *   MSB=0: absolute cptr address; use as pointer.
@@ -12,7 +12,7 @@
  * every function declared here an inline body, at every -O. The current-g
  * API reads the live g (amd64 %fs:-8, arm64 x28): stack.lo at g+0,
  * stack.hi at g+8. A wrong tag writes "goc FATAL uptr: ..." and traps.
- * Protocol and helpers: docs/design/uptr.md.
+ * Protocol and helpers: docs/design/runtime.md §4.
  */
 #ifndef GOC_UPTR_H
 #define GOC_UPTR_H

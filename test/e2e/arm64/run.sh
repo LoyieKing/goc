@@ -215,7 +215,6 @@ EOF
 KEEP="$TMP/goabi-tmp"
 mkdir -p "$KEEP"
 # The 9th Go argument moves through x8 into the AAPCS stack slot.
-# Stack maps stay off: arm64 has no frame-address repair.
 "$GOC" build "$TMP/sum9.c" -o "$TMP/sum9.goobj" --arch arm64 --keep-tmp="$KEEP"
 # The thunk is assembled by llvm-mc with the body. The x8 store is the
 # 9th Go argument (X8) moving to the AAPCS stack.

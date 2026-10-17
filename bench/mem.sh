@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Memory benchmark for docs/benchmark.md (## 内存占用).
+# Memory benchmark for docs/benchmark/README.md (## 内存占用).
 #
 # Part 1, peak RSS per workload: each script runs in a fresh process under
 # `/usr/bin/time -v` (Maximum resident set size), pinned with taskset -c $CPU

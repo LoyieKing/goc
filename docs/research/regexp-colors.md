@@ -1,12 +1,12 @@
 # RegExp 热路径：每个 `T *` 收成了什么色
 
-对象：`libregexp.c` 的执行路径（`lre_exec` / `lre_exec_backtrack`），goc @ a52263b，Bellard 与 quickjs-ng 两个版本。上级文档：[perf-gap.md](../perf-gap.md) 第 4.4 节。
+对象：`libregexp.c` 的执行路径（`lre_exec` / `lre_exec_backtrack`），goc @ a52263b，Bellard 与 quickjs-ng 两个版本。上级文档：[perf-gap.md](perf-gap.md) 第 4.4 节。
 
-工具：`scripts/goc-color-report.py`。它按 `cmd/goc build` 的步骤重跑前半段编译，保留每一级 IR，再把 `goc-color-escape` 的决定映射回 C 声明和行号。用法见文末“复现”。
+工具：当时的颜色报告脚本（e2ecca5 之前在 scripts/ 下）。它按 `goc build` 的步骤重跑前半段编译，保留每一级 IR，再把 `goc-color-escape` 的决定映射回 C 声明和行号。用法见文末“复现”。
 
-> 这个脚本已经删除，换成了 `libGocPasses.so` 里的 `print<goc-color>` pass：`goc build --color-report x.c` 或 `opt -load-pass-plugin=build/llvm/libGocPasses.so -passes='print<goc-color>' -disable-output x.ll`（IR 要带 `-g`）。表的列和这里一样。按文末命令完整复现时，用 `git show e2ecca5~1:scripts/goc-color-report.py` 取回旧脚本，并换到 e2ecca5 之前的提交（旧脚本要用 `build/llvm/goc-color-escape`）。
+> 这个脚本已经删除，换成了 `libGocPasses.so` 里的 `print<goc-color>` pass：`goc build --color-report x.c` 或 `opt -load-pass-plugin=build/llvm/libGocPasses.so -passes='print<goc-color>' -disable-output x.ll`（IR 要带 `-g`）。表的列和这里一样。第 7 节给的是现在的做法；要逐字复现 A–F 六节的报告，在 e2ecca5 之前的提交里运行当时的脚本。
 
-标注：【实测】直接从 IR 元数据或 callgrind 数据读出；【推导】根据 IR 形状加 `llvm/lib/Transforms/ColorEscape/GocColorEscape.cpp` 的规则重建出来的原因；【推测】按指令模式匹配，没有直接验证。下文行号都是 Bellard 版 `third_party/quickjs-bellard/libregexp.c`（打过 `scripts/qjs-gstack-bellard.patch`）；ng 的着色完全相同，行号整体 +58。
+标注：【实测】直接从 IR 元数据或 callgrind 数据读出；【推导】根据 IR 形状加 `llvm/lib/Transforms/ColorEscape/GocColorEscape.cpp` 的规则重建出来的原因；【推测】按指令模式匹配，没有直接验证。下文行号都是 Bellard 版 `third_party/quickjs-bellard/libregexp.c`（打过 `ports/quickjs/patches/bellard-gstack.patch`）；ng 的着色完全相同，行号整体 +58。
 
 ## 1. 结论
 
@@ -99,31 +99,25 @@ E1 成立的条件（**没有运行验证**）：压进回溯栈的指针，在�
 
 ## 7. 复现
 
-在仓库根目录执行（`build/` 已被 gitignore）。前提：QuickJS 源码在 `third_party/` 下且打过 gstack 补丁（`scripts/qjs-build.sh` 会打），打过补丁的 clang、它旁边的 `opt`、`build/llvm/goc-color-escape`（e2ecca5 之前才有）、`build/llvm/libGocPasses.so` 都已就绪。
+在仓库根目录执行（`build/` 已被 gitignore）。前提：QuickJS 源码在 `third_party/` 下且打过 gstack 补丁（`ports/quickjs/build.sh` 第一次运行时会打），`bin/goc` 和它用的工具都已就绪（`bin/goc env`）。
 
 ```bash
-R=build/regexp-colors
-scripts/goc-color-report.py build --flavor bellard --out $R/bellard     # clang -g … → a.reanchor.ll
-scripts/goc-color-report.py build --flavor ng      --out $R/ng
-scripts/goc-color-report.py report $R/bellard --title "Bellard libregexp.c" --md $R/bellard.md
-scripts/goc-color-report.py report $R/ng      --title "quickjs-ng libregexp.c" --md $R/ng.md
+R=build/regexp-colors; mkdir -p $R/bellard $R/e1
+Q=third_party/quickjs-bellard
+DEFS=(-DGOC_QJS_BELLARD=1 -D_GNU_SOURCE -DGOC_QJS_GSTACK=1 -DNDEBUG)
+# 和 ports/quickjs/build.sh 相同的开关，加 --color-report；--keep-tmp 留下每一级 IR
+bin/goc build $Q/libregexp.c -o $R/bellard/libregexp.goobj -O3 --default-ptr-color cptr \
+    --fast-stack-alloca --color-report --keep-tmp=$R/bellard/tmp -- "${DEFS[@]}" \
+    2> $R/bellard/report.txt
+# ng：Q=third_party/quickjs-ng，DEFS=(-DJS_NAN_BOXING=0 -D_GNU_SOURCE -DGOC_QJS_GSTACK=1 -DNDEBUG)
 
-# -g 不改变着色
-scripts/goc-color-report.py build --flavor bellard --no-g --out $R/bellard-nog
-scripts/goc-color-report.py diff $R/bellard $R/bellard-nog
-
-# E1：拷一份 libregexp.c，改两个恢复宏（见第 5 节），再建
-mkdir -p $R/e1-src && cp third_party/quickjs-bellard/libregexp.c $R/e1-src/
-#   （编辑 $R/e1-src/libregexp.c）
-scripts/goc-color-report.py build --flavor bellard --src $R/e1-src/libregexp.c \
-    --cflags "-I third_party/quickjs-bellard" --out $R/e1
-scripts/goc-color-report.py report $R/e1 --title "E1" --md $R/e1.md
-scripts/goc-color-report.py diff $R/bellard $R/e1
-
-# 其它函数 / 翻译单元：--src file.c，report --funcs f1,f2
+# E1：拷一份 libregexp.c，改两个恢复宏（见第 5 节），同样编译后和上面的报告 diff
+mkdir -p $R/e1-src && cp $Q/libregexp.c $R/e1-src/
+bin/goc build $R/e1-src/libregexp.c -o $R/e1/libregexp.goobj -O3 --default-ptr-color cptr \
+    --fast-stack-alloca --color-report -- "${DEFS[@]}" -I $Q 2> $R/e1/report.txt
 ```
 
-每个输出目录里有 `a.ll → a.color.ll → a.gate.ll → a.opt.ll → a.sm.ll → a.reanchor.ll`、`color-escape.log` 和 `BUILD.txt`。报告分 A–F 六节：A 按声明的色，B 经 struct/union 字段的指针读写，C 编码点，D 解码点，E O3 后内联的 `FS:-8` 读取，F GC 根槽。
+报告和编译日志一起写到 stderr，报告行以 `goc-color-report` 开头（`grep ^goc-color-report`）。`--keep-tmp` 目录里有 `a.ll → a.color.ll → a.gate.ll → a.opt.ll → a.sm.ll → a.reanchor.ll`。当时的脚本把报告分成 A–F 六节：A 按声明的色，B 经 struct/union 字段的指针读写，C 编码点，D 解码点，E O3 后内联的 `FS:-8` 读取，F GC 根槽；`--color-report` 的表对应 A，其余几节要从保留的 IR 里看。
 
 ## 附录：生成的表（Bellard，只保留热函数和关键行）
 

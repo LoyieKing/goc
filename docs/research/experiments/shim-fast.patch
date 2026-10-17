@@ -57,7 +57,7 @@ index eee4daa..ca5ca3d 100644
 -GOC_GO_MATH1(trunc, main.gocGoMathTrunc)
 -GOC_GO_MATH1(floor, main.gocGoMathFloor)
 -GOC_GO_MATH1(ceil, main.gocGoMathCeil)
-+/* perf-gap experiment (docs/perf-gap.md): the exactly-specified functions
++/* perf-gap experiment (docs/research/perf-gap.md): the exactly-specified functions
 + * (sqrt, floor, ceil, trunc, round) computed in C instead of a Go -> cgo ->
 + * glibc round trip. IEEE 754 fixes their results, so they are bit-identical
 + * to glibc. floor/ceil/trunc/round follow musl (MIT). */
@@ -129,7 +129,7 @@ index 0c1cfb7..62b5a86 100644
 +func gocRuntimeNanotime() int64
 +
 +// gocGoClockGettime backs goc_clock_gettime for CLOCK_REALTIME (0) and
-+// CLOCK_MONOTONIC (1) (perf-gap experiment, docs/perf-gap.md).
++// CLOCK_MONOTONIC (1) (perf-gap experiment, docs/research/perf-gap.md).
 +func gocGoClockGettime(clk int64) (int64, int64) {
 +	if clk == 1 {
 +		n := gocRuntimeNanotime()
@@ -154,7 +154,7 @@ index 9e535f1..244a827 100644
 +func gocRuntimeNanotime() int64
 +
 +// gocGoClockGettime backs goc_clock_gettime for CLOCK_REALTIME (0) and
-+// CLOCK_MONOTONIC (1) (perf-gap experiment, docs/perf-gap.md).
++// CLOCK_MONOTONIC (1) (perf-gap experiment, docs/research/perf-gap.md).
 +func gocGoClockGettime(clk int64) (int64, int64) {
 +	if clk == 1 {
 +		n := gocRuntimeNanotime()

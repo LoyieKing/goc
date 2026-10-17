@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw docs/benchmark/charts/*.svg from docs/benchmark/data/all.json.
 
-Charts are SVG only (docs/benchmark.md embeds them).
+Charts are SVG only (docs/benchmark/README.md embeds them).
 All chart text is English; the doc prose stays Chinese. Every performance
 chart shows all five engines, Goja included (log axes where Goja would dwarf
 the others). goc builds are drawn dark, the native build of the same engine

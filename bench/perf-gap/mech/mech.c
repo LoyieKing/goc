@@ -1,4 +1,4 @@
-/* perf-gap mechanism microbenchmarks (docs/perf-gap.md).
+/* perf-gap mechanism microbenchmarks (docs/research/perf-gap.md).
  *
  * Built twice from this one file: by goc into a goobj called from Go
  * (main.go), and by clang/gcc natively with mech_native_main.c. Each function

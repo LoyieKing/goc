@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mechanism probes for docs/perf-gap.md.
+# Mechanism probes for docs/research/perf-gap.md.
 #
 #   perf-gap/mech.sh [c]   build bench/perf-gap/mech/mech.c with goc (same switches
 #                          as ports/quickjs/build.sh) and natively (clang -O3,
@@ -65,7 +65,7 @@ if [[ "${BUILD:-1}" == 1 ]]; then
   $CL -O3 -DNDEBUG -mllvm -tail-dup-pred-size=1000 -mllvm -tail-dup-succ-size=1000 \
     -o "$OUT/mech-clang-O3-taildup" "$SRC/mech.c" "$SRC/mech_native_main.c"
   gcc -O2 -DNDEBUG -o "$OUT/mech-gcc-O2" "$SRC/mech.c" "$SRC/mech_native_main.c"
-  # one goc flag at a time on top of clang -O3 (docs/perf-gap.md, section 6)
+  # one goc flag at a time on top of clang -O3 (docs/research/perf-gap.md, section 6)
   for f in "fp:-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer" \
            "nosib:-fno-optimize-sibling-calls" "notailmerge:-mllvm -enable-tail-merge=false" \
            "align8:-mstack-alignment=8" "noslotshare:-mllvm -no-stack-slot-sharing"; do

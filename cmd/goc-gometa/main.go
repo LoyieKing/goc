@@ -1,6 +1,6 @@
 // goc-gometa reads a Go release's sources and writes the
-// facts gocobj2goobj needs to produce object files for that release, as
-// JSON (schema: docs/go-metadata-schema.md):
+// facts the converter needs to produce object files for that release, as
+// JSON (schema: docs/design/go-versions.md §12):
 //
 //	goc-gometa [-goroot DIR] [-o internal/gometa/data/go1.N.json]
 //

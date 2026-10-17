@@ -18,7 +18,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 
 
 # ---- classify: instruction classes and function groups ----
-CLASSIFY_DOC = r"""Instruction-level decomposition of callgrind Ir (docs/perf-gap.md, "where
+CLASSIFY_DOC = r"""Instruction-level decomposition of callgrind Ir (docs/research/perf-gap.md, "where
 the extra instructions go").
 
 Input: callgrind files recorded with --dump-instr=yes (scripts in the doc,
@@ -366,7 +366,7 @@ def decompose_main(argv):
 
 
 # ---- bycount: one function in two builds, paired by execution count ----
-BYCOUNT_DOC = r"""Compare one function in two builds by execution count (docs/perf-gap.md,
+BYCOUNT_DOC = r"""Compare one function in two builds by execution count (docs/research/perf-gap.md,
 section 5). Every executed instruction's Ir in a callgrind --dump-instr file is
 its execution count; instructions of the same basic block share a count, and
 the same source block has the same count in both builds (same bytecode run).
@@ -403,7 +403,7 @@ def bycount_main(argv):
 # ---- framemem: the framemem delta by kind and position ----
 FRAMEMEM_DOC = r"""Split the 'framemem' Ir delta (instructions with an (%rbp)/(%rsp) operand,
 engine code only) between two builds by kind and by function
-(docs/perf-gap.md, section 4).
+(docs/research/perf-gap.md, section 4).
 
 Kinds: lea    address of a frame slot (no memory access; goc-reanchor
               re-derives stack addresses from %rbp after calls)
@@ -468,7 +468,7 @@ def framemem_main(argv):
 
 
 # ---- frameslots: what the extra frame accesses are ----
-FRAMESLOTS_DOC = r"""What the extra frame loads/stores ('framemem') are (docs/perf-gap.md, section 4).
+FRAMESLOTS_DOC = r"""What the extra frame loads/stores ('framemem') are (docs/research/perf-gap.md, section 4).
 
 For the hottest functions, the llc assembly (asm-verbose, so register
 allocator spills carry '# 8-byte Spill' / 'Reload' comments) is aligned

@@ -210,7 +210,7 @@ func marshalIndent(v any) ([]byte, error) {
 // WriteGoABI writes the Go ABI thunks of one module.
 // WriteGoABI writes the renamed IR, the thunk assembly and goabi.json. With
 // a non-empty outTables (amd64) it also writes the thunks' .goc.* table
-// records as assembler text (docs/gocobj-format.md, 1.3).
+// records as assembler text (docs/design/gocobj-format.md, 1.3).
 func WriteGoABI(inLL, outLL, outS, outJSON, outTables, arch string) error {
 	text, err := os.ReadFile(inLL)
 	if err != nil {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sampling profiles for docs/perf-gap.md: perf record -e cpu-clock (the VM has
+# Sampling profiles for docs/research/perf-gap.md: perf record -e cpu-clock (the VM has
 # no hardware PMU, so cycles/instructions events are unavailable), one engine
 # at a time pinned to CPU 3, on the fixed-work V8 per suite. Writes
 # OUT/<engine>.<suite>.txt (perf report --sort sym, self %).

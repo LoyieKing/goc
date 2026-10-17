@@ -14,7 +14,7 @@ import (
 // reviewed lists the Go functions whose behaviour gometa's writer
 // (internal/goobj) reproduces, with the fingerprint of every version of them it
 // was checked against (byte-identical output on goc's test corpus, see
-// docs/multi-go-version.md). A fingerprint is the sha256 of the
+// docs/design/go-versions.md). A fingerprint is the sha256 of the
 // gofmt-printed function without comments. A function not listed under
 // its fingerprint stops the resolver: read the Go change, update internal/goobj
 // if needed, and add the fingerprint here.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deterministic counters for docs/perf-gap.md. The VM has no hardware PMU
+# Deterministic counters for docs/research/perf-gap.md. The VM has no hardware PMU
 # (perf stat reports <not supported> for instructions/cycles), so callgrind is
 # the counter source: Ir (instructions retired), simulated D1/LL cache misses
 # and simulated branch mispredicts (Bcm conditional, Bim indirect).

@@ -1186,7 +1186,7 @@ L 845.725937 351.541969
     <text style="font-size: 6.5px; font-family: 'DejaVu Sans'" transform="translate(807.195648 192.224673) rotate(-90)">283</text>
    </g>
    <g id="text_83">
-    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #475569" x="64.525938" y="31.20625" transform="rotate(-0 64.525938 31.20625)">Bellard tests/microbench.js, median of 3 rounds per test, geometric mean per group (groups: scripts/bench-summarize.py).</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #475569" x="64.525938" y="31.20625" transform="rotate(-0 64.525938 31.20625)">Bellard tests/microbench.js, median of 3 rounds per test, geometric mean per group (groups: bench/report/summarize.py).</text>
    </g>
    <g id="text_84">
     <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start" x="64.525938" y="17.077969" transform="rotate(-0 64.525938 17.077969)">microbench by group</text>

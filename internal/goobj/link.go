@@ -1,8 +1,8 @@
-// Package goobjw writes Go object files (the "\x00go120ld" goobj format)
+// Package goobj writes Go object files (the "\x00go120ld" goobj format)
 // without any of the Go toolchain's code. Everything that differs between
 // Go releases comes from a gometa.Meta; the symbol model, numbering and
 // block layout follow cmd/internal/obj's assembler path, which is what
-// gocobj2goobj used to drive (docs/multi-go-version.md lists the
+// the converter used to drive (docs/design/go-versions.md lists the
 // functions it mirrors; cmd/goc-gometa checks they did
 // not change).
 package goobj

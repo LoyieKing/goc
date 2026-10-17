@@ -3,7 +3,7 @@
  * third_party/quickjs-bellard/quickjs.h, only for --flavor bellard
  * (-DGOC_QJS_BELLARD). Nothing here changes the ng build.
  *
- * Known gaps (documented in docs/benchmark.md):
+ * Known gaps (documented in docs/benchmark/README.md):
  *  - JS_SetImmutableArrayBuffer: Bellard has no immutable ArrayBuffers, so
  *    `import ... with { type: "bytes" }` yields a mutable Uint8Array.
  *  - JS_WRITE_OBJ_STRIP_DEBUG/SOURCE do not exist; qjs:bjson omits them.

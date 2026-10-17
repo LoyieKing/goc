@@ -1,50 +1,16 @@
-# Building patched Clang for goc
+# clang/
 
-goc’s product frontend is **Clang 19.1.7** with:
+goc's frontend is Clang 19.1.7 with a few patches. They add the pointer-color attributes and a Sema step that checks them and passes them on to the IR.
 
-1. `Attr.td` entries for `goc_cptr` / `goc_sptr` / `goc_uptr` / `goc_auto_ptr` / `goc_gptr`
-2. `SemaGocColors.cpp` — lowers attrs to `AnnotateAttr` and rejects `sptr` escape
+| Path | What it changes |
+|---|---|
+| `patches/0001-Attr.td-goc-colors.patch` | `Attr.td`: the `GocCPtr`, `GocSPtr`, `GocUPtr`, `GocAutoPtr`, `GocGPtr` attributes (`include/goc.h` spells them `cptr(T)` and so on) |
+| `sema/SemaGocColors.cpp` | Copied to `lib/Sema/`: mirrors the Goc* attributes to `AnnotateAttr` (what the IR passes read) and reports sptr escapes, such as returning the address of a local |
+| `patches/0003-mirror-goc-colors-before-codegen.patch` | `ParseAST.cpp` mirrors the colors before `HandleTopLevelDecl`. CodeGen is incremental, so the end-of-TU call is too late for IR and only diagnoses |
+| `patches/0004-wire-sema-goc-colors.patch` | `CMakeLists.txt`, `Sema.h`, and the end-of-TU call in `Sema.cpp` |
 
-## Option A — in-tree (recommended)
+`scripts/build-clang.sh` downloads LLVM 19.1.7, applies these in this order (a patch that does not apply stops the build) and builds into `third_party/llvm-19.1.7-clang-build`, where goc finds it. See [docs/build-from-source.md](../docs/build-from-source.md). Use clang-19 as the host compiler if you can; GCC may reject Clang-only warning flags.
 
-The supported build is one script. It downloads LLVM 19.1.7, applies the patches, and writes `third_party/llvm-19.1.7-clang-build`. The driver finds `bin/clang` there. There is no path to pass.
+What the colors mean is [docs/language.md](../docs/language.md); how they reach the IR is [docs/design/frontend-ir.md](../docs/design/frontend-ir.md) §1. Sema tests are in [test/lit/Sema](../test/lit/Sema).
 
-```bash
-./scripts/build-clang.sh
-./scripts/build-passes.sh
-./cmd/goc test
-```
-
-The whole release archive (goc plus this Clang) is `scripts/pack-release.sh`. See [docs/build-from-source.md](../docs/build-from-source.md).
-
-**Notes:**
-
-- Prefer clang-19 as the host compiler (GCC may choke on Clang-only warning flags).
-- Build directory stays under `third_party/` (gitignored); do not commit binaries.
-- Expect ~30–60 minutes for a Release clang build depending on hardware.
-
-## Option B — out-of-tree plugin
-
-```bash
-make -C clang/plugin all
-export CLANG=clang-19
-./cmd/goc test --plugin
-# or: ./cmd/goc cc -emit-llvm -S file.c
-```
-
-The plugin registers the same attribute spellings and Sema escape checks when
-loaded with `-fplugin=libGocClang.so`.
-
-## Layout
-
-| Path | Contents |
-|------|----------|
-| `patches/0001-Attr.td-goc-colors.patch` | Attr.td delta |
-| `patches/0003-mirror-goc-colors-before-codegen.patch` | Mirror colors in ParseAST before CodeGen |
-| `patches/0004-wire-sema-goc-colors.patch` | CMakeLists.txt, Sema.h, and the end-of-TU call |
-| `sema/SemaGocColors.cpp` | Drop-in Sema source |
-| `plugin/GocClangPlugin.cpp` | Out-of-tree plugin (`goc test --plugin`) |
-
-## Third-party notice
-
-LLVM/Clang remain under Apache-2.0 WITH LLVM-exception. See repo root `NOTICE`.
+LLVM/Clang is Apache-2.0 WITH LLVM-exception; see [NOTICE](../NOTICE).

@@ -57,7 +57,7 @@ double round(double x) {
 double goc_round(double x) { return round(x); }
 
 /* Transcendentals call glibc through ports/quickjs/host/asm/goc_libm_glibc.S. The asm
- * symbol is goc_libc_<name>; gocobj2goobj names it main.goc_libc_<name>.
+ * symbol is goc_libc_<name>; the converter names it main.goc_libc_<name>.
  * A Go -> cgo -> glibc hop is not bit-identical in cost, and a C libm
  * would change the last bit. The trampoline realigns SP, then calls
  * glibc, so the SysV registers set up here are the ones glibc sees. */

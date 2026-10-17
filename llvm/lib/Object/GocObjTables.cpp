@@ -2,14 +2,14 @@
 //
 // The last machine pass before the AsmPrinter. It puts a label after every
 // call and at the end of every function, and at the end of the module writes
-// the .goc.* sections (docs/gocobj-format.md) as assembler directives that
+// the .goc.* sections (docs/design/gocobj-format.md) as assembler directives that
 // refer to those labels. The driver appends that file to the function
 // assembly, so llvm-mc fills in every offset and the one ELF object it
 // writes is the .gocobj.
 //
 // Content: functions (text size, frame size), direct-call relocations, and
 // one gc record per safepoint call with its locals/args pointer bitmaps
-// (docs/gocobj-format.md); there is no meta.json side file.
+// (docs/design/gocobj-format.md); there is no meta.json side file.
 //
 //===----------------------------------------------------------------------===//
 #include "GocObjTablesImpl.h"

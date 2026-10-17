@@ -1,5 +1,5 @@
 /* Reproducibility input: many functions, each in its own section, each
- * reading a different external array, so gocobj2goobj creates many GOT
+ * reading a different external array, so the converter creates many GOT
  * slots from many text sections (their order used to follow map order). */
 extern int ext_0[];
 extern int ext_1[];

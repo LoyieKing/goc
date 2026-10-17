@@ -1,4 +1,4 @@
-// perf-gap mechanism probes (docs/perf-gap.md): each loop stresses one
+// perf-gap mechanism probes (docs/research/perf-gap.md): each loop stresses one
 // runtime service that the goc build implements differently from native
 // (libm bridge, clock, localtime, allocator, memcpy, calls). Prints ns/op.
 "use strict";

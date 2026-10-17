@@ -1,7 +1,7 @@
 //===- GocObjTablesWriter.cpp - .goc.* sections as assembler text ---------===//
 //
 // GocObjTables::doFinalization: after the last function, writes every
-// collected table (see docs/gocobj-format.md) to the -goc-tables file.
+// collected table (see docs/design/gocobj-format.md) to the -goc-tables file.
 //===----------------------------------------------------------------------===//
 #include "GocObjTablesImpl.h"
 
@@ -44,7 +44,7 @@ bool GocObjTables::doFinalization(Module &M) {
     return false;
   }
   Writer W{OS};
-  OS << "# .goc.* tables written by goc-llc (docs/gocobj-format.md)\n";
+  OS << "# .goc.* tables written by goc-llc (docs/design/gocobj-format.md)\n";
 
   // gcmaps first: funcs records point at them.
   std::vector<std::string> GC(Funcs.size());

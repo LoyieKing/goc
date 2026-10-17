@@ -1,78 +1,89 @@
 # goc 架构
 
-这一页说明每个目录负责什么，以及一段 C 代码怎样变成 Go 链接器能接受的目标文件。细节文档放在 `docs/` 里。
+这是读代码的入口：goc 要解决什么、一段 C 怎样变成 Go 链接器能接受的目标文件、每个目录负责什么。细节按主题分在 [docs/design/](docs/design/)。
+
+## 要解决的问题
+
+Go 的 goroutine 栈很小，不够时运行时会把整块栈搬到更大的内存（copystack），再把栈上指向栈自己的指针逐个修正。Go 编译器生成的每个函数都配合这件事：
+
+1. 入口栈检查：比较 `SP` 和 `g.stackguard0`，不够就调用 `runtime.morestack_noctxt`。
+2. pc 表：每个 pc 上 SP 偏了多少（pcsp）、能不能被抢占（`UNSAFE_POINT`）、源文件行号。
+3. 栈图：每个调用点，帧里哪些字是指针。搬栈和 GC 靠它。
+
+普通 C 编译器什么都不给，所以 cgo 要切到系统栈。goc 让 LLVM 编出来的 C 也带上这三样，再写成 Go 的目标文件。为此 C 的指针要分颜色（[docs/language.md](docs/language.md)），编译器才知道哪些值是栈地址：`sptr` 栈指针、`cptr` C 堆或全局指针、`uptr` 编码后可以存进堆的栈指针、`gptr` Go 堆指针。
 
 ## 流水线
 
+一个 `.c` 的编译全在 `internal/pipeline`（`goc build` 和 `goc go` 都走它）。`goc build --keep-tmp=DIR` 留下下面每一步的文件。
+
 ```
-C 源码
-  │  clang（打过补丁的 Clang 19.1.7：clang/patches + clang/sema/SemaGocColors.cpp）
-  │    Sema 检查和推断指针颜色，输出 LLVM IR
+foo.c
+  │  clang（Clang 19.1.7 + clang/patches + clang/sema/SemaGocColors.cpp）
+  │    Sema 检查并推断指针颜色，颜色以 annotate 进 IR                       a.ll
   ▼
-opt -passes=goc-color-escape     llvm/lib/Transforms/ColorEscape（分析在 lib/Analysis/GocColor）
-                                   IR → IR：逃逸细化，插入 uptr 编码/解码；--color-report 时先跑 print<goc-color>
+opt，libGocPasses.so（llvm/lib/Plugin）
+  ├─ goc-color-escape   逃逸细化，插入 uptr 编码/解码（--color-report 先跑 print<goc-color>）  a.color.ll
+  ├─ goc-uptr-inline    uptr helper 和 alloca 池的函数体                     a.gate.ll
+  ├─ default<On> 去掉 argpromotion、globalopt，加 goc-name-blocks（-O0 跳过）  a.opt.ll
+  ├─ goc-stackmap       根槽 + llvm.experimental.stackmap                     a.sm.ll
+  └─ goc-reanchor       指针实参锚定                                          a.reanchor.ll
   ▼
-tools/goc/realbody.sh   （由 cmd/goc build / scripts/goc-go.sh 调用）
-  ├─ goc-lower fix-ir                tools/goc-lower + goobj/lower   Go ABI 包装、IR 修正
-  ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-uptr-inline
-  ├─ opt default<O{0..3}>
-  ├─ opt -load-pass-plugin=libGocPasses.so -passes=goc-stackmap    llvm/lib/Transforms/StackMap
-  ├─ goc-llc -function-sections -goc-tables   llvm/tools/goc-llc（只是 llc 驱动）
-  │    lib/CodeGen：GocStackmapPlacement、GocStackCheck（栈检查 + morestack）
-  │    lib/Target/X86：GocX86FrameAddrFix；lib/Target/AArch64：arm64 帧和 LR
-  │    lib/Object：GocObjTables（.goc.* 表）
-  ├─ goc-lower goabi                 生成 Go ABI thunk（thunks.s + thunks.goc.s）
-  ├─ llvm-mc → 一个 ELF，即 .gocobj（机器码 + ELF 重定位 + .goc.* 表）
-  └─ gocobj2goobj -symabis           tools/gocobj2goobj   纯表 → goobj 转换
+internal/lower
+  ├─ FixIR、RenameIR    IR 小修                                               body.ll
+  └─ WriteGoABI         C 本体改名 F.impl，生成 Go ABIInternal thunk F         body.impl.ll、thunks.s
   ▼
-go build -toolexec tools/goc/toolexec_recognize_goobj.sh
-  把 .goobj 打进包归档，交给 Go 链接器
+goc-llc -function-sections -goc-tables（llvm/tools/goc-llc，只是 llc 驱动）
+  │  lib/CodeGen：GocStackmapPlacement、GocStackCheck（栈检查 + morestack）
+  │  lib/Target/X86：帧地址修复；lib/Target/AArch64：LR 槽和调用后修复
+  │  lib/Object：GocObjTables（.goc.* 表）                                   body.s、body.goc.s
+  ▼
+llvm-mc → foo.gocobj（ELF：机器码 + ELF 重定位 + .goc.* 表）
+  ▼
+internal/convert → foo.goobj + foo.symabis（按目标 Go 版本，事实来自 internal/gometa）
+  ▼
+go build -a -toolexec "goc toolexec -pkg P foo.goobj --"
+  asm 阶段追加 symabis，compile 阶段把对象打进包归档，交给 Go 链接器
 ```
 
-所有指令、重定位、pc 表（SP_DELTA、UNSAFE_POINT）和栈图都由 LLVM 产出。`gocobj2goobj` 不解码也不生成任何指令，只把表翻译成当前 Go 版本的目标文件；`-function-sections` 保证每个跨函数引用都有 ELF 重定位，不需要修补已烘焙的位移。
+所有指令、重定位、pc 表和栈图都由 LLVM 产出。转换器不解码也不生成指令，只把表翻译成当前 Go 版本的目标文件；`-function-sections` 保证每个跨函数引用都有 ELF 重定位。一个 goc 二进制覆盖 go1.18–1.27（arm64 从 go1.21 起）。
 
-### 栈检查：共享部分与架构钩子
-
-栈检查分两层，目标是让每个架构只写最少的代码：
-
-| 层 | 位置 | 负责 |
-|---|---|---|
-| 共享（与架构无关） | `llvm/include/Goc/StackCheck.h`、`llvm/lib/CodeGen/GocStackCheck.cpp` | 判定哪些函数需要检查（叶子 / 无栈帧 / 帧 ≤ 128 且无调用 → nosplit）；按 ABI profile 常量选 small（≤128）/ big（≤4096）/ huge 档；记录 body/stub 标签、每段 SP 偏移、morestack 调用点，供 GocObjTables 写表 |
-| 架构钩子 | `llvm/lib/Target/X86/GocX86StackCheck.cpp`（`createX86StackCheckTarget`）、`llvm/lib/Target/AArch64/GocAArch64StackCheck.cpp`（`createAArch64StackCheckTarget`） | 只发指令：读 g 和 stackguard、比较、条件跳转、stub 里保存参数寄存器、调用 `runtime.morestack_noctxt`、恢复并跳回入口 |
-
-新增一个架构只需要实现钩子接口（约 150 行），再在 `gocobj2goobj` 里加该架构的重定位映射（arm64 的在 `tools/gocobj2goobj/arm64.go`）。AArch64 钩子按名字在目标自己的表里查 opcode 和寄存器，不需要 AArch64 的私有头文件，所以只要 goc-llc 链接的 libLLVM 带 AArch64 后端即可。
-
-其他按架构区分的地方都很小：GocObjTables 里 x86 的调用记在返回地址前 4 字节（CALL，addend −4），AArch64 的 BL 记在指令本身（ARM64_CALL26，addend 0）；`goc-lower goabi` 为两种架构都输出 thunk 的表。arm64 另有 `llvm/lib/Target/AArch64/GocAArch64Frame.cpp`：每个有调用的帧在 0(SP) 留 LR 副本（Go 的回溯从这里读返回地址），C 的栈参数整体上移 16 字节，调用后对被调用者保存寄存器和溢出槽里的帧地址做和 copystack 相同的修正。arm64 在 qemu-aarch64 里运行测试（`test/e2e/arm64`、arm64 压力测试）。
+用 `examples/hello` 和一个带调用的文件逐步看真实产物：[docs/design/walkthrough.md](docs/design/walkthrough.md)。
 
 ## 目录
 
 | 目录 | 职责 |
 |---|---|
-| `cmd/goc` | 命令行入口（bash）：`goc go`、`goc build`、`goc test`、`goc check`、`goc toolchain` |
-| `scripts/` | 驱动用的 shell 库（`goc-flags.sh`、`goc-product-lib.sh`、`goc-go.sh`）、构建（`build-clang.sh`、`build-passes.sh`、`qjs-build.sh`、`qjs-cli-build.sh`）、发布（`pack-release.sh`）、CI 入口（`ci-test.sh`、`check-file-size.sh`：单文件 800 行上限）。测试脚本本身都在 `test/` 下 |
-| `clang/` | Clang 补丁、`SemaGocColors.cpp`（树内 Sema）、树外插件 `plugin/`（与树内同规则，`goc test --plugin` 用） |
-| `llvm/` | goc 自己的 LLVM 代码，目录照 LLVM 的布局：`lib/Analysis`（只读分析：指针颜色、safepoint、栈地址）、`lib/Transforms`（IR 改写：ColorEscape、StackMap）、`lib/Plugin`（`libGocPasses.so`，所有 IR pass 都在这里，用 `opt -load-pass-plugin`）、`lib/CodeGen` / `lib/Target/<arch>` / `lib/Object`（goc-llc 的机器 pass 和表输出）、`tools/goc-llc`（llc 驱动）。构建：`scripts/build-passes.sh`，产物在 `build/llvm/`。见 `llvm/README.md` |
-| `gometa` | 各 Go 版本的事实（`data/go1.X.json`，由 `tools/golangc-metadata-resolver` 从 GOROOT 生成并内嵌；docs/go-metadata-schema.md） |
-| `goobjw` | goc 自己的 Go 目标文件 writer/reader，按 `gometa` 的事实写出与 `go tool asm` 同样的对象（docs/multi-go-version.md） |
-| `goobj/lower` | Go ABI 降级：thunk、签名、参数布局 |
-| `tools/goc` | `realbody.sh`（单个 C 文件 → .goobj 的流水线）、toolexec 钩子 |
-| `tools/gocobj2goobj` | `.gocobj` → goobj：先 verify、检查 ABI profile，再按表生成符号、重定位、pc 表和 funcdata。ELF→`R_*` 按名字映射（`relocmap.go`），编号、profile 等随 Go 版本变的事实来自 `gometa`；一个二进制覆盖 go1.18–1.27（arm64 从 go1.21 起） |
-| `tools/golangc-metadata-resolver` | 读一个 GOROOT 的源码，输出该版本的事实 JSON；升级 Go 时运行它 |
-| `tools/gocobj-diff` | 开发工具：两个 goobj 的语义比对（符号、reloc、解码后的 pc 表、funcdata、FuncInfo），改转换器时用；CI 里由 `test/gocobj/diff.sh` 检查 |
-| `tools/goc-lower` | `goobj/lower` 的命令行外壳，realbody.sh 调用，发布包里是 `bin/goc-lower` |
-| `tools/goc-objdump` | 查看和校验 `.gocobj`（`dump` / `verify`），格式见 `docs/gocobj-format.md` |
-| `gocobj` | `.gocobj` 的 Go 读写和校验库（与 Go 版本无关，ABI 常量见 `docs/go-abi-profiles.md`） |
-| `include/` | 用户头文件 `goc.h`、`goc_uptr.h`（uptr helper 的函数体由 `goc-uptr-inline` 给出，没有运行时库，见 `docs/design/uptr.md`） |
-| `test/` | 所有测试，入口是各目录的 `run.sh`：`clang`（前端 golden）、`color-escape`、`lit`（FileCheck）、`gocobj`（格式 golden）、`e2e/`（`realbody`、`goabi`、`stress`、`lines`、`arm64`、`qjs` QuickJS 宿主与测试脚本）。见 `test/README.md` |
-| `bench/` | 基准和 perf-gap 脚本，不在 CI 里 |
-| `third_party/` | QuickJS 源码说明（源码本身不进 git）、本地 LLVM 构建目录 |
+| `cmd/goc` | 命令行：`goc go`、`build`、`check`、`cc`、`env`、`toolexec`、`tool convert`、`tool objdump`、`version`。参数在 `flags.go`，goc 不读 `GOC_*` 环境变量 |
+| `cmd/goc-gometa` | 读一个 GOROOT 的源码，生成该 Go 版本的事实 JSON；升级 Go 时运行 |
+| `internal/pipeline` | 一个 C 文件到 Go 对象的全流程（上图） |
+| `internal/toolchain` | 找本树的 clang、opt、llvm-mc、goc-llc、libGocPasses.so：发布包的 `bin/`、`passes/`，或 checkout 的 `third_party/llvm-19.1.7-clang-build`、`build/llvm` |
+| `internal/lower` | Go ABI thunk（amd64、arm64）、`__go_extern` stub、IR 小修、汇编对齐 |
+| `internal/convert` | `.gocobj` → goobj：校验、检查 ABI profile、生成符号、重定位、pc 表和 funcdata |
+| `internal/gocobj` | `.gocobj` 的读写和校验，与 Go 版本无关（`goc tool objdump`） |
+| `internal/gometa` | 各 Go 版本的事实，内嵌 `data/go1.X.json` |
+| `internal/goobj` | goc 自己的 goobj writer/reader，按 gometa 写出和 `go tool asm` 一样的对象 |
+| `clang/` | Clang 补丁和树内 Sema `SemaGocColors.cpp`（[clang/README.md](clang/README.md)） |
+| `llvm/` | goc 的 LLVM 代码，照 LLVM 布局：`lib/Analysis`、`lib/Transforms`、`lib/Plugin`（IR pass）、`lib/CodeGen`、`lib/Target/<arch>`、`lib/Object`、`tools/goc-llc`（[llvm/README.md](llvm/README.md)） |
+| `include/` | 用户头文件 `goc.h`、`goc_uptr.h`。没有运行时库，uptr helper 的函数体由 `goc-uptr-inline` 给出 |
+| `scripts/` | 构建 Clang 和 pass、CI 入口、打发布包 |
+| `test/` | `lit`（Sema、IR pass、goc-llc 的 FileCheck）、`e2e`（Go 程序端到端，含 arm64/qemu）、`gocobj`（格式金样），见 [test/README.md](test/README.md) |
+| `ports/quickjs` | QuickJS（ng 和 Bellard）的 goc 移植：补丁、自带 libc shim 的宿主、CLI、测试脚本（[README](ports/quickjs/README.md)） |
+| `bench/` | 基准、内存、perf-gap 对照，不在 CI 里（[docs/benchmark/README.md](docs/benchmark/README.md)） |
+| `examples/` | `hello`（`goc check` 用）、`colors` |
+| `third_party/` | 只进 git 一份说明；本地放 LLVM 构建目录 |
 
-## Go 模块
+Go 模块：仓库根是 `github.com/LoyieKing/goc`；`test/e2e`、`ports/quickjs`、`bench`、`examples/hello` 各自是独立模块。
 
-仓库根目录是 Go 模块 `github.com/LoyieKing/goc`，包含 `goobj/...` 和 `tools/...`。`test/*`、`bench/goja (-mem)`、`bench/goja`、`examples/hello` 各自是独立的模块。
+## 按主题读
 
-## 测试
-
-- `scripts/ci-test.sh`：依次跑文件大小检查、`goc check`、`test/clang`、`test/color-escape`、`test/lit`、`test/e2e/{realbody,goabi,stress,lines,arm64}`、Go 单元测试、gocobj golden 和 gocobj-diff。CI 跑的就是这一组。
-- QuickJS：`scripts/qjs-cli-build.sh`（ng / `QJS_FLAVOR=bellard`），然后跑 `test/e2e/qjs/test262-sample.py` 和 `test/e2e/qjs/official-tests.py`。
-- Go 单元测试：`go test ./goobj/lower ./tools/...`。
+| 文档 | 内容 |
+|---|---|
+| [design/walkthrough.md](docs/design/walkthrough.md) | 从 `add.c` 到二进制，每一步的真实输出 |
+| [design/frontend-ir.md](docs/design/frontend-ir.md) | Clang 补丁与 Sema、每个 IR pass 的输入、输出、不变量，颜色在 IR 里的表示 |
+| [design/codegen.md](docs/design/codegen.md) | 为什么要自己的 llc、栈检查（共享策略 + 架构钩子）、帧地址修复、arm64、`.goc.*` 表 |
+| [design/objects-link.md](docs/design/objects-link.md) | `.gocobj`、转换器、`goc toolexec`、符号命名 |
+| [design/gocobj-format.md](docs/design/gocobj-format.md) | `.gocobj` 格式规范 |
+| [design/go-versions.md](docs/design/go-versions.md) | 和 Go 版本相关的事实、ABI profile、升级 Go 的流程 |
+| [design/runtime.md](docs/design/runtime.md) | morestack、搬栈、GC、uptr、alloca 池、Go 与 C 互调 |
+| [contributing.md](docs/contributing.md) | 测试、加 Go 版本 / pass / 架构、已知缺口 |
+| [roadmap.md](docs/roadmap.md) | 还没做的事 |
