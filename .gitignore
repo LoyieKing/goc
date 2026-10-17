@@ -49,3 +49,4 @@ __pycache__/
 /docs/perf-gap/data/
 /docs/benchmark/data/
 !tools/gocobj2goobj/testdata/golden/**/*.goobj
+!goobj/lower/testdata/goabi/*.log

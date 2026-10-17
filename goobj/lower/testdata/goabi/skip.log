@@ -1,0 +1,3 @@
+goabi: 1 rewritten, 2 left SysV-only [hid, dots]
+goabi: skipped hid: file-local functions are not Go-callable
+goabi: skipped dots: variadic functions are unsupported
