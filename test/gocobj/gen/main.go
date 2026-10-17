@@ -14,7 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/LoyieKing/goc/gocobj"
+	"github.com/LoyieKing/goc/internal/gocobj"
 )
 
 // main.add: stack check, frame, one call to runtime.helper, return.

@@ -160,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     # Every supported Go release is required (docs/multi-go-version.md).
-    # One gocobj2goobj serves them all from the facts in gometa/data; the
+    # One gocobj2goobj serves them all from the facts in internal/gometa/data; the
     # toolchain job above does not depend on Go. The repository's tools need
     # go1.23 to build: for an older release a second Go builds them
     # (GOC_HOST_GO).
@@ -255,11 +255,11 @@ jobs:
       # The release facts gocobj2goobj embeds must be what the resolver reads
       # from this GOROOT (a newer patch release may only change
       # source_version; any other change needs review: docs/go-metadata-schema.md).
-      - name: gometa/data is what the resolver reads
+      - name: internal/gometa/data is what the resolver reads
         run: |
           m="$(go env GOVERSION | cut -d. -f1,2)"
-          "${GOC_HOST_GO:-go}" run ./tools/golangc-metadata-resolver -goroot "$(go env GOROOT)" -o "$RUNNER_TEMP/$m.json"
-          diff <(jq 'del(.source_version)' "gometa/data/$m.json") <(jq 'del(.source_version)' "$RUNNER_TEMP/$m.json")
+          "${GOC_HOST_GO:-go}" run ./cmd/goc-gometa -goroot "$(go env GOROOT)" -o "$RUNNER_TEMP/$m.json"
+          diff <(jq 'del(.source_version)' "internal/gometa/data/$m.json") <(jq 'del(.source_version)' "$RUNNER_TEMP/$m.json")
 
       - name: Disk usage (end)
         if: always()

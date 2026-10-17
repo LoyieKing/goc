@@ -2,8 +2,8 @@
 # goc_converter ROOT: print the path of gocobj2goobj.
 #
 # One converter serves every supported Go release: it writes the object
-# itself from the release's facts (gometa/data/*.json, made by
-# tools/golangc-metadata-resolver; docs/multi-go-version.md) and picks them
+# itself from the release's facts (internal/gometa/data/*.json, made by
+# cmd/goc-gometa; docs/multi-go-version.md) and picks them
 # by `go env GOVERSION`. A release ships it prebuilt as bin/gocobj2goobj; a
 # checkout builds it once per converter source into build/conv.
 goc_converter() {
@@ -13,8 +13,8 @@ goc_converter() {
     echo "$root/bin/gocobj2goobj"
     return 0
   fi
-  sum="$( (cd "$root" && cat go.mod gocobj/*.go gometa/*.go gometa/data/*.json goobjw/*.go \
-    tools/gocobj2goobj/*.go) | sha256sum | cut -c1-12)"
+  sum="$( (cd "$root" && cat go.mod internal/gocobj/*.go internal/gometa/*.go internal/gometa/data/*.json \
+    internal/goobj/*.go internal/convert/*.go tools/gocobj2goobj/*.go) | sha256sum | cut -c1-12)"
   dir="$root/build/conv/$sum"
   if [[ -x "$dir/gocobj2goobj" ]]; then
     echo "$dir/gocobj2goobj"

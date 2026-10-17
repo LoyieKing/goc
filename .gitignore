@@ -48,5 +48,5 @@ __pycache__/
 # Raw measurements live on the local docs-data branch (git worktree add ../goc-data docs-data).
 /docs/perf-gap/data/
 /docs/benchmark/data/
-!tools/gocobj2goobj/testdata/golden/**/*.goobj
-!goobj/lower/testdata/goabi/*.log
+!internal/convert/testdata/golden/**/*.goobj
+!internal/lower/testdata/goabi/*.log

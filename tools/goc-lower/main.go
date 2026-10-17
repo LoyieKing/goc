@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/LoyieKing/goc/goobj/lower"
+	"github.com/LoyieKing/goc/internal/lower"
 )
 
 func main() {

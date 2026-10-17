@@ -6,8 +6,8 @@
 //
 // One profile covers every Go release whose facts are equal: goabi1 is
 // go1.23 through go1.27 (docs/go-version-diffs.md).
-// tools/golangc-metadata-resolver reads these facts from a GOROOT into
-// gometa/data, and gocobj2goobj picks the profile from them, so a new Go release
+// cmd/goc-gometa reads these facts from a GOROOT into
+// internal/gometa/data, and internal/convert picks the profile from them, so a new Go release
 // needs no change here unless it moves one of them.
 // go1.24-amd64/arm64 are the old names of goabi1, kept so older .gocobj
 // files and goldens still decode.
@@ -22,7 +22,7 @@
 //                    runtime.morestack_noctxt for functions without a closure context
 //   INT_REGS/FP_REGS cmd/compile/abi-internal.md (ABIInternal argument registers)
 //
-// Keep gocobj/abi.go in sync; gocobj's tests parse this file and compare.
+// Keep internal/gocobj/abi.go in sync; its tests parse this file and compare.
 //
 // GOC_ABI_PROFILE(NAME, ARCH, PTR_SIZE, G_REG, STACKGUARD0_OFF, STACK_SMALL,
 //                 STACK_BIG, MORESTACK, INT_REGS, FP_REGS)

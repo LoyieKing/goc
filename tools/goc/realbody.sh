@@ -231,7 +231,7 @@ fi
 # ELF relocation, so the converter never patches code.
 LLC_ARGS+=(-function-sections -goc-sym-abi="$SYM_ABI")
 # The converter names the ABI profile of the Go in PATH (from that
-# release's facts, gometa/data); goc-llc records it in the .gocobj header.
+# release's facts, internal/gometa/data); goc-llc records it in the .gocobj header.
 PACK_BIN="$(goc_converter "$ROOT")" || exit 1
 PROFILE="$("$PACK_BIN" -print-profile -goarch "$GOC_ARCH")" || exit 1
 LLC_ARGS+=(-goc-profile="$PROFILE")

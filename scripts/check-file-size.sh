@@ -19,7 +19,7 @@ while IFS= read -r f; do
     echo "FAIL $f: $n lines > $MAX; split it" >&2
     fail=1
   fi
-done < <(git ls-files -- cmd llvm goobj gometa goobjw tools scripts gocobj \
+done < <(git ls-files -- cmd internal llvm tools scripts \
   | grep -Ev '/testdata/' \
   | grep -E '\.(c|cc|cpp|h|go|py|sh|s|S|td|def)$|^cmd/goc$')
 

@@ -61,7 +61,7 @@ goc_lower_bin() {
   if [[ ! -x "$bin" ]]; then
     stale=1
   else
-    for src in "$ROOT/tools/goc-lower/"*.go "$ROOT/goobj/lower/"*.go; do
+    for src in "$ROOT/tools/goc-lower/"*.go "$ROOT/internal/lower/"*.go; do
       if [[ -f "$src" && "$src" -nt "$bin" ]]; then
         stale=1
         break
