@@ -9,8 +9,8 @@ C 写函数体，Go 来调用。这不是 cgo：goc 把 C 编成 Go 的对象文
 发布页：<https://github.com/LoyieKing/goc/releases>
 
 ```bash
-tar -xzf goc-0.0.2-linux-amd64.tar.gz
-cd goc-0.0.2-linux-amd64
+tar -xzf goc-0.0.3-linux-amd64.tar.gz
+cd goc-0.0.3-linux-amd64
 export PATH="$PWD/bin:$PATH"
 goc version
 goc check            # 编出并运行 examples/hello，打印 PASS goc check

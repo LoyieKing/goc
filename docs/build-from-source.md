@@ -57,7 +57,7 @@ pass 用宿主的 `clang++-19`、刚才的 `llvm-config` 和 X86 后端头文件
 ## 5. 打成一个包
 
 ```bash
-./scripts/pack-release.sh dist/goc-0.0.2-linux-amd64.tar.gz
+./scripts/pack-release.sh dist/goc-0.0.3-linux-amd64.tar.gz
 ```
 
 版本号读仓库根目录的 `VERSION`。解压后的布局：
@@ -75,8 +75,8 @@ pass 用宿主的 `clang++-19`、刚才的 `llvm-config` 和 X86 后端头文件
 ## 6. 确认能用
 
 ```bash
-tar -C /tmp -xzf dist/goc-0.0.2-linux-amd64.tar.gz
-export PATH="/tmp/goc-0.0.2-linux-amd64/bin:$PATH"
+tar -C /tmp -xzf dist/goc-0.0.3-linux-amd64.tar.gz
+export PATH="/tmp/goc-0.0.3-linux-amd64/bin:$PATH"
 goc check
 ```
 
@@ -87,6 +87,6 @@ bin/goc check
 ./scripts/ci-test.sh       # 文件大小、goc check、lit、e2e（含 arm64/qemu）、Go 单元测试、gocobj 金样
 ```
 
-GitHub Actions 在每次推送到 `main` 和每个 pull request 上，用 10 个 Go 版本（1.18–1.27）跑 `scripts/ci-test.sh`，另外编一次 QuickJS-ng 跑冒烟。打 `v*` tag 时，release workflow 用同一个 clang 缓存跑同样的测试，再执行 `pack-release.sh`，解开压缩包跑 `goc check`，然后传到对应的 GitHub Release。tag 必须和 `VERSION` 一致，例如 `VERSION` 是 `0.0.2` 时 tag 是 `v0.0.2`。在 Actions 页手动运行 release workflow 是演练：压缩包留作 artifact，不发布。
+GitHub Actions 在每次推送到 `main` 和每个 pull request 上，用 10 个 Go 版本（1.18–1.27）跑 `scripts/ci-test.sh`，另外编一次 QuickJS-ng 跑冒烟。打 `v*` tag 时，release workflow 用同一个 clang 缓存跑同样的测试，再执行 `pack-release.sh`，解开压缩包跑 `goc check`，然后传到对应的 GitHub Release。tag 必须和 `VERSION` 一致，例如 `VERSION` 是 `0.0.3` 时 tag 是 `v0.0.3`。在 Actions 页手动运行 release workflow 是演练：压缩包留作 artifact，不发布。
 
 完整的 QuickJS 核对和跑分不在 CI 里，它们要另外下载引擎源码：[ports/quickjs/README.md](../ports/quickjs/README.md)、[benchmark/README.md](benchmark/README.md)。

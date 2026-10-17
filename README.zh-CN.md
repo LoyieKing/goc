@@ -30,8 +30,8 @@ goc 让 C 遵守 Go 的栈规则。打过补丁的 Clang/LLVM 生成 Go 需要�
 ## 上手
 
 ```bash
-tar -xzf goc-0.0.2-linux-amd64.tar.gz      # 从 Releases 页下载
-export PATH="$PWD/goc-0.0.2-linux-amd64/bin:$PATH"
+tar -xzf goc-0.0.3-linux-amd64.tar.gz      # 从 Releases 页下载
+export PATH="$PWD/goc-0.0.3-linux-amd64/bin:$PATH"
 goc check                                  # PASS goc check
 goc go ./mypkg                             # 把 mypkg/*.c 编进这个 Go 包
 ```

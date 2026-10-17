@@ -30,8 +30,8 @@ QuickJS compiled with goc, V8-v7 score (2026-10-09, Ryzen 9 7900X): goc-ng is 92
 ## Quick start
 
 ```bash
-tar -xzf goc-0.0.2-linux-amd64.tar.gz      # from the Releases page
-export PATH="$PWD/goc-0.0.2-linux-amd64/bin:$PATH"
+tar -xzf goc-0.0.3-linux-amd64.tar.gz      # from the Releases page
+export PATH="$PWD/goc-0.0.3-linux-amd64/bin:$PATH"
 goc check                                  # PASS goc check
 goc go ./mypkg                             # compiles mypkg/*.c into the Go package
 ```
