@@ -72,20 +72,6 @@ bool goc_stack_check(size_t need);
 goc_cptr goc_dynalloc(size_t bytes, void **scope);
 void goc_dynrelease(void **scope);
 
-typedef struct JSObject JSObject;
-typedef struct JSValue {
-  int tagged_value;
-  cptr(JSObject) pointer;
-} JSValue;
-
-static inline JSValue goc_js_from_obj(cptr(JSObject) p, int tag) {
-  JSValue v;
-  v.tagged_value = tag;
-  v.pointer = p;
-  return v;
-}
-static inline JSObject *goc_js_get_obj(JSValue v) { return v.pointer; }
-
 #define __goc_nosplit __attribute__((annotate("goc.attr.nosplit")))
 #define __goc_nowb __attribute__((annotate("goc.attr.nowb")))
 #define __goc_safepoint __attribute__((annotate("goc.attr.safepoint")))

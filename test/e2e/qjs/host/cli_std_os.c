@@ -4,10 +4,10 @@
  * uses raw Linux syscalls for filesystem/descriptor operations and crosses to
  * Go only for process creation/waiting and C-runtime-free float formatting.
  */
+#include "../../../../include/goc.h"
 #ifdef GOC_QJS_BELLARD
 #include "../../../../third_party/quickjs-bellard/quickjs.h"
 #include "bellard_compat.h"
-#include "../../../../include/goc.h"
 #else
 #include "../../../../third_party/quickjs-ng/quickjs.h"
 #endif
