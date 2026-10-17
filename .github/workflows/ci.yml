@@ -7,153 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Builds the patched Clang and the goc passes once per push and caches them.
-  #
-  # Two caches, two keys. The Clang key covers only what goes into Clang (its
-  # patches, SemaGocColors and the build scripts). The old single key also
-  # hashed llvm/**, so any pass change threw away the ~1.5 h Clang build.
-  # The pass key adds llvm/** on top of the Clang key; a pass change rebuilds
-  # only build/llvm (minutes).
-  #
-  # On a Clang miss, ccache (restored by prefix from the newest earlier run)
-  # makes the rebuild recompile only what a patch touches.
   toolchain:
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CCACHE_BASEDIR: ${{ github.workspace }}
-      CCACHE_MAXSIZE: 3G
-      CCACHE_COMPRESS: "1"
-      GOC_CCACHE: "1"
-    outputs:
-      clang-key: ${{ steps.keys.outputs.clang }}
-      passes-key: ${{ steps.keys.outputs.passes }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Cache keys
-        id: keys
-        env:
-          # r4: the clang cache also carries LLVM's headers and CMake package so
-          # a passes rebuild on a clang hit finds this LLVM, not the system's
-          # (r3 lacked them; the passes were then built with RTTI and failed to load).
-          CLANG_KEY: goc-clang-19.1.7-r4-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/apply-patches.sh', 'scripts/slim-clang-build.sh') }}
-          PASSES_KEY: goc-passes-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/apply-patches.sh', 'scripts/slim-clang-build.sh') }}-${{ hashFiles('llvm/**', 'scripts/build-passes.sh') }}
-        run: |
-          echo "clang=$CLANG_KEY" >>"$GITHUB_OUTPUT"
-          echo "passes=$PASSES_KEY" >>"$GITHUB_OUTPUT"
-          echo "clang=$CLANG_KEY passes=$PASSES_KEY"
-
-      - name: Restore patched clang
-        id: clang
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            third_party/llvm-19.1.7-clang-build/bin
-            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
-            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
-            third_party/llvm-19.1.7-clang-build/lib/libclang-cpp.so*
-            third_party/llvm-19.1.7-clang-build/lib/clang
-            third_party/llvm-19.1.7-clang-build/lib/Target/X86
-            third_party/llvm-19.1.7-clang-build/x86-src
-            third_party/llvm-19.1.7-clang-build/include
-            third_party/llvm-19.1.7-clang-build/lib/cmake/llvm
-            third_party/llvm-project-19.1.7/llvm/include
-            third_party/llvm-project-19.1.7/llvm/cmake
-          key: ${{ steps.keys.outputs.clang }}
-
-      - name: Restore passes
-        id: passes
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            build/llvm/goc-llc
-            build/llvm/libGocPasses.so
-          key: ${{ steps.keys.outputs.passes }}
-
-      # Only a cold Clang build needs the space (~30 GB of build tree). The
-      # biggest preinstalled trees go in parallel.
-      - name: Free disk
-        if: steps.clang.outputs.cache-hit != 'true'
-        run: |
-          df -h /
-          for d in /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL; do
-            sudo rm -rf "$d" &
-          done
-          wait
-          df -h /
-
-      - name: Install build tools
-        if: steps.clang.outputs.cache-hit != 'true' || steps.passes.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build ccache \
-            curl xz-utils zlib1g-dev
-          if ! command -v clang-19 >/dev/null 2>&1; then
-            wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
-            chmod +x /tmp/llvm.sh
-            sudo /tmp/llvm.sh 19
-          fi
-
-      # Prefix fallback: an exact key never matches (run_id), the newest
-      # entry of the same kind is restored and ccache reuses what still fits.
-      - name: Restore ccache
-        if: steps.clang.outputs.cache-hit != 'true' || steps.passes.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@v4
-        with:
-          path: .ccache
-          key: goc-ccache-r1-${{ github.run_id }}
-          restore-keys: goc-ccache-r1-
-
-      - name: Build clang
-        if: steps.clang.outputs.cache-hit != 'true'
-        run: |
-          ccache -z
-          ./scripts/build-clang.sh
-          ./scripts/slim-clang-build.sh
-          ccache -s
-
-      - name: Save patched clang
-        if: steps.clang.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            third_party/llvm-19.1.7-clang-build/bin
-            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
-            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
-            third_party/llvm-19.1.7-clang-build/lib/libclang-cpp.so*
-            third_party/llvm-19.1.7-clang-build/lib/clang
-            third_party/llvm-19.1.7-clang-build/lib/Target/X86
-            third_party/llvm-19.1.7-clang-build/x86-src
-            third_party/llvm-19.1.7-clang-build/include
-            third_party/llvm-19.1.7-clang-build/lib/cmake/llvm
-            third_party/llvm-project-19.1.7/llvm/include
-            third_party/llvm-project-19.1.7/llvm/cmake
-          key: ${{ steps.keys.outputs.clang }}
-
-      - name: Build passes
-        if: steps.passes.outputs.cache-hit != 'true'
-        run: |
-          ./scripts/build-passes.sh
-          ccache -s
-
-      - name: Save passes
-        if: steps.passes.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            build/llvm/goc-llc
-            build/llvm/libGocPasses.so
-          key: ${{ steps.keys.outputs.passes }}
-
-      # Saved even when a later build step fails, so the next run resumes.
-      - name: Save ccache
-        if: always() && (steps.clang.outputs.cache-hit != 'true' || steps.passes.outputs.cache-hit != 'true')
-        uses: actions/cache/save@v4
-        with:
-          path: .ccache
-          key: goc-ccache-r1-${{ github.run_id }}
+    uses: ./.github/workflows/toolchain.yml
 
   test:
     needs: toolchain
@@ -264,3 +119,68 @@ jobs:
       - name: Disk usage (end)
         if: always()
         run: df -h /
+
+  # QuickJS-ng on goroutine stacks: the real C program goc is checked on.
+  # ports/quickjs/build.sh compiles the engine and the host with goc, runs the
+  # moving-stack smoke (embed) and links qjscli; then the ng tests.conf suite.
+  # test262, the Bellard tests and the V8 benchmark stay local (docs/contributing.md §2).
+  qjs-smoke:
+    needs: toolchain
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GOTOOLCHAIN: local
+      QJS_NG_VERSION: "0.17.0"
+      QJS_NG_SHA256: 559bc4c420475e55c7ab4510adbc562f55d7524d75e8e89d79ce4bb02f5687d9
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.4"
+          cache-dependency-path: go.mod
+
+      - name: Restore patched clang
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            third_party/llvm-19.1.7-clang-build/bin
+            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
+            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
+            third_party/llvm-19.1.7-clang-build/lib/libclang-cpp.so*
+            third_party/llvm-19.1.7-clang-build/lib/clang
+            third_party/llvm-19.1.7-clang-build/lib/Target/X86
+            third_party/llvm-19.1.7-clang-build/x86-src
+            third_party/llvm-19.1.7-clang-build/include
+            third_party/llvm-19.1.7-clang-build/lib/cmake/llvm
+            third_party/llvm-project-19.1.7/llvm/include
+            third_party/llvm-project-19.1.7/llvm/cmake
+          key: ${{ needs.toolchain.outputs.clang-key }}
+          fail-on-cache-miss: true
+
+      - name: Restore passes
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/llvm/goc-llc
+            build/llvm/libGocPasses.so
+          key: ${{ needs.toolchain.outputs.passes-key }}
+          fail-on-cache-miss: true
+
+      - name: Fetch QuickJS-ng
+        run: |
+          curl -sSL --fail -o "$RUNNER_TEMP/ng.tgz" \
+            "https://github.com/quickjs-ng/quickjs/archive/refs/tags/v$QJS_NG_VERSION.tar.gz"
+          echo "$QJS_NG_SHA256  $RUNNER_TEMP/ng.tgz" | sha256sum -c -
+          tar -C third_party -xzf "$RUNNER_TEMP/ng.tgz"
+          mv "third_party/quickjs-$QJS_NG_VERSION" third_party/quickjs-ng
+
+      - name: Build (engine, host, embed smoke, qjscli)
+        run: ./ports/quickjs/build.sh
+
+      - name: tests.conf suite
+        run: |
+          echo 'print("goc qjs " + (6 * 7))' > "$RUNNER_TEMP/smoke.js"
+          build/qjs/qjscli --script "$RUNNER_TEMP/smoke.js" | tee "$RUNNER_TEMP/smoke.out"
+          grep -qx 'goc qjs 42' "$RUNNER_TEMP/smoke.out"
+          python3 ports/quickjs/tests/cli_tests.py

@@ -38,6 +38,8 @@ Release 构建大约要几十分钟到一个多小时。构建目录已被 gitig
 
 已经编过、且 `bin/clang`、`opt`、`llc`、`llvm-mc`、`llvm-objdump` 都在时，脚本直接退出。要重编：`GOC_REBUILD_CLANG=1 ./scripts/build-clang.sh`。
 
+`--slim` 编完后删掉目标文件、静态库和只在构建时用的子目录，只留 goc 和 `build-passes.sh` 用得到的部分（CI 和发布用它，缓存因此小得多）。删过的目录不能增量重编。
+
 ## 4. 编 goc 自己的 pass 和 goc
 
 ```bash
@@ -85,6 +87,6 @@ bin/goc check
 ./scripts/ci-test.sh       # 文件大小、goc check、lit、e2e（含 arm64/qemu）、Go 单元测试、gocobj 金样
 ```
 
-GitHub Actions 在每次推送到 `main` 和每个 pull request 上，用 10 个 Go 版本（1.18–1.27）跑 `scripts/ci-test.sh`。打 `v*` tag 时，release workflow 先跑同样的测试，再执行 `pack-release.sh`，把压缩包传到对应的 GitHub Release。tag 必须和 `VERSION` 一致，例如 `VERSION` 是 `0.0.2` 时 tag 是 `v0.0.2`。
+GitHub Actions 在每次推送到 `main` 和每个 pull request 上，用 10 个 Go 版本（1.18–1.27）跑 `scripts/ci-test.sh`，另外编一次 QuickJS-ng 跑冒烟。打 `v*` tag 时，release workflow 用同一个 clang 缓存跑同样的测试，再执行 `pack-release.sh`，解开压缩包跑 `goc check`，然后传到对应的 GitHub Release。tag 必须和 `VERSION` 一致，例如 `VERSION` 是 `0.0.2` 时 tag 是 `v0.0.2`。在 Actions 页手动运行 release workflow 是演练：压缩包留作 artifact，不发布。
 
-QuickJS 和跑分不在 CI 里，它们要另外下载引擎源码：[ports/quickjs/README.md](../ports/quickjs/README.md)、[benchmark/README.md](benchmark/README.md)。
+完整的 QuickJS 核对和跑分不在 CI 里，它们要另外下载引擎源码：[ports/quickjs/README.md](../ports/quickjs/README.md)、[benchmark/README.md](benchmark/README.md)。

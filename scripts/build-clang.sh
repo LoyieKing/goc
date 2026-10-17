@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 # Build the patched Clang 19.1.7 that ships inside a goc release.
-# Writes third_party/llvm-19.1.7-clang-build. Skips the build when bin/clang,
-# opt, llc, llvm-mc and llvm-objdump are already there, unless GOC_REBUILD_CLANG=1.
+#
+#   scripts/build-clang.sh [--slim]
+#
+# Downloads LLVM 19.1.7 into third_party/llvm-project-19.1.7, applies
+# clang/patches/0001-0003 and clang/sema/SemaGocColors.cpp (once; a patch that
+# does not apply stops the build), and builds third_party/llvm-19.1.7-clang-build.
+# Skips the build when bin/clang, opt, llc, llvm-mc and llvm-objdump are
+# already there, unless GOC_REBUILD_CLANG=1.
+#
+# --slim (CI, release) then drops what neither goc nor build-passes.sh needs:
+# object files, static archives and the build-only subtrees. It keeps the
+# binaries, libLLVM, the clang resource dir, the generated X86 .inc files and
+# a copy of the X86 sources llvm/CMakeLists.txt needs (x86-src). A slimmed
+# tree cannot be rebuilt incrementally.
 #
 # Host tools: clang-19 or clang++-19 (gcc if those are absent), cmake, ninja, curl.
 # Targets: X86 and AArch64, shared libLLVM, clang, opt, llc, llvm-mc,
@@ -12,6 +24,39 @@ export GOC_ROOT="$ROOT"
 BUILD="$ROOT/third_party/llvm-19.1.7-clang-build"
 SRC="${LLVM_SRC:-$ROOT/third_party/llvm-project-19.1.7}"
 JOBS="${JOBS:-$(nproc)}"
+SLIM=0
+case "${1:-}" in
+  --slim) SLIM=1 ;;
+  "") ;;
+  *) echo "usage: scripts/build-clang.sh [--slim]" >&2; exit 2 ;;
+esac
+
+slim() {
+  if [[ -d "$SRC/llvm/lib/Target/X86" && ! -f "$BUILD/x86-src/X86InstrInfo.h" ]]; then
+    mkdir -p "$BUILD/x86-src"
+    cp -a "$SRC/llvm/lib/Target/X86/." "$BUILD/x86-src/"
+  fi
+  find "$BUILD" -type f \( -name '*.o' -o -name '*.a' \) -delete
+  rm -rf "$BUILD/tools" "$BUILD/utils" "$BUILD/unittests" "$BUILD/test" \
+    "$BUILD/examples" "$BUILD/projects" "$BUILD/runtimes"
+  echo "build-clang: slimmed to $(du -sh "$BUILD" | awk '{print $1}')"
+}
+
+# patch_clang LLVM_SRC: the goc patches, in order, with SemaGocColors.cpp
+# copied in after the Attr.td patch (the later patches build it).
+patch_clang() {
+  local clang="$1/clang" p
+  [[ -f "$clang/include/clang/Basic/Attr.td" ]] || {
+    echo "build-clang: no clang/include/clang/Basic/Attr.td under $1" >&2; exit 1; }
+  for p in "$ROOT"/clang/patches/0*.patch; do
+    echo "build-clang: apply ${p#$ROOT/}"
+    patch -d "$clang" -p1 -N --batch -i "$p" || {
+      echo "build-clang: $p does not apply" >&2; exit 1; }
+    if [[ "$(basename "$p")" == 0001-* ]]; then
+      cp -a "$ROOT/clang/sema/SemaGocColors.cpp" "$clang/lib/Sema/SemaGocColors.cpp"
+    fi
+  done
+}
 
 need() {
   command -v "$1" >/dev/null 2>&1 || { echo "build-clang: missing $1" >&2; exit 1; }
@@ -22,6 +67,7 @@ if [[ "${GOC_REBUILD_CLANG:-}" != 1 \
     && -x "$BUILD/bin/llvm-mc" && -x "$BUILD/bin/llvm-objdump" \
     && -e "$BUILD/lib/libLLVM.so.19.1" ]]; then
   echo "build-clang: already built ($BUILD/bin/clang)"
+  (( SLIM )) && slim
   exit 0
 fi
 
@@ -29,6 +75,7 @@ need cmake
 need ninja
 need curl
 need tar
+need patch
 
 CC="${CC:-}"
 CXX="${CXX:-}"
@@ -72,7 +119,7 @@ if [[ ! -f "$SRC/llvm/CMakeLists.txt" ]]; then
 fi
 
 if [[ ! -f "$SRC/.goc-patches-applied" ]]; then
-  "$ROOT/scripts/apply-patches.sh" "$SRC"
+  patch_clang "$SRC"
   touch "$SRC/.goc-patches-applied"
 fi
 
@@ -102,4 +149,5 @@ ninja -C "$BUILD" -j"$JOBS" clang opt llc llvm-mc llvm-objdump llvm-config lld
 if [[ -x "$BUILD/bin/lld" && ! -e "$BUILD/bin/ld.lld" ]]; then
   ln -sfn lld "$BUILD/bin/ld.lld"
 fi
+(( SLIM )) && slim
 echo "build-clang: ready $BUILD/bin/clang"

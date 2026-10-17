@@ -107,15 +107,14 @@ if command -v patchelf >/dev/null 2>&1; then
 fi
 
 # Assertion builds embed the absolute source path. Overwrite this checkout's
-# prefix with a same-length generic one so the archive does not carry it.
+# prefix with a same-length generic one so the archive does not carry it
+# (/src/goc-release, padded with '/' or cut to the checkout path's length).
 python3 - "$stage" "$ROOT" <<'PY'
 import os, sys
 stage, root = sys.argv[1], sys.argv[2]
 old = root.encode()
 base = b"/src/goc-release"
-if len(base) > len(old):
-    sys.exit("pack-release: checkout path is shorter than the replacement")
-new = base + b"/" * (len(old) - len(base))
+new = (base + b"/" * max(0, len(old) - len(base)))[:len(old)]
 nfiles = 0
 for dirpath, _, files in os.walk(stage):
     for name in files:
@@ -137,7 +136,7 @@ linux/amd64. This archive is the whole compiler: \`goc\` and the patched Clang.
 
 ## Install
 
-Need Go 1.24 or newer.
+Needs Go 1.18 to 1.27 (arm64 targets: Go 1.21 or newer).
 
 \`\`\`bash
 tar -xzf ${name}.tar.gz

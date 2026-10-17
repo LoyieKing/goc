@@ -1,46 +1,52 @@
 name: Release
 
+# A v* tag builds, tests, packs and publishes goc-<VERSION>-linux-amd64.tar.gz.
+# Run it by hand (workflow_dispatch) for a dry run: the same build, test and
+# pack, with the archive kept as a workflow artifact and nothing published.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  # The same reusable job as CI: on a cache hit nothing is rebuilt.
+  toolchain:
+    uses: ./.github/workflows/toolchain.yml
+
   release:
+    needs: toolchain
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 90
+    env:
+      GOTOOLCHAIN: local
     steps:
       - uses: actions/checkout@v4
 
-      - name: Free disk
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-            /opt/hostedtoolcache/CodeQL || true
-          df -h
-
+      # lit runs the IR tests with LLVM 19's opt and FileCheck; patchelf
+      # rewrites the archive's RUNPATHs; qemu runs the arm64 e2e cases.
       - name: Install host tools
         run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc >/dev/null
+          codename="$(lsb_release -cs)"
+          echo "deb http://apt.llvm.org/$codename/ llvm-toolchain-$codename-19 main" \
+            | sudo tee /etc/apt/sources.list.d/llvm-19.list >/dev/null
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build python3 \
-            ripgrep curl ca-certificates xz-utils patchelf pkg-config \
-            zlib1g-dev lld
-          if ! command -v clang-19 >/dev/null 2>&1; then
-            wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
-            chmod +x /tmp/llvm.sh
-            sudo /tmp/llvm.sh 19
-          fi
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build ripgrep patchelf lld \
+            qemu-user libc6-dev-arm64-cross linux-libc-dev-arm64-cross \
+            llvm-19-dev llvm-19-tools
+          pipx install lit==23.1.3
 
       - uses: actions/setup-go@v5
         with:
           go-version: "1.24.4"
+          cache-dependency-path: go.mod
 
-      # restore + save, not actions/cache. The combined action only writes
-      # the cache when the whole job succeeds, so a test failure used to
-      # throw away the Clang build.
-      - name: Restore patched clang and passes
-        id: cache
+      - name: Restore patched clang
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -51,70 +57,71 @@ jobs:
             third_party/llvm-19.1.7-clang-build/lib/clang
             third_party/llvm-19.1.7-clang-build/lib/Target/X86
             third_party/llvm-19.1.7-clang-build/x86-src
-            build/llvm/goc-color-escape
-            build/llvm/goc-llc
-            build/llvm/libGocPasses.so
-          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'llvm/lib/Transforms/ColorEscape/**', 'llvm/**') }}
+            third_party/llvm-19.1.7-clang-build/include
+            third_party/llvm-19.1.7-clang-build/lib/cmake/llvm
+            third_party/llvm-project-19.1.7/llvm/include
+            third_party/llvm-project-19.1.7/llvm/cmake
+          key: ${{ needs.toolchain.outputs.clang-key }}
+          fail-on-cache-miss: true
 
-      - name: Build clang and passes
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          ./scripts/build-clang.sh
-          ./scripts/build-passes.sh
-          ./scripts/slim-clang-build.sh
-
-      - name: Save patched clang and passes
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+      - name: Restore passes
+        uses: actions/cache/restore@v4
         with:
           path: |
-            third_party/llvm-19.1.7-clang-build/bin
-            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so.19.1
-            third_party/llvm-19.1.7-clang-build/lib/libLLVM.so
-            third_party/llvm-19.1.7-clang-build/lib/libclang-cpp.so*
-            third_party/llvm-19.1.7-clang-build/lib/clang
-            third_party/llvm-19.1.7-clang-build/lib/Target/X86
-            third_party/llvm-19.1.7-clang-build/x86-src
-            build/llvm/goc-color-escape
             build/llvm/goc-llc
             build/llvm/libGocPasses.so
-          key: goc-clang-19.1.7-r2-${{ hashFiles('clang/patches/**', 'clang/sema/**', 'scripts/build-clang.sh', 'scripts/build-passes.sh', 'scripts/apply-patches.sh', 'llvm/lib/Transforms/ColorEscape/**', 'llvm/**') }}
+          key: ${{ needs.toolchain.outputs.passes-key }}
+          fail-on-cache-miss: true
 
       - name: Test
-        run: |
-          # LLVM 19's opt, FileCheck and not run the color-escape and lit tests.
-          sudo apt-get install -y llvm-19-dev llvm-19-tools
-          command -v llvm-config-19 >/dev/null
-          ./scripts/ci-test.sh
+        run: ARM64_REQUIRE_QEMU=1 GOC_REQUIRE_LIT=1 ./scripts/ci-test.sh
 
       - name: Pack
         run: |
           ver="$(tr -d '[:space:]' < VERSION)"
-          tag="${GITHUB_REF_NAME#v}"
-          [[ "$ver" == "$tag" ]] || {
-            echo "VERSION ($ver) does not match tag ($GITHUB_REF_NAME)" >&2
-            exit 1
-          }
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
+            [[ "$ver" == "${GITHUB_REF_NAME#v}" ]] || {
+              echo "VERSION ($ver) does not match tag ($GITHUB_REF_NAME)" >&2
+              exit 1
+            }
+          fi
           ./scripts/pack-release.sh "goc-${ver}-linux-amd64.tar.gz"
+          echo "ASSET=goc-${ver}-linux-amd64.tar.gz" >> "$GITHUB_ENV"
+
+      # The packed archive on its own: unpack it elsewhere and run goc check.
+      - name: Check the archive
+        run: |
+          d="$RUNNER_TEMP/unpacked"
+          mkdir -p "$d"
+          tar -C "$d" -xzf "$ASSET"
+          (cd "$RUNNER_TEMP" && env -u LD_LIBRARY_PATH "$d/${ASSET%.tar.gz}/bin/goc" check)
+
+      - name: Keep the archive (dry run)
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ASSET }}
+          path: ${{ env.ASSET }}
+          retention-days: 7
 
       - name: Publish
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           ver="$(tr -d '[:space:]' < VERSION)"
-          asset="goc-${ver}-linux-amd64.tar.gz"
           notes="$(mktemp)"
           cat >"$notes" <<EOF
           goc ${ver} for linux/amd64.
 
           The archive contains goc and the patched Clang. Unpack it, put \`bin\` on \`PATH\`, and run \`goc check\`.
 
-          You need Go 1.24 or newer. See docs/quickstart.md.
+          You need Go 1.18 to 1.27. See docs/quickstart.md.
           EOF
           if gh release view "v${ver}" >/dev/null 2>&1; then
-            gh release upload "v${ver}" "$asset" --clobber
+            gh release upload "v${ver}" "$ASSET" --clobber
           else
-            gh release create "v${ver}" "$asset" \
+            gh release create "v${ver}" "$ASSET" \
               --title "goc ${ver}" \
               --notes-file "$notes"
           fi

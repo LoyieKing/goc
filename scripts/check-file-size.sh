@@ -5,8 +5,8 @@
 # C file split into #included .inc parts as in ports/quickjs/host)
 # rather than raising the limit.
 #
-# Vendored code (third_party/) and test
-# inputs (test/, testdata/) are not checked.
+# Vendored code (third_party/), test inputs (test/, testdata/) and the docs
+# are not checked.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -20,7 +20,7 @@ while IFS= read -r f; do
     echo "FAIL $f: $n lines > $MAX; split it" >&2
     fail=1
   fi
-done < <(git ls-files -- cmd internal llvm scripts ports \
+done < <(git ls-files -- cmd internal llvm clang scripts ports bench examples include \
   | grep -Ev '/testdata/' \
   | grep -E '\.(c|cc|cpp|h|inc|go|py|sh|s|S|td|def)$')
 

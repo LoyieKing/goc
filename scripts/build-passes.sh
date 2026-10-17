@@ -55,7 +55,7 @@ fi
 # references typeinfo symbols opt does not export and fails to load.
 LLVM_CMAKEDIR="$("$LLVM_CFG" --cmakedir)"
 [[ -f "$LLVM_CMAKEDIR/LLVMConfig.cmake" ]] || {
-  echo "build-passes: no LLVMConfig.cmake in $LLVM_CMAKEDIR (a slimmed clang build lacks it; see scripts/slim-clang-build.sh)" >&2
+  echo "build-passes: no LLVMConfig.cmake in $LLVM_CMAKEDIR (a clang cache saved without lib/cmake/llvm lacks it; see .github/workflows/toolchain.yml)" >&2
   exit 1
 }
 

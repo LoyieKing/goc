@@ -1,14 +1,13 @@
 //===- SemaGocColors.cpp - goc pointer-color Sema (in-tree) ---------------===//
 //
-// Contract (goc-syntax-guide.md v0.2.1):
+// Contract (docs/language.md in the goc tree, v0.2.4):
 //   sptr to non-stack cptr/auto T* storage promotes that storage to uptr in
 //   the IR pass; unsupported escapes and raw sptr returns remain hard errors.
 //
 // Attr.td defines GocCPtr/SPtr/UPtr/AutoPtr/GPtr with SimpleHandler=1.
 // This file:
 //   1. Mirrors Goc*Attr → AnnotateAttr("goc.color.*") so CodeGen emits
-//      llvm.var.annotation / llvm.global.annotations for the IR pass (same
-//      as the plugin). MirrorGocColorAttrs runs from ParseAST before
+//      llvm.var.annotation / llvm.global.annotations for the IR pass. MirrorGocColorAttrs runs from ParseAST before
 //      HandleTopLevelDecl. CodeGen is incremental, so the end-of-TU mirror
 //      is too late for IR.
 //   2. Runs AST escape analysis at end of TU (same rules as GocClangPlugin).

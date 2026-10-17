@@ -5,9 +5,9 @@
  }
  
 +//===----------------------------------------------------------------------===//
-+// goc pointer-color attributes. clang/plugin/GocClangPlugin.cpp registers
-+// the same GNU spellings through ParsedAttrInfo for a stock clang (tests
-+// only). See clang/patches/README.md in the goc tree.
++// goc pointer-color attributes. The goc tree's include/goc.h spells them
++// cptr(T), sptr(T), uptr(T), auto_ptr(T) and gptr(T). See clang/README.md
++// in the goc tree.
 +//===----------------------------------------------------------------------===//
 +
 +def GocCPtr : InheritableAttr {

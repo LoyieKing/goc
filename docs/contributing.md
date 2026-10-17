@@ -6,7 +6,7 @@
 
 ## 1. 测试
 
-所有测试在 `test/`（目录说明见 [test/README.md](../test/README.md)）；Go 单元测试按 Go 的要求放在包旁边；构建输出在 `build/test/`。QuickJS 在 `ports/quickjs/`，跑分在 `bench/`，都不在 CI 里。
+所有测试在 `test/`（目录说明见 [test/README.md](../test/README.md)）；Go 单元测试按 Go 的要求放在包旁边；构建输出在 `build/test/`。QuickJS 在 `ports/quickjs/`（CI 只跑 QuickJS-ng 的冒烟，见下），跑分在 `bench/`，不在 CI 里。
 
 | 目录 | 测什么 | 入口 |
 |---|---|---|
@@ -19,7 +19,7 @@
 `scripts/ci-test.sh` 按顺序跑：
 
 ```
-file sizes      ./scripts/check-file-size.sh          # cmd internal llvm scripts ports 下单文件 800 行，无例外（testdata/ 不查）
+file sizes      ./scripts/check-file-size.sh          # cmd internal llvm clang scripts ports bench examples include 下单文件 800 行，无例外（testdata/ 不查）
 goc check       bin/goc check
 lit             ./test/lit/run.sh
 e2e             ./test/e2e/run.sh
@@ -27,8 +27,11 @@ go unit tests   go test ./internal/... ./cmd/...
 gocobj goldens  bin/goc tool objdump verify test/gocobj/v1.0/valid.gocobj
 ```
 
-GitHub Actions（`.github/workflows/ci.yml`）在 10 个 Go 版本（1.18–1.27）上跑 `ARM64_REQUIRE_QEMU=1 GOC_REQUIRE_LIT=1 ./scripts/ci-test.sh`，装 `qemu-user`、arm64 交叉头文件、`llvm-19-tools`；
-打补丁的 clang 和 goc 的 pass 分两个缓存键，clang 的键不中时完整重编（约 1.5 小时）。每个 job 还检查 `cmd/goc-gometa` 从该 GOROOT 读出的事实与 `internal/gometa/data` 一致。
+GitHub Actions：
+
+- `toolchain.yml`（可复用）：编打补丁的 clang（`scripts/build-clang.sh --slim`）和 goc 的 pass，分两个缓存键。clang 的键只看 `clang/patches`、`clang/sema` 和 `build-clang.sh`，不中时借 ccache 重编（冷编约 1.5 小时）；pass 的键再加上 `llvm/**` 和 `build-passes.sh`。
+- `ci.yml`：每次推送和 PR。先调 `toolchain.yml`；再在 10 个 Go 版本（1.18–1.27）上跑 `ARM64_REQUIRE_QEMU=1 GOC_REQUIRE_LIT=1 ./scripts/ci-test.sh`（装 `qemu-user`、arm64 交叉头文件、`llvm-19-tools`），每个 job 还检查 `cmd/goc-gometa` 从该 GOROOT 读出的事实与 `internal/gometa/data` 一致；`qjs-smoke` 下载 QuickJS-ng 0.17.0（校验 sha256），跑 `ports/quickjs/build.sh`（含搬栈冒烟）和 `cli_tests.py`。
+- `release.yml`：打 `v*` tag 时调同一个 `toolchain.yml`，跑 `ci-test.sh`，打包，解开压缩包跑 `goc check`，再发布。手动触发（workflow_dispatch）是演练：同样构建、测试、打包和检查，压缩包留作 artifact，不发布。
 
 ### 本地常用
 
@@ -46,7 +49,7 @@ bin/goc tool objdump diff a.goobj b.goobj       # 改转换器前后对比
 
 ## 2. 改了编译路径之后：QuickJS
 
-改 pass、goc-llc、`internal/lower` 或转换器之后，除了 CI，还要在 QuickJS 上核对（引擎源码按 [third_party/README.md](../third_party/README.md) 放好）：
+改 pass、goc-llc、`internal/lower` 或转换器之后，除了 CI（只有 ng 的冒烟），还要在 QuickJS 上完整核对（引擎源码按 [third_party/README.md](../third_party/README.md) 放好）：
 
 ```bash
 ports/quickjs/build.sh && ports/quickjs/build.sh --flavor bellard

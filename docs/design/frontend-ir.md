@@ -26,8 +26,8 @@
 |---|---|
 | `clang/patches/0001-Attr.td-goc-colors.patch` | `Attr.td` 加 `GocCPtr/SPtr/UPtr/AutoPtr/GPtr` 五个属性 |
 | `clang/sema/SemaGocColors.cpp` | 复制到 `lib/Sema/`：(1) 把 `Goc*Attr` 镜像成 `AnnotateAttr("goc.color.*")`，CodeGen 因此产出 `llvm.var.annotation` / `llvm.global.annotations`；(2) 翻译单元结束时做 AST 级逃逸检查 |
-| `clang/patches/0003-mirror-goc-colors-before-codegen.patch` | `ParseAST.cpp`：在 `HandleTopLevelDecl` 前镜像（CodeGen 是增量的，等到 TU 结束就晚了） |
-| `clang/patches/0004-wire-sema-goc-colors.patch` | `CMakeLists.txt`、`Sema.h`、`Sema.cpp` 的接线 |
+| `clang/patches/0002-mirror-goc-colors-before-codegen.patch` | `ParseAST.cpp`：在 `HandleTopLevelDecl` 前镜像（CodeGen 是增量的，等到 TU 结束就晚了） |
+| `clang/patches/0003-wire-sema-goc-colors.patch` | `CMakeLists.txt`、`Sema.h`、`Sema.cpp` 的接线 |
 
 所以 **颜色进 IR 的载体是 annotate**（[walkthrough.md](walkthrough.md) §5 有真实输出），之后 `goc-color-escape` 把它们读出来变成 metadata。
 
