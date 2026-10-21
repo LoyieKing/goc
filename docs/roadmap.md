@@ -81,6 +81,6 @@
 
 2026-10-09 的五引擎对照里，goc-ng 的 V8 分数是 native ng 的 0.92，goc-bellard 是 gcc Bellard 的 0.90（[benchmark/README.md](benchmark/README.md)）。[research/perf-gap.md](research/perf-gap.md) 第 8 节的改进项（回溯栈不解码、每个函数只读一次 `g`、根在调用之间留在寄存器、尾部复制、libm、vDSO 时钟、`memcmp`/`memcpy`、栈槽共享、小叶子免栈检查）都已进默认构建。还开着的：
 
-- `-inline-threshold=250`（perf-gap 第 13 项）：文本管线不带 `default<O3>` 的 250 阈值。打开要重新计时并重跑正确性对照。
+- `-inline-threshold`：2026-10-21 已经测过，没有收益，不再列为待办。goc 现在的默认值就等于 225（用 `-inline-threshold=225` 构建出的目标文件和默认构建逐字节相同）。把它改成 250 或 300 以后，V8 总分的变化都在噪声范围内（大约 ±2%），所以保持默认值。之前看到 RegExp 在两个 flavor 上往相反方向变化，原因不是内联：`lre_exec` 的机器码完全没变，只是前面的代码大小变了，让它的起点地址对 64 取模在 0 和 32 之间来回变化。Go 链接器只保证函数起点按 32 字节对齐，所以 RegExp 单项会因为这种位置变化跳动大约 ±10%。
 - RegExp 仍是 V8 里差距最大的子项（2026-10-09：goc-ng/ng 0.90，goc-bellard/Bellard 0.94），合入改进之后没有重测指令数。
 - 剩下的开销主要是栈检查、uptr 编解码和栈图根槽的读写（perf-gap 第 4 节）。
