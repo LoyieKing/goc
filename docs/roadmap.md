@@ -69,6 +69,14 @@
 - 和指针色的关系：堆上 JS 对象里的指针应当都是 `gptr`，要确认颜色分析能自动推断，不需要大规模手改 QuickJS 源码。
 - 收益要量化：内存占用、GC 停顿、V8-v7 分数，和现在的方案对比。
 
+## `goc_dynalloc`：恢复全进程共用的池
+
+删掉 `runtime/` 之后，`goc_dynalloc` 的池改成每个目标文件（翻译单元）各自在 BSS 里放一个 16 MiB。语义是对的，但每多一个翻译单元就多占 16 MiB 虚拟内存，各个池之间也不共享。要改的：
+
+- 恢复成整个进程只有一个池：比如只定义一个 weak / COMDAT 的池符号，或者在链接时把各翻译单元的定义合并成一份。
+- 不重新引入 `runtime/` 目录。
+- 加一个测试：多个翻译单元链接进同一个程序时，确认它们用的是同一个池。
+
 ## 性能：缩小和原生 QuickJS 的差距
 
 2026-10-09 的五引擎对照里，goc-ng 的 V8 分数是 native ng 的 0.92，goc-bellard 是 gcc Bellard 的 0.90（[benchmark/README.md](benchmark/README.md)）。[research/perf-gap.md](research/perf-gap.md) 第 8 节的改进项（回溯栈不解码、每个函数只读一次 `g`、根在调用之间留在寄存器、尾部复制、libm、vDSO 时钟、`memcmp`/`memcpy`、栈槽共享、小叶子免栈检查）都已进默认构建。还开着的：
