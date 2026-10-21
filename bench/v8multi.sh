@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Ten-engine V8-v7 comparison for docs/benchmark/README.md ("多引擎 V8-v7 对比").
+# Multi-engine V8-v7 comparison for docs/benchmark/README.md ("多引擎 V8-v7 对比").
 #
 # Engines: goc-ng, goc-bellard, native ng, native Bellard (gcc and clang),
 # liustack's C patch on Bellard 2026-06-04 built natively (gcc and clang, the
 # same upstream Makefile), github.com/liustack/quickjs and modernc.org/quickjs
-# (both ccgo-translated Bellard QuickJS, pure Go, via bench/ccgo), and Goja.
+# (both ccgo-translated Bellard QuickJS, pure Go, via bench/ccgo), moejs (a
+# pure-Go engine with its own parser, compiler and interpreter, via
+# bench/moejs) and Goja.
 #
 # Rounds are split over the CPUs in $CPUS (one lane each, odd/even rounds);
 # in every round each engine runs once, one at a time on that lane's CPU, and
@@ -26,6 +28,7 @@ B="$OUT/build"; mkdir -p "$OUT/v8" "$B"
 
 if [[ -z "${SKIP_BUILD:-}" ]]; then
   (cd "$ROOT/bench/ccgo" && go build -o "$B/qjs-liustack" ./liustack && go build -o "$B/qjs-modernc" ./modernc)
+  (cd "$ROOT/bench/moejs" && go build -o "$B/moejs" .)
   patch_file="$(cd "$ROOT/bench/ccgo" && go list -m -f '{{.Dir}}' github.com/liustack/quickjs)/lib/internal/patch/quickjs.diff"
   for cc in gcc clang; do
     rm -rf "$B/c-$cc"; mkdir -p "$B/c-$cc"
@@ -46,12 +49,14 @@ liustack-c-gcc $B/c-gcc/qjs --stack-size 16M
 liustack-c-clang $B/c-clang/qjs --stack-size 16M
 liustack-go $B/qjs-liustack
 modernc-go $B/qjs-modernc
+moejs $B/moejs
 goja $GOJA
 EOT
 {
   echo "date: $(date '+%Y-%m-%d %H:%M:%S %Z')"
   echo "host: $(uname -srm), $(nproc) vCPU, $(lscpu | sed -n 's/^Model name: *//p'), lanes on CPUs $CPUS"
   echo "goc commit: $(git -C "$ROOT" rev-parse HEAD)"
+  echo "loadavg before timing: $(cut -d" " -f1-3 /proc/loadavg)"
   while read -r n p _; do echo "$n: sha256=$(sha256sum "$p" | cut -c1-16)"; done < "$OUT/engines.txt"
 } > "$OUT/env.txt"
 
@@ -72,4 +77,5 @@ for ((j = 0; j < k; j++)); do
   lane "${C[$j]}" "${rs[@]}" &
 done
 wait
+echo "loadavg after timing: $(cut -d" " -f1-3 /proc/loadavg)" >> "$OUT/env.txt"
 python3 "$ROOT/bench/report/v8multi.py" "$OUT/v8"

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Ten-engine V8-v7 comparison (docs/benchmark/README.md, "多引擎 V8-v7 对比").
+"""Multi-engine V8-v7 comparison (docs/benchmark/README.md, "多引擎 V8-v7 对比").
 
-Reads RAW/<engine>-r<round>.txt (bench-v8.js output plus a WALL line), takes
+Reads RAW/<engine>-r<round>.txt (bench-v8.js output plus a WALL line) and the
+run date from RAW/../env.txt (written by bench/v8multi.sh), takes
 the median per item over the rounds, writes RAW/../v8multi.json, prints the
 Markdown tables, and draws OUT/v8multi-total.svg and OUT/v8multi-subs.svg.
 Chart text is English. Needs matplotlib.
@@ -16,20 +17,20 @@ from lib.plot import plt, LEG, saver, title  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RAW = sys.argv[1]
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "docs/benchmark/charts")
-DATE = "2026-10-21"
+DATE = open(os.path.join(os.path.dirname(os.path.abspath(RAW)), "env.txt")).readline().split()[1]
 ENG = ["bellard", "liustack-c-gcc", "bellard-clang", "liustack-c-clang", "goc-bellard",
-       "ng", "goc-ng", "liustack-go", "modernc-go", "goja"]
+       "ng", "goc-ng", "liustack-go", "modernc-go", "moejs", "goja"]
 LABEL = {"bellard": "native Bellard (gcc)", "liustack-c-gcc": "liustack C (gcc)",
          "bellard-clang": "native Bellard (clang)", "liustack-c-clang": "liustack C (clang)",
          "goc-bellard": "goc-bellard", "ng": "native ng (clang)", "goc-ng": "goc-ng",
          "liustack-go": "liustack/quickjs (ccgo, Go)", "modernc-go": "modernc.org/quickjs (ccgo, Go)",
-         "goja": "Goja"}
+         "moejs": "moejs (Go)", "goja": "Goja"}
 COLOR = {"bellard": "#6ee7b7", "liustack-c-gcc": "#a7f3d0", "bellard-clang": "#34d399",
          "liustack-c-clang": "#99f6e4", "goc-bellard": "#047857", "ng": "#93c5fd", "goc-ng": "#1d4ed8",
-         "liustack-go": "#ea580c", "modernc-go": "#fdba74", "goja": "#94a3b8"}
+         "liustack-go": "#ea580c", "modernc-go": "#fdba74", "moejs": "#a855f7", "goja": "#94a3b8"}
 SHORT = {"bellard": "Bellard gcc", "liustack-c-gcc": "liustack C gcc", "bellard-clang": "Bellard clang",
          "liustack-c-clang": "liustack C clang", "goc-bellard": "goc-bellard", "ng": "native ng", "goc-ng": "goc-ng",
-         "liustack-go": "liustack Go", "modernc-go": "modernc Go", "goja": "Goja"}
+         "liustack-go": "liustack Go", "modernc-go": "modernc Go", "moejs": "moejs", "goja": "Goja"}
 SUBS = ["Richards", "DeltaBlue", "Crypto", "RayTrace", "EarleyBoyer", "RegExp", "Splay", "NavierStokes", "Score"]
 BASE = "bellard"
 
@@ -80,7 +81,7 @@ for b, e, v in zip(bars, ENG, vals):
                 xytext=(3, 0), textcoords="offset points", va="center", fontsize=8.5)
 ax.set_yticks(list(ys)); ax.set_yticklabels([LABEL[e] for e in ENG]); ax.set_ylim(len(ENG) - 0.5, -0.5)
 ax.set_xlim(0, max(vals) * 1.25); ax.grid(axis="y", visible=False); ax.set_xlabel("V8-v7 score (higher is faster)")
-title(ax, "V8-v7 total score, ten engines (%s)" % DATE,
+title(ax, "V8-v7 total score, %d engines (%s)" % (len(ENG), DATE),
       "Median of %d interleaved rounds per engine; ratio in parentheses is vs native Bellard (gcc -O2)." % n)
 save(fig, "v8multi-total")
 # per-subtest ratio vs native Bellard gcc, log scale
