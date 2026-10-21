@@ -140,24 +140,46 @@ goc-ng 的调用速度是 native ng 的 0.96 倍。时间比最大的是 `depth4
 
 ![V8-v7 per sub-benchmark, relative to native Bellard](charts/v8multi-subs.svg)
 
-这一节是另一台机器、另一个时段单独测的，只比 V8-v7，数字不要和上面 2026-10-09 主时段的表混用。新加的是三个“用 Go 跑 QuickJS”的方案和 liustack 那份 C 补丁：
+这一节是 2026-10-21 在另一台机器上单独测的，只跑了 V8-v7 这一套基准。机器和时段都和上面 2026-10-09 的主测试不同，所以这一节的数字只能在这一节内部互相比较，不要拿去和前面的表直接对比。
 
-- **liustack/quickjs**（[github.com/liustack/quickjs](https://github.com/liustack/quickjs)，commit `e5078bb`，2026-10-21）：fork 自 modernc.org/quickjs v0.25.0 和 modernc.org/libquickjs v0.13.1，引擎是 Bellard QuickJS 2026-06-04 经 ccgo 翻译成的纯 Go 代码（不用 cgo），为 tifa（Go 里做 React SSR）维护。它的提速改动都由 `internal/fixlib` 直接改写生成出来的 Go 代码（解释器循环少做栈操作、调用不分配 Go 内存、frame 释放不用 defer、对象 shape 缓存、正则跳到可能匹配的位置等），这些改动没有 C 版本。另有一份 C 补丁 `lib/internal/patch/quickjs.diff`，只是为了重新生成时保留不可捕获异常、错误栈、OOM 这类行为改动。它自己的跑分口径是 tifa 示例商店的 React 渲染，声称比起点 modernc.org/quickjs 快 1.63–1.66 倍，没有发布 V8 跑分。
-- **modernc.org/quickjs v0.25.0**（libquickjs v0.13.1，modernc.org/libc v1.77.1）：上游的 ccgo 版，也就是 liustack 的起点。
-- **liustack C（gcc / clang）**：Bellard 2026-06-04 源码包打上 liustack 的 `quickjs.diff`，用上游 Makefile 原生编译（gcc 14.2.0 `-O2`；clang 用 `CONFIG_CLANG=y CC=clang-19`，`-O2`）。这不是 liustack 发布的东西，只用来看那份 C 补丁本身对速度的影响。
+这次测试的起因是想知道：除了 goc 之外，还有别的办法让 QuickJS 在 Go 程序里运行，它们的速度和 goc 比怎么样。为此在原来的五个引擎之外，又加了五个，一共十个。
 
-两个 ccgo 版本由 [`bench/ccgo`](../../bench/ccgo/) 里的小 CLI 运行（Go 1.27.2 默认构建，没有 PGO）：读入整个文件，`EvalGlobal` 执行，`print` / `console.log` 和 qjs 一样把参数用空格连起来。整套流程在 `bench/v8multi.sh`，表和图由 `bench/report/v8multi.py` 生成。
+### 参加比较的引擎
+
+**goc 的两个构建。** goc-ng 是用 goc 编译的 QuickJS-ng，goc-bellard 是用 goc 编译的 Fabrice Bellard 原版 QuickJS（2026-06-04 版）。它们用的是 v0.0.3 发布时的二进制，运行命令和上面的主测试一样。
+
+**原生构建。** native ng 是用 clang-19 直接编译的 QuickJS-ng 0.17.0（`-O2 -DNDEBUG`）。native Bellard 是用上游自带的 Makefile 直接编译的 Bellard QuickJS 2026-06-04，分两个版本：一个用 gcc 14.2.0（`-O2`，这是上游的默认做法），一个改用 clang-19（`make CONFIG_CLANG=y CC=clang-19`，同样是 `-O2`）。这些原生构建都是在这台机器上编译的，代表“C 代码直接编译成机器码”能达到的速度。
+
+**modernc.org/quickjs（v0.25.0）。** 这是一个纯 Go 的 QuickJS 库，不需要 cgo。它的做法和 goc 完全不同：作者 Jan Mercl 用自己写的 ccgo 工具，把 Bellard QuickJS 2026-06-04 的 C 源码整个翻译成 Go 源码（这部分是 modernc.org/libquickjs v0.13.1），再在上面包了一层 Go API。C 里的指针运算在翻译后变成了 Go 里的 `uintptr` 加减和 `unsafe` 读写，C 标准库则由 modernc.org/libc（这里是 v1.77.1）用 Go 实现。最后由 Go 编译器把这些 Go 代码编译成机器码。
+
+**liustack/quickjs（[github.com/liustack/quickjs](https://github.com/liustack/quickjs)，commit `e5078bb`，2026-10-21）。** 这是 modernc.org/quickjs 的一个 fork，作者为了自己的项目 tifa（一个在 Go 里做 React 服务端渲染的框架）在维护它。它把 modernc.org/quickjs v0.25.0 和 libquickjs v0.13.1 合并成一个模块，引擎仍然是 ccgo 从 Bellard 2026-06-04 翻译出来的 Go 代码。在这个基础上，它用一个叫 `internal/fixlib` 的工具，对翻译出来的 Go 代码做机械式的改写来提速。改写的内容包括：让解释器主循环少做栈操作、函数调用时不再分配 Go 内存、释放调用帧时不用 `defer`、缓存对象的 shape、正则匹配时直接跳到可能匹配的位置，等等。这些提速改写只存在于 Go 代码里，没有对应的 C 版本。它另外带了一份 C 补丁 `lib/internal/patch/quickjs.diff`，作用是将来从 C 重新翻译时保留它做的行为改动，例如超时和内存耗尽变成脚本无法捕获的异常、错误栈的生成方式等，和速度无关。它的 README 用 tifa 示例商店的 React 页面渲染来衡量速度，说比起点 modernc.org/quickjs 快 1.63 到 1.66 倍，没有公布 V8 跑分。
+
+**liustack C（gcc 和 clang 两个版本）。** 这不是 liustack 发布的东西，是这次为了参考自己做的：把 liustack 的那份 C 补丁打到 Bellard 2026-06-04 的源码包上，再像 native Bellard 一样用上游 Makefile 分别以 gcc 和 clang `-O2` 编译。它的用处只是看那份 C 补丁本身会不会影响速度。因为 liustack 的提速改写都不在 C 里，这两个构建不能代表 liustack/quickjs 的实际速度。
+
+**Goja（`cfe4039`）。** 一个用 Go 从头写的 JavaScript 解释器，和上面的主测试一样，用 `bench/goja` 运行。
+
+两个 ccgo 版本（modernc.org/quickjs 和 liustack/quickjs）都没有自带命令行程序，所以在 [`bench/ccgo`](../../bench/ccgo/) 里各写了一个很小的 CLI：读入整个脚本文件，用 `EvalGlobal` 当普通脚本执行，并提供 `print` 和 `console.log`（和 qjs 一样把多个参数用空格连起来输出）。这两个 CLI 用 Go 1.27.2 默认参数编译，没有用 PGO。
+
+### 怎么测的
+
+整套流程写在 `bench/v8multi.sh` 里，可以直接重跑。它会编译两个 ccgo CLI 和两个 liustack C 构建，然后开始计时，最后调用 `bench/report/v8multi.py` 算中位数、生成下面的表和两张图。
 
 | 项目 | 内容 |
 |---|---|
 | 时段 | 2026-10-21 16:55–17:26（CST） |
-| 机器 | 8 vCPU Intel Xeon 虚拟机（`lscpu` 只报 “Intel(R) Xeon(R) Processor”），Linux 6.12.94，gcc 14.2.0，clang 19.1.7，Go 1.27.2 |
-| goc | v0.0.3 的 `build/qjs/qjscli`、`build/qjs-bellard/qjscli`（main `919217e`，相对 v0.0.3 只改了文档），命令同上 |
-| native ng / Bellard | 同上面的构建方式，但都在这台机器上编译：ng 0.17.0 clang-19 `-O2 -DNDEBUG`；Bellard 2026-06-04 上游 Makefile gcc 14.2.0 `-O2`，以及 `CONFIG_CLANG=y CC=clang-19` 的 clang 版 |
-| Goja | `cfe4039`，`bench/goja` |
-| 方法 | 两条 lane 分别固定在 CPU 1 和 CPU 5，CPU 1 跑奇数轮、CPU 5 跑偶数轮，共 8 轮；每一轮十个引擎依次各跑一次，下一轮换起始引擎；总分和每个子项取 8 轮中位数 |
+| 机器 | 8 个 vCPU 的 Intel Xeon 虚拟机（`lscpu` 只显示 “Intel(R) Xeon(R) Processor”，没有具体型号），Linux 6.12.94，gcc 14.2.0，clang 19.1.7，Go 1.27.2 |
+| goc | v0.0.3 的 `build/qjs/qjscli` 和 `build/qjs-bellard/qjscli`（当时 main 是 `919217e`，相对 v0.0.3 只改了文档） |
+| 轮数 | 每个引擎 8 轮，总分和每个子项都取 8 轮的中位数 |
+| 固定核 | 开两条 lane，一条固定在 CPU 1 上跑第 1、3、5、7 轮，另一条固定在 CPU 5 上跑第 2、4、6、8 轮 |
+| 交替顺序 | 每一轮里十个引擎一个接一个各跑一次；下一轮换一个引擎打头，这样每个引擎都在差不多的时间段里运行 |
 
-注意：测量期间这台机器上另有一个任务在 CPU 3 和 6 上做计时，还有不固定核的 `go build`，两条 lane 也是同时跑的，所以噪声比主时段大。各轮总分大多落在中位数的 −5% 到 +3% 之间，超出的是 liustack C（gcc）的一轮 1474（其余 1579–1671）、liustack C（clang）的一轮 1316 和 Goja 的一轮 271，见下面的各轮表。这两个 Go 方案在 `taskset` 下只能用一个核，Go 的 GC 也要挤在同一个核上，Goja 同样如此。
+有几点会让这次的数字比主测试更嘈杂，需要说明：
+
+- 测量期间，这台机器上还有另一个任务在 CPU 3 和 CPU 6 上做性能计时，偶尔还有不固定核的 `go build` 在运行。两条 lane 本身也是同时在跑的。
+- 大多数引擎各轮总分落在中位数的 −5% 到 +3% 之间。超出这个范围的有三次：liustack C（gcc）有一轮只有 1474（其余几轮是 1579 到 1671），liustack C（clang）有一轮 1316，Goja 有一轮 271。具体每轮的数字见下面的“各轮总分”表。因为取的是中位数，个别偏低的轮次对结果影响不大。
+- `taskset` 把每个进程限制在一个核上。对 modernc.org/quickjs、liustack/quickjs 和 Goja 这三个 Go 程序来说，Go 的垃圾回收也只能和 JS 代码挤在同一个核上运行。goc 的两个构建同样是 Go 程序，也受同样的限制。
+
+### 结果
 
 | 子项 | Bellard gcc | liustack C gcc | Bellard clang | liustack C clang | goc-bellard | native ng | goc-ng | liustack Go | modernc Go | Goja |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -171,7 +193,9 @@ goc-ng 的调用速度是 native ng 的 0.96 倍。时间比最大的是 `depth4
 | NavierStokes | 3166 | 2428 | 2142 | 1564 | 2918 | 1788 | 1793 | 1694 | 1224 | 222 |
 | **总分** | **1752** | **1601** | **1511** | **1414** | **1560** | **1352** | **1284** | **1138** | **692** | **296** |
 
-相对 native Bellard（gcc）的比值：
+上表是各引擎的分数，越高越快。每个子项单独取 8 轮中位数，所以子项之间不一定能算回总分。表头里 “liustack Go” 指 liustack/quickjs，“modernc Go” 指 modernc.org/quickjs。
+
+下面是每个数字除以 gcc 版 native Bellard 的同一项，大于 1 表示比它快：
 
 | 子项 | Bellard gcc | liustack C gcc | Bellard clang | liustack C clang | goc-bellard | native ng | goc-ng | liustack Go | modernc Go | Goja |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -185,6 +209,8 @@ goc-ng 的调用速度是 native ng 的 0.96 倍。时间比最大的是 `depth4
 | NavierStokes | 1.000 | 0.767 | 0.677 | 0.494 | 0.922 | 0.565 | 0.566 | 0.535 | 0.387 | 0.070 |
 | **总分** | 1.000 | 0.914 | 0.862 | 0.807 | 0.890 | 0.772 | 0.733 | 0.650 | 0.395 | 0.169 |
 
+各轮总分（第 1、3、5、7 轮在 CPU 1 上，第 2、4、6、8 轮在 CPU 5 上）：
+
 | 引擎 | 各轮总分 | 中位数 | 最小–最大 | 单轮墙钟中位数 |
 |---|---|---:|---:|---:|
 | native Bellard (gcc) | 1782 / 1800 / 1737 / 1791 / 1752 / 1753 / 1704 / 1743 | 1752 | 1704–1800 | 31.4 s |
@@ -197,18 +223,24 @@ goc-ng 的调用速度是 native ng 的 0.96 倍。时间比最大的是 `depth4
 | liustack/quickjs (ccgo, Go) | 1147 / 1143 / 1118 / 1141 / 1142 / 1136 / 1121 / 1088 | 1138 | 1088–1147 | 38.9 s |
 | modernc.org/quickjs (ccgo, Go) | 706 / 711 / 687 / 680 / 697 / 708 / 662 / 673 | 692 | 662–711 | 52.7 s |
 | Goja | 299 / 306 / 303 / 301 / 290 / 293 / 271 / 287 | 296 | 271–306 | 109.2 s |
-wrote v8multi-total
-wrote v8multi-subs
 
-几个结论：
+### 怎么理解这些结果
 
-- **liustack/quickjs 总分 1138**，是 gcc 版 native Bellard 的 0.650 倍、goc-bellard 的 0.73 倍（goc-bellard 是它的 1.37 倍），goc-ng 也是它的 1.13 倍。它比 modernc.org/quickjs 快 1.65 倍（692 → 1138），和它自己在 tifa 上报的 1.63–1.66 倍一致，八个子项都在 1.38–1.78 倍之间。
-- 按子项看，liustack 最接近原生的是 RegExp（0.80，和 goc-bellard 的 0.81 持平，高于 native ng 和 goc-ng）、Splay（0.80）和 DeltaBlue（0.78），这几项分配、属性访问和调用多，看起来正是它重点改写的地方。差得最远的是 Crypto（0.455）、NavierStokes（0.535）、RayTrace（0.58）和 EarleyBoyer（0.62），都是整数、浮点运算和数组访问为主。ccgo 把 C 的指针运算翻译成 `uintptr` 加减和 `unsafe` 读写，Go 编译器对这类代码的优化弱于 gcc/clang，这可能是主要原因（推测，没有做 profile）。goc-bellard 在这几项上是它的 1.45–1.99 倍。
-- **liustack 的 C 补丁本身会变慢**：gcc 版 1601，是原版 Bellard 的 0.914 倍；clang 版 1414，是 clang 原版的 0.936 倍。掉得多的是 NavierStokes（gcc 0.77、clang 0.73）和 Crypto（0.86、0.77）。补丁在 `JS_CallInternal` 的入口加了一次“不可捕获异常未决”的检查，在 `get_field` 快路径里加了一个 `stack` 属性的判断，还改了几处异常路径；这些改动落在巨大的解释器函数里，影响的很可能是寄存器分配和代码布局，单看补丁内容看不出这么大的开销，这里没有再往下查。它的提速都只在生成的 Go 里，所以这份 C 构建只能当参考，不代表 liustack。
-- goc 自己的两组比值和 10/21 的性能排查一致：goc-ng / native ng 0.95，goc-bellard / gcc 版 Bellard 0.890。goc-bellard 比 clang 版 native Bellard 还快 3%（1560 对 1511），主要在 Crypto（1.25 倍）和 NavierStokes（1.36 倍），这里面有 goc 默认打开的分发块尾复制。
-- 正确性上，用 `ports/quickjs/tests/test262.py` 跑同一份 test262 抽样（同上面 test262 一节）：liustack/quickjs、modernc.org/quickjs、liustack C（gcc）都是 1501/1526，失败的文件和 native Bellard 逐个相同。
+**liustack/quickjs 和 goc 比。** liustack/quickjs 的 V8 总分是 1138，大约是 gcc 版 native Bellard 的 0.65 倍。goc-bellard 的总分是 1560，是 liustack/quickjs 的 1.37 倍；goc-ng 的总分是 1284，也是它的 1.13 倍。也就是说，在这套基准上，goc 编译出来的 QuickJS 比 ccgo 翻译再经过 liustack 改写的版本更快。
 
-原始输出在 docs-data 分支的 `docs/benchmark/data/raw/v8multi-2026-10-21/`（每轮原文、`env.txt`、`engines.txt`、`v8multi.json`、test262 结果）。
+**liustack 的改写确实有效。** liustack/quickjs 的总分是 modernc.org/quickjs（692）的 1.65 倍，和它 README 里在 tifa 页面渲染上测出的 1.63 到 1.66 倍基本一致。八个子项全都变快了，提升幅度在 1.38 倍到 1.78 倍之间。
+
+**liustack 在哪些子项上接近原生，哪些差得远。** 它最接近原生的是 RegExp（0.80 倍，和 goc-bellard 的 0.81 倍差不多，比 native ng 和 goc-ng 还高）、Splay（0.80 倍）和 DeltaBlue（0.78 倍）。这几项主要是创建对象、读写属性、函数调用和正则匹配，看起来正好是 liustack 重点改写过的地方。它差得最远的是 Crypto（0.455 倍）、NavierStokes（0.535 倍）、RayTrace（0.58 倍）和 EarleyBoyer（0.62 倍），这些子项以整数运算、浮点运算和数组访问为主。在这几项上，goc-bellard 是 liustack 的 1.45 到 1.99 倍。一个可能的原因是：ccgo 把 C 的指针运算翻译成了 `uintptr` 加减和 `unsafe` 内存读写，而 Go 编译器对这类代码的优化远不如 gcc 和 clang 对原始 C 代码的优化；goc 则是把 C 直接交给 LLVM 优化，再输出 Go 的目标文件。这一点只是推测，这次没有做 profile 去验证。
+
+**liustack 的 C 补丁本身会让原生构建变慢一些。** 打了补丁的 gcc 版总分是 1601，是没打补丁的 gcc 版 Bellard 的 0.914 倍；clang 版是 1414，是没打补丁的 clang 版的 0.936 倍。变慢最多的是 NavierStokes（gcc 0.77 倍，clang 0.73 倍）和 Crypto（gcc 0.86 倍，clang 0.77 倍）。补丁在 `JS_CallInternal` 的入口加了一次“是否有未决的不可捕获异常”的检查，在 `get_field` 的快路径里加了一次对 `stack` 属性的判断，还改了几处异常处理路径。这些改动本身都很小，单看代码解释不了这么大的差距；它们落在 QuickJS 那个非常大的解释器函数里，更可能是改变了编译器的寄存器分配和代码布局。这次没有继续往下查。再强调一次，liustack 的提速都在 Go 代码里，这两个 C 构建只是参考，不代表 liustack/quickjs。
+
+**goc 自己的比值。** goc-ng 是 native ng 的 0.95 倍，goc-bellard 是 gcc 版 native Bellard 的 0.89 倍，和同一天做的性能排查结果一致。goc-bellard 甚至比 clang 版 native Bellard 快 3%（1560 对 1511），主要快在 Crypto（1.25 倍）和 NavierStokes（1.36 倍）。原因之一是 goc 的默认构建打开了解释器分发块的尾复制（`-tail-dup-pred-size=1000 -tail-dup-succ-size=1000`），而 clang 版 native Bellard 用的是上游 Makefile 的默认参数，没有这一项。
+
+**Goja。** Goja 的总分是 296，大约是 gcc 版 native Bellard 的 0.17 倍，是这十个引擎里最慢的。它是用 Go 从头写的另一个引擎（把 JS 编译成自己的字节码再解释执行），不是 QuickJS，所以和其他几个引擎的差距不只来自编译方式。在 modernc.org/quickjs、liustack/quickjs 和 Goja 这三个纯 Go 库之间比较，liustack/quickjs 大约是 Goja 的 3.8 倍，modernc.org/quickjs 大约是 Goja 的 2.3 倍。
+
+**正确性。** 为了确认这些引擎跑的是正确的结果，用 `ports/quickjs/tests/test262.py` 对 liustack/quickjs、modernc.org/quickjs 和 liustack C（gcc）跑了同一份 test262 抽样（抽样方法见下面的 test262 一节）。三者都是 1501/1526，失败的文件和 native Bellard 一个不差。
+
+原始输出放在 docs-data 分支的 `docs/benchmark/data/raw/v8multi-2026-10-21/` 目录里，包括每个引擎每一轮的原文、`env.txt`（时间、机器和各二进制的 sha256）、`engines.txt`（各引擎的运行命令）、`v8multi.json`（汇总后的数字）和 test262 结果。
 
 ## test262
 
