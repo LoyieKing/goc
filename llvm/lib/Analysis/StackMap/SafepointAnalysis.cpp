@@ -487,3 +487,96 @@ DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL) {
   return stack;
 }
 } // namespace goc::sm
+
+namespace goc::sm {
+
+// Rewrite Uses of V so a use reads V itself on every safepoint-free path
+// from its definition, and a volatile reload of Slot after each safepoint
+// that V is live across. The definitions (V at Def, or on entry when Def is
+// null, plus the reloads) are joined with SSA PHIs. A safepoint on a cold
+// path no longer costs a reload in the hot path, and a use right after the
+// save reads the register. The copier adjusts Slot only inside a safepoint,
+// so between two safepoints the register and the slot agree.
+unsigned rewriteWithSafepointReloads(Function &F, Value *V, Instruction *Def,
+                                     AllocaInst *Slot, ArrayRef<Use *> Uses,
+                                     StringRef Name) {
+  SmallVector<Instruction *, 16> points;
+  for (Use *U : Uses)
+    points.push_back(usePoint(*U));
+  CrossCallLiveness L(Def, points);
+  // Definitions per block, in program order. Def's position is its block
+  // start for a PHI (the save follows the PHIs).
+  DenseMap<BasicBlock *, SmallVector<std::pair<Instruction *, Value *>, 4>> defs;
+  BasicBlock *DefBB = Def ? Def->getParent() : &F.getEntryBlock();
+  defs[DefBB].push_back({Def, V});
+  SmallVector<Instruction *, 16> sites;
+  for (Instruction &I : instructions(F))
+    // Def itself may be a safepoint (a call returning a stack address); the
+    // save after it is the definition, not a reload.
+    if (&I != Def && isSafepoint(I) && L.liveAcross(&I))
+      sites.push_back(&I);
+  unsigned reloads = 0;
+  for (Instruction *CB : sites) {
+    if (CB->isTerminator())
+      report_fatal_error(Twine("goc-stackmap: terminator safepoint in ") +
+                         F.getName());
+    IRBuilder<> B(CB->getNextNode());
+    auto *R = B.CreateLoad(V->getType(), Slot, Name);
+    R->setVolatile(true);
+    defs[CB->getParent()].push_back({R, R});
+    ++reloads;
+  }
+  for (BasicBlock &BB : F)
+    BB.renumberInstructions();
+  // Def sorts first in its block (for a PHI Def, or entry when Def is null,
+  // nothing in the block precedes it that matters).
+  auto before = [&](Instruction *A, Instruction *B) {
+    if (!A)
+      return true;
+    if (!B)
+      return false;
+    if (isa<PHINode>(A) && !isa<PHINode>(B))
+      return true;
+    return A->comesBefore(B);
+  };
+  for (auto &E : defs)
+    std::sort(E.second.begin(), E.second.end(),
+              [&](auto &X, auto &Y) { return X.first != Y.first && before(X.first, Y.first); });
+  SSAUpdater SSA;
+  SSA.Initialize(V->getType(), Name);
+  for (auto &E : defs)
+    SSA.AddAvailableValue(E.first, E.second.back().second);
+  // Value reaching At from defs earlier in At's block, or null.
+  auto local = [&](Instruction *At, bool AtEnd) -> Value * {
+    auto It = defs.find(At->getParent());
+    if (It == defs.end())
+      return nullptr;
+    Value *Found = nullptr;
+    for (auto &D : It->second) {
+      if (AtEnd || D.first == nullptr ||
+          (D.first != At && before(D.first, At)))
+        Found = D.second;
+      else
+        break;
+    }
+    return Found;
+  };
+  for (Use *U : Uses) {
+    auto *User = cast<Instruction>(U->getUser());
+    Value *NewV;
+    if (auto *Phi = dyn_cast<PHINode>(User)) {
+      BasicBlock *Inc = Phi->getIncomingBlock(U->getOperandNo());
+      NewV = local(Inc->getTerminator(), true);
+      if (!NewV)
+        NewV = SSA.GetValueAtEndOfBlock(Inc);
+    } else {
+      NewV = local(User, false);
+      if (!NewV)
+        NewV = SSA.GetValueInMiddleOfBlock(User->getParent());
+    }
+    U->set(NewV);
+  }
+  return reloads;
+}
+
+} // namespace goc::sm

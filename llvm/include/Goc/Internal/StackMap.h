@@ -23,6 +23,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
@@ -117,6 +118,9 @@ const DenseSet<const Argument *> &stackPointerArguments(const Module &M,
 DenseSet<Value *> stackAddresses(Function &F, const DataLayout &DL);
 bool unmergeReportedAllocas(Function &F);
 bool gocArchArm64(const Module &M);
+unsigned rewriteWithSafepointReloads(Function &F, Value *V, Instruction *Def,
+                                     AllocaInst *Slot, ArrayRef<Use *> Uses,
+                                     StringRef Name);
 Value *tlsGWord(IRBuilder<> &B, uint64_t Off);
 Function *uptrFatal(Module &M);
 void emitUptrFatal(IRBuilder<> &B, Module &M, const char *Msg);

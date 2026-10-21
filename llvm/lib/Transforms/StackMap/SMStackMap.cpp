@@ -341,68 +341,23 @@ struct GocStackMap : PassInfoMixin<GocStackMap> {
         IP = V->getParent()->getTerminator();
       IRBuilder<> Save(IP);
       Save.CreateStore(V, Root)->setVolatile(true);
-      // One volatile reload per safepoint-free stretch in a block. Later
-      // uses in that stretch keep the SSA value in a register. The next
-      // call reloads: morestack may have adjusted the slot, and a
-      // callee-saved copy of the pre-call bits is not adjusted. Volatile
-      // stops the post-call load from being forwarded. Frame addresses are
-      // not spilled here; GocFrameAddrFix re-derives them after tail
-      // duplication. A switch can list one predecessor twice; those edges
-      // must share one reload instruction.
-      for (BasicBlock &BB : F)
-        BB.renumberInstructions();
-      SmallVector<Use *, 16> ordered(uses.begin(), uses.end());
-      std::sort(ordered.begin(), ordered.end(), [](Use *A, Use *B) {
-        Instruction *IA = usePoint(*A);
-        Instruction *IB = usePoint(*B);
-        if (IA == IB)
-          return false;
-        if (IA->getParent() != IB->getParent())
-          return IA->getParent() < IB->getParent();
-        return IA->comesBefore(IB);
-      });
-      DenseMap<std::pair<PHINode *, BasicBlock *>, LoadInst *> phiReload;
-      SmallVector<LoadInst *, 8> placed;
-      for (Use *U : ordered) {
+      // The next safepoint V is live across reloads: morestack may have
+      // adjusted the slot, and a callee-saved copy of the pre-call bits is
+      // not adjusted. Volatile stops the post-call load from being
+      // forwarded. Uses on safepoint-free paths keep the SSA value (PHIs
+      // join it with the reloads). Frame addresses are not spilled here;
+      // GocFrameAddrFix re-derives them after tail duplication.
+      SmallVector<Use *, 16> rewrite;
+      for (Use *U : uses) {
         auto *UserInst = dyn_cast<Instruction>(U->getUser());
         if (!UserInst)
           report_fatal_error("goc-stackmap: non-instruction sptr user");
         if (auto *Call = dyn_cast<CallBase>(UserInst))
           if (isNonSafepointIntrinsic(*Call))
             continue; // preserve the original alloca for annotations
-        Instruction *At = usePoint(*U);
-        PHINode *Phi = dyn_cast<PHINode>(UserInst);
-        std::pair<PHINode *, BasicBlock *> Key{nullptr, nullptr};
-        if (Phi) {
-          Key = std::make_pair(Phi, Phi->getIncomingBlock(U->getOperandNo()));
-          if (LoadInst *Existing = phiReload.lookup(Key)) {
-            U->set(Existing);
-            continue;
-          }
-        }
-        LoadInst *Share = nullptr;
-        for (LoadInst *Prev : placed) {
-          if (Prev->getParent() != At->getParent())
-            continue;
-          if (separatedBySafepoint(Prev, At))
-            continue;
-          Share = Prev;
-          break;
-        }
-        if (Share) {
-          if (Phi)
-            phiReload[Key] = Share;
-          U->set(Share);
-          continue;
-        }
-        IRBuilder<> B(At);
-        auto *Reload = B.CreateLoad(V->getType(), Root, "goc.spill.reload");
-        Reload->setVolatile(true);
-        placed.push_back(Reload);
-        if (Phi)
-          phiReload[Key] = Reload;
-        U->set(Reload);
+        rewrite.push_back(U);
       }
+      rewriteWithSafepointReloads(F, V, V, Root, rewrite, "goc.spill.reload");
     }
     for (Instruction *V : sptr)
       if (rematerializableFrameAddress(V, DL))

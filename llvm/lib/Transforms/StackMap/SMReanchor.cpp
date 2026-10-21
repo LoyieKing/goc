@@ -67,6 +67,20 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       S->setMetadata("goc.frame.words", goc::frameWordsTag(Slot, {uint64_t(SOff)}));
     }
 
+    // A value needs an anchor only if some safepoint lies on a path from its
+    // definition to a use. A reload from a root slot or a PHI of reloads
+    // (goc-stackmap) is already redefined after every safepoint it is live
+    // across, so it is left alone.
+    auto liveAcrossSomeSafepoint = [&](Instruction *Def, ArrayRef<Use *> Uses) {
+      SmallVector<Instruction *, 16> pts;
+      for (Use *U : Uses)
+        pts.push_back(usePoint(*U));
+      CrossCallLiveness L(Def, pts);
+      for (Instruction &I : instructions(F))
+        if (isSafepoint(I) && &I != Def && L.liveAcross(&I))
+          return true;
+      return false;
+    };
     struct Fix {
       Instruction *Def;
       SmallVector<Use *, 8> Uses; // uses that cross a safepoint
@@ -94,10 +108,9 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
         if (auto *CB = dyn_cast<CallBase>(User))
           if (CB->isInlineAsm() && pureFrameAddress(Def, DL))
             continue;
-        if (separatedBySafepoint(Def, usePoint(U)))
-          fix.Uses.push_back(&U);
+        fix.Uses.push_back(&U);
       }
-      if (!fix.Uses.empty())
+      if (!fix.Uses.empty() && liveAcrossSomeSafepoint(Def, fix.Uses))
         fixes.push_back(std::move(fix));
     }
     // Pointer arguments are not Instructions, so the loop above skipped them.
@@ -108,18 +121,6 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       SmallVector<Use *, 8> Uses;
     };
     SmallVector<ArgFix, 4> argFixes;
-    auto argUseAfterSafepoint = [&](const Instruction *UsePoint) {
-      const BasicBlock &Entry = F.getEntryBlock();
-      if (UsePoint->getParent() != &Entry)
-        return true;
-      for (const Instruction &I : Entry) {
-        if (&I == UsePoint)
-          return false;
-        if (isSafepoint(I))
-          return true;
-      }
-      return false;
-    };
     for (Argument &A : F.args()) {
       // A proven frame address must be reloaded after growth. An ordinary
       // pointer argument must too: the caller may pass an address of its own
@@ -133,10 +134,9 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
         auto *User = dyn_cast<Instruction>(U.getUser());
         if (!User || ignoreUse(User))
           continue;
-        if (argUseAfterSafepoint(usePoint(U)))
-          fix.Uses.push_back(&U);
+        fix.Uses.push_back(&U);
       }
-      if (!fix.Uses.empty())
+      if (!fix.Uses.empty() && liveAcrossSomeSafepoint(nullptr, fix.Uses))
         argFixes.push_back(std::move(fix));
     }
     if (fixes.empty() && argFixes.empty())
@@ -227,45 +227,11 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       IRBuilder<> Save(SaveAt);
       Save.CreateStore(fix.Def, Anchor)->setVolatile(true);
 
-      // One volatile reload per safepoint-free stretch, not per use. Extra
-      // uses in the same stretch stay in a register. A PHI that lists one
-      // predecessor twice must still see one incoming value.
-      SmallVector<Use *, 8> ordered(fix.Uses.begin(), fix.Uses.end());
-      std::sort(ordered.begin(), ordered.end(), [](Use *A, Use *B) {
-        Instruction *IA = usePoint(*A);
-        Instruction *IB = usePoint(*B);
-        if (IA == IB)
-          return false;
-        if (IA->getParent() != IB->getParent())
-          return IA->getParent() < IB->getParent();
-        return IA->comesBefore(IB);
-      });
       SmallVector<Instruction *, 8> usePoints;
-      for (Use *U : ordered)
+      for (Use *U : fix.Uses)
         usePoints.push_back(usePoint(*U));
-      SmallVector<LoadInst *, 8> placed;
-      for (Use *U : ordered) {
-        Instruction *At = usePoint(*U);
-        LoadInst *Share = nullptr;
-        for (LoadInst *Prev : placed) {
-          if (Prev->getParent() != At->getParent())
-            continue;
-          if (separatedBySafepoint(Prev, At))
-            continue;
-          Share = Prev;
-          break;
-        }
-        if (Share) {
-          U->set(Share);
-          continue;
-        }
-        IRBuilder<> B(At);
-        auto *Reload = B.CreateLoad(fix.Def->getType(), Anchor, "goc.reanchor");
-        Reload->setVolatile(true);
-        placed.push_back(Reload);
-        U->set(Reload);
-        ++reloads;
-      }
+      reloads += rewriteWithSafepointReloads(F, fix.Def, fix.Def, Anchor,
+                                             fix.Uses, "goc.reanchor");
       publish(fix.Def, fix.Def, Anchor, usePoints);
     }
     for (ArgFix &fix : argFixes) {
@@ -315,35 +281,11 @@ struct GocReanchor : PassInfoMixin<GocReanchor> {
       IRBuilder<> Save(At);
       Save.CreateStore(fix.Arg, Anchor)->setVolatile(true);
 
-      // Use-list order is enough to share a reload inside one block. Sorting
-      // with Instruction::comesBefore is not a strict weak order once the
-      // block's numbering is stale, and std::sort then corrupts the heap.
       SmallVector<Instruction *, 8> usePoints;
       for (Use *U : fix.Uses)
         usePoints.push_back(usePoint(*U));
-      SmallVector<LoadInst *, 8> placed;
-      for (Use *U : fix.Uses) {
-        Instruction *At = usePoint(*U);
-        LoadInst *Share = nullptr;
-        for (LoadInst *Prev : placed) {
-          if (Prev->getParent() != At->getParent())
-            continue;
-          if (separatedBySafepoint(Prev, At))
-            continue;
-          Share = Prev;
-          break;
-        }
-        if (Share) {
-          U->set(Share);
-          continue;
-        }
-        IRBuilder<> ReloadB(At);
-        auto *Reload = ReloadB.CreateLoad(fix.Arg->getType(), Anchor, "goc.reanchor");
-        Reload->setVolatile(true);
-        placed.push_back(Reload);
-        U->set(Reload);
-        ++reloads;
-      }
+      reloads += rewriteWithSafepointReloads(F, fix.Arg, nullptr, Anchor,
+                                             fix.Uses, "goc.reanchor");
       publish(nullptr, fix.Arg, Anchor, usePoints);
     }
     if (anchors || remats)
