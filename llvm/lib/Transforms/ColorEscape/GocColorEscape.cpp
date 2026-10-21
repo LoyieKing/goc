@@ -49,6 +49,7 @@ int goc::runColorEscape(Module &M, raw_ostream *Report) {
         propagate(F, S);
     }
   }
+  unsigned FoldedReencodes = foldReencodedDecodes(M, S);
   unsigned GuardedReturns = guardDynamicUptrReturns(M, S);
   for (Function &F : M) {
     if (F.isDeclaration())
@@ -70,7 +71,8 @@ int goc::runColorEscape(Module &M, raw_ostream *Report) {
          << " error(s), scoped dynamic allocas=" << DynamicAllocas
          << ", implicit uptr stores=" << EncodedStores
          << ", decoded pointer loads=" << DecodedLoads
-         << ", guarded returns=" << GuardedReturns << " in module '"
+         << ", guarded returns=" << GuardedReturns
+         << ", folded re-encodes=" << FoldedReencodes << " in module '"
          << M.getModuleIdentifier() << "'\n";
   return (int)S.ErrorCount;
 }

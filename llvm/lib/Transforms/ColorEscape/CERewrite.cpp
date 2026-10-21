@@ -157,6 +157,28 @@ void markAutoUptrSlot(Value *Address, ColorEscapeState &S) {
   }
 }
 
+// True if this pointer value's referent may escape. A load of a local
+// `T *p = &local;` only names the slot; the escape is of what was stored
+// into it (QuickJS: `JSStackFrame sf_s, *sf = &sf_s;`).
+static bool rootOrPointeeMayEscape(Value *Root) {
+  if (addressMayEscape(Root))
+    return true;
+  auto *LI = dyn_cast<LoadInst>(Root);
+  if (!LI)
+    return false;
+  auto *Slot = dyn_cast<AllocaInst>(LI->getPointerOperand()->stripPointerCasts());
+  if (!Slot || !Slot->getAllocatedType()->isPointerTy())
+    return false;
+  for (User *U : Slot->users()) {
+    auto *SI = dyn_cast<StoreInst>(U);
+    if (!SI || SI->getPointerOperand() != Slot)
+      continue;
+    if (addressMayEscape(SI->getValueOperand()))
+      return true;
+  }
+  return false;
+}
+
 bool isAutoUptrSlot(Value *Address, ColorEscapeState &S) {
   std::string Key = pointerFieldKey(Address);
   auto Roots = pointerStorageRoots(Address);
@@ -174,7 +196,7 @@ bool isAutoUptrSlot(Value *Address, ColorEscapeState &S) {
     if (isStackDest(Address, S)) {
       bool Escapes = false;
       for (Value *Root : Roots)
-        Escapes |= addressMayEscape(Root);
+        Escapes |= rootOrPointeeMayEscape(Root);
       if (!Escapes)
         return false;
     }
@@ -414,6 +436,117 @@ unsigned decodeAutoUptrLoads(Module &M, ColorEscapeState &S) {
     ++N;
   }
   return N;
+}
+
+// goc_uptr_from_ptr(goc_uptr_decode(X)) is X. A stack word is an offset from
+// stack.hi, so decoding and re-encoding it under the same g gives the same
+// offset back; a cptr word (MSB clear, outside the stack) passes through
+// both unchanged. Copying an encoded field into another uptr slot
+// (sf->prev_frame = rt->current_stack_frame) then costs no range checks.
+unsigned foldReencodedDecodes(Module &M, ColorEscapeState &S) {
+  SmallVector<CallInst *, 32> Folded;
+  for (Function &F : M) {
+    if (F.isDeclaration())
+      continue;
+    for (Instruction &I : instructions(F)) {
+      auto *Enc = dyn_cast<CallInst>(&I);
+      if (!Enc || !Enc->getCalledFunction() ||
+          !isUptrFromPtr(Enc->getCalledFunction()->getName()))
+        continue;
+      auto *Dec = dyn_cast<CallInst>(Enc->getArgOperand(0));
+      if (!Dec || !Dec->getCalledFunction() ||
+          !isUptrDecode(Dec->getCalledFunction()->getName()))
+        continue;
+      Enc->replaceAllUsesWith(Dec->getArgOperand(0));
+      Folded.push_back(Enc);
+    }
+  }
+  // The -O0 form keeps the decoded word in a local first
+  // (prev_sf = rt->current_stack_frame; sf->prev_frame = prev_sf). When every
+  // assignment of that local is a decode, a shadow local carries the encoded
+  // words alongside, and an encode of a load of the local reads the shadow.
+  SmallVector<std::pair<CallInst *, LoadInst *>, 16> SlotFolds;
+  DenseMap<AllocaInst *, AllocaInst *> Shadow;
+  auto decodedOnlySlot = [&](AllocaInst *A) {
+    if (!A->getAllocatedType()->isPointerTy())
+      return false;
+    bool AnyStore = false;
+    for (User *U : A->users()) {
+      if (auto *SI = dyn_cast<StoreInst>(U)) {
+        auto *D = dyn_cast<CallInst>(SI->getValueOperand());
+        if (SI->getPointerOperand() != A || !D || !D->getCalledFunction() ||
+            !isUptrDecode(D->getCalledFunction()->getName()))
+          return false;
+        AnyStore = true;
+        continue;
+      }
+      if (isa<LoadInst>(U))
+        continue;
+      if (auto *II = dyn_cast<IntrinsicInst>(U))
+        if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+            II->getIntrinsicID() == Intrinsic::lifetime_end)
+          continue;
+      return false; // escapes or is written some other way
+    }
+    return AnyStore;
+  };
+  for (Function &F : M) {
+    if (F.isDeclaration())
+      continue;
+    for (Instruction &I : instructions(F)) {
+      auto *Enc = dyn_cast<CallInst>(&I);
+      if (!Enc || !Enc->getCalledFunction() ||
+          !isUptrFromPtr(Enc->getCalledFunction()->getName()))
+        continue;
+      auto *L = dyn_cast<LoadInst>(Enc->getArgOperand(0));
+      if (!L)
+        continue;
+      auto *A = dyn_cast<AllocaInst>(L->getPointerOperand());
+      if (!A || !decodedOnlySlot(A))
+        continue;
+      SlotFolds.push_back({Enc, L});
+    }
+  }
+  for (auto [Enc, L] : SlotFolds) {
+    auto *A = cast<AllocaInst>(L->getPointerOperand());
+    AllocaInst *&Sh = Shadow[A];
+    if (!Sh) {
+      Sh = new AllocaInst(A->getAllocatedType(), A->getAddressSpace(),
+                          A->getName() + ".uptr", A->getNextNode());
+      Sh->setAlignment(A->getAlign());
+      S.SlotColor[Sh] = Color::UPtr;
+      PtrInfo &SI = S.info(Sh);
+      SI.Declared = Color::UPtr;
+      SI.Refined = Color::UPtr;
+      SI.StackProv = true; // the slot itself lives on the stack
+      SmallVector<StoreInst *, 4> Stores;
+      for (User *U : A->users())
+        if (auto *St = dyn_cast<StoreInst>(U))
+          Stores.push_back(St);
+      for (StoreInst *St : Stores) {
+        auto *D = cast<CallInst>(St->getValueOperand());
+        new StoreInst(D->getArgOperand(0), Sh, St->getNextNode());
+      }
+    }
+    auto *ShL = new LoadInst(L->getType(), Sh, L->getName() + ".uptr", Enc);
+    PtrInfo &LI = S.info(ShL);
+    LI.Declared = Color::UPtr;
+    LI.Refined = Color::UPtr;
+    LI.EncodedUPtr = true;
+    Enc->replaceAllUsesWith(ShL);
+    S.Info.erase(Enc);
+    Enc->eraseFromParent();
+  }
+  for (CallInst *Enc : Folded) {
+    auto *Dec = cast<CallInst>(Enc->getArgOperand(0));
+    S.Info.erase(Enc);
+    Enc->eraseFromParent();
+    if (Dec->use_empty()) {
+      S.Info.erase(Dec);
+      Dec->eraseFromParent();
+    }
+  }
+  return Folded.size() + SlotFolds.size();
 }
 
 unsigned guardDynamicUptrReturns(Module &M, ColorEscapeState &S) {

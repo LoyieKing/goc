@@ -173,6 +173,7 @@ FunctionCallee getUnaryPtrHelper(Module &M, StringRef Name);
 bool mayDirectlyNameStack(Value *V, DenseSet<Value *> &Seen);
 unsigned encodeEscapingSptrStores(Module &M, ColorEscapeState &S);
 unsigned decodeAutoUptrLoads(Module &M, ColorEscapeState &S);
+unsigned foldReencodedDecodes(Module &M, ColorEscapeState &S);
 unsigned guardDynamicUptrReturns(Module &M, ColorEscapeState &S);
 bool borrowedFromStackFormal(Value *V, ColorEscapeState &S,
                                     DenseSet<Value *> &Seen);
